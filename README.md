@@ -66,6 +66,44 @@ To set up the CESAFI Sports Website development environment on your local machin
 
 ---
 
+## 🧪 Testing Guide
+
+We are committed to maintaining a high-quality, reliable, and bug-free application. Our testing strategy primarily focuses on ensuring that new features integrate smoothly and existing functionalities remain robust.
+
+### Our Testing Philosophy
+
+- **Unit Tests:** Focus on individual functions, components, and hooks in isolation (e.g., utility functions, Zod schemas, custom React hooks).
+- **Integration Tests:** Verify how different parts of the application work together (e.g., a component interacting with a data-fetching hook).
+
+### Tools We Use
+
+- **Jest & React Testing Library:** For fast and reliable unit and integration tests of React components and TypeScript logic. We leverage Jest's integration with Next.js for an optimized testing environment.
+
+### Running Tests
+
+To run the tests on your local machine:
+
+1.  **Unit & Integration Tests (Jest):**
+    ```bash
+    npm test
+    # or
+    yarn test
+    ```
+    To run tests in watch mode (reruns on file changes):
+    ```bash
+    npm run test:watch
+    # or
+    yarn test:watch
+    ```
+    To generate a code coverage report:
+    ```bash
+    npm run test:coverage
+    # or
+    yarn test:coverage
+    ```
+
+---
+
 ## 🌿 Branching & Naming Conventions
 
 To maintain a clean and organized codebase, we follow a consistent branching strategy. All development work occurs on dedicated branches, which are then merged into `main` via pull requests after review and approval.
