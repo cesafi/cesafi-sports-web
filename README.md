@@ -45,7 +45,7 @@ To set up the CESAFI Sports Website development environment on your local machin
 1.  **Clone the repository:**
     ```bash
     git clone https://github.com/cesafi/cesafi-sports-web.git
-    cd cesafi-sports-website
+    cd cesafi-sports-web
     ```
 2.  **Install dependencies:**
     ```bash
@@ -63,6 +63,27 @@ To set up the CESAFI Sports Website development environment on your local machin
     yarn dev
     ```
     Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+---
+
+## 🌿 Branching & Naming Conventions
+
+To maintain a clean and organized codebase, we follow a consistent branching strategy. All development work occurs on dedicated branches, which are then merged into `main` via pull requests after review and approval.
+
+- **`main`**: This branch represents the **production-ready** code. It is always stable and deployable. All direct pushes to `main` are restricted.
+- **`feat/<description>`**: For new features. (e.g., `feat/live-scoreboard`, `feat/team-profiles`)
+- **`fix/<description>`**: For bug fixes. (e.g., `fix/login-issue`, `fix/missing-article-image`)
+- **`docs/<description>`**: For documentation updates. (e.g., `docs/add-setup-guide`)
+- **`refactor/<description>`**: For code refactoring or improvements that don't add new features or fix bugs. (e.g., `refactor/api-calls`)
+- **`chore/<description>`**: For miscellaneous tasks, build process changes, or dependency updates. (e.g., `chore/update-dependencies`, `chore/add-eslint-config`)
+
+**Workflow:**
+
+1.  Create your feature or fix branch from `main`.
+2.  Work on your changes.
+3.  Open a Pull Request (PR) against `main`.
+4.  Get your PR reviewed and approved by at least one other team member.
+5.  Merge your PR into `main`. Vercel will automatically deploy `main` to production.
 
 ---
 

@@ -1,0 +1,25 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/cesafi/cesafi-sports-web/security/policy
+    about: Do NOT open public issues for security vulnerabilities.
+
+issue_templates:
+  - name: Bug Report
+    description: Report an unexpected error, incorrect behavior, or a problem in the application.
+    title: '[Bug]: '
+    labels: [bug, triage]
+    assignees: []
+    body: bug_report.md
+  - name: Feature Request
+    description: Suggest a new idea or an enhancement for the CESAFI Sports Hub.
+    title: '[Feature]: '
+    labels: [enhancement, triage]
+    assignees: []
+    body: feature_request.md
+  - name: Documentation Request
+    description: Request an update, correction, or new addition to the project documentation.
+    title: '[Docs]: '
+    labels: [documentation, triage]
+    assignees: []
+    body: documentation_request.md
