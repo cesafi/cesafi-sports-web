@@ -1,0 +1,146 @@
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryOptions,
+  UseMutationOptions
+} from '@tanstack/react-query';
+
+import {
+  getPaginatedSchools,
+  getAllSchools,
+  getSchoolById,
+  createSchool,
+  updateSchoolById,
+  deleteSchoolById
+} from '@/actions/schools';
+
+import { SchoolInsert, SchoolUpdate, SchoolPaginationOptions, School } from '@/lib/types/schools';
+
+import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
+
+export const schoolKeys = {
+  all: ['schools'] as const,
+  paginated: (options: SchoolPaginationOptions) =>
+    [...schoolKeys.all, 'paginated', options] as const,
+  details: (id: string) => [...schoolKeys.all, id] as const
+};
+
+export function usePaginatedSchools(
+  options: SchoolPaginationOptions,
+  queryOptions?: UseQueryOptions<
+    ServiceResponse<PaginatedResponse<School>>,
+    Error,
+    PaginatedResponse<School>
+  >
+) {
+  return useQuery({
+    queryKey: schoolKeys.paginated(options),
+    queryFn: () => getPaginatedSchools(options),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch paginated schools.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useAllSchools(
+  queryOptions?: UseQueryOptions<ServiceResponse<School[]>, Error, School[]>
+) {
+  return useQuery({
+    queryKey: schoolKeys.all,
+    queryFn: getAllSchools,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch all schools.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useSchoolById(
+  id: string,
+  queryOptions?: UseQueryOptions<ServiceResponse<School>, Error, School>
+) {
+  return useQuery({
+    queryKey: schoolKeys.details(id),
+    queryFn: () => getSchoolById(id),
+    enabled: !!id,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || `School with ID ${id} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useCreateSchool(
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, SchoolInsert>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createSchool,
+    onSuccess: (result, variables, context) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: schoolKeys.all });
+      }
+      mutationOptions?.onSuccess?.(result, variables, context);
+    },
+    onError: (error, variables, context) => {
+      console.error('Failed to create school:', error);
+      mutationOptions?.onError?.(error, variables, context);
+    },
+    ...mutationOptions
+  });
+}
+
+export function useUpdateSchool(
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, SchoolUpdate>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateSchoolById,
+    onSuccess: (result, variables, context) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: schoolKeys.all });
+        if (variables.id) {
+          queryClient.invalidateQueries({ queryKey: schoolKeys.details(variables.id) });
+        }
+      }
+      mutationOptions?.onSuccess?.(result, variables, context);
+    },
+    onError: (error, variables, context) => {
+      console.error('Failed to update school:', error);
+      mutationOptions?.onError?.(error, variables, context);
+    },
+    ...mutationOptions
+  });
+}
+
+export function useDeleteSchool(
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, string>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteSchoolById,
+    onSuccess: (result, id, context) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: schoolKeys.all });
+        queryClient.invalidateQueries({ queryKey: schoolKeys.details(id) });
+      }
+      mutationOptions?.onSuccess?.(result, id, context);
+    },
+    onError: (error, id, context) => {
+      console.error('Failed to delete school:', error);
+      mutationOptions?.onError?.(error, id, context);
+    },
+    ...mutationOptions
+  });
+}

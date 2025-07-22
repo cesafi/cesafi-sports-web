@@ -109,6 +109,7 @@ To run the tests on your local machine:
 To maintain a clean and organized codebase, we follow a consistent branching strategy. All development work occurs on dedicated branches, which are then merged into `main` via pull requests after review and approval.
 
 - **`main`**: This branch represents the **production-ready** code. It is always stable and deployable. All direct pushes to `main` are restricted.
+- **`dev`**: This branch serves as the **staging/integration environment**. All new features (`feat/`), bug fixes (`fix/`), and refactors (`refactor/`) are merged into `dev` first for testing and review before being merged into `main`. This branch may not always be production-ready but should generally be stable enough for internal testing.
 - **`feat/<description>`**: For new features. (e.g., `feat/live-scoreboard`, `feat/team-profiles`)
 - **`fix/<description>`**: For bug fixes. (e.g., `fix/login-issue`, `fix/missing-article-image`)
 - **`docs/<description>`**: For documentation updates. (e.g., `docs/add-setup-guide`)
