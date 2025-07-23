@@ -49,12 +49,12 @@ export const updateSession = async (request: NextRequest) => {
 
     const publicRoutes = [
       '/',
-      '/student',
       '/favicon.ico',
       '/_next/public',
       '/sitemap.xml',
       '/robots.txt',
-      '/login'
+      '/login',
+      '/forgot-password'
     ];
 
     const isProtectedRoute = !publicRoutes.some(

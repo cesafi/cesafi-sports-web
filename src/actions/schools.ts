@@ -21,7 +21,7 @@ export async function createSchool(data: SchoolInsert) {
   const result = await SchoolService.insert(data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/students');
+    revalidatePath('/admin/dashboard/schools');
   }
 
   return result;
@@ -31,7 +31,7 @@ export async function updateSchoolById(data: SchoolUpdate) {
   const result = await SchoolService.updateById(data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/students');
+    revalidatePath('/admin/dashboard/schools');
   }
 
   return result;
@@ -41,7 +41,7 @@ export async function deleteSchoolById(id: string) {
   const result = await SchoolService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/students');
+    revalidatePath('/admin/dashboard/schools');
   }
 
   return result;

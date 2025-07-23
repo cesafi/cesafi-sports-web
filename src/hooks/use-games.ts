@@ -1,0 +1,216 @@
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryOptions,
+  UseMutationOptions
+} from '@tanstack/react-query';
+
+import {
+  getPaginatedGames,
+  getAllGames,
+  getGameById,
+  getGamesByMatchId,
+  createGame,
+  updateGameById,
+  deleteGameById,
+  calculateMatchDuration
+} from '@/actions/games';
+
+import { GameInsert, GameUpdate, GamePaginationOptions, Game } from '@/lib/types/games';
+
+import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
+
+export const gameKeys = {
+  all: ['games'] as const,
+  paginated: (options: GamePaginationOptions) => [...gameKeys.all, 'paginated', options] as const,
+  details: (id: string) => [...gameKeys.all, id] as const,
+  byMatch: (matchId: string) => [...gameKeys.all, 'match', matchId] as const,
+  matchDuration: (matchId: string) => [...gameKeys.all, 'duration', matchId] as const
+};
+
+export function usePaginatedGames(
+  options: GamePaginationOptions,
+  queryOptions?: UseQueryOptions<
+    ServiceResponse<PaginatedResponse<Game>>,
+    Error,
+    PaginatedResponse<Game>
+  >
+) {
+  return useQuery({
+    queryKey: gameKeys.paginated(options),
+    queryFn: () => getPaginatedGames(options),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch paginated games.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useAllGames(
+  queryOptions?: UseQueryOptions<ServiceResponse<Game[]>, Error, Game[]>
+) {
+  return useQuery({
+    queryKey: gameKeys.all,
+    queryFn: getAllGames,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch all games.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useGameById(
+  id: string,
+  queryOptions?: UseQueryOptions<ServiceResponse<Game>, Error, Game>
+) {
+  return useQuery({
+    queryKey: gameKeys.details(id),
+    queryFn: () => getGameById(id),
+    enabled: !!id,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || `Game with ID ${id} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useGamesByMatchId(
+  matchId: string,
+  queryOptions?: UseQueryOptions<ServiceResponse<Game[]>, Error, Game[]>
+) {
+  return useQuery({
+    queryKey: gameKeys.byMatch(matchId),
+    queryFn: () => getGamesByMatchId(matchId),
+    enabled: !!matchId,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || `Failed to fetch games for match ${matchId}.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useMatchDuration(
+  matchId: string,
+  queryOptions?: UseQueryOptions<ServiceResponse<string>, Error, string>
+) {
+  return useQuery({
+    queryKey: gameKeys.matchDuration(matchId),
+    queryFn: () => calculateMatchDuration(matchId),
+    enabled: !!matchId,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || `Failed to calculate duration for match ${matchId}.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useCreateGame(
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, GameInsert>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createGame,
+    onSuccess: (result, variables, context) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: gameKeys.all });
+        // Invalidate match-specific queries
+        if (variables.match_id) {
+          queryClient.invalidateQueries({
+            queryKey: gameKeys.byMatch(variables.match_id)
+          });
+          queryClient.invalidateQueries({
+            queryKey: gameKeys.matchDuration(variables.match_id)
+          });
+          // Invalidate parent match queries
+          queryClient.invalidateQueries({ queryKey: ['matches'] });
+          queryClient.invalidateQueries({
+            queryKey: ['matches', variables.match_id]
+          });
+        }
+      }
+      mutationOptions?.onSuccess?.(result, variables, context);
+    },
+    onError: (error, variables, context) => {
+      console.error('Failed to create game:', error);
+      mutationOptions?.onError?.(error, variables, context);
+    },
+    ...mutationOptions
+  });
+}
+
+export function useUpdateGame(
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, GameUpdate>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateGameById,
+    onSuccess: (result, variables, context) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: gameKeys.all });
+        if (variables.id) {
+          queryClient.invalidateQueries({ queryKey: gameKeys.details(variables.id) });
+        }
+        if (variables.match_id) {
+          queryClient.invalidateQueries({
+            queryKey: gameKeys.byMatch(variables.match_id)
+          });
+          queryClient.invalidateQueries({
+            queryKey: gameKeys.matchDuration(variables.match_id)
+          });
+          queryClient.invalidateQueries({ queryKey: ['matches'] });
+          queryClient.invalidateQueries({
+            queryKey: ['matches', variables.match_id]
+          });
+        }
+        queryClient.invalidateQueries({ queryKey: ['game_scores'] });
+      }
+      mutationOptions?.onSuccess?.(result, variables, context);
+    },
+    onError: (error, variables, context) => {
+      console.error('Failed to update game:', error);
+      mutationOptions?.onError?.(error, variables, context);
+    },
+    ...mutationOptions
+  });
+}
+
+export function useDeleteGame(
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, string>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteGameById,
+    onSuccess: (result, id, context) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: gameKeys.all });
+        queryClient.invalidateQueries({ queryKey: gameKeys.details(id) });
+        // Invalidate all match-related queries since we don't know which match this game belonged to
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        // Invalidate related entities
+        queryClient.invalidateQueries({ queryKey: ['game_scores'] });
+      }
+      mutationOptions?.onSuccess?.(result, id, context);
+    },
+    onError: (error, id, context) => {
+      console.error('Failed to delete game:', error);
+      mutationOptions?.onError?.(error, id, context);
+    },
+    ...mutationOptions
+  });
+}

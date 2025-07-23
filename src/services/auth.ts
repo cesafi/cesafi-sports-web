@@ -2,6 +2,8 @@ import { ServiceResponse } from '@/lib/types/base';
 import { BaseService } from './base';
 import { AuthCheckResult } from '@/lib/types/auth';
 
+const WEBSITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+
 export class AuthService extends BaseService {
   static async login(email: string, password: string): Promise<ServiceResponse<undefined>> {
     if (!email || !password) {
@@ -31,6 +33,43 @@ export class AuthService extends BaseService {
       return { success: true, data: undefined };
     } catch (error) {
       return this.formatError(error, 'Failed to login');
+    }
+  }
+
+  static async logout(): Promise<ServiceResponse<undefined>> {
+    try {
+      const supabase = await this.getClient();
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, data: undefined };
+    } catch (error) {
+      return this.formatError(error, 'Failed to log out');
+    }
+  }
+
+  static async forgotPassword(email: string): Promise<ServiceResponse<undefined>> {
+    if (!email) {
+      return { success: false, error: 'Email is required for password reset.' };
+    }
+
+    try {
+      const supabase = await this.getClient();
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${WEBSITE_URL}/update-password`
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, data: undefined };
+    } catch (error) {
+      return this.formatError(error, 'Failed to initiate password reset');
     }
   }
 

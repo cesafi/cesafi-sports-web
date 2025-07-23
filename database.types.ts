@@ -23,6 +23,7 @@ export type Database = {
           id: string
           is_published: boolean
           published_at: string
+          status: Database["public"]["Enums"]["article_status"]
           title: string
           updated_at: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           id?: string
           is_published: boolean
           published_at: string
+          status?: Database["public"]["Enums"]["article_status"]
           title: string
           updated_at?: string
         }
@@ -45,6 +47,7 @@ export type Database = {
           id?: string
           is_published?: boolean
           published_at?: string
+          status?: Database["public"]["Enums"]["article_status"]
           title?: string
           updated_at?: string
         }
@@ -80,8 +83,22 @@ export type Database = {
             foreignKeyName: "game_scores_games_id_fkey"
             columns: ["games_id"]
             isOneToOne: false
+            referencedRelation: "game_scores_detailed"
+            referencedColumns: ["game_id"]
+          },
+          {
+            foreignKeyName: "game_scores_games_id_fkey"
+            columns: ["games_id"]
+            isOneToOne: false
             referencedRelation: "games"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_scores_match_participants_id_fkey"
+            columns: ["match_participants_id"]
+            isOneToOne: false
+            referencedRelation: "game_scores_detailed"
+            referencedColumns: ["match_participant_id"]
           },
           {
             foreignKeyName: "game_scores_match_participants_id_fkey"
@@ -128,6 +145,13 @@ export type Database = {
             foreignKeyName: "games_match_id_fkey"
             columns: ["match_id"]
             isOneToOne: false
+            referencedRelation: "game_scores_detailed"
+            referencedColumns: ["match_id"]
+          },
+          {
+            foreignKeyName: "games_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
             referencedRelation: "matches"
             referencedColumns: ["id"]
           },
@@ -163,8 +187,22 @@ export type Database = {
             foreignKeyName: "match_participants_matches_id_fkey"
             columns: ["matches_id"]
             isOneToOne: false
+            referencedRelation: "game_scores_detailed"
+            referencedColumns: ["match_id"]
+          },
+          {
+            foreignKeyName: "match_participants_matches_id_fkey"
+            columns: ["matches_id"]
+            isOneToOne: false
             referencedRelation: "matches"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_participants_schools_teams_id_fkey"
+            columns: ["schools_teams_id"]
+            isOneToOne: false
+            referencedRelation: "game_scores_detailed"
+            referencedColumns: ["school_team_id"]
           },
           {
             foreignKeyName: "match_participants_schools_teams_id_fkey"
@@ -288,6 +326,13 @@ export type Database = {
             foreignKeyName: "schools_teams_schools_id_fkey"
             columns: ["schools_id"]
             isOneToOne: false
+            referencedRelation: "game_scores_detailed"
+            referencedColumns: ["school_id"]
+          },
+          {
+            foreignKeyName: "schools_teams_schools_id_fkey"
+            columns: ["schools_id"]
+            isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
@@ -405,7 +450,28 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      game_scores_detailed: {
+        Row: {
+          game_end_time: string | null
+          game_id: string | null
+          game_number: number | null
+          game_score_created_at: string | null
+          game_score_id: string | null
+          game_score_updated_at: string | null
+          game_start_time: string | null
+          match_id: string | null
+          match_name: string | null
+          match_participant_id: string | null
+          placement: number | null
+          school_abbreviation: string | null
+          school_id: string | null
+          school_name: string | null
+          school_team_id: string | null
+          score: number | null
+          team_name: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       user_has_role: {
@@ -414,6 +480,7 @@ export type Database = {
       }
     }
     Enums: {
+      article_status: "review" | "approved" | "revise" | "canceled"
       competition_stage: "group_stage" | "playins" | "playoffs" | "finals"
       match_status: "upcoming" | "ongoing" | "finished" | "canceled"
       sport_divisions: "men" | "women" | "mixed"
@@ -546,6 +613,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      article_status: ["review", "approved", "revise", "canceled"],
       competition_stage: ["group_stage", "playins", "playoffs", "finals"],
       match_status: ["upcoming", "ongoing", "finished", "canceled"],
       sport_divisions: ["men", "women", "mixed"],
