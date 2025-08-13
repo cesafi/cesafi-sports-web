@@ -1,0 +1,244 @@
+import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
+import { BaseService } from './base';
+import { Season, SeasonInsert, SeasonUpdate } from '@/lib/types/seasons';
+import { AuthService } from './auth';
+
+const TABLE_NAME = 'seasons';
+
+export class SeasonService extends BaseService {
+  static async getPaginated(
+    options: PaginationOptions,
+    selectQuery: string = '*'
+  ): Promise<ServiceResponse<PaginatedResponse<Season>>> {
+    try {
+      const result = await this.getPaginatedData<Season, typeof TABLE_NAME>(
+        TABLE_NAME,
+        options,
+        selectQuery
+      );
+
+      return result;
+    } catch (err) {
+      return this.formatError(err, `Failed to retrieve paginated seasons.`);
+    }
+  }
+
+  static async getAll(): Promise<ServiceResponse<Season[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase.from(TABLE_NAME).select().order('number', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch all ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async getById(id: string): Promise<ServiceResponse<Season>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase.from(TABLE_NAME).select().eq('id', id).single();
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async insert(data: SeasonInsert): Promise<ServiceResponse<undefined>> {
+    try {
+      const roles = ['admin', 'league_operator'];
+
+      const authResult = await AuthService.checkAuth(roles);
+
+      if (!authResult.authenticated) {
+        return { success: false, error: authResult.error || 'Authentication failed.' };
+      }
+
+      if (!authResult.authorized) {
+        return {
+          success: false,
+          error: authResult.error || 'Authorization failed: insufficient permissions.'
+        };
+      }
+
+      // Check for date range overlap with existing seasons
+      const supabase = await this.getClient();
+      const { data: existingSeasons, error: checkError } = await supabase
+        .from(TABLE_NAME)
+        .select('id, number, start_at, end_at')
+        .or(`and(start_at.lte.${data.start_at},end_at.gte.${data.start_at}),and(start_at.lte.${data.end_at},end_at.gte.${data.end_at}),and(start_at.gte.${data.start_at},end_at.lte.${data.end_at})`);
+
+      if (checkError) {
+        throw checkError;
+      }
+
+      if (existingSeasons && existingSeasons.length > 0) {
+        return {
+          success: false,
+          error: `Season dates overlap with existing season(s): ${existingSeasons.map(s => `Season ${s.number}`).join(', ')}`
+        };
+      }
+
+      // Check for duplicate season number
+      const { data: duplicateNumber, error: numberError } = await supabase
+        .from(TABLE_NAME)
+        .select('id, number')
+        .eq('number', data.number)
+        .single();
+
+      if (numberError && numberError.code !== 'PGRST116') { // PGRST116 is "not found" error
+        throw numberError;
+      }
+
+      if (duplicateNumber) {
+        return {
+          success: false,
+          error: `Season number ${data.number} already exists.`
+        };
+      }
+
+      const { error } = await supabase.from(TABLE_NAME).insert(data);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to insert new ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async updateById(data: SeasonUpdate): Promise<ServiceResponse<undefined>> {
+    try {
+      if (!data.id) {
+        return { success: false, error: 'Entity ID is required to update.' };
+      }
+
+      const roles = ['admin', 'league_operator'];
+
+      const authResult = await AuthService.checkAuth(roles);
+
+      if (!authResult.authenticated) {
+        return { success: false, error: authResult.error || 'Authentication failed.' };
+      }
+
+      if (!authResult.authorized) {
+        return {
+          success: false,
+          error: authResult.error || 'Authorization failed: insufficient permissions.'
+        };
+      }
+
+      const supabase = await this.getClient();
+
+      // If updating dates, check for overlap with other seasons
+      if (data.start_at || data.end_at) {
+        // Get current season data to fill in missing dates
+        const { data: currentSeason, error: currentError } = await supabase
+          .from(TABLE_NAME)
+          .select('start_at, end_at')
+          .eq('id', data.id)
+          .single();
+
+        if (currentError) {
+          throw currentError;
+        }
+
+        const startAt = data.start_at || currentSeason.start_at;
+        const endAt = data.end_at || currentSeason.end_at;
+
+        const { data: existingSeasons, error: checkError } = await supabase
+          .from(TABLE_NAME)
+          .select('id, number, start_at, end_at')
+          .neq('id', data.id) // Exclude current season from overlap check
+          .or(`and(start_at.lte.${startAt},end_at.gte.${startAt}),and(start_at.lte.${endAt},end_at.gte.${endAt}),and(start_at.gte.${startAt},end_at.lte.${endAt})`);
+
+        if (checkError) {
+          throw checkError;
+        }
+
+        if (existingSeasons && existingSeasons.length > 0) {
+          return {
+            success: false,
+            error: `Updated season dates would overlap with existing season(s): ${existingSeasons.map(s => `Season ${s.number}`).join(', ')}`
+          };
+        }
+      }
+
+      // If updating number, check for duplicates
+      if (data.number) {
+        const { data: duplicateNumber, error: numberError } = await supabase
+          .from(TABLE_NAME)
+          .select('id, number')
+          .eq('number', data.number)
+          .neq('id', data.id)
+          .single();
+
+        if (numberError && numberError.code !== 'PGRST116') { // PGRST116 is "not found" error
+          throw numberError;
+        }
+
+        if (duplicateNumber) {
+          return {
+            success: false,
+            error: `Season number ${data.number} already exists.`
+          };
+        }
+      }
+
+      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to update ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async deleteById(id: string): Promise<ServiceResponse<undefined>> {
+    try {
+      if (!id) {
+        return { success: false, error: 'Entity ID is required to delete.' };
+      }
+
+      const roles = ['admin', 'league_operator'];
+
+      const authResult = await AuthService.checkAuth(roles);
+
+      if (!authResult.authenticated) {
+        return { success: false, error: authResult.error || 'Authentication failed.' };
+      }
+
+      if (!authResult.authorized) {
+        return {
+          success: false,
+          error: authResult.error || 'Authorization failed: insufficient permissions.'
+        };
+      }
+
+      const supabase = await this.getClient();
+      const { error } = await supabase.from(TABLE_NAME).delete().eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);
+    }
+  }
+}

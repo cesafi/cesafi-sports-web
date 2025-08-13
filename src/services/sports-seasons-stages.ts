@@ -1,0 +1,276 @@
+import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
+import { BaseService } from './base';
+import { SportsSeasonsStage, SportsSeasonsStageInsert, SportsSeasonsStageUpdate } from '@/lib/types/sports-seasons-stages';
+import { AuthService } from './auth';
+
+const TABLE_NAME = 'sports_seasons_stages';
+
+export class SportsSeasonsStageService extends BaseService {
+  static async getPaginated(
+    options: PaginationOptions,
+    selectQuery: string = '*'
+  ): Promise<ServiceResponse<PaginatedResponse<SportsSeasonsStage>>> {
+    try {
+      const result = await this.getPaginatedData<SportsSeasonsStage, typeof TABLE_NAME>(
+        TABLE_NAME,
+        options,
+        selectQuery
+      );
+
+      return result;
+    } catch (err) {
+      return this.formatError(err, `Failed to retrieve paginated sports seasons stages.`);
+    }
+  }
+
+  static async getAll(): Promise<ServiceResponse<SportsSeasonsStage[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select()
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch all ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async getById(id: string): Promise<ServiceResponse<SportsSeasonsStage>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select()
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async insert(data: SportsSeasonsStageInsert): Promise<ServiceResponse<undefined>> {
+    try {
+      const roles = ['admin', 'league_operator'];
+
+      const authResult = await AuthService.checkAuth(roles);
+
+      if (!authResult.authenticated) {
+        return { success: false, error: authResult.error || 'Authentication failed.' };
+      }
+
+      if (!authResult.authorized) {
+        return {
+          success: false,
+          error: authResult.error || 'Authorization failed: insufficient permissions.'
+        };
+      }
+
+      const supabase = await this.getClient();
+
+      // Check if the combination of sport, season, and competition stage already exists
+      const { data: existingStage, error: checkError } = await supabase
+        .from(TABLE_NAME)
+        .select('id')
+        .eq('sports_id', data.sports_id)
+        .eq('seasons_id', data.seasons_id)
+        .eq('competition_stage', data.competition_stage)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+        throw checkError;
+      }
+
+      if (existingStage) {
+        return {
+          success: false,
+          error: `A ${data.competition_stage} stage already exists for this sport and season combination.`
+        };
+      }
+
+      // Verify that the referenced entities exist
+      const [sportCheck, seasonCheck] = await Promise.all([
+        supabase.from('sports').select('id').eq('id', data.sports_id).single(),
+        supabase.from('seasons').select('id').eq('id', data.seasons_id).single()
+      ]);
+
+      if (sportCheck.error) {
+        return { success: false, error: 'Referenced sport does not exist.' };
+      }
+      if (seasonCheck.error) {
+        return { success: false, error: 'Referenced season does not exist.' };
+      }
+
+      const { error } = await supabase.from(TABLE_NAME).insert(data);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to insert new ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async updateById(data: SportsSeasonsStageUpdate): Promise<ServiceResponse<undefined>> {
+    try {
+      if (!data.id) {
+        return { success: false, error: 'Entity ID is required to update.' };
+      }
+
+      const roles = ['admin', 'league_operator'];
+
+      const authResult = await AuthService.checkAuth(roles);
+
+      if (!authResult.authenticated) {
+        return { success: false, error: authResult.error || 'Authentication failed.' };
+      }
+
+      if (!authResult.authorized) {
+        return {
+          success: false,
+          error: authResult.error || 'Authorization failed: insufficient permissions.'
+        };
+      }
+
+      const supabase = await this.getClient();
+
+      // If updating relationship fields or competition stage, check for duplicates
+      if (data.sports_id || data.seasons_id || data.competition_stage) {
+        // Get current stage data to fill in missing fields
+        const { data: currentStage, error: currentError } = await supabase
+          .from(TABLE_NAME)
+          .select('sports_id, seasons_id, competition_stage')
+          .eq('id', data.id)
+          .single();
+
+        if (currentError) {
+          throw currentError;
+        }
+
+        const sportsId = data.sports_id || currentStage.sports_id;
+        const seasonsId = data.seasons_id || currentStage.seasons_id;
+        const competitionStage = data.competition_stage || currentStage.competition_stage;
+
+        // Check if the combination already exists (excluding current stage)
+        const { data: existingStage, error: checkError } = await supabase
+          .from(TABLE_NAME)
+          .select('id')
+          .eq('sports_id', sportsId)
+          .eq('seasons_id', seasonsId)
+          .eq('competition_stage', competitionStage)
+          .neq('id', data.id)
+          .single();
+
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+          throw checkError;
+        }
+
+        if (existingStage) {
+          return {
+            success: false,
+            error: `A ${competitionStage} stage already exists for this sport and season combination.`
+          };
+        }
+
+        // Verify that the referenced entities exist if they're being updated
+        const checks = [];
+        if (data.sports_id) {
+          checks.push(supabase.from('sports').select('id').eq('id', data.sports_id).single());
+        }
+        if (data.seasons_id) {
+          checks.push(supabase.from('seasons').select('id').eq('id', data.seasons_id).single());
+        }
+
+        if (checks.length > 0) {
+          const results = await Promise.all(checks);
+          let index = 0;
+          
+          if (data.sports_id && results[index]?.error) {
+            return { success: false, error: 'Referenced sport does not exist.' };
+          }
+          if (data.sports_id) index++;
+          
+          if (data.seasons_id && results[index]?.error) {
+            return { success: false, error: 'Referenced season does not exist.' };
+          }
+        }
+      }
+
+      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to update ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async deleteById(id: string): Promise<ServiceResponse<undefined>> {
+    try {
+      if (!id) {
+        return { success: false, error: 'Entity ID is required to delete.' };
+      }
+
+      const roles = ['admin', 'league_operator'];
+
+      const authResult = await AuthService.checkAuth(roles);
+
+      if (!authResult.authenticated) {
+        return { success: false, error: authResult.error || 'Authentication failed.' };
+      }
+
+      if (!authResult.authorized) {
+        return {
+          success: false,
+          error: authResult.error || 'Authorization failed: insufficient permissions.'
+        };
+      }
+
+      const supabase = await this.getClient();
+
+      // Check if this stage is referenced by matches
+      const { data: matches, error: checkError } = await supabase
+        .from('matches')
+        .select('id')
+        .eq('sports_seasons_stages_id', id)
+        .limit(1);
+
+      if (checkError) {
+        throw checkError;
+      }
+
+      if (matches && matches.length > 0) {
+        return {
+          success: false,
+          error: 'Cannot delete sports seasons stage that has associated matches. Please remove matches first.'
+        };
+      }
+
+      const { error } = await supabase.from(TABLE_NAME).delete().eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);
+    }
+  }
+}
