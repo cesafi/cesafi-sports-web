@@ -54,7 +54,8 @@ export const updateSession = async (request: NextRequest) => {
       '/sitemap.xml',
       '/robots.txt',
       '/login',
-      '/forgot-password'
+      '/forgot-password',
+      '/test-cloudinary'
     ];
 
     const isProtectedRoute = !publicRoutes.some(
