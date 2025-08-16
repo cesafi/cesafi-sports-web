@@ -116,8 +116,8 @@ export function useCloudinary() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: ({ publicId }: { publicId: string }) =>
-      CloudinaryService.deleteImage(publicId),
+    mutationFn: ({ publicId, options }: { publicId: string; options?: { resourceType?: 'image' | 'video' | 'raw' | 'auto'; invalidate?: boolean } }) =>
+      CloudinaryService.deleteImage(publicId, options),
     onMutate: () => {
       setState((prev) => ({
         ...prev,
@@ -159,8 +159,11 @@ export function useCloudinary() {
     return updateMutation.mutateAsync({ publicId, newFile, options });
   };
 
-  const deleteImage = (publicId: string) => {
-    return deleteMutation.mutateAsync({ publicId });
+  const deleteImage = (
+    publicId: string, 
+    options?: { resourceType?: 'image' | 'video' | 'raw' | 'auto'; invalidate?: boolean }
+  ) => {
+    return deleteMutation.mutateAsync({ publicId, options });
   };
 
   const getImageUrl = (

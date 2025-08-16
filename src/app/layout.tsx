@@ -5,7 +5,6 @@ import { QueryProvider } from '@/components/contexts/query-provider';
 import { Toaster } from '@/components/ui/sonner';
 import NextTopLoader from 'nextjs-toploader';
 import { ThemeProvider } from 'next-themes';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { metadata as siteMetadata } from './metadata';
 
 const geistSans = Geist({
