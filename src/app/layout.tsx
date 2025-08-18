@@ -5,7 +5,6 @@ import { QueryProvider } from '@/components/contexts/query-provider';
 import { Toaster } from '@/components/ui/sonner';
 import NextTopLoader from 'nextjs-toploader';
 import { ThemeProvider } from 'next-themes';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { metadata as siteMetadata } from './metadata';
 
 const geistSans = Geist({
@@ -29,10 +28,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <QueryProvider>
-          <ThemeProvider>
+          <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem>
             <NextTopLoader color="#d31f4e" />
             {children}
-            <ReactQueryDevtools initialIsOpen={false} />
+            {/* <ReactQueryDevtools initialIsOpen={false} /> */}
             <Toaster richColors position="top-right" />
           </ThemeProvider>
         </QueryProvider>
