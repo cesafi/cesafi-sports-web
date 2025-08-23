@@ -180,11 +180,11 @@ export default function TestCloudinaryPage() {
           ...prev,
           uploadImage: {
             success: true,
-            message: `Upload successful! Public ID: ${result.data.public_id}`,
+            message: `Upload successful! Public ID: ${result.data?.public_id || 'Unknown'}`,
             duration
           }
         }));
-        setTestPublicId(result.data.public_id);
+        setTestPublicId(result.data?.public_id);
         toast.success('Upload test passed!');
       } else {
         setTestResults(prev => ({
@@ -298,7 +298,7 @@ export default function TestCloudinaryPage() {
           ...prev,
           updateImage: {
             success: true,
-            message: `Update successful! New URL: ${result.data.secure_url.substring(0, 50)}...`,
+            message: `Update successful! New URL: ${result.data?.secure_url?.substring(0, 50) || 'Unknown'}...`,
             duration
           }
         }));

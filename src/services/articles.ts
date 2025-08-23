@@ -77,12 +77,12 @@ export class ArticleService extends BaseService {
       const insertData = { ...data };
       
       // If article is being published, ensure published_at is set
-      if (insertData.is_published && !insertData.published_at) {
+      if (insertData.status === 'published' && !insertData.published_at) {
         insertData.published_at = new Date().toISOString();
       }
       
       // If article is not published, clear published_at
-      if (!insertData.is_published) {
+      if (insertData.status !== 'published') {
         insertData.published_at = '';
       }
 
@@ -126,12 +126,12 @@ export class ArticleService extends BaseService {
       const updateData = { ...data };
       
       // If article is being published and published_at is not set, set it now
-      if (updateData.is_published === true && !updateData.published_at) {
+      if (updateData.status === 'published' && !updateData.published_at) {
         updateData.published_at = new Date().toISOString();
       }
       
       // If article is being unpublished, clear published_at
-      if (updateData.is_published === false) {
+      if (updateData.status !== 'published') {
         updateData.published_at = '';
       }
 

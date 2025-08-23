@@ -282,7 +282,9 @@ export class VolunteerService extends BaseService {
       // Extract unique departments
       const departments: string[] = [
         ...new Set<string>(
-          data.map((item: { department: string }) => item.department).filter(Boolean)
+          data
+            .map((item) => item.department)
+            .filter((dept): dept is string => dept !== null)
         )
       ];
 

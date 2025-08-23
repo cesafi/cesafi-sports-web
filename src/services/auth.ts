@@ -1,11 +1,11 @@
 import { ServiceResponse } from '@/lib/types/base';
 import { BaseService } from './base';
-import { AuthCheckResult } from '@/lib/types/auth';
+import { AuthCheckResult, LoginResult, UserRole } from '@/lib/types/auth';
 
 const WEBSITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
 export class AuthService extends BaseService {
-  static async login(email: string, password: string): Promise<ServiceResponse<undefined>> {
+  static async login(email: string, password: string): Promise<LoginResult> {
     if (!email || !password) {
       return { success: false, error: 'Email or Password is missing.' };
     }
@@ -30,9 +30,12 @@ export class AuthService extends BaseService {
         };
       }
 
-      return { success: true, data: undefined };
-    } catch (error) {
-      return this.formatError(error, 'Failed to login');
+      const userRole = data.user.app_metadata?.role as UserRole | undefined;
+
+      return { success: true, userRole };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_) {
+      return { success: false, error: 'Failed to login' };
     }
   }
 
@@ -90,12 +93,14 @@ export class AuthService extends BaseService {
         };
       }
 
-      const userRoles: string[] = (user.user_metadata?.roles as string[] | undefined) || [];
+      const userRole = user.app_metadata?.role as UserRole | undefined;
+      const userRoles: string[] = userRole ? [userRole] : [];
 
       if (requiredRoles.length === 0) {
         return {
           authenticated: true,
           authorized: true,
+          userRole,
           userRoles: userRoles
         };
       }
@@ -107,6 +112,7 @@ export class AuthService extends BaseService {
           authenticated: true,
           authorized: false,
           error: 'You do not have the required permissions to perform this action.',
+          userRole,
           userRoles: userRoles
         };
       }
@@ -114,6 +120,7 @@ export class AuthService extends BaseService {
       return {
         authenticated: true,
         authorized: true,
+        userRole,
         userRoles: userRoles
       };
     } catch (error) {

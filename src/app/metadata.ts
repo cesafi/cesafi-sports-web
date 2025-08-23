@@ -27,25 +27,25 @@ export const metadata: Metadata = {
     icon: [{ url: '/favicon.ico', href: '/favicon.ico' }]
   },
   openGraph: {
-    title: 'CESAFI Sports Website',
+    title: 'CESAFI',
     description:
       'The official digital platform for Cebu Schools Athletic Foundation, Inc. (CESAFI). Get real-time updates, scores, news, schedules, standings, and team profiles for Cebuano collegiate athletics and education.', // Updated Open Graph description
     url: `${metadataBase}`,
-    siteName: 'CESAFI Sports Website',
+    siteName: 'CESAFI | Cebu Schools Athletic Foundation, Inc.',
     locale: 'en_US',
     images: [
       {
         url: '/img/cesafi-banner.jpg',
         width: 1200,
         height: 630,
-        alt: 'CESAFI Sports Website Banner | Cebu Schools Athletic Foundation, Inc.' // Updated image alt text
+        alt: 'CESAFI | Cebu Schools Athletic Foundation, Inc. Banner'
       }
     ],
     type: 'website'
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CESAFI Sports Website',
+    title: 'CESAFI | Cebu Schools Athletic Foundation, Inc.',
     description:
       'The official digital platform for Cebu Schools Athletic Foundation, Inc. (CESAFI). Get real-time updates, scores, news, schedules, standings, and team profiles for Cebuano collegiate athletics and education.', // Updated Twitter description
     images: ['/img/cesafi-banner.jpg']
