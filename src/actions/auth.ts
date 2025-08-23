@@ -27,9 +27,7 @@ export async function logoutAction() {
   return result;
 }
 
-export async function forgotPasswordAction(email: string) {
-  return await AuthService.forgotPassword(email);
-}
+
 
 export async function checkAuthAction(requiredRoles: string[] = []) {
   return await AuthService.checkAuth(requiredRoles);

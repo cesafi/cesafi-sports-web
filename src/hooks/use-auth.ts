@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { loginAction, logoutAction, forgotPasswordAction, checkAuthAction } from '@/actions/auth';
-import { LoginFormData, ForgotPasswordFormData } from '@/lib/validations/auth';
+import { loginAction, logoutAction, checkAuthAction } from '@/actions/auth';
+import { LoginFormData } from '@/lib/validations/auth';
 
 export function useLogin() {
   return useMutation({
@@ -20,14 +20,7 @@ export function useLogout() {
   });
 }
 
-export function useForgotPassword() {
-  return useMutation({
-    mutationFn: ({ email }: ForgotPasswordFormData) => forgotPasswordAction(email),
-    onError: (error: Error) => {
-      console.error('Forgot password error:', error);
-    }
-  });
-}
+
 
 export function useCheckAuth(requiredRoles: string[] = []) {
   return useQuery({

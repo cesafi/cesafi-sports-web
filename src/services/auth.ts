@@ -2,8 +2,6 @@ import { ServiceResponse } from '@/lib/types/base';
 import { BaseService } from './base';
 import { AuthCheckResult, LoginResult, UserRole } from '@/lib/types/auth';
 
-const WEBSITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-
 export class AuthService extends BaseService {
   static async login(email: string, password: string): Promise<LoginResult> {
     if (!email || !password) {
@@ -54,27 +52,7 @@ export class AuthService extends BaseService {
     }
   }
 
-  static async forgotPassword(email: string): Promise<ServiceResponse<undefined>> {
-    if (!email) {
-      return { success: false, error: 'Email is required for password reset.' };
-    }
 
-    try {
-      const supabase = await this.getClient();
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${WEBSITE_URL}/update-password`
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      return { success: true, data: undefined };
-    } catch (error) {
-      return this.formatError(error, 'Failed to initiate password reset');
-    }
-  }
 
   static async checkAuth(requiredRoles: string[] = []): Promise<AuthCheckResult> {
     try {

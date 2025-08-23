@@ -11,12 +11,4 @@ export const LoginSchema = z.object({
     .min(6, { message: 'Password must be at least 6 characters long.' })
 });
 
-export const ForgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .min(1, { message: 'Email is required.' })
-    .email({ message: 'Please enter a valid email address.' })
-});
-
 export type LoginFormData = z.infer<typeof LoginSchema>;
-export type ForgotPasswordFormData = z.infer<typeof ForgotPasswordSchema>;
