@@ -41,6 +41,21 @@ export class SportsSeasonsStageService extends BaseService {
     }
   }
 
+  static async getCount(): Promise<ServiceResponse<number>> {
+    try {
+      const supabase = await this.getClient();
+      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: count || 0 };
+    } catch (err) {
+      return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
+    }
+  }
+
   static async getById(id: string): Promise<ServiceResponse<SportsSeasonsStage>> {
     try {
       const supabase = await this.getClient();

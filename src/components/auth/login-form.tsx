@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,11 +13,13 @@ import { ZodError } from 'zod';
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
   });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
+  const router = useRouter();
 
   const loginMutation = useLogin();
 
@@ -54,11 +57,48 @@ export function LoginForm() {
       return;
     }
 
+    if (isLoading || isRedirecting) {
+      return;
+    }
+
     try {
-      await loginMutation.mutateAsync(formData);
+      const result = await loginMutation.mutateAsync(formData);
+
+      if (result.success) {
+        setIsRedirecting(true);
+
+        const roleDisplay = result.userRole
+          ? `Welcome! Redirecting to ${result.userRole.replace('_', ' ')} dashboard...`
+          : 'Login successful! Redirecting...';
+
+        toast.success(roleDisplay);
+
+        // Debug: Check current user session before redirect
+        console.log('About to redirect, checking current session...');
+
+        setTimeout(() => {
+          try {
+            console.log('Reloading page to trigger middleware redirect...');
+            window.location.reload();
+          } catch (redirectError) {
+            console.error('Redirect error:', redirectError);
+            router.push('/');
+          }
+        }, 1000);
+      } else {
+        console.log('Login failed:', result.error);
+        if (result.error) {
+          toast.error(result.error);
+        } else {
+          toast.error('Login failed. Please check your credentials and try again.');
+        }
+      }
     } catch (error) {
+      console.error('Login error caught:', error);
       if (error instanceof Error && error.message) {
-        toast.error(error.message);
+        if (error.message !== 'NEXT_REDIRECT') {
+          toast.error(error.message);
+        }
       } else {
         toast.error('An unexpected error occurred. Please try again.');
       }
@@ -71,7 +111,7 @@ export function LoginForm() {
     <div className="w-full max-w-md space-y-6">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="flex flex-col space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="email" className="text-foreground text-sm font-medium">
             Email Address
           </Label>
           <div className="relative">
@@ -82,10 +122,11 @@ export function LoginForm() {
               placeholder="sample@cesafi.org"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              className={`h-12 rounded-md border-gray-300 pl-10 focus:border-[#4a7c59] focus:ring-[#4a7c59] ${
+              className={`border-muted focus:border-primary h-12 rounded-md pl-10 focus:ring-primary${
                 errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
               }`}
               required
+              disabled={isLoading || isRedirecting}
             />
           </div>
           {errors.email && (
@@ -97,7 +138,7 @@ export function LoginForm() {
         </div>
 
         <div className="flex flex-col space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="password" className="text-foreground text-sm font-medium">
             Password
           </Label>
           <div className="relative">
@@ -108,15 +149,17 @@ export function LoginForm() {
               placeholder="••••••••••"
               value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
-              className={`h-12 rounded-md border-gray-300 pr-10 pl-10 focus:border-[#4a7c59] focus:ring-[#4a7c59] ${
+              className={`border-muted focus:border-primary focus:ring-primary h-12 rounded-md pr-10 pl-10 ${
                 errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
               }`}
               required
+              disabled={isLoading || isRedirecting}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isLoading || isRedirecting}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -132,9 +175,9 @@ export function LoginForm() {
         <Button
           type="submit"
           className="bg-primary text-primary-foreground h-12 w-full rounded-md font-medium"
-          disabled={isLoading}
+          disabled={isLoading || isRedirecting}
         >
-          {isLoading ? 'Signing in...' : 'Sign In to Portal'}
+          {isLoading ? 'Signing in...' : isRedirecting ? 'Redirecting...' : 'Sign In to Portal'}
         </Button>
       </form>
     </div>

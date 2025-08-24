@@ -11,7 +11,7 @@ export interface RangeOrEqualityFilter {
 export type FilterValue = FilterPrimitive | FilterPrimitive[] | RangeOrEqualityFilter;
 
 export interface PaginationOptions<
-  TFilters extends Record<string, FilterValue> = Record<string, FilterValue>
+  TFilters = Record<string, FilterValue>
 > {
   page: number;
   pageSize: number;

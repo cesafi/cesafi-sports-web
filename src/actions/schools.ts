@@ -1,12 +1,47 @@
 'use server';
 
-import { PaginationOptions } from '@/lib/types/base';
+import { PaginationOptions, FilterValue } from '@/lib/types/base';
 import { SchoolInsert, SchoolUpdate } from '@/lib/types/schools';
 import { SchoolService } from '@/services/schools';
 import { revalidatePath } from 'next/cache';
 
-export async function getPaginatedSchools(options: PaginationOptions) {
-  return await SchoolService.getPaginated(options);
+export async function testSchoolsConnection() {
+  try {
+    const result = await SchoolService.testConnection();
+    return result;
+  } catch (error) {
+    return { success: false, error: 'Database connection failed' };
+  }
+}
+
+export async function getPaginatedSchools(options: PaginationOptions<Record<string, FilterValue>>) {
+  try {
+    const result = await SchoolService.getPaginated(options);
+    
+    if (!result.success || !result.data) {
+      return { 
+        success: false, 
+        error: result.success === false ? result.error : 'No data returned from service' 
+      };
+    }
+
+    // Transform the data to match the expected format
+    return {
+      success: true,
+      data: {
+        data: result.data.data,
+        totalCount: result.data.totalCount,
+        pageCount: result.data.pageCount,
+        currentPage: result.data.currentPage
+      }
+    };
+  } catch (error) {
+    console.error('getPaginatedSchools error:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+    };
+  }
 }
 
 export async function getAllSchools() {
@@ -21,7 +56,7 @@ export async function createSchool(data: SchoolInsert) {
   const result = await SchoolService.insert(data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/schools');
+    revalidatePath('/admin/schools');
   }
 
   return result;
@@ -31,7 +66,7 @@ export async function updateSchoolById(data: SchoolUpdate) {
   const result = await SchoolService.updateById(data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/schools');
+    revalidatePath('/admin/schools');
   }
 
   return result;
@@ -41,7 +76,7 @@ export async function deleteSchoolById(id: string) {
   const result = await SchoolService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/schools');
+    revalidatePath('/admin/schools');
   }
 
   return result;

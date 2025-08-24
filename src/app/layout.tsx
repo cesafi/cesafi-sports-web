@@ -29,7 +29,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <QueryProvider>
           <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem>
-            <NextTopLoader color="#d31f4e" />
+            <NextTopLoader color="#336C61" />
             {children}
             {/* <ReactQueryDevtools initialIsOpen={false} /> */}
             <Toaster richColors position="top-right" />

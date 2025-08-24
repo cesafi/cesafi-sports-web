@@ -20,10 +20,15 @@ export abstract class BaseService {
     }
   }
 
+  protected static async getAdminClient() {
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    return createAdminClient();
+  }
+
   protected static formatError<T>(error: unknown, message: string): ServiceResponse<T> {
     return {
       success: false,
-      error: message
+      error: error instanceof Error ? error.message : message
     };
   }
 
@@ -34,6 +39,7 @@ export abstract class BaseService {
   ): Promise<ServiceResponse<PaginatedResponse<T>>> {
     try {
       const { page, pageSize, filters, searchQuery, searchableFields, sortBy, sortOrder } = options;
+      
       const supabase = await this.getClient();
 
       const offset = (page - 1) * pageSize;
@@ -42,6 +48,9 @@ export abstract class BaseService {
 
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
+          // Skip the 'search' property as it's not a database column
+          if (key === 'search') return;
+          
           if (value !== undefined && value !== null) {
             if (Array.isArray(value)) {
               const nonNullValues = value.filter((item): item is NonNullPrimitive => item !== null);
@@ -79,14 +88,15 @@ export abstract class BaseService {
       const { data, error, count } = await query.range(offset, offset + pageSize - 1);
 
       if (error) {
+        console.error('Supabase query error:', error);
         throw error;
       }
 
       const totalCount = count || 0;
       const pageCount = Math.ceil(totalCount / pageSize);
 
-      return {
-        success: true,
+      const result = {
+        success: true as const,
         data: {
           data: data as T[],
           totalCount,
@@ -94,9 +104,10 @@ export abstract class BaseService {
           currentPage: page
         }
       };
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_) {
-      return this.formatError(false, `Failed to fetch paginated ${tableName}`);
+      return result;
+    } catch (error) {
+      console.error('BaseService.getPaginatedData error:', error);
+      return this.formatError(error, `Failed to fetch paginated ${tableName}`);
     }
   }
 }

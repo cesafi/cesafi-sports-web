@@ -15,10 +15,10 @@ export default function LoginPage() {
     <div className="bg-background min-h-screen">
       <div className="flex min-h-screen">
         {/* Left side - Brand */}
-        <div className="bg-primary text-primary-foreground relative hidden flex-col justify-between overflow-hidden p-12 lg:flex lg:w-1/3">
-          <div className="relative z-10">
-            <Image src={'/img/cesafi-logo.webp'} alt="CESAFI Logo" width={128} height={128} />
-            <h1 className="text-9xl font-bold">CESAFI PORTAL </h1>
+        <div className="bg-primary text-primary-foreground relative hidden flex-col justify-between overflow-hidden p-12 xl:flex xl:w-1/3">
+          <div className="relative z-10 space-y-12">
+            <Image src={'/img/cesafi-logo.webp'} alt="CESAFI Logo" width={80} height={80} />
+            <h1 className="text-7xl font-bold 2xl:text-9xl">CESAFI PORTAL </h1>
           </div>
 
           <div className="relative z-10 space-y-8">
@@ -26,7 +26,7 @@ export default function LoginPage() {
               <CircleQuestionMark className="h-8 w-8" />
               <div>
                 <h3 className="mb-1 text-lg font-medium">Inquiries</h3>
-                <p>
+                <p className="text-sm 2xl:text-base">
                   If you have requests, require any help or have any questions, please approach any
                   website operations department member.
                 </p>
@@ -37,7 +37,7 @@ export default function LoginPage() {
               <Shield className="h-8 w-8" />
               <div>
                 <h3 className="mb-1 text-lg font-medium">Access</h3>
-                <p>
+                <p className="text-sm 2xl:text-base">
                   This portal is restricted to authorized personnel only. All actions are logged for
                   security purposes.
                 </p>
@@ -45,7 +45,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="relative z-10 mx-auto text-sm font-medium">
+          <div className="relative z-10 mx-auto text-xs font-medium">
             &copy; {new Date().getFullYear()} Cebu Schools Athletics Foundation, Inc.
           </div>
         </div>
@@ -56,7 +56,7 @@ export default function LoginPage() {
             <ThemeSwitcher />
           </div>
           <div className="w-full max-w-md">
-            <div className="bg-primary-foreground rounded-xl border border-gray-100 p-8 shadow-lg">
+            <div className="bg-background border-muted rounded-xl border p-8 shadow-lg">
               <div className="mb-6 flex flex-col items-center justify-center space-y-4">
                 <div className="flex items-center space-x-2">
                   <User2 className="h-5 w-5" />

@@ -1,137 +1,169 @@
 # Dashboard Components
 
-This directory contains reusable dashboard components for the CESAFI admin system.
+This directory contains the dashboard layout components for the CESAFI management portal.
 
 ## Components
 
 ### DashboardLayout
-The main layout wrapper that combines the sidebar and header.
+The main layout wrapper that provides the dashboard structure with header and sidebar.
 
+#### Props
+- `children`: ReactNode - The content to render in the main area
+- `userRole`: Technical role for logic (e.g., 'admin', 'head_writer', 'writer', 'league_operator')
+- `userRoleDisplay`: Human-readable role for display (e.g., 'Admin', 'Head Writer', 'League Operator')
+- `userName`: User's display name
+- `userEmail`: User's email address
+
+#### Usage Examples
+
+**Basic Usage (with all user information):**
 ```tsx
 import { DashboardLayout } from '@/components/dashboard';
-
-export default function MyPage() {
-  return (
-    <DashboardLayout userRole="admin" userRoleDisplay="Admin">
-      {/* Your page content */}
-    </DashboardLayout>
-  );
-}
-```
-
-**Props:**
-- `children`: ReactNode - The page content
-- `userRole`: 'admin' | 'head_writer' | 'writer' | 'league_operator' - User's role for navigation
-- `userRoleDisplay`: string - Display name for the user role (optional)
-- `userName`: string - User's name (defaults to 'Admin')
-
-### DashboardSidebar
-The left navigation sidebar that automatically adapts based on user role.
-
-**Features:**
-- Role-based navigation items
-- Active page highlighting
-- CESAFI branding
-- Responsive design
-
-**Navigation by Role:**
-- **Admin**: Overview, Accounts, Schools, Seasons, Sports, Articles, Volunteers
-- **Head Writer**: Overview, Articles, Writers
-- **Writer**: Overview, My Articles, Drafts
-- **League Operator**: Overview, Schedules, Results, Standings
-
-### DashboardHeader
-The top header with theme switcher and user profile dropdown.
-
-**Features:**
-- Theme toggle (light/dark mode)
-- User profile dropdown
-- Responsive design
-
-## Usage Examples
-
-### Basic Admin Page
-```tsx
-import { DashboardLayout } from '@/components/dashboard';
+import { useCurrentUser } from '@/hooks/use-auth';
 
 export default function AdminPage() {
-  return (
-    <DashboardLayout userRole="admin">
-      <h1>Admin Dashboard</h1>
-      {/* Your content */}
-    </DashboardLayout>
-  );
-}
-```
-
-### Head Writer Page
-```tsx
-import { DashboardLayout } from '@/components/dashboard';
-
-export default function HeadWriterPage() {
+  const { data: user } = useCurrentUser();
+  
   return (
     <DashboardLayout 
-      userRole="head_writer" 
-      userRoleDisplay="Head Writer"
-      userName="John Doe"
+      userRole="admin"
+      userRoleDisplay="Admin"
+      userName={user?.userName || 'Admin'}
+      userEmail={user?.email || 'admin@cesafi.org'}
     >
-      <h1>Head Writer Dashboard</h1>
-      {/* Your content */}
+      <div>Your admin content here</div>
     </DashboardLayout>
   );
 }
 ```
 
-### Custom Navigation
-If you need to customize the navigation for a specific page, you can override the sidebar:
-
+**With Role Mapping:**
 ```tsx
-import { DashboardHeader, DashboardSidebar } from '@/components/dashboard';
+const roleDisplayMap = {
+  admin: 'Administrator',
+  head_writer: 'Head Writer',
+  writer: 'Writer',
+  league_operator: 'League Operator'
+};
 
-export default function CustomPage() {
+export default function DashboardPage() {
+  const { data: user } = useCurrentUser();
+  const userRole = user?.userRole || 'admin';
+  
   return (
-    <div className="flex h-screen bg-background">
-      <DashboardSidebar userRole="admin" />
-      
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader userRole="Admin" userName="Custom User" />
-        
-        <main className="flex-1 overflow-auto p-6">
-          {/* Your custom content */}
-        </main>
-      </div>
-    </div>
+    <DashboardLayout 
+      userRole={userRole}
+      userRoleDisplay={roleDisplayMap[userRole as keyof typeof roleDisplayMap]}
+      userName={user?.userName || 'User'}
+      userEmail={user?.email || 'user@cesafi.org'}
+    >
+      <div>Your dashboard content here</div>
+    </DashboardLayout>
   );
 }
 ```
 
-## Styling
+**Simple Usage (with defaults):**
+```tsx
+export default function SimplePage() {
+  return (
+    <DashboardLayout userRole="admin" userRoleDisplay="Admin">
+      <div>Simple content</div>
+    </DashboardLayout>
+  );
+}
+```
 
-The components use CSS variables defined in `globals.css` for consistent theming:
+### DashboardHeader
+The top navigation bar that displays user information and controls.
 
-- `--sidebar`: Sidebar background color
-- `--sidebar-foreground`: Sidebar text color
-- `--sidebar-primary`: Primary accent color for active states
-- `--sidebar-accent`: Hover and secondary background colors
+#### Props
+- `userEmail`: User's email address
+- `userName`: User's display name  
+- `userRole`: Human-readable role for display
 
-## Responsive Design
+### DashboardSidebar
+The left navigation sidebar that shows menu items based on user role.
 
-The dashboard is designed to be responsive:
-- Sidebar collapses on smaller screens (you can add a toggle button)
-- Header adapts to different screen sizes
-- Content area scrolls independently
+#### Props
+- `userRole`: Technical role used to determine which menu items to show
 
-## Adding New Pages
+## Key Differences
 
-1. Create a new page in the appropriate directory
-2. Import and use `DashboardLayout`
-3. Set the appropriate `userRole`
-4. Add any new navigation items to the sidebar component if needed
+### `userRole` vs `userRoleDisplay`
 
-## Customization
+- **`userRole`** (Technical/Internal):
+  - Used for **logic and permissions**
+  - Determines sidebar menu items
+  - Used in API calls and access control
+  - Examples: `'admin'`, `'head_writer'`, `'writer'`
 
-To customize the dashboard:
-1. Modify the CSS variables in `globals.css`
-2. Update the navigation items in `DashboardSidebar`
-3. Add new UI components as needed
-4. Extend the layout for specific use cases
+- **`userRoleDisplay`** (Human-Readable):
+  - Used for **user interface display**
+  - Shows friendly role names to users
+  - Examples: `'Administrator'`, `'Head Writer'`, `'League Operator'`
+
+### User Information Flow
+
+1. **Authentication**: User logs in with email/password
+2. **Role Assignment**: System assigns technical role (e.g., `'admin'`)
+3. **Display Mapping**: Technical role maps to display role (e.g., `'Administrator'`)
+4. **Layout Rendering**: Dashboard shows appropriate sidebar and header information
+
+## Best Practices
+
+1. **Always provide `userRole`** for proper sidebar functionality
+2. **Use `userRoleDisplay`** for user-friendly interface text
+3. **Include `userEmail`** when available for better user identification
+4. **Use `useCurrentUser()` hook** to get real-time user information
+5. **Provide fallbacks** for all user information props
+
+## Example Implementation
+
+Here's a complete example showing how to implement a dashboard page with full user information:
+
+```tsx
+'use client';
+
+import { DashboardLayout } from '@/components/dashboard';
+import { useCurrentUser } from '@/hooks/use-auth';
+
+const roleDisplayMap = {
+  admin: 'Administrator',
+  head_writer: 'Head Writer', 
+  writer: 'Writer',
+  league_operator: 'League Operator'
+};
+
+export default function DashboardPage() {
+  const { data: user, isLoading, error } = useCurrentUser();
+  
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  
+  if (error || !user) {
+    return <div>Error loading user information</div>;
+  }
+  
+  const userRole = user.userRole || 'admin';
+  const userRoleDisplay = roleDisplayMap[userRole as keyof typeof roleDisplayMap] || 'User';
+  
+  return (
+    <DashboardLayout 
+      userRole={userRole}
+      userRoleDisplay={userRoleDisplay}
+      userName={user.userName}
+      userEmail={user.email}
+    >
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Welcome, {user.userName}!</h1>
+        <p className="text-muted-foreground">
+          You are logged in as a {userRoleDisplay.toLowerCase()}
+        </p>
+        {/* Your dashboard content here */}
+      </div>
+    </DashboardLayout>
+  );
+}
+```

@@ -9,27 +9,28 @@ interface DashboardLayoutProps {
   userRole?: 'admin' | 'head_writer' | 'writer' | 'league_operator';
   userRoleDisplay?: string;
   userName?: string;
+  userEmail?: string;
 }
 
 export default function DashboardLayout({
   children,
   userRole = 'admin',
   userRoleDisplay,
-  userName = 'Admin'
+  userName = 'Admin',
+  userEmail
 }: DashboardLayoutProps) {
   return (
-    <div className="flex h-screen bg-background">
+    <div className="bg-background flex h-screen">
       <DashboardSidebar userRole={userRole} />
-      
+
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardHeader 
-          userRole={userRoleDisplay || userRole} 
+          userEmail={userEmail} 
           userName={userName} 
+          userRole={userRoleDisplay || userRole}
         />
-        
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
+
+        <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
   );

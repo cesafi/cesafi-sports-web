@@ -1,12 +1,10 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
+import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 import { BaseService } from './base';
 import {
   Volunteer,
   VolunteerInsert,
   VolunteerUpdate,
-  VolunteersPaginationOptions,
-  VolunteerByDepartment,
-  VolunteerDepartmentStats
+  VolunteersPaginationOptions
 } from '@/lib/types/volunteers';
 import { AuthService } from './auth';
 
@@ -46,6 +44,21 @@ export class VolunteerService extends BaseService {
       return { success: true, data };
     } catch (err) {
       return this.formatError(err, `Failed to fetch all ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async getCount(): Promise<ServiceResponse<number>> {
+    try {
+      const supabase = await this.getClient();
+      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: count || 0 };
+    } catch (err) {
+      return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
     }
   }
 

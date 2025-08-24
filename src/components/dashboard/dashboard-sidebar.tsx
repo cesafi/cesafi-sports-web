@@ -28,11 +28,8 @@ interface DashboardSidebarProps {
 export default function DashboardSidebar({ userRole = 'admin' }: DashboardSidebarProps) {
   const pathname = usePathname();
 
-  // Define navigation items based on user role
   const getNavigationItems = (role: string): NavigationItem[] => {
-    const baseItems: NavigationItem[] = [
-      { href: '/admin', label: 'Overview', icon: Grid3X3 },
-    ];
+    const baseItems: NavigationItem[] = [{ href: '/admin', label: 'Overview', icon: Grid3X3 }];
 
     switch (role) {
       case 'admin':
@@ -43,26 +40,26 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
           { href: '/admin/seasons', label: 'Seasons', icon: Trophy },
           { href: '/admin/sports', label: 'Sports', icon: Volleyball },
           { href: '/admin/articles', label: 'Articles', icon: FileText },
-          { href: '/admin/volunteers', label: 'Volunteers', icon: Users },
+          { href: '/admin/volunteers', label: 'Volunteers', icon: Users }
         ];
       case 'head_writer':
         return [
           ...baseItems,
           { href: '/head-writer/articles', label: 'Articles', icon: FileText },
-          { href: '/head-writer/writers', label: 'Writers', icon: Users },
+          { href: '/head-writer/writers', label: 'Writers', icon: Users }
         ];
       case 'writer':
         return [
           ...baseItems,
           { href: '/writer/articles', label: 'My Articles', icon: FileText },
-          { href: '/writer/drafts', label: 'Drafts', icon: FileText },
+          { href: '/writer/drafts', label: 'Drafts', icon: FileText }
         ];
       case 'league_operator':
         return [
           ...baseItems,
           { href: '/league-operator/schedules', label: 'Schedules', icon: BarChart3 },
           { href: '/league-operator/results', label: 'Results', icon: Trophy },
-          { href: '/league-operator/standings', label: 'Standings', icon: BarChart3 },
+          { href: '/league-operator/standings', label: 'Standings', icon: BarChart3 }
         ];
       default:
         return baseItems;
@@ -72,18 +69,17 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
   const navigationItems = getNavigationItems(userRole);
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-border bg-sidebar">
+    <aside className="border-border bg-sidebar flex h-screen w-64 flex-col border-r">
       {/* Logo */}
-      <div className="flex h-16 items-center justify-center border-b border-border">
+      <div className="border-border flex h-16 items-center border-b px-6">
         <div className="flex items-center gap-3">
-          <Image 
-            src="/img/cesafi-logo.webp" 
-            alt="CESAFI Logo" 
-            width={40} 
+          <Image
+            src="/img/cesafi-logo.webp"
+            alt="CESAFI Logo"
+            width={40}
             height={40}
             className="rounded-lg"
           />
-          <span className="text-xl font-bold text-sidebar-foreground">CESAFI</span>
         </div>
       </div>
 
@@ -98,14 +94,16 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-sidebar-primary'
+                  ? 'bg-sidebar-accent text-sidebar-accent-foreground border-sidebar-primary border-l-4'
                   : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
               )}
             >
-              <item.icon className={cn(
-                'h-5 w-5',
-                isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground'
-              )} />
+              <item.icon
+                className={cn(
+                  'h-5 w-5',
+                  isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground'
+                )}
+              />
               {item.label}
             </Link>
           );
@@ -113,8 +111,8 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-4">
-        <div className="text-xs text-sidebar-foreground space-y-1">
+      <div className="border-border border-t p-4">
+        <div className="text-sidebar-foreground space-y-1 text-xs">
           <p className="font-medium">Cebu Schools Athletics Foundation, Inc.</p>
           <p>© 2025</p>
         </div>

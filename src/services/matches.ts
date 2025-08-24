@@ -42,6 +42,40 @@ export class MatchService extends BaseService {
     }
   }
 
+  static async getRecent(limit: number = 5): Promise<ServiceResponse<Pick<Match, 'id' | 'name' | 'scheduled_at' | 'created_at'>[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select('id, name, scheduled_at, created_at')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch recent ${TABLE_NAME}.`);
+    }
+  }
+
+  static async getCount(): Promise<ServiceResponse<number>> {
+    try {
+      const supabase = await this.getClient();
+      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: count || 0 };
+    } catch (err) {
+      return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
+    }
+  }
+
   static async getById(id: string): Promise<ServiceResponse<Match>> {
     try {
       const supabase = await this.getClient();

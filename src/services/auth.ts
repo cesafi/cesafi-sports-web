@@ -16,6 +16,16 @@ export class AuthService extends BaseService {
         password: password
       });
 
+      // Debug logging
+      console.log('AuthService.login: Sign in result:', {
+        hasError: !!error,
+        errorMessage: error?.message,
+        hasSession: !!data.session,
+        hasUser: !!data.user,
+        userEmail: data.user?.email,
+        userRole: data.user?.app_metadata?.role
+      });
+
       if (error) {
         return { success: false, error: error.message };
       }
