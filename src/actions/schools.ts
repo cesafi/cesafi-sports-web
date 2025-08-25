@@ -9,7 +9,7 @@ export async function testSchoolsConnection() {
   try {
     const result = await SchoolService.testConnection();
     return result;
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Database connection failed' };
   }
 }
@@ -35,11 +35,10 @@ export async function getPaginatedSchools(options: PaginationOptions<Record<stri
         currentPage: result.data.currentPage
       }
     };
-  } catch (error) {
-    console.error('getPaginatedSchools error:', error);
+  } catch {
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      error: 'Unknown error occurred' 
     };
   }
 }

@@ -6,7 +6,7 @@ interface ModalLayoutProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   children: ReactNode;
-  footer: ReactNode;
+  footer?: ReactNode;
   maxWidth?: string;
   height?: string;
 
@@ -35,10 +35,12 @@ export function ModalLayout({
           {children}
         </div>
 
-        {/* Fixed Footer */}
-        <div className="flex-shrink-0 pt-4 border-t bg-background">
-          {footer}
-        </div>
+        {/* Fixed Footer - only render if footer prop is provided */}
+        {footer && (
+          <div className="flex-shrink-0 pt-4 border-t bg-background">
+            {footer}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

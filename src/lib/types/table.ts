@@ -91,7 +91,7 @@ export interface UseTableOptions<T extends BaseEntity> {
   pageSizeOptions?: number[];
 }
 
-export interface UseTableReturn<T extends BaseEntity> {
+export interface UseTableReturn<_T extends BaseEntity> {
   // State
   tableState: TableState;
 
@@ -108,13 +108,13 @@ export interface UseTableReturn<T extends BaseEntity> {
 
   // Table props
   tableProps: Omit<
-    TableProps<T>,
+    TableProps<_T>,
     'data' | 'totalCount' | 'currentPage' | 'pageCount' | 'pageSize' | 'columns' | 'actions'
   >;
 }
 
-export interface SortableHeaderProps<T extends BaseEntity> {
-  column: TableColumn<T>;
+export interface SortableHeaderProps<_T extends BaseEntity> {
+  column: TableColumn<_T>;
   sortBy?: string;
   sortOrder: 'asc' | 'desc';
   onSort: (key: string, order: 'asc' | 'desc') => void;

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Filter } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { SchoolInsert, SchoolUpdate } from '@/lib/types/schools';
 
 export default function SchoolsManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,12 +90,18 @@ export default function SchoolsManagementPage() {
     }
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: SchoolInsert | SchoolUpdate) => {
     if (modalMode === 'add') {
-      createSchool(data);
+      createSchool(data as SchoolInsert);
     } else {
-      updateSchool({ id: editingSchool!.id, ...data });
+      // The modal now includes the ID in the data, so we can use it directly
+      updateSchool(data as SchoolUpdate);
     }
+  };
+
+  const handleSuccess = () => {
+    // This will be called when the modal closes after successful submission
+    // The useSchoolsTable hook will automatically refetch the data
   };
 
   const columns = getSchoolsTableColumns();
@@ -195,6 +202,7 @@ export default function SchoolsManagementPage() {
         school={editingSchool}
         onSubmit={handleSubmit}
         isSubmitting={isCreating || isUpdating}
+        onSuccess={handleSuccess}
       />
 
       {/* Confirmation Modal */}

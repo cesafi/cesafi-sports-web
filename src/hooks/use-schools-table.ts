@@ -5,6 +5,7 @@ import { School } from '@/lib/types/schools';
 import { SchoolUpdate } from '@/lib/types/schools';
 import { toast } from 'sonner';
 import { TableFilters } from '@/lib/types/table';
+import { FilterValue, PaginationOptions } from '@/lib/types/base';
 
 export function useSchoolsTable() {
   const {
@@ -33,7 +34,7 @@ export function useSchoolsTable() {
     refetch
   } = useQuery({
     queryKey: ['schools', 'paginated', paginationOptions],
-    queryFn: () => getPaginatedSchools(paginationOptions),
+    queryFn: () => getPaginatedSchools(paginationOptions as PaginationOptions<Record<string, FilterValue>>),
     select: (data) => {
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch schools');

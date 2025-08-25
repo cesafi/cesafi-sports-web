@@ -6,7 +6,7 @@ export const createSchoolSchema = z.object({
     .string()
     .min(2, { message: 'Abbreviation must be at least 2 characters.' })
     .max(10, { message: 'Abbreviation cannot exceed 10 characters.' }),
-  logo_url: z.string().optional().or(z.literal('')),
+  logo_url: z.string().nullable().optional(),
   is_active: z.boolean().default(true)
 });
 
@@ -18,10 +18,10 @@ export const updateSchoolSchema = z.object({
     .min(2, { message: 'Abbreviation must be at least 2 characters.' })
     .max(10, { message: 'Abbreviation cannot exceed 10 characters.' })
     .optional(),
-  logo_url: z.string().optional().or(z.literal('')),
+  logo_url: z.string().nullable().optional(),
   is_active: z.boolean().optional()
 });
 
 // Legacy exports for backward compatibility
 export const SchoolInsertSchema = createSchoolSchema;
-export const SchoolUpdateSchema = updateSchoolSchema;
+export const UpdateSchoolSchema = updateSchoolSchema;

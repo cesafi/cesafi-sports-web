@@ -29,16 +29,16 @@ export const schoolKeys = {
 export function usePaginatedSchools(
   options: SchoolPaginationOptions,
   queryOptions?: UseQueryOptions<
-    ServiceResponse<PaginatedResponse<School>>,
+    { success: boolean; error?: string; data?: { data: School[]; totalCount: number; pageCount: number; currentPage: number } },
     Error,
-    PaginatedResponse<School>
+    { data: School[]; totalCount: number; pageCount: number; currentPage: number }
   >
 ) {
   return useQuery({
     queryKey: schoolKeys.paginated(options),
     queryFn: () => getPaginatedSchools(options),
     select: (data) => {
-      if (!data.success) {
+      if (!data.success || !data.data) {
         throw new Error(data.error || 'Failed to fetch paginated schools.');
       }
       return data.data;
@@ -54,8 +54,8 @@ export function useAllSchools(
     queryKey: schoolKeys.all,
     queryFn: getAllSchools,
     select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch all schools.');
+      if (!data.success || !data.data) {
+        throw new Error(data.success === false ? data.error : 'Failed to fetch all schools.');
       }
       return data.data;
     },
@@ -72,8 +72,8 @@ export function useSchoolById(
     queryFn: () => getSchoolById(id),
     enabled: !!id,
     select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error || `School with ID ${id} not found.`);
+      if (!data.success || !data.data) {
+        throw new Error(data.success === false ? data.error : `School with ID ${id} not found.`);
       }
       return data.data;
     },

@@ -72,7 +72,7 @@ export async function getPaginatedAccounts(options: PaginationOptions<TableFilte
         currentPage: page
       }
     };
-  } catch (error) {
+  } catch {
     return { success: false, error: 'Failed to fetch paginated accounts' };
   }
 }

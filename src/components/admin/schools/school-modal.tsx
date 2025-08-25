@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { ModalLayout } from '@/components/ui/modal-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { School, SchoolInsert, SchoolUpdate } from '@/lib/types/schools';
 import { createSchoolSchema, updateSchoolSchema } from '@/lib/validations/schools';
-import { ZodError } from 'zod';
-import { Building2, Hash, Image, Power, Upload, X } from 'lucide-react';
+import { z } from 'zod';
+import { Building2, Image as ImageIcon, Power, Upload, X } from 'lucide-react';
+import Image from 'next/image';
 
 interface SchoolModalProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface SchoolModalProps {
   school?: School;
   onSubmit: (data: SchoolInsert | SchoolUpdate) => Promise<void>;
   isSubmitting: boolean;
+  onSuccess?: () => void; // Callback to trigger refetch
 }
 
 export function SchoolModal({
@@ -28,19 +30,22 @@ export function SchoolModal({
   mode,
   school,
   onSubmit,
-  isSubmitting
+  isSubmitting,
+  onSuccess
 }: SchoolModalProps) {
   const [formData, setFormData] = useState<SchoolInsert | SchoolUpdate>({
     name: '',
     abbreviation: '',
-    logo_url: '',
+    logo_url: null,
     is_active: true
   } as SchoolInsert | SchoolUpdate);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [hasStartedCreating, setHasStartedCreating] = useState(false);
-  const [hasStartedUpdating, setHasStartedUpdating] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+
+  // Track when mutations start to detect completion
+  const hasStartedCreating = useRef(false);
+  const hasStartedUpdating = useRef(false);
 
   const handleClose = useCallback(() => {
     setErrors({});
@@ -51,64 +56,85 @@ export function SchoolModal({
   useEffect(() => {
     if (open) {
       if (mode === 'edit' && school) {
-        setFormData({
+        const editData = {
+          id: school.id, // Include the ID for updates
           name: school.name || '',
           abbreviation: school.abbreviation || '',
-          logo_url: school.logo_url || '',
+          logo_url: school.logo_url || null,
           is_active: school.is_active ?? true
-        });
+        };
+        setFormData(editData);
       } else {
-        setFormData({
+        const addData = {
           name: '',
           abbreviation: '',
-          logo_url: '',
+          logo_url: null,
           is_active: true
-        });
+        };
+        setFormData(addData);
       }
       setErrors({});
-      setHasStartedCreating(false);
-      setHasStartedUpdating(false);
+      hasStartedCreating.current = false;
+      hasStartedUpdating.current = false;
     }
   }, [open, mode, school]);
 
-  // Handle form submission completion
+  // Track when mutations start
   useEffect(() => {
-    if (hasStartedCreating && !isSubmitting && mode === 'add') {
+    if (isSubmitting && mode === 'add' && !hasStartedCreating.current) {
+      hasStartedCreating.current = true;
+    }
+    if (isSubmitting && mode === 'edit' && !hasStartedUpdating.current) {
+      hasStartedUpdating.current = true;
+    }
+  }, [isSubmitting, mode]);
+
+  // Handle successful mutations - only trigger when mutations complete
+  useEffect(() => {
+    // Check if create mutation just completed (was started and now finished)
+    if (hasStartedCreating.current && !isSubmitting && mode === 'add') {
+      hasStartedCreating.current = false;
+      onSuccess?.();
       handleClose();
     }
-  }, [isSubmitting, mode, hasStartedCreating, handleClose]);
 
-  useEffect(() => {
-    if (hasStartedUpdating && !isSubmitting && mode === 'edit') {
+    // Check if update mutation just completed (was started and now finished)
+    if (hasStartedUpdating.current && !isSubmitting && mode === 'edit') {
+      hasStartedUpdating.current = false;
+      onSuccess?.();
       handleClose();
     }
-  }, [isSubmitting, mode, hasStartedUpdating, handleClose]);
+  }, [isSubmitting, mode, onSuccess, handleClose]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-
+  const validateForm = () => {
     try {
       const schema = mode === 'add' ? createSchoolSchema : updateSchoolSchema;
-      const validatedData = schema.parse(formData);
-
-      if (mode === 'add') {
-        setHasStartedCreating(true);
-      } else {
-        setHasStartedUpdating(true);
-      }
-
-      await onSubmit(validatedData);
+      schema.parse(formData);
+      setErrors({});
+      return true;
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
-        error.issues.forEach((issue) => {
-          if (issue.path) {
-            newErrors[issue.path[0] as string] = issue.message;
+        error.issues.forEach((err) => {
+          if (err.path) {
+            newErrors[err.path[0] as string] = err.message;
           }
         });
         setErrors(newErrors);
-      } else if (error instanceof Error) {
+      }
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      if (error instanceof Error) {
         toast.error(error.message);
       } else {
         toast.error('An unexpected error occurred');
@@ -116,14 +142,14 @@ export function SchoolModal({
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: string, value: string | boolean | null) => {
+    setFormData((prev: SchoolInsert | SchoolUpdate) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
 
-  const handleLogoUpload = (file: File) => {
+  const handleLogoUpload = () => {
     // TODO: Implement Cloudinary upload
     // For now, just show a placeholder message
     toast.info('Logo upload functionality will be implemented with Cloudinary integration');
@@ -134,7 +160,7 @@ export function SchoolModal({
   };
 
   const removeLogo = () => {
-    handleInputChange('logo_url', '');
+    handleInputChange('logo_url', null);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -150,12 +176,12 @@ export function SchoolModal({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
       if (file.type.startsWith('image/')) {
-        handleLogoUpload(file);
+        handleLogoUpload();
       } else {
         toast.error('Please upload an image file');
       }
@@ -169,38 +195,12 @@ export function SchoolModal({
       title={mode === 'add' ? 'Add New School' : 'Edit School'}
       maxWidth="max-w-2xl"
       height="h-[700px]"
-      footer={
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            className="flex-1"
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            className="flex-1"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              'Saving...'
-            ) : mode === 'add' ? (
-              'Create School'
-            ) : (
-              'Update School'
-            )}
-          </Button>
-        </div>
-      }
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Building2 className="h-5 w-5" />
               Basic Information
             </CardTitle>
@@ -235,8 +235,8 @@ export function SchoolModal({
         {/* Logo Upload */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Image className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <ImageIcon className="h-5 w-5" />
               School Logo
             </CardTitle>
           </CardHeader>
@@ -244,23 +244,28 @@ export function SchoolModal({
             {formData.logo_url ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-20 w-20 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
-                    <img 
-                      src={formData.logo_url} 
-                      alt="School logo" 
-                      className="h-full w-full object-cover"
-                    />
+                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300">
+                    {formData.logo_url && (
+                      <Image
+                        src={formData.logo_url}
+                        alt="School logo"
+                        width={80}
+                        height={80}
+                        unoptimized
+                        className="h-full w-full object-cover"
+                      />
+                    )}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">Current Logo</p>
-                    <p className="text-xs text-muted-foreground truncate">{formData.logo_url}</p>
+                    <p className="text-muted-foreground truncate text-xs">{formData.logo_url}</p>
                   </div>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={removeLogo}
-                    className="text-red-600 hover:text-red-700 hover:border-red-300"
+                    className="text-red-600 hover:border-red-300 hover:text-red-700"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -270,45 +275,47 @@ export function SchoolModal({
                   variant="outline"
                   onClick={() => document.getElementById('logo-upload')?.click()}
                 >
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="mr-2 h-4 w-4" />
                   Change Logo
                 </Button>
               </div>
             ) : (
               <div className="space-y-3">
-                <div 
+                <div
                   className={`h-32 w-full rounded-lg border-2 border-dashed transition-colors duration-200 ${
-                    isDragOver 
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20' 
+                    isDragOver
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
                       : 'border-gray-300 hover:border-gray-400'
                   } flex flex-col items-center justify-center`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  <Image className={`h-8 w-8 mb-2 transition-colors duration-200 ${
-                    isDragOver ? 'text-blue-500' : 'text-gray-400'
-                  }`} />
-                  <p className={`text-sm mb-2 transition-colors duration-200 ${
-                    isDragOver ? 'text-blue-600' : 'text-gray-600'
-                  }`}>
+                  <ImageIcon
+                    className={`mb-2 h-8 w-8 transition-colors duration-200 ${
+                      isDragOver ? 'text-blue-500' : 'text-gray-400'
+                    }`}
+                  />
+                  <p
+                    className={`mb-2 text-sm transition-colors duration-200 ${
+                      isDragOver ? 'text-blue-600' : 'text-gray-600'
+                    }`}
+                  >
                     {isDragOver ? 'Drop your logo here' : 'Upload school logo'}
                   </p>
-                  <p className="text-xs text-gray-500 text-center">
-                    PNG, JPG, or WebP up to 5MB
-                  </p>
+                  <p className="text-center text-xs text-gray-500">PNG, JPG, or WebP up to 5MB</p>
                 </div>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => document.getElementById('logo-upload')?.click()}
                 >
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload className="mr-2 h-4 w-4" />
                   Choose File
                 </Button>
               </div>
             )}
-            
+
             {/* Hidden file input */}
             <input
               id="logo-upload"
@@ -318,13 +325,14 @@ export function SchoolModal({
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  handleLogoUpload(file);
+                  handleLogoUpload();
                 }
               }}
             />
-            
-            <p className="text-xs text-muted-foreground">
-              Logo will be automatically optimized and stored in the cloud. Recommended size: 200x200px or larger.
+
+            <p className="text-muted-foreground text-xs">
+              Logo will be automatically optimized and stored in the cloud. Recommended size:
+              200x200px or larger.
             </p>
           </CardContent>
         </Card>
@@ -332,7 +340,7 @@ export function SchoolModal({
         {/* Status */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Power className="h-5 w-5" />
               Status
             </CardTitle>
@@ -346,11 +354,27 @@ export function SchoolModal({
               />
               <Label htmlFor="is_active">Active School</Label>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 text-xs">
               Active schools are visible in the system and can participate in events.
             </p>
           </CardContent>
         </Card>
+
+        {/* Form Actions */}
+        <div className="flex gap-3 border-t pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            className="flex-1"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" className="flex-1" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : mode === 'add' ? 'Create School' : 'Update School'}
+          </Button>
+        </div>
       </form>
     </ModalLayout>
   );

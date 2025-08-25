@@ -575,3 +575,4 @@ Use `npx shadcn@latest add [component-name]` to add missing components:
 ## 🔗 **Reference Implementation**
 
 See `src/components/admin/accounts/` for the complete working implementation that follows this pattern.
+
