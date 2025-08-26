@@ -6,12 +6,13 @@ export interface CreateAccountData {
   email: string;
   password: string;
   role: UserRole;
-  displayName?: string;
+  displayName: string;
 }
 
 import { BaseEntity } from '@/lib/types/table';
 
-export interface AccountData extends BaseEntity {
+export interface AccountEntity extends BaseEntity {
+  id: string;
   email: string;
   role: UserRole;
   displayName?: string;
@@ -19,12 +20,15 @@ export interface AccountData extends BaseEntity {
   lastSignInAt?: string;
 }
 
+export type AccountData = AccountEntity;
+
 export class AccountsService extends BaseService {
-  static async createAccount(accountData: CreateAccountData): Promise<ServiceResponse<AccountData>> {
+  static async createAccount(
+    accountData: CreateAccountData
+  ): Promise<ServiceResponse<AccountData>> {
     try {
       const supabase = await this.getAdminClient();
 
-      // Create the user account
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: accountData.email,
         password: accountData.password,
@@ -74,7 +78,11 @@ export class AccountsService extends BaseService {
         id: user.id,
         email: user.email || '',
         role: (user.app_metadata?.role as UserRole) || 'writer',
-        displayName: user.user_metadata?.display_name || user.user_metadata?.full_name || user.user_metadata?.displayName || user.user_metadata?.name,
+        displayName:
+          user.user_metadata?.display_name ||
+          user.user_metadata?.full_name ||
+          user.user_metadata?.displayName ||
+          user.user_metadata?.name,
         createdAt: user.created_at,
         lastSignInAt: user.last_sign_in_at
       }));
@@ -85,7 +93,10 @@ export class AccountsService extends BaseService {
     }
   }
 
-  static async updateAccountRole(userId: string, newRole: UserRole): Promise<ServiceResponse<AccountData>> {
+  static async updateAccountRole(
+    userId: string,
+    newRole: UserRole
+  ): Promise<ServiceResponse<AccountData>> {
     try {
       const supabase = await this.getAdminClient();
 
@@ -101,14 +112,14 @@ export class AccountsService extends BaseService {
         return { success: false, error: 'Failed to update user role' };
       }
 
-             const account: AccountData = {
-         id: user.user.id,
-         email: user.user.email!,
-         role: newRole,
-         displayName: user.user.user_metadata?.display_name,
-         createdAt: user.user.created_at,
-         lastSignInAt: user.user.last_sign_in_at
-       };
+      const account: AccountData = {
+        id: user.user.id,
+        email: user.user.email!,
+        role: newRole,
+        displayName: user.user.user_metadata?.display_name,
+        createdAt: user.user.created_at,
+        lastSignInAt: user.user.last_sign_in_at
+      };
 
       return { success: true, data: account };
     } catch (error) {
@@ -116,31 +127,34 @@ export class AccountsService extends BaseService {
     }
   }
 
-  static async updateAccount(userId: string, updates: { displayName?: string; role?: UserRole; password?: string }): Promise<ServiceResponse<AccountData>> {
+  static async updateAccount(
+    userId: string,
+    updates: { displayName?: string; role?: UserRole; password?: string }
+  ): Promise<ServiceResponse<AccountData>> {
     try {
       const supabase = await this.getAdminClient();
-      
+
       const updateData: {
         user_metadata?: { display_name?: string };
         app_metadata?: { role?: UserRole };
         password?: string;
       } = {};
-      
+
       // Update user metadata for display name
       if (updates.displayName !== undefined) {
         updateData.user_metadata = { display_name: updates.displayName };
       }
-      
+
       // Update app metadata for role
       if (updates.role !== undefined) {
         updateData.app_metadata = { role: updates.role };
       }
-      
+
       // Update password if provided
       if (updates.password !== undefined) {
         updateData.password = updates.password;
       }
-      
+
       const { data: user, error } = await supabase.auth.admin.updateUserById(userId, updateData);
 
       if (error) {
@@ -166,7 +180,10 @@ export class AccountsService extends BaseService {
     }
   }
 
-  static async resetPassword(userId: string, newPassword: string): Promise<ServiceResponse<undefined>> {
+  static async resetPassword(
+    userId: string,
+    newPassword: string
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getAdminClient();
 

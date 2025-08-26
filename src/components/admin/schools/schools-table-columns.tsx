@@ -7,26 +7,26 @@ import Image from 'next/image';
 
 export const getSchoolsTableColumns = (): TableColumn<School>[] => [
   {
-    key: 'schoolInfo',
-    header: 'School Information',
-    sortable: false,
-    width: '50%',
+    key: 'name',
+    header: 'School Name',
+    sortable: true,
+    width: '45%',
     render: (school: School) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
             {school.logo_url ? (
-              <Image 
-                src={school.logo_url} 
-                alt={school.name} 
+              <Image
+                src={school.logo_url}
+                alt={school.name}
                 width={32}
                 height={32}
                 className="h-8 w-8 rounded-full object-cover"
               />
             ) : (
-              <Image 
-                src="/img/cesafi-logo.webp" 
-                alt="CESAFI Logo" 
+              <Image
+                src="/img/cesafi-logo.webp"
+                alt="CESAFI Logo"
                 width={32}
                 height={32}
                 className="h-8 w-8 rounded-full object-cover"
@@ -36,11 +36,7 @@ export const getSchoolsTableColumns = (): TableColumn<School>[] => [
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{school.name}</p>
-          <p className="truncate text-xs text-muted-foreground">{school.abbreviation}</p>
-          <div className="text-muted-foreground flex items-center space-x-2 text-xs">
-            <Calendar className="h-3 w-3" />
-            <span>Created {formatTableDate(school.created_at)}</span>
-          </div>
+          <p className="text-muted-foreground truncate text-xs">{school.abbreviation}</p>
         </div>
       </div>
     )
@@ -49,9 +45,9 @@ export const getSchoolsTableColumns = (): TableColumn<School>[] => [
     key: 'abbreviation',
     header: 'Abbreviation',
     sortable: true,
-    width: '25%',
+    width: '20%',
     render: (school: School) => (
-      <Badge variant="secondary" className="font-mono text-lg font-bold">
+      <Badge variant="secondary" className="font-mono capitalize">
         {school.abbreviation}
       </Badge>
     )
@@ -60,14 +56,23 @@ export const getSchoolsTableColumns = (): TableColumn<School>[] => [
     key: 'status',
     header: 'Status',
     sortable: true,
-    width: '25%',
+    width: '20%',
     render: (school: School) => (
-      <Badge
-        variant={school.is_active ? 'default' : 'secondary'}
-        className="capitalize"
-      >
+      <Badge variant={school.is_active ? 'default' : 'secondary'} className="capitalize">
         {school.is_active ? 'Active' : 'Inactive'}
       </Badge>
+    )
+  },
+  {
+    key: 'created_at',
+    header: 'Created',
+    sortable: true,
+    width: '15%',
+    render: (school: School) => (
+      <div className="text-muted-foreground flex items-center space-x-2 text-xs">
+        <Calendar className="h-3 w-3" />
+        <span>{formatTableDate(school.created_at)}</span>
+      </div>
     )
   }
 ];

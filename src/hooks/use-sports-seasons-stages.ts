@@ -28,7 +28,7 @@ export const sportsSeasonsStageKeys = {
   all: ['sports-seasons-stages'] as const,
   paginated: (options: SportsSeasonsStagesPaginationOptions) =>
     [...sportsSeasonsStageKeys.all, 'paginated', options] as const,
-  details: (id: string) => [...sportsSeasonsStageKeys.all, id] as const
+  details: (id: number) => [...sportsSeasonsStageKeys.all, id] as const
 };
 
 export function usePaginatedSportsSeasonsStages(
@@ -69,7 +69,7 @@ export function useAllSportsSeasonsStages(
 }
 
 export function useSportsSeasonsStageById(
-  id: string,
+  id: number,
   queryOptions?: UseQueryOptions<ServiceResponse<SportsSeasonsStage>, Error, SportsSeasonsStage>
 ) {
   return useQuery({
@@ -136,7 +136,7 @@ export function useUpdateSportsSeasonsStage(
 }
 
 export function useDeleteSportsSeasonsStage(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, string>
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, number>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

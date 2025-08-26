@@ -13,11 +13,11 @@ export async function getAllGames() {
   return await GameService.getAll();
 }
 
-export async function getGameById(id: string) {
+export async function getGameById(id: number) {
   return await GameService.getById(id);
 }
 
-export async function getGamesByMatchId(matchId: string) {
+export async function getGamesByMatchId(matchId: number) {
   return await GameService.getByMatchId(matchId);
 }
 
@@ -41,7 +41,7 @@ export async function updateGameById(data: GameUpdate) {
   return result;
 }
 
-export async function deleteGameById(id: string) {
+export async function deleteGameById(id: number) {
   const result = await GameService.deleteById(id);
 
   if (result.success) {
@@ -51,6 +51,6 @@ export async function deleteGameById(id: string) {
   return result;
 }
 
-export async function calculateMatchDuration(matchId: string) {
+export async function calculateMatchDuration(matchId: number) {
   return await GameService.calculateMatchDuration(matchId);
 }

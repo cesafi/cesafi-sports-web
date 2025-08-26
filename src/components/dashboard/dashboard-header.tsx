@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { ChevronDown, User, Settings, LogOut, Building2 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -14,6 +15,7 @@ import {
   DropdownMenuTrigger
 } from '../ui/dropdown-menu';
 import { useLogout } from '@/hooks/use-auth';
+import { SmartBreadcrumbs } from '../shared';
 
 interface DashboardHeaderProps {
   userEmail?: string;
@@ -28,6 +30,8 @@ export default function DashboardHeader({
 }: DashboardHeaderProps) {
   const router = useRouter();
   const logoutMutation = useLogout();
+
+
 
   const handleSignOut = async () => {
     try {
@@ -48,13 +52,13 @@ export default function DashboardHeader({
 
   return (
     <header className="border-border bg-background flex h-16 items-center justify-between border-b px-6">
-      {/* Left side - Logo and Brand */}
+      {/* Left side - Breadcrumbs and Season Context */}
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="hidden md:block">
-            <h2 className="text-foreground text-lg font-medium">{userRole} Dashboard</h2>
-          </div>
-        </div>
+        <SmartBreadcrumbs 
+          maxVisibleItems={5}
+          showHomeIcon={true}
+          customHomeLabel="Admin Dashboard"
+        />
       </div>
 
       {/* Right side - Theme switcher and User menu */}

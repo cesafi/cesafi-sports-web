@@ -5,14 +5,7 @@ import { SchoolInsert, SchoolUpdate } from '@/lib/types/schools';
 import { SchoolService } from '@/services/schools';
 import { revalidatePath } from 'next/cache';
 
-export async function testSchoolsConnection() {
-  try {
-    const result = await SchoolService.testConnection();
-    return result;
-  } catch {
-    return { success: false, error: 'Database connection failed' };
-  }
-}
+
 
 export async function getPaginatedSchools(options: PaginationOptions<Record<string, FilterValue>>) {
   try {

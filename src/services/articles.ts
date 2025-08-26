@@ -1,4 +1,4 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
+import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
 import { BaseService } from './base';
 import { Article, ArticleInsert, ArticleUpdate } from '@/lib/types/articles';
 import { AuthService } from './auth';
@@ -7,13 +7,19 @@ const TABLE_NAME = 'articles';
 
 export class ArticleService extends BaseService {
   static async getPaginated(
-    options: PaginationOptions,
+    options: PaginationOptions<Record<string, FilterValue>>,
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<Article>>> {
     try {
+      const searchableFields = ['title', 'content', 'status'];
+      const optionsWithSearchableFields = {
+        ...options,
+        searchableFields
+      };
+
       const result = await this.getPaginatedData<Article, typeof TABLE_NAME>(
         TABLE_NAME,
-        options,
+        optionsWithSearchableFields,
         selectQuery
       );
 
@@ -41,7 +47,9 @@ export class ArticleService extends BaseService {
   static async getCount(): Promise<ServiceResponse<number>> {
     try {
       const supabase = await this.getClient();
-      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+      const { count, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
 
       if (error) {
         throw error;
@@ -53,7 +61,9 @@ export class ArticleService extends BaseService {
     }
   }
 
-  static async getRecent(limit: number = 5): Promise<ServiceResponse<Pick<Article, 'id' | 'title' | 'created_at' | 'status'>[]>> {
+  static async getRecent(
+    limit: number = 5
+  ): Promise<ServiceResponse<Pick<Article, 'id' | 'title' | 'created_at' | 'status'>[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
@@ -89,7 +99,6 @@ export class ArticleService extends BaseService {
 
   static async insert(data: ArticleInsert): Promise<ServiceResponse<undefined>> {
     try {
-      // Articles require admin, head_writer, or writer roles for write operations
       const roles = ['admin', 'head_writer', 'writer'];
 
       const authResult = await AuthService.checkAuth(roles);
@@ -106,16 +115,13 @@ export class ArticleService extends BaseService {
       }
 
       const supabase = await this.getClient();
-      
-      // Handle publishing workflow logic
+
       const insertData = { ...data };
-      
-      // If article is being published, ensure published_at is set
+
       if (insertData.status === 'published' && !insertData.published_at) {
         insertData.published_at = new Date().toISOString();
       }
-      
-      // If article is not published, clear published_at
+
       if (insertData.status !== 'published') {
         insertData.published_at = '';
       }
@@ -155,15 +161,15 @@ export class ArticleService extends BaseService {
       }
 
       const supabase = await this.getClient();
-      
+
       // Handle publishing workflow logic
       const updateData = { ...data };
-      
+
       // If article is being published and published_at is not set, set it now
       if (updateData.status === 'published' && !updateData.published_at) {
         updateData.published_at = new Date().toISOString();
       }
-      
+
       // If article is being unpublished, clear published_at
       if (updateData.status !== 'published') {
         updateData.published_at = '';
@@ -187,7 +193,6 @@ export class ArticleService extends BaseService {
         return { success: false, error: 'Entity ID is required to delete.' };
       }
 
-      // Articles require admin, head_writer, or writer roles for write operations
       const roles = ['admin', 'head_writer', 'writer'];
 
       const authResult = await AuthService.checkAuth(roles);

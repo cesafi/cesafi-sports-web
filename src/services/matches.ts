@@ -1,4 +1,4 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
+import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
 import { BaseService } from './base';
 import { Match, MatchInsert, MatchUpdate } from '@/lib/types/matches';
 import { AuthService } from './auth';
@@ -7,13 +7,19 @@ const TABLE_NAME = 'matches';
 
 export class MatchService extends BaseService {
   static async getPaginated(
-    options: PaginationOptions,
+    options: PaginationOptions<Record<string, FilterValue>>,
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<Match>>> {
     try {
+      const searchableFields = ['name', 'scheduled_at', 'created_at'];
+      const optionsWithSearchableFields = {
+        ...options,
+        searchableFields
+      };
+
       const result = await this.getPaginatedData<Match, typeof TABLE_NAME>(
         TABLE_NAME,
-        options,
+        optionsWithSearchableFields,
         selectQuery
       );
 
@@ -76,7 +82,7 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async getById(id: string): Promise<ServiceResponse<Match>> {
+  static async getById(id: number): Promise<ServiceResponse<Match>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase.from(TABLE_NAME).select().eq('id', id).single();
@@ -110,11 +116,11 @@ export class MatchService extends BaseService {
 
       const supabase = await this.getClient();
 
-      // Validate that the sports_seasons_stages_id exists
+      // Validate that the sports_seasons_stage_id exists
       const { data: stageExists, error: stageError } = await supabase
         .from('sports_seasons_stages')
         .select('id')
-        .eq('id', data.sports_seasons_stages_id)
+        .eq('id', data.stage_id)
         .single();
 
       if (stageError && stageError.code !== 'PGRST116') {
@@ -189,13 +195,13 @@ export class MatchService extends BaseService {
 
       const supabase = await this.getClient();
 
-      // Validate sports_seasons_stages_id if provided
-      if (data.sports_seasons_stages_id) {
-        const { data: stageExists, error: stageError } = await supabase
-          .from('sports_seasons_stages')
-          .select('id')
-          .eq('id', data.sports_seasons_stages_id)
-          .single();
+      // Validate stage_id if provided
+      if (data.stage_id) {
+              const { data: stageExists, error: stageError } = await supabase
+        .from('sports_seasons_stages')
+        .select('id')
+        .eq('id', data.stage_id)
+        .single();
 
         if (stageError && stageError.code !== 'PGRST116') {
           throw stageError;
@@ -281,7 +287,7 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async deleteById(id: string): Promise<ServiceResponse<undefined>> {
+  static async deleteById(id: number): Promise<ServiceResponse<undefined>> {
     try {
       if (!id) {
         return { success: false, error: 'Entity ID is required to delete.' };
@@ -325,7 +331,7 @@ export class MatchService extends BaseService {
       const { data: participants, error: participantsError } = await supabase
         .from('match_participants')
         .select('id')
-        .eq('matches_id', id)
+        .eq('match_id', id)
         .limit(1);
 
       if (participantsError) {

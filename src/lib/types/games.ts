@@ -6,18 +6,19 @@ export type GameInsert = Database['public']['Tables']['games']['Insert'];
 export type GameUpdate = Database['public']['Tables']['games']['Update'];
 
 export interface GameSearchFilters {
-  match_id?: string;
+  match_id?: number;
   game_number?: number;
-  duration?: string;
-  start_at?: string;
-  end_at?: string;
-  date_range?: {
-    start?: string;
-    end?: string;
+  start_at?: {
+    gte?: string;
+    lte?: string;
   };
-  game_number_range?: {
-    min?: number;
-    max?: number;
+  end_at?: {
+    gte?: string;
+    lte?: string;
+  };
+  created_at?: {
+    gte?: string;
+    lte?: string;
   };
 }
 

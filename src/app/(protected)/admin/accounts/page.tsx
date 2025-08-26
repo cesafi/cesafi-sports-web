@@ -2,13 +2,19 @@
 
 import { useState } from 'react';
 import { DataTable } from '@/components/table';
-import { useAccountsTable } from '@/hooks/use-accounts-table';
+import { useAccountsTable } from '@/hooks/use-accounts';
 import { getAccountsTableColumns, getAccountsTableActions } from '@/components/admin/accounts';
 import { AccountData } from '@/services/accounts';
 import { AccountModal } from '@/components/admin/accounts';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label';
@@ -18,7 +24,7 @@ export default function AccountsManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingAccount, setEditingAccount] = useState<AccountData | undefined>();
-  
+
   // Confirmation modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<AccountData | undefined>();
@@ -91,7 +97,7 @@ export default function AccountsManagementPage() {
     if (filterType === 'role') {
       setRoleFilter(value);
     }
-    
+
     // For "all" roles, we need to reset filters completely since onFiltersChange merges
     if (value === 'all') {
       console.log('Resetting filters for "all" roles');
@@ -108,14 +114,14 @@ export default function AccountsManagementPage() {
   const actions = getAccountsTableActions(handleEditAccount, handleDeleteAccount);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Simple Filter Bar */}
-      <div className="flex items-center gap-4 mb-4">
+      <div className="mb-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Filter className="text-muted-foreground h-4 w-4" />
           <span className="text-sm font-medium">Filters:</span>
         </div>
-        
+
         {/* Role Filter */}
         <div className="flex items-center gap-2">
           <Label htmlFor="role-filter">Role:</Label>
@@ -133,27 +139,22 @@ export default function AccountsManagementPage() {
           </Select>
         </div>
 
-        {(roleFilter !== 'all') && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearFilters}
-            className="h-9"
-          >
+        {roleFilter !== 'all' && (
+          <Button variant="outline" size="sm" onClick={clearFilters} className="h-9">
             Clear Filters
           </Button>
         )}
       </div>
 
       {/* Filter Badges */}
-      {(roleFilter !== 'all') && (
-        <div className="flex flex-wrap gap-2 mb-4">
+      {roleFilter !== 'all' && (
+        <div className="mb-4 flex flex-wrap gap-2">
           {roleFilter !== 'all' && (
             <Badge variant="secondary" className="flex items-center gap-1">
               Role: {roleFilter}
               <button
                 onClick={() => handleFilterChange('role', 'all')}
-                className="ml-1 hover:text-destructive"
+                className="hover:text-destructive ml-1"
               >
                 ×
               </button>

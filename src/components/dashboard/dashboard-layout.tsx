@@ -24,13 +24,13 @@ export default function DashboardLayout({
       <DashboardSidebar userRole={userRole} />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader 
-          userEmail={userEmail} 
-          userName={userName} 
+        <DashboardHeader
+          userEmail={userEmail}
+          userName={userName}
           userRole={userRoleDisplay || userRole}
         />
 
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="flex flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>
   );

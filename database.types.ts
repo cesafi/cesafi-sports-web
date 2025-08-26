@@ -50,56 +50,63 @@ export type Database = {
         }
         Relationships: []
       }
+      departments: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       game_scores: {
         Row: {
           created_at: string
-          games_id: string
-          id: string
-          match_participants_id: string
+          game_id: number | null
+          id: number
+          match_participant_id: number
           score: number
           updated_at: string
         }
         Insert: {
           created_at?: string
-          games_id: string
-          id?: string
-          match_participants_id: string
+          game_id?: number | null
+          id?: number
+          match_participant_id: number
           score: number
           updated_at?: string
         }
         Update: {
           created_at?: string
-          games_id?: string
-          id?: string
-          match_participants_id?: string
+          game_id?: number | null
+          id?: number
+          match_participant_id?: number
           score?: number
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "game_scores_games_id_fkey"
-            columns: ["games_id"]
-            isOneToOne: false
-            referencedRelation: "game_scores_detailed"
-            referencedColumns: ["game_id"]
-          },
-          {
-            foreignKeyName: "game_scores_games_id_fkey"
-            columns: ["games_id"]
+            foreignKeyName: "game_scores_game_id_fkey"
+            columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "game_scores_match_participants_id_fkey"
-            columns: ["match_participants_id"]
-            isOneToOne: false
-            referencedRelation: "game_scores_detailed"
-            referencedColumns: ["match_participant_id"]
-          },
-          {
-            foreignKeyName: "game_scores_match_participants_id_fkey"
-            columns: ["match_participants_id"]
+            foreignKeyName: "game_scores_match_participant_id_fkey"
+            columns: ["match_participant_id"]
             isOneToOne: false
             referencedRelation: "match_participants"
             referencedColumns: ["id"]
@@ -112,8 +119,8 @@ export type Database = {
           duration: string
           end_at: string | null
           game_number: number
-          id: string
-          match_id: string
+          id: number
+          match_id: number
           start_at: string | null
           updated_at: string
         }
@@ -122,8 +129,8 @@ export type Database = {
           duration?: string
           end_at?: string | null
           game_number?: number
-          id?: string
-          match_id: string
+          id?: number
+          match_id: number
           start_at?: string | null
           updated_at?: string
         }
@@ -132,19 +139,12 @@ export type Database = {
           duration?: string
           end_at?: string | null
           game_number?: number
-          id?: string
-          match_id?: string
+          id?: number
+          match_id?: number
           start_at?: string | null
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "games_match_id_fkey"
-            columns: ["match_id"]
-            isOneToOne: false
-            referencedRelation: "game_scores_detailed"
-            referencedColumns: ["match_id"]
-          },
           {
             foreignKeyName: "games_match_id_fkey"
             columns: ["match_id"]
@@ -157,53 +157,36 @@ export type Database = {
       match_participants: {
         Row: {
           created_at: string
-          id: string
-          matches_id: string
-          placement: number
-          schools_teams_id: string
+          id: number
+          match_id: number
+          team_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          id?: string
-          matches_id: string
-          placement?: number
-          schools_teams_id: string
+          id?: number
+          match_id: number
+          team_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          id?: string
-          matches_id?: string
-          placement?: number
-          schools_teams_id?: string
+          id?: number
+          match_id?: number
+          team_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "match_participants_matches_id_fkey"
-            columns: ["matches_id"]
-            isOneToOne: false
-            referencedRelation: "game_scores_detailed"
-            referencedColumns: ["match_id"]
-          },
-          {
-            foreignKeyName: "match_participants_matches_id_fkey"
-            columns: ["matches_id"]
+            foreignKeyName: "match_participants_match_id_fkey"
+            columns: ["match_id"]
             isOneToOne: false
             referencedRelation: "matches"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "match_participants_schools_teams_id_fkey"
-            columns: ["schools_teams_id"]
-            isOneToOne: false
-            referencedRelation: "game_scores_detailed"
-            referencedColumns: ["school_team_id"]
-          },
-          {
-            foreignKeyName: "match_participants_schools_teams_id_fkey"
-            columns: ["schools_teams_id"]
+            foreignKeyName: "match_participants_team_id_fkey"
+            columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "schools_teams"
             referencedColumns: ["id"]
@@ -216,41 +199,44 @@ export type Database = {
           created_at: string
           description: string
           end_at: string | null
-          id: string
+          id: number
           name: string
           scheduled_at: string | null
-          sports_seasons_stages_id: string
+          stage_id: number
           start_at: string | null
           updated_at: string
+          venue: string
         }
         Insert: {
           best_of?: number
           created_at?: string
           description: string
           end_at?: string | null
-          id?: string
+          id?: number
           name: string
           scheduled_at?: string | null
-          sports_seasons_stages_id: string
+          stage_id: number
           start_at?: string | null
           updated_at?: string
+          venue: string
         }
         Update: {
           best_of?: number
           created_at?: string
           description?: string
           end_at?: string | null
-          id?: string
+          id?: number
           name?: string
           scheduled_at?: string | null
-          sports_seasons_stages_id?: string
+          stage_id?: number
           start_at?: string | null
           updated_at?: string
+          venue?: string
         }
         Relationships: [
           {
-            foreignKeyName: "matches_sports_seasons_stages_id_fkey"
-            columns: ["sports_seasons_stages_id"]
+            foreignKeyName: "matches_stage_id_fkey"
+            columns: ["stage_id"]
             isOneToOne: false
             referencedRelation: "sports_seasons_stages"
             referencedColumns: ["id"]
@@ -293,9 +279,9 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
-          schools_id: string
-          seasons_id: string
-          sports_id: string
+          school_id: string
+          season_id: number
+          sport_category_id: number
           updated_at: string
         }
         Insert: {
@@ -303,9 +289,9 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
-          schools_id: string
-          seasons_id: string
-          sports_id: string
+          school_id: string
+          season_id: number
+          sport_category_id: number
           updated_at?: string
         }
         Update: {
@@ -313,38 +299,31 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
-          schools_id?: string
-          seasons_id?: string
-          sports_id?: string
+          school_id?: string
+          season_id?: number
+          sport_category_id?: number
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "schools_teams_schools_id_fkey"
-            columns: ["schools_id"]
-            isOneToOne: false
-            referencedRelation: "game_scores_detailed"
-            referencedColumns: ["school_id"]
-          },
-          {
-            foreignKeyName: "schools_teams_schools_id_fkey"
-            columns: ["schools_id"]
+            foreignKeyName: "schools_teams_school_id_fkey"
+            columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "schools_teams_seasons_id_fkey"
-            columns: ["seasons_id"]
+            foreignKeyName: "schools_teams_season_id_fkey"
+            columns: ["season_id"]
             isOneToOne: false
             referencedRelation: "seasons"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "schools_teams_sports_id_fkey"
-            columns: ["sports_id"]
+            foreignKeyName: "schools_teams_sport_category_id_fkey"
+            columns: ["sport_category_id"]
             isOneToOne: false
-            referencedRelation: "sports"
+            referencedRelation: "sports_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -353,24 +332,21 @@ export type Database = {
         Row: {
           created_at: string
           end_at: string
-          id: string
-          number: number
+          id: number
           start_at: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           end_at: string
-          id?: string
-          number: number
+          id?: number
           start_at: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           end_at?: string
-          id?: string
-          number?: number
+          id?: number
           start_at?: string
           updated_at?: string
         }
@@ -379,68 +355,97 @@ export type Database = {
       sports: {
         Row: {
           created_at: string
-          division: Database["public"]["Enums"]["sport_divisions"]
-          id: string
-          level: Database["public"]["Enums"]["sport_levels"]
+          id: number
           name: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          division: Database["public"]["Enums"]["sport_divisions"]
-          id?: string
-          level: Database["public"]["Enums"]["sport_levels"]
+          id?: number
           name: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          division?: Database["public"]["Enums"]["sport_divisions"]
-          id?: string
-          level?: Database["public"]["Enums"]["sport_levels"]
+          id?: number
           name?: string
           updated_at?: string
         }
         Relationships: []
       }
+      sports_categories: {
+        Row: {
+          created_at: string
+          division: Database["public"]["Enums"]["sport_divisions"]
+          id: number
+          levels: Database["public"]["Enums"]["sport_levels"]
+          sport_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          division: Database["public"]["Enums"]["sport_divisions"]
+          id?: number
+          levels: Database["public"]["Enums"]["sport_levels"]
+          sport_id: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          division?: Database["public"]["Enums"]["sport_divisions"]
+          id?: number
+          levels?: Database["public"]["Enums"]["sport_levels"]
+          sport_id?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_categories_sport_id_fkey"
+            columns: ["sport_id"]
+            isOneToOne: false
+            referencedRelation: "sports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sports_seasons_stages: {
         Row: {
           competition_stage: Database["public"]["Enums"]["competition_stage"]
           created_at: string
-          id: string
-          seasons_id: string
-          sports_id: string
+          id: number
+          season_id: number | null
+          sport_category_id: number | null
           updated_at: string
         }
         Insert: {
           competition_stage: Database["public"]["Enums"]["competition_stage"]
           created_at?: string
-          id?: string
-          seasons_id: string
-          sports_id: string
+          id?: number
+          season_id?: number | null
+          sport_category_id?: number | null
           updated_at?: string
         }
         Update: {
           competition_stage?: Database["public"]["Enums"]["competition_stage"]
           created_at?: string
-          id?: string
-          seasons_id?: string
-          sports_id?: string
+          id?: number
+          season_id?: number | null
+          sport_category_id?: number | null
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "sports_seasons_stages_seasons_id_fkey"
-            columns: ["seasons_id"]
+            foreignKeyName: "sports_seasons_stages_season_id_fkey"
+            columns: ["season_id"]
             isOneToOne: false
             referencedRelation: "seasons"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sports_seasons_stages_sports_id_fkey"
-            columns: ["sports_id"]
+            foreignKeyName: "sports_seasons_stages_sport_category_id_fkey"
+            columns: ["sport_category_id"]
             isOneToOne: false
-            referencedRelation: "sports"
+            referencedRelation: "sports_categories"
             referencedColumns: ["id"]
           },
         ]
@@ -448,54 +453,54 @@ export type Database = {
       volunteers: {
         Row: {
           created_at: string
-          department: string | null
+          department_id: number | null
           full_name: string
           id: string
           image_url: string | null
+          is_active: boolean | null
+          season_id: number | null
           updated_at: string
         }
         Insert: {
           created_at?: string
-          department?: string | null
+          department_id?: number | null
           full_name?: string
           id?: string
           image_url?: string | null
+          is_active?: boolean | null
+          season_id?: number | null
           updated_at?: string
         }
         Update: {
           created_at?: string
-          department?: string | null
+          department_id?: number | null
           full_name?: string
           id?: string
           image_url?: string | null
+          is_active?: boolean | null
+          season_id?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "volunteers_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "volunteers_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
-      game_scores_detailed: {
-        Row: {
-          game_end_time: string | null
-          game_id: string | null
-          game_number: number | null
-          game_score_created_at: string | null
-          game_score_id: string | null
-          game_score_updated_at: string | null
-          game_start_time: string | null
-          match_id: string | null
-          match_name: string | null
-          match_participant_id: string | null
-          placement: number | null
-          school_abbreviation: string | null
-          school_id: string | null
-          school_name: string | null
-          school_team_id: string | null
-          score: number | null
-          team_name: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       user_has_role: {

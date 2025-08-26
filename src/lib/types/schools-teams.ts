@@ -6,16 +6,76 @@ export type SchoolsTeamInsert = Database['public']['Tables']['schools_teams']['I
 export type SchoolsTeamUpdate = Database['public']['Tables']['schools_teams']['Update'];
 
 export interface SchoolsTeamSearchFilters {
-  name?: string;
-  is_active?: boolean;
-  schools_id?: string;
-  seasons_id?: string;
-  sports_id?: string;
-  school_name?: string;
-  season_number?: number;
-  sport_name?: string;
+  school_id?: string;
+  season_id?: number;
+  sport_category_id?: number;
+  team_name?: string;
+  created_at?: {
+    gte?: string;
+    lte?: string;
+  };
 }
 
 export type SchoolsTeamPaginationOptions = PaginationOptions<
   SchoolsTeamSearchFilters & Record<string, FilterValue>
 >;
+
+// Detailed view types for service responses
+export interface SchoolsTeamWithSportDetails {
+  id: string;
+  name: string;
+  school_id: string;
+  season_id: number;
+  sport_category_id: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  sports_categories: {
+    id: number;
+    division: Database['public']['Enums']['sport_divisions'];
+    levels: Database['public']['Enums']['sport_levels'];
+    sports: {
+      name: string;
+    };
+  };
+}
+
+export interface SchoolsTeamWithSchoolDetails {
+  id: string;
+  name: string;
+  school_id: string;
+  season_id: number;
+  sport_category_id: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  schools: {
+    name: string;
+    abbreviation: string;
+    logo_url: string | null;
+  };
+}
+
+export interface SchoolsTeamWithFullDetails {
+  id: string;
+  name: string;
+  school_id: string;
+  season_id: number;
+  sport_category_id: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  sports_categories: {
+    id: number;
+    division: Database['public']['Enums']['sport_divisions'];
+    levels: Database['public']['Enums']['sport_levels'];
+    sports: {
+      name: string;
+    };
+  };
+  seasons: {
+    id: number;
+    start_at: string;
+    end_at: string;
+  };
+}

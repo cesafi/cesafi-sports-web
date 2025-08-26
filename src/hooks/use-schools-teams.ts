@@ -7,9 +7,13 @@ import {
 } from '@tanstack/react-query';
 
 import {
-  getPaginatedSchoolsTeams,
-  getAllSchoolsTeams,
-  getSchoolsTeamById,
+  getSchoolsTeamsBySchoolId,
+  getSchoolsTeamsBySeasonId,
+  getSchoolsTeamsBySportCategoryId,
+  getSchoolsTeamsBySchoolAndSeason,
+  getSchoolsTeamsBySchoolAndSportCategory,
+  getTeamsWithFullDetails,
+  getActiveTeamsBySchool,
   createSchoolsTeam,
   updateSchoolsTeamById,
   deleteSchoolsTeamById
@@ -18,11 +22,10 @@ import {
 import {
   SchoolsTeamInsert,
   SchoolsTeamUpdate,
-  SchoolsTeamPaginationOptions,
   SchoolsTeam
 } from '@/lib/types/schools-teams';
 
-import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
+import { ServiceResponse } from '@/lib/types/base';
 
 // Import related query keys for invalidation
 import { schoolKeys } from './use-schools';
@@ -31,41 +34,28 @@ import { sportKeys } from './use-sports';
 
 export const schoolsTeamKeys = {
   all: ['schools-teams'] as const,
-  paginated: (options: SchoolsTeamPaginationOptions) =>
-    [...schoolsTeamKeys.all, 'paginated', options] as const,
+  bySchool: (schoolId: string) => [...schoolsTeamKeys.all, 'bySchool', schoolId] as const,
+  bySeason: (seasonId: number) => [...schoolsTeamKeys.all, 'bySeason', seasonId] as const,
+  bySportCategory: (sportCategoryId: number) => [...schoolsTeamKeys.all, 'bySportCategory', sportCategoryId] as const,
+  bySchoolAndSeason: (schoolId: string, seasonId: number) => [...schoolsTeamKeys.all, 'bySchoolAndSeason', schoolId, seasonId] as const,
+  bySchoolAndSportCategory: (schoolId: string, sportCategoryId: number) => [...schoolsTeamKeys.all, 'bySchoolAndSportCategory', schoolId, sportCategoryId] as const,
+  withFullDetails: (schoolId: string) => [...schoolsTeamKeys.all, 'withFullDetails', schoolId] as const,
+  activeBySchool: (schoolId: string) => [...schoolsTeamKeys.all, 'activeBySchool', schoolId] as const,
   details: (id: string) => [...schoolsTeamKeys.all, id] as const
 };
 
-export function usePaginatedSchoolsTeams(
-  options: SchoolsTeamPaginationOptions,
-  queryOptions?: UseQueryOptions<
-    ServiceResponse<PaginatedResponse<SchoolsTeam>>,
-    Error,
-    PaginatedResponse<SchoolsTeam>
-  >
-) {
-  return useQuery({
-    queryKey: schoolsTeamKeys.paginated(options),
-    queryFn: () => getPaginatedSchoolsTeams(options),
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch paginated schools teams.');
-      }
-      return data.data;
-    },
-    ...queryOptions
-  });
-}
-
-export function useAllSchoolsTeams(
+// Context-based fetching hooks
+export function useSchoolsTeamsBySchoolId(
+  schoolId: string,
   queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeam[]>, Error, SchoolsTeam[]>
 ) {
   return useQuery({
-    queryKey: schoolsTeamKeys.all,
-    queryFn: getAllSchoolsTeams,
+    queryKey: schoolsTeamKeys.bySchool(schoolId),
+    queryFn: () => getSchoolsTeamsBySchoolId(schoolId),
+    enabled: !!schoolId,
     select: (data) => {
       if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch all schools teams.');
+        throw new Error(data.error || 'Failed to fetch schools teams by school ID.');
       }
       return data.data;
     },
@@ -73,23 +63,116 @@ export function useAllSchoolsTeams(
   });
 }
 
-export function useSchoolsTeamById(
-  id: string,
-  queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeam>, Error, SchoolsTeam>
+export function useSchoolsTeamsBySeasonId(
+  seasonId: number,
+  queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeam[]>, Error, SchoolsTeam[]>
 ) {
   return useQuery({
-    queryKey: schoolsTeamKeys.details(id),
-    queryFn: () => getSchoolsTeamById(id),
-    enabled: !!id,
+    queryKey: schoolsTeamKeys.bySeason(seasonId),
+    queryFn: () => getSchoolsTeamsBySeasonId(seasonId),
+    enabled: !!seasonId,
     select: (data) => {
       if (!data.success) {
-        throw new Error(data.error || `Schools team with ID ${id} not found.`);
+        throw new Error(data.error || 'Failed to fetch schools teams by season ID.');
       }
       return data.data;
     },
     ...queryOptions
   });
 }
+
+export function useSchoolsTeamsBySportCategoryId(
+  sportCategoryId: number,
+  queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeam[]>, Error, SchoolsTeam[]>
+) {
+  return useQuery({
+    queryKey: schoolsTeamKeys.bySportCategory(sportCategoryId),
+    queryFn: () => getSchoolsTeamsBySportCategoryId(sportCategoryId),
+    enabled: !!sportCategoryId,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch schools teams by sport category ID.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useSchoolsTeamsBySchoolAndSeason(
+  schoolId: string,
+  seasonId: number,
+  queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeam[]>, Error, SchoolsTeam[]>
+) {
+  return useQuery({
+    queryKey: schoolsTeamKeys.bySchoolAndSeason(schoolId, seasonId),
+    queryFn: () => getSchoolsTeamsBySchoolAndSeason(schoolId, seasonId),
+    enabled: !!(schoolId && seasonId),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch schools teams by school and season.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useSchoolsTeamsBySchoolAndSportCategory(
+  schoolId: string,
+  sportCategoryId: number,
+  queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeam[]>, Error, SchoolsTeam[]>
+) {
+  return useQuery({
+    queryKey: schoolsTeamKeys.bySchoolAndSportCategory(schoolId, sportCategoryId),
+    queryFn: () => getSchoolsTeamsBySchoolAndSportCategory(schoolId, sportCategoryId),
+    enabled: !!(schoolId && sportCategoryId),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch schools teams by school and sport category.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useTeamsWithFullDetails(
+  schoolId: string,
+  queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeam[]>, Error, SchoolsTeam[]>
+) {
+  return useQuery({
+    queryKey: schoolsTeamKeys.withFullDetails(schoolId),
+    queryFn: () => getTeamsWithFullDetails(schoolId),
+    enabled: !!schoolId,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch teams with full details.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useActiveTeamsBySchool(
+  schoolId: string,
+  queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeam[]>, Error, SchoolsTeam[]>
+) {
+  return useQuery({
+    queryKey: schoolsTeamKeys.activeBySchool(schoolId),
+    queryFn: () => getActiveTeamsBySchool(schoolId),
+    enabled: !!schoolId,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch active teams by school.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
 export function useCreateSchoolsTeam(
   mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, SchoolsTeamInsert>
 ) {

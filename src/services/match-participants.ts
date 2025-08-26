@@ -1,35 +1,99 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
-import { BaseService } from './base';
-import { MatchParticipant, MatchParticipantInsert, MatchParticipantUpdate } from '@/lib/types/match-participants';
 import { AuthService } from './auth';
+import { ServiceResponse } from '@/lib/types/base';
+import {
+  MatchParticipantInsert,
+  MatchParticipantUpdate,
+  MatchParticipantWithTeamDetails,
+  MatchParticipantWithMatchDetails,
+  MatchParticipantWithFullDetails,
+  MatchParticipantWithMatchHistory
+} from '@/lib/types/match-participants';
+import { BaseService } from './base';
 
 const TABLE_NAME = 'match_participants';
 
 export class MatchParticipantService extends BaseService {
-  static async getPaginated(
-    options: PaginationOptions,
-    selectQuery: string = '*'
-  ): Promise<ServiceResponse<PaginatedResponse<MatchParticipant>>> {
-    try {
-      const result = await this.getPaginatedData<MatchParticipant, typeof TABLE_NAME>(
-        TABLE_NAME,
-        options,
-        selectQuery
-      );
-
-      return result;
-    } catch (err) {
-      return this.formatError(err, `Failed to retrieve paginated match participants.`);
-    }
-  }
-
-  static async getAll(): Promise<ServiceResponse<MatchParticipant[]>> {
+  static async getByMatchId(
+    matchId: number
+  ): Promise<ServiceResponse<MatchParticipantWithTeamDetails[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select()
-        .order('placement', { ascending: true });
+        .select(
+          `
+          *,
+          schools_teams!inner(
+            id,
+            name,
+            schools!inner(name, abbreviation)
+          )
+        `
+        )
+        .eq('match_id', matchId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch match participants for match ${matchId}.`);
+    }
+  }
+
+  static async getByTeamId(
+    teamId: string
+  ): Promise<ServiceResponse<MatchParticipantWithMatchDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          matches!inner(
+            id,
+            name,
+            scheduled_at
+          )
+        `
+        )
+        .eq('team_id', teamId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch match participants for team ${teamId}.`);
+    }
+  }
+
+  static async getByMatchAndTeam(
+    matchId: number,
+    teamId: string
+  ): Promise<ServiceResponse<MatchParticipantWithTeamDetails>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          schools_teams!inner(
+            id,
+            name,
+            schools!inner(name, abbreviation)
+          )
+        `
+        )
+        .eq('match_id', matchId)
+        .eq('team_id', teamId)
+        .single();
 
       if (error) {
         throw error;
@@ -37,37 +101,10 @@ export class MatchParticipantService extends BaseService {
 
       return { success: true, data };
     } catch (err) {
-      return this.formatError(err, `Failed to fetch all ${TABLE_NAME} entity.`);
-    }
-  }
-
-  static async getCount(): Promise<ServiceResponse<number>> {
-    try {
-      const supabase = await this.getClient();
-      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
-
-      if (error) {
-        throw error;
-      }
-
-      return { success: true, data: count || 0 };
-    } catch (err) {
-      return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
-    }
-  }
-
-  static async getById(id: string): Promise<ServiceResponse<MatchParticipant>> {
-    try {
-      const supabase = await this.getClient();
-      const { data, error } = await supabase.from(TABLE_NAME).select().eq('id', id).single();
-
-      if (error) {
-        throw error;
-      }
-
-      return { success: true, data };
-    } catch (err) {
-      return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity.`);
+      return this.formatError(
+        err,
+        `Failed to fetch match participant for match ${matchId} and team ${teamId}.`
+      );
     }
   }
 
@@ -90,15 +127,16 @@ export class MatchParticipantService extends BaseService {
 
       const supabase = await this.getClient();
 
-      // Check if the combination of match and team already exists
+      // Check if this team is already participating in this match
       const { data: existingParticipant, error: checkError } = await supabase
         .from(TABLE_NAME)
         .select('id')
-        .eq('matches_id', data.matches_id)
-        .eq('schools_teams_id', data.schools_teams_id)
+        .eq('match_id', data.match_id)
+        .eq('team_id', data.team_id)
         .single();
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 is "not found" error
         throw checkError;
       }
 
@@ -111,8 +149,8 @@ export class MatchParticipantService extends BaseService {
 
       // Verify that the referenced entities exist
       const [matchCheck, teamCheck] = await Promise.all([
-        supabase.from('matches').select('id').eq('id', data.matches_id).single(),
-        supabase.from('schools_teams').select('id').eq('id', data.schools_teams_id).single()
+        supabase.from('matches').select('id').eq('id', data.match_id).single(),
+        supabase.from('schools_teams').select('id').eq('id', data.team_id).single()
       ]);
 
       if (matchCheck.error) {
@@ -120,27 +158,6 @@ export class MatchParticipantService extends BaseService {
       }
       if (teamCheck.error) {
         return { success: false, error: 'Referenced team does not exist.' };
-      }
-
-      // If placement is provided, check if it's already taken in this match
-      if (data.placement) {
-        const { data: placementCheck, error: placementError } = await supabase
-          .from(TABLE_NAME)
-          .select('id')
-          .eq('matches_id', data.matches_id)
-          .eq('placement', data.placement)
-          .single();
-
-        if (placementError && placementError.code !== 'PGRST116') {
-          throw placementError;
-        }
-
-        if (placementCheck) {
-          return {
-            success: false,
-            error: `Placement ${data.placement} is already taken in this match.`
-          };
-        }
       }
 
       const { error } = await supabase.from(TABLE_NAME).insert(data);
@@ -151,14 +168,14 @@ export class MatchParticipantService extends BaseService {
 
       return { success: true, data: undefined };
     } catch (err) {
-      return this.formatError(err, `Failed to insert new ${TABLE_NAME} entity.`);
+      return this.formatError(err, `Failed to insert new match participant.`);
     }
   }
 
   static async updateById(data: MatchParticipantUpdate): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
-        return { success: false, error: 'Entity ID is required to update.' };
+        return { success: false, error: 'Match participant ID is required to update.' };
       }
 
       const roles = ['admin', 'league_operator'];
@@ -179,11 +196,11 @@ export class MatchParticipantService extends BaseService {
       const supabase = await this.getClient();
 
       // If updating relationship fields, check for duplicates
-      if (data.matches_id || data.schools_teams_id) {
+      if (data.match_id || data.team_id) {
         // Get current participant data to fill in missing relationship IDs
         const { data: currentParticipant, error: currentError } = await supabase
           .from(TABLE_NAME)
-          .select('matches_id, schools_teams_id')
+          .select('match_id, team_id')
           .eq('id', data.id)
           .single();
 
@@ -191,19 +208,20 @@ export class MatchParticipantService extends BaseService {
           throw currentError;
         }
 
-        const matchesId = data.matches_id || currentParticipant.matches_id;
-        const schoolsTeamsId = data.schools_teams_id || currentParticipant.schools_teams_id;
+        const matchId = data.match_id || currentParticipant.match_id;
+        const teamId = data.team_id || currentParticipant.team_id;
 
         // Check if the combination already exists (excluding current participant)
         const { data: existingParticipant, error: checkError } = await supabase
           .from(TABLE_NAME)
           .select('id')
-          .eq('matches_id', matchesId)
-          .eq('schools_teams_id', schoolsTeamsId)
+          .eq('match_id', matchId)
+          .eq('team_id', teamId)
           .neq('id', data.id)
           .single();
 
-        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+        if (checkError && checkError.code !== 'PGRST116') {
+          // PGRST116 is "not found" error
           throw checkError;
         }
 
@@ -216,60 +234,25 @@ export class MatchParticipantService extends BaseService {
 
         // Verify that the referenced entities exist if they're being updated
         const checks = [];
-        if (data.matches_id) {
-          checks.push(supabase.from('matches').select('id').eq('id', data.matches_id).single());
+        if (data.match_id) {
+          checks.push(supabase.from('matches').select('id').eq('id', data.match_id).single());
         }
-        if (data.schools_teams_id) {
-          checks.push(supabase.from('schools_teams').select('id').eq('id', data.schools_teams_id).single());
+        if (data.team_id) {
+          checks.push(supabase.from('schools_teams').select('id').eq('id', data.team_id).single());
         }
 
         if (checks.length > 0) {
           const results = await Promise.all(checks);
           let index = 0;
-          
-          if (data.matches_id && results[index]?.error) {
+
+          if (data.match_id && results[index]?.error) {
             return { success: false, error: 'Referenced match does not exist.' };
           }
-          if (data.matches_id) index++;
-          
-          if (data.schools_teams_id && results[index]?.error) {
+          if (data.match_id) index++;
+
+          if (data.team_id && results[index]?.error) {
             return { success: false, error: 'Referenced team does not exist.' };
           }
-        }
-      }
-
-      // If placement is being updated, check if it's already taken in this match
-      if (data.placement) {
-        // Get the match ID for this participant
-        const { data: currentParticipant, error: currentError } = await supabase
-          .from(TABLE_NAME)
-          .select('matches_id')
-          .eq('id', data.id)
-          .single();
-
-        if (currentError) {
-          throw currentError;
-        }
-
-        const matchId = data.matches_id || currentParticipant.matches_id;
-
-        const { data: placementCheck, error: placementError } = await supabase
-          .from(TABLE_NAME)
-          .select('id')
-          .eq('matches_id', matchId)
-          .eq('placement', data.placement)
-          .neq('id', data.id)
-          .single();
-
-        if (placementError && placementError.code !== 'PGRST116') {
-          throw placementError;
-        }
-
-        if (placementCheck) {
-          return {
-            success: false,
-            error: `Placement ${data.placement} is already taken in this match.`
-          };
         }
       }
 
@@ -281,14 +264,14 @@ export class MatchParticipantService extends BaseService {
 
       return { success: true, data: undefined };
     } catch (err) {
-      return this.formatError(err, `Failed to update ${TABLE_NAME} entity.`);
+      return this.formatError(err, `Failed to update match participant.`);
     }
   }
 
-  static async deleteById(id: string): Promise<ServiceResponse<undefined>> {
+  static async deleteById(id: number): Promise<ServiceResponse<undefined>> {
     try {
       if (!id) {
-        return { success: false, error: 'Entity ID is required to delete.' };
+        return { success: false, error: 'Match participant ID is required to delete.' };
       }
 
       const roles = ['admin', 'league_operator'];
@@ -308,11 +291,11 @@ export class MatchParticipantService extends BaseService {
 
       const supabase = await this.getClient();
 
-      // Check if this participant has game scores
+      // Check if this participant has any game scores
       const { data: gameScores, error: checkError } = await supabase
         .from('game_scores')
         .select('id')
-        .eq('match_participants_id', id)
+        .eq('match_participant_id', id)
         .limit(1);
 
       if (checkError) {
@@ -322,7 +305,8 @@ export class MatchParticipantService extends BaseService {
       if (gameScores && gameScores.length > 0) {
         return {
           success: false,
-          error: 'Cannot delete match participant that has game scores. Please remove game scores first.'
+          error:
+            'Cannot delete match participant that has game scores. Please remove game scores first.'
         };
       }
 
@@ -334,7 +318,76 @@ export class MatchParticipantService extends BaseService {
 
       return { success: true, data: undefined };
     } catch (err) {
-      return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);
+      return this.formatError(err, `Failed to delete match participant.`);
+    }
+  }
+
+  static async getMatchParticipantsWithDetails(
+    matchId: number
+  ): Promise<ServiceResponse<MatchParticipantWithFullDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          schools_teams!inner(
+            id,
+            name,
+            schools!inner(name, abbreviation, logo_url)
+          )
+        `
+        )
+        .eq('match_id', matchId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch match participants with details.`);
+    }
+  }
+
+  static async getTeamMatchHistory(
+    teamId: string
+  ): Promise<ServiceResponse<MatchParticipantWithMatchHistory[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          matches!inner(
+            id,
+            name,
+            scheduled_at,
+            venue,
+            sports_seasons_stages!inner(
+              competition_stage,
+              sports_categories!inner(
+                division,
+                levels,
+                sports!inner(name)
+              )
+            )
+          )
+        `
+        )
+        .eq('team_id', teamId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch team match history.`);
     }
   }
 }

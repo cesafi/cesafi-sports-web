@@ -16,7 +16,7 @@ export async function getAllSportsSeasonsStages() {
   return await SportsSeasonsStageService.getAll();
 }
 
-export async function getSportsSeasonsStageById(id: string) {
+export async function getSportsSeasonsStageById(id: number) {
   return await SportsSeasonsStageService.getById(id);
 }
 
@@ -40,7 +40,7 @@ export async function updateSportsSeasonsStageById(data: SportsSeasonsStageUpdat
   return result;
 }
 
-export async function deleteSportsSeasonsStageById(id: string) {
+export async function deleteSportsSeasonsStageById(id: number) {
   const result = await SportsSeasonsStageService.deleteById(id);
 
   if (result.success) {

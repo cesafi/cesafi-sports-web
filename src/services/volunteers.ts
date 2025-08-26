@@ -16,9 +16,49 @@ export class VolunteerService extends BaseService {
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<Volunteer>>> {
     try {
+      const searchableFields = ['full_name', 'department_id'];
+      const optionsWithSearchableFields = {
+        ...options,
+        searchableFields
+      };
+
+      // Filter by season_id if provided
+      if (options.filters?.season_id) {
+        const supabase = await this.getClient();
+        const { data, error } = await supabase
+          .from(TABLE_NAME)
+          .select('*')
+          .eq('season_id', options.filters.season_id)
+          .order(options.sortBy || 'created_at', { ascending: options.sortOrder === 'asc' });
+
+        if (error) {
+          throw error;
+        }
+
+        // Get total count for pagination
+        const { count } = await supabase
+          .from(TABLE_NAME)
+          .select('*', { count: 'exact', head: true })
+          .eq('season_id', options.filters.season_id);
+
+        const totalCount = count || 0;
+        const pageCount = Math.ceil(totalCount / (options.pageSize || 10));
+        const currentPage = options.page || 1;
+
+        return {
+          success: true,
+          data: {
+            data: (data || []) as Volunteer[],
+            totalCount,
+            pageCount,
+            currentPage
+          }
+        };
+      }
+
       const result = await this.getPaginatedData<Volunteer, typeof TABLE_NAME>(
         TABLE_NAME,
-        options,
+        optionsWithSearchableFields,
         selectQuery
       );
 
@@ -34,8 +74,8 @@ export class VolunteerService extends BaseService {
       const { data, error } = await supabase
         .from(TABLE_NAME)
         .select()
-        .order('full_name', { ascending: true })
-        .order('created_at', { ascending: false });
+        .order('department_id', { ascending: true })
+        .order('full_name', { ascending: true });
 
       if (error) {
         throw error;
@@ -50,7 +90,9 @@ export class VolunteerService extends BaseService {
   static async getCount(): Promise<ServiceResponse<number>> {
     try {
       const supabase = await this.getClient();
-      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+      const { count, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
 
       if (error) {
         throw error;
@@ -77,13 +119,13 @@ export class VolunteerService extends BaseService {
     }
   }
 
-  static async getByDepartment(department: string): Promise<ServiceResponse<Volunteer[]>> {
+  static async getByDepartment(departmentId: number): Promise<ServiceResponse<Volunteer[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
         .select()
-        .eq('department', department)
+        .eq('department_id', departmentId)
         .order('full_name', { ascending: true });
 
       if (error) {
@@ -92,7 +134,7 @@ export class VolunteerService extends BaseService {
 
       return { success: true, data };
     } catch (err) {
-      return this.formatError(err, `Failed to fetch volunteers by department.`);
+      return this.formatError(err, `Failed to fetch volunteers by department_id.`);
     }
   }
 
@@ -248,25 +290,6 @@ export class VolunteerService extends BaseService {
 
       const supabase = await this.getClient();
 
-      // Check if volunteer has authored any articles before deletion
-      const { data: articles, error: articlesError } = await supabase
-        .from('articles')
-        .select('id, title')
-        .eq('authored_by', id)
-        .limit(1);
-
-      if (articlesError) {
-        throw articlesError;
-      }
-
-      if (articles && articles.length > 0) {
-        return {
-          success: false,
-          error:
-            'Cannot delete volunteer who has authored articles. Please reassign articles first.'
-        };
-      }
-
       const { error } = await supabase.from(TABLE_NAME).delete().eq('id', id);
 
       if (error) {
@@ -276,34 +299,6 @@ export class VolunteerService extends BaseService {
       return { success: true, data: undefined };
     } catch (err) {
       return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);
-    }
-  }
-
-  static async getDepartments(): Promise<ServiceResponse<string[]>> {
-    try {
-      const supabase = await this.getClient();
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select('department')
-        .not('department', 'is', null)
-        .order('department', { ascending: true });
-
-      if (error) {
-        throw error;
-      }
-
-      // Extract unique departments
-      const departments: string[] = [
-        ...new Set<string>(
-          data
-            .map((item) => item.department)
-            .filter((dept): dept is string => dept !== null)
-        )
-      ];
-
-      return { success: true, data: departments };
-    } catch (err) {
-      return this.formatError(err, `Failed to fetch volunteer departments.`);
     }
   }
 }

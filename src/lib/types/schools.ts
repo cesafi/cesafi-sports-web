@@ -6,9 +6,12 @@ export type SchoolInsert = Database['public']['Tables']['schools']['Insert'];
 export type SchoolUpdate = Database['public']['Tables']['schools']['Update'];
 
 export interface SchoolSearchFilters {
-  abbreviation?: string;
-  name: string;
-  is_active: boolean;
+  name?: string;
+  address?: string;
+  created_at?: {
+    gte?: string;
+    lte?: string;
+  };
 }
 
 export type SchoolPaginationOptions = PaginationOptions<

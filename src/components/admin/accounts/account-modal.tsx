@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ModalLayout } from '@/components/ui/modal-layout';
-import { useAccountsTable } from '@/hooks/use-accounts-table';
+import { useAccountsTable } from '@/hooks/use-accounts';
 import { CreateAccountFormData, UpdateAccountFormData, createAccountSchema, updateAccountSchema } from '@/lib/validations/accounts';
 import { AccountData } from '@/services/accounts';
 import { toast } from 'sonner';
@@ -137,7 +137,8 @@ export function AccountModal({ isOpen, onClose, mode, account, onSuccess }: Acco
       } else if (mode === 'edit' && account) {
         updateAccount({ userId: account.id, accountData: formData as UpdateAccountFormData });
       }
-    } catch {
+    } catch (error) {
+      console.error('Error in form submission:', error);
       toast.error(mode === 'add' ? 'Failed to create account' : 'Failed to update account');
     }
   };

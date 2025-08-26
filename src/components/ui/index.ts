@@ -15,3 +15,5 @@ export { Separator } from './separator';
 export { Toaster } from './sonner';
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 export { DateDisplay, TableDate, SmartDate, RelativeDate, DetailedDate } from './date-display';
+export { Calendar } from './calendar';
+export { Popover, PopoverContent, PopoverTrigger } from './popover';

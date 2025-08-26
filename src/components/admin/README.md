@@ -1,6 +1,6 @@
 # Admin Entity Management Pages Implementation Guide
 
-This guide documents the pattern for implementing new entity management pages in the admin dashboard, using the **Accounts Management** as the reference implementation.
+This guide documents the pattern for implementing new entity management pages in the admin dashboard, using the **Seasons Management** as the reference implementation.
 
 ## 🏗️ **Architecture Pattern**
 
@@ -18,9 +18,9 @@ src/components/admin/[entity-name]/
 ### **2. Required Files**
 - **Table Columns**: Define how data is displayed in the table
 - **Modal**: Handle create/edit operations
-- **Hook**: Manage data fetching, mutations, and state
+- **Hook**: Manage data fetching, mutations, and state (consolidated in main entity hook)
 - **Actions**: Server-side CRUD operations
-- **Validation**: Zod schemas for form validation
+- **Validation**: Zod schemas for form validation (in separate file)
 
 ## 📋 **Implementation Steps**
 
@@ -35,6 +35,7 @@ import { TableColumn } from '@/lib/types/table';
 import { EntityType } from '@/lib/types/[entity]';
 import { Badge } from '@/components/ui/badge';
 import { formatTableDate } from '@/lib/utils/date';
+import { Pencil, Trash2 } from 'lucide-react';
 
 export const get[Entity]TableColumns = (): TableColumn<EntityType>[] => [
   {
@@ -63,7 +64,14 @@ export const get[Entity]TableActions = (
     variant: 'ghost' as const,
     size: 'sm' as const
   },
-  // ... more actions
+  {
+    key: 'delete',
+    label: 'Delete Entity',
+    icon: <Trash2 className="h-4 w-4" />,
+    onClick: onDelete,
+    variant: 'ghost' as const,
+    size: 'sm' as const
+  }
 ];
 ```
 
@@ -192,20 +200,166 @@ export function EntityModal({ ... }: EntityModalProps) {
 }
 ```
 
-### **Step 3: Create Hook**
+### **Step 3: Create Consolidated Hook**
 
-**File**: `src/hooks/use-[entity]-table.ts`
+**File**: `src/hooks/use-[entity].ts`
 
-**Pattern**: Use `useTable` from `@/hooks/use-table`
+**Pattern**: Consolidate both basic entity operations and table functionality in one file
 
 ```typescript
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getPaginated[Entity], create[Entity], update[Entity], delete[Entity] } from '@/actions/[entity]';
-import { useTable } from './use-table';
-import { EntityType } from '@/lib/types/[entity]';
-import { toast } from 'sonner';
-import { TableFilters } from '@/lib/types/table';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryOptions,
+  UseMutationOptions
+} from '@tanstack/react-query';
 
+import {
+  getPaginated[Entity],
+  getAll[Entity],
+  get[Entity]ById,
+  create[Entity],
+  update[Entity]ById,
+  delete[Entity]ById
+} from '@/actions/[entity]';
+
+import { EntityInsert, EntityUpdate, EntityPaginationOptions, Entity } from '@/lib/types/[entity]';
+import { PaginatedResponse, ServiceResponse, FilterValue, PaginationOptions } from '@/lib/types/base';
+import { useTable } from './use-table';
+import { TableFilters } from '@/lib/types/table';
+import { toast } from 'sonner';
+
+// Query keys for caching
+export const entityKeys = {
+  all: ['[entity]'] as const,
+  paginated: (options: EntityPaginationOptions) =>
+    [...entityKeys.all, 'paginated', options] as const,
+  details: (id: string) => [...entityKeys.all, id] as const
+};
+
+// Basic entity operations (for non-table use cases)
+export function usePaginated[Entity](
+  options: EntityPaginationOptions,
+  queryOptions?: UseQueryOptions<
+    ServiceResponse<PaginatedResponse<Entity>>,
+    Error,
+    PaginatedResponse<Entity>
+  >
+) {
+  return useQuery({
+    queryKey: entityKeys.paginated(options),
+    queryFn: () => getPaginated[Entity](options),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch paginated [entity].');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useAll[Entity](
+  queryOptions?: UseQueryOptions<ServiceResponse<Entity[]>, Error, Entity[]>
+) {
+  return useQuery({
+    queryKey: entityKeys.all,
+    queryFn: getAll[Entity],
+    select: (data) => {
+      if (!data.success || !data.data) {
+        throw new Error(data.success === false ? data.error : 'Failed to fetch all [entity].');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function use[Entity]ById(
+  id: string,
+  queryOptions?: UseQueryOptions<ServiceResponse<Entity>, Error, Entity>
+) {
+  return useQuery({
+    queryKey: entityKeys.details(id),
+    queryFn: () => get[Entity]ById(id),
+    enabled: !!id,
+    select: (data) => {
+      if (!data.success || !data.data) {
+        throw new Error(data.success === false ? data.error : `[Entity] with ID ${id} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+// Mutation hooks
+export function useCreate[Entity](
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, EntityInsert>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: create[Entity],
+    onSuccess: (result, variables, context) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: entityKeys.all });
+      }
+      mutationOptions?.onSuccess?.(result, variables, context);
+    },
+    onError: (error, variables, context) => {
+      console.error('Failed to create [entity]:', error);
+      mutationOptions?.onError?.(error, variables, context);
+    },
+    ...mutationOptions
+  });
+}
+
+export function useUpdate[Entity](
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, EntityUpdate>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: update[Entity]ById,
+    onSuccess: (result, variables, context) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: entityKeys.all });
+        if (variables.id) {
+          queryClient.invalidateQueries({ queryKey: entityKeys.details(variables.id) });
+        }
+      }
+      mutationOptions?.onSuccess?.(result, variables, context);
+    },
+    onError: (error, variables, context) => {
+      console.error('Failed to update [entity]:', error);
+      mutationOptions?.onError?.(error, variables, context);
+    },
+    ...mutationOptions
+  });
+}
+
+export function useDelete[Entity](
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, string>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: delete[Entity]ById,
+    onSuccess: (result, id, context) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: entityKeys.all });
+        queryClient.invalidateQueries({ queryKey: entityKeys.details(id) });
+      }
+      mutationOptions?.onSuccess?.(result, id, context);
+    },
+    onError: (error, id, context) => {
+      console.error('Failed to delete [entity]:', error);
+      mutationOptions?.onError?.(error, id, context);
+    },
+    ...mutationOptions
+  });
+}
+
+// Table-specific hook that extends the base entity functionality
 export function use[Entity]Table() {
   const {
     tableState,
@@ -216,7 +370,7 @@ export function use[Entity]Table() {
     setFilters,
     resetFilters,
     paginationOptions
-  } = useTable<EntityType>({
+  } = useTable<Entity>({
     initialPage: 1,
     initialPageSize: 10,
     initialSortBy: 'created_at',
@@ -233,7 +387,7 @@ export function use[Entity]Table() {
     refetch
   } = useQuery({
     queryKey: ['[entity]', 'paginated', paginationOptions],
-    queryFn: () => getPaginated[Entity](paginationOptions),
+    queryFn: () => getPaginated[Entity](paginationOptions as PaginationOptions<Record<string, FilterValue>>),
     select: (data) => {
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch [entity]');
@@ -242,10 +396,13 @@ export function use[Entity]Table() {
     }
   });
 
+  // Show table body loading when fetching (for sorting, searching, filtering)
+  // but not on initial load
   const tableBodyLoading = isFetching && !isLoading;
+
   const queryClient = useQueryClient();
 
-  // Mutations
+  // Create entity mutation
   const createEntityMutation = useMutation({
     mutationFn: create[Entity],
     onSuccess: (result) => {
@@ -261,9 +418,62 @@ export function use[Entity]Table() {
     }
   });
 
-  // ... similar mutations for update and delete
+  // Update entity mutation
+  const updateEntityMutation = useMutation({
+    mutationFn: (data: EntityUpdate) => update[Entity]ById(data),
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('[Entity] updated successfully');
+        queryClient.invalidateQueries({ queryKey: ['[entity]'] });
+      } else {
+        toast.error(result.error || 'Failed to update [entity]');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
 
-  // Return hook interface
+  // Delete entity mutation
+  const deleteEntityMutation = useMutation({
+    mutationFn: delete[Entity]ById,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('[Entity] deleted successfully');
+        queryClient.invalidateQueries({ queryKey: ['[entity]'] });
+      } else {
+        toast.error(result.error || 'Failed to delete [entity]');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
+
+  // Handle search with debouncing
+  const handleSearch = (search: string) => {
+    setSearch(search);
+  };
+
+  // Handle filters
+  const handleFilters = (filters: TableFilters) => {
+    setFilters(filters);
+  };
+
+  // Handle sorting
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    setSortBy(sortBy, sortOrder);
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setPage(page);
+  };
+
+  const handlePageSizeChange = (pageSize: number) => {
+    setPageSize(pageSize);
+  };
+
   return {
     // Data
     [entity]: entityData?.data || [],
@@ -277,13 +487,13 @@ export function use[Entity]Table() {
 
     // Mutations
     create[Entity]: createEntityMutation.mutate,
-    update[Entity]: update[Entity]Mutation.mutate,
-    delete[Entity]: delete[Entity]Mutation.mutate,
+    update[Entity]: updateEntityMutation.mutate,
+    delete[Entity]: deleteEntityMutation.mutate,
 
     // Loading states
     isCreating: createEntityMutation.isPending,
-    isUpdating: update[Entity]Mutation.isPending,
-    isDeleting: delete[Entity]Mutation.isPending,
+    isUpdating: updateEntityMutation.isPending,
+    isDeleting: deleteEntityMutation.isPending,
 
     // Actions
     refetch,
@@ -342,14 +552,30 @@ export async function create[Entity](data: EntityInsert) {
   return result;
 }
 
-// ... similar functions for update and delete
+export async function update[Entity]ById(data: EntityUpdate) {
+  const result = await EntityService.updateById(data);
+  if (result.success) {
+    revalidatePath('/admin/[entity]');
+  }
+  return result;
+}
+
+export async function delete[Entity]ById(id: string) {
+  const result = await EntityService.deleteById(id);
+  if (result.success) {
+    revalidatePath('/admin/[entity]');
+  }
+  return result;
+}
+
+// ... other entity-specific actions
 ```
 
 ### **Step 5: Create Validation Schemas**
 
 **File**: `src/lib/validations/[entity].ts`
 
-**Pattern**: Use Zod for validation
+**Pattern**: Use Zod for validation in a separate file
 
 ```typescript
 import { z } from 'zod';
@@ -374,20 +600,19 @@ export const [Entity]UpdateSchema = update[Entity]Schema;
 
 **File**: `src/app/(protected)/admin/[entity]/page.tsx`
 
-**Pattern**: Use the hook and components
+**Pattern**: Use the consolidated hook and DataTable with proper props
 
 ```typescript
 'use client';
 
 import { useState } from 'react';
 import { DataTable } from '@/components/table';
-import { use[Entity]Table } from '@/hooks/use-[entity]-table';
+import { use[Entity]Table } from '@/hooks/use-[entity]';
 import { get[Entity]TableColumns, get[Entity]TableActions } from '@/components/admin/[entity]';
 import { EntityType } from '@/lib/types/[entity]';
 import { EntityModal } from '@/components/admin/[entity]';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { EntityInsert, EntityUpdate } from '@/lib/types/[entity]';
 
 export default function [Entity]ManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -429,11 +654,24 @@ export default function [Entity]ManagementPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const confirmDeleteEntity = async () => {
+    if (!entityToDelete) return;
+
+    try {
+      delete[Entity](entityToDelete.id);
+      setIsDeleteModalOpen(false);
+      setEntityToDelete(undefined);
+    } catch {
+      setIsDeleteModalOpen(false);
+      setEntityToDelete(undefined);
+    }
+  };
+
   const handleSubmit = async (data: EntityInsert | EntityUpdate) => {
     if (modalMode === 'add') {
-      create[Entity](data);
+      create[Entity](data as EntityInsert);
     } else {
-      update[Entity]({ id: editingEntity!.id, ...data });
+      update[Entity](data as EntityUpdate);
     }
   };
 
@@ -442,27 +680,7 @@ export default function [Entity]ManagementPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">[Entity] Management</h1>
-        <p className="text-muted-foreground">
-          View and manage [entity] entries.
-        </p>
-      </div>
-
-      {/* Action Bar */}
-      <div className="flex items-center gap-4">
-        <Button onClick={() => {
-          setModalMode('add');
-          setEditingEntity(undefined);
-          setIsModalOpen(true);
-        }}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add [Entity]
-        </Button>
-      </div>
-
-      {/* Data Table */}
+      {/* Data Table - Use DataTable props for header and actions */}
       <DataTable
         data={[entity]}
         totalCount={totalCount}
@@ -481,9 +699,19 @@ export default function [Entity]ManagementPage() {
         onFiltersChange={onFiltersChange}
         title="[Entity] Management"
         subtitle="View and manage [entity] entries."
-        searchPlaceholder="Search [entity] by name..."
+        searchPlaceholder="Search [entity]..."
         showSearch={true}
         showFilters={false}
+        addButton={{
+          label: 'Add [Entity]',
+          onClick: () => {
+            setModalMode('add');
+            setEditingEntity(undefined);
+            setIsModalOpen(true);
+          }
+        }}
+        className=""
+        emptyMessage="No [entity] found"
       />
 
       {/* Modal */}
@@ -500,17 +728,13 @@ export default function [Entity]ManagementPage() {
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteEntity}
         type="delete"
         title="Delete [Entity]"
-        message={`Are you sure you want to delete "${entityToDelete?.name}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete this [entity]? This action cannot be undone.`}
         confirmText="Delete"
-        onConfirm={() => {
-          if (entityToDelete) {
-            delete[Entity](entityToDelete.id);
-            setIsDeleteModalOpen(false);
-            setEntityToDelete(undefined);
-          }
-        }}
+        cancelText="Cancel"
+        destructive={true}
         isLoading={isDeleting}
       />
     </div>
@@ -520,26 +744,33 @@ export default function [Entity]ManagementPage() {
 
 ## 🔧 **Key Implementation Details**
 
+### **Hook Consolidation Pattern**
+- **Single File**: Keep all entity-related hooks in `use-[entity].ts`
+- **Basic Operations**: `usePaginated[Entity]`, `useAll[Entity]`, `use[Entity]ById`
+- **Mutations**: `useCreate[Entity]`, `useUpdate[Entity]`, `useDelete[Entity]`
+- **Table Operations**: `use[Entity]Table` for DataTable functionality
+
+### **DataTable Usage**
+- **No Manual Headers**: Use `title`, `subtitle`, and `addButton` props
+- **Search Placeholder**: Provide clear guidance for search functionality
+- **Empty State**: Set appropriate `emptyMessage`
+
 ### **Modal State Management**
 - Use `useRef` to track mutation progress
 - Use `useEffect` to detect when mutations complete
 - Automatically close modal on successful operations
+- Reset form state on modal open/close
 
 ### **Error Handling**
-- Use Zod for validation
-- Display field-specific errors below inputs
+- Use Zod for validation with proper error display
+- Handle both validation and general errors
 - Use toast notifications for success/error feedback
+- Display field-specific errors below inputs
 
-### **Data Flow**
-1. **Hook** manages table state and data fetching
-2. **Actions** handle server-side operations
-3. **Components** use the hook for data and operations
-4. **Modal** handles form state and submission
-
-### **Type Safety**
-- All components use proper TypeScript types
-- Validation schemas ensure data integrity
-- Consistent error handling patterns
+### **Form Handling**
+- Use native HTML inputs for reliability (avoid complex date pickers unless necessary)
+- Implement proper form reset logic
+- Handle both create and edit modes in single modal
 
 ## 📚 **Available UI Components**
 
@@ -550,19 +781,35 @@ Use `npx shadcn@latest add [component-name]` to add missing components:
 - `select` - For dropdown selections
 - `checkbox` - For boolean inputs
 - `radio-group` - For single-choice selections
+- `calendar` - For date selection
+- `popover` - For dropdown overlays
 
-## 🚨 **Common Pitfalls**
+## 🚨 **Common Pitfalls & Solutions**
 
-1. **Type Mismatches**: Ensure action function signatures match hook expectations
-2. **Modal Props**: Use `open`/`onOpenChange` not `isOpen`/`onClose`
-3. **Error Handling**: Always handle both Zod validation and general errors
-4. **State Management**: Use refs to track mutation progress for modal closing
-5. **Dependencies**: Include all dependencies in useEffect dependency arrays
+### **1. Modal Closing Issues**
+- **Problem**: Modal closes when clicking on popover/calendar
+- **Solution**: Use native HTML inputs or implement proper event handling with `onPointerDownOutside`
+
+### **2. Form Submission on Date Selection**
+- **Problem**: Clicking dates submits form automatically
+- **Solution**: Use native `<input type="date">` or implement proper event prevention
+
+### **3. Search Functionality for Numeric Fields**
+- **Problem**: PostgreSQL `ilike` doesn't work with numeric types
+- **Solution**: Implement custom search logic in service layer for exact numeric matching
+
+### **4. Type Safety Issues**
+- **Problem**: `any` types and missing properties
+- **Solution**: Use proper TypeScript types, handle null checks, and validate response structures
+
+### **5. Hook Duplication**
+- **Problem**: Separate table hooks create maintenance overhead
+- **Solution**: Consolidate all functionality in main entity hook file
 
 ## ✅ **Testing Checklist**
 
 - [ ] Table displays data correctly
-- [ ] Search functionality works
+- [ ] Search functionality works (especially for numeric fields)
 - [ ] Pagination works
 - [ ] Add modal opens and submits
 - [ ] Edit modal populates and updates
@@ -571,8 +818,23 @@ Use `npx shadcn@latest add [component-name]` to add missing components:
 - [ ] Loading states show correctly
 - [ ] Form validation works
 - [ ] Success/error toasts display
+- [ ] Modal closes automatically on success
+- [ ] Form resets properly between operations
 
 ## 🔗 **Reference Implementation**
 
-See `src/components/admin/accounts/` for the complete working implementation that follows this pattern.
+See `src/components/admin/seasons/` for the complete working implementation that follows this pattern, including:
+- Proper DataTable usage
+- Native date inputs
+- Enhanced delete confirmation
+- Numeric search functionality
+- Consolidated hook pattern
+
+## 📝 **Migration Notes**
+
+If you have existing separate table hooks:
+1. **Consolidate**: Move table functionality into main entity hook
+2. **Update Imports**: Change from `use[Entity]Table` to `use[Entity]Table` from main hook file
+3. **Delete Files**: Remove separate table hook files
+4. **Test**: Ensure all functionality works after consolidation
 

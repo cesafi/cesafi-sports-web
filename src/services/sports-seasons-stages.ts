@@ -1,4 +1,4 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
+import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
 import { BaseService } from './base';
 import { SportsSeasonsStage, SportsSeasonsStageInsert, SportsSeasonsStageUpdate } from '@/lib/types/sports-seasons-stages';
 import { AuthService } from './auth';
@@ -7,13 +7,19 @@ const TABLE_NAME = 'sports_seasons_stages';
 
 export class SportsSeasonsStageService extends BaseService {
   static async getPaginated(
-    options: PaginationOptions,
+    options: PaginationOptions<Record<string, FilterValue>>,
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<SportsSeasonsStage>>> {
     try {
+      const searchableFields = ['competition_stage', 'sport_category_id', 'season_id', 'created_at'];
+      const optionsWithSearchableFields = {
+        ...options,
+        searchableFields
+      };
+
       const result = await this.getPaginatedData<SportsSeasonsStage, typeof TABLE_NAME>(
         TABLE_NAME,
-        options,
+        optionsWithSearchableFields,
         selectQuery
       );
 
@@ -56,7 +62,7 @@ export class SportsSeasonsStageService extends BaseService {
     }
   }
 
-  static async getById(id: string): Promise<ServiceResponse<SportsSeasonsStage>> {
+  static async getById(id: number): Promise<ServiceResponse<SportsSeasonsStage>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
@@ -94,12 +100,19 @@ export class SportsSeasonsStageService extends BaseService {
 
       const supabase = await this.getClient();
 
-      // Check if the combination of sport, season, and competition stage already exists
+      // Check if the combination of sport category, season, and competition stage already exists
+      if (!data.sport_category_id || !data.season_id) {
+        return {
+          success: false,
+          error: 'Both sport category ID and season ID are required.'
+        };
+      }
+
       const { data: existingStage, error: checkError } = await supabase
         .from(TABLE_NAME)
         .select('id')
-        .eq('sports_id', data.sports_id)
-        .eq('seasons_id', data.seasons_id)
+        .eq('sport_category_id', data.sport_category_id)
+        .eq('season_id', data.season_id)
         .eq('competition_stage', data.competition_stage)
         .single();
 
@@ -115,13 +128,13 @@ export class SportsSeasonsStageService extends BaseService {
       }
 
       // Verify that the referenced entities exist
-      const [sportCheck, seasonCheck] = await Promise.all([
-        supabase.from('sports').select('id').eq('id', data.sports_id).single(),
-        supabase.from('seasons').select('id').eq('id', data.seasons_id).single()
+      const [sportCategoryCheck, seasonCheck] = await Promise.all([
+        supabase.from('sports_categories').select('id').eq('id', data.sport_category_id).single(),
+        supabase.from('seasons').select('id').eq('id', data.season_id).single()
       ]);
 
-      if (sportCheck.error) {
-        return { success: false, error: 'Referenced sport does not exist.' };
+      if (sportCategoryCheck.error) {
+        return { success: false, error: 'Referenced sport category does not exist.' };
       }
       if (seasonCheck.error) {
         return { success: false, error: 'Referenced season does not exist.' };
@@ -163,11 +176,11 @@ export class SportsSeasonsStageService extends BaseService {
       const supabase = await this.getClient();
 
       // If updating relationship fields or competition stage, check for duplicates
-      if (data.sports_id || data.seasons_id || data.competition_stage) {
+      if (data.sport_category_id || data.season_id || data.competition_stage) {
         // Get current stage data to fill in missing fields
         const { data: currentStage, error: currentError } = await supabase
           .from(TABLE_NAME)
-          .select('sports_id, seasons_id, competition_stage')
+          .select('sport_category_id, season_id, competition_stage')
           .eq('id', data.id)
           .single();
 
@@ -175,16 +188,24 @@ export class SportsSeasonsStageService extends BaseService {
           throw currentError;
         }
 
-        const sportsId = data.sports_id || currentStage.sports_id;
-        const seasonsId = data.seasons_id || currentStage.seasons_id;
+        const sportCategoryId = data.sport_category_id || currentStage.sport_category_id;
+        const seasonId = data.season_id || currentStage.season_id;
         const competitionStage = data.competition_stage || currentStage.competition_stage;
+
+        // Ensure we have valid IDs before querying
+        if (!sportCategoryId || !seasonId) {
+          return {
+            success: false,
+            error: 'Both sport category ID and season ID are required.'
+          };
+        }
 
         // Check if the combination already exists (excluding current stage)
         const { data: existingStage, error: checkError } = await supabase
           .from(TABLE_NAME)
           .select('id')
-          .eq('sports_id', sportsId)
-          .eq('seasons_id', seasonsId)
+          .eq('sport_category_id', sportCategoryId)
+          .eq('season_id', seasonId)
           .eq('competition_stage', competitionStage)
           .neq('id', data.id)
           .single();
@@ -202,23 +223,23 @@ export class SportsSeasonsStageService extends BaseService {
 
         // Verify that the referenced entities exist if they're being updated
         const checks = [];
-        if (data.sports_id) {
-          checks.push(supabase.from('sports').select('id').eq('id', data.sports_id).single());
+        if (data.sport_category_id) {
+          checks.push(supabase.from('sports_categories').select('id').eq('id', data.sport_category_id).single());
         }
-        if (data.seasons_id) {
-          checks.push(supabase.from('seasons').select('id').eq('id', data.seasons_id).single());
+        if (data.season_id) {
+          checks.push(supabase.from('seasons').select('id').eq('id', data.season_id).single());
         }
 
         if (checks.length > 0) {
           const results = await Promise.all(checks);
           let index = 0;
           
-          if (data.sports_id && results[index]?.error) {
-            return { success: false, error: 'Referenced sport does not exist.' };
+          if (data.sport_category_id && results[index]?.error) {
+            return { success: false, error: 'Referenced sport category does not exist.' };
           }
-          if (data.sports_id) index++;
+          if (data.sport_category_id) index++;
           
-          if (data.seasons_id && results[index]?.error) {
+          if (data.season_id && results[index]?.error) {
             return { success: false, error: 'Referenced season does not exist.' };
           }
         }
@@ -236,7 +257,7 @@ export class SportsSeasonsStageService extends BaseService {
     }
   }
 
-  static async deleteById(id: string): Promise<ServiceResponse<undefined>> {
+  static async deleteById(id: number): Promise<ServiceResponse<undefined>> {
     try {
       if (!id) {
         return { success: false, error: 'Entity ID is required to delete.' };
@@ -263,7 +284,7 @@ export class SportsSeasonsStageService extends BaseService {
       const { data: matches, error: checkError } = await supabase
         .from('matches')
         .select('id')
-        .eq('sports_seasons_stages_id', id)
+        .eq('stage_id', id)
         .limit(1);
 
       if (checkError) {

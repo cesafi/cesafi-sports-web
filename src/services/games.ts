@@ -1,4 +1,4 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
+import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
 import { BaseService } from './base';
 import { Game, GameInsert, GameUpdate } from '@/lib/types/games';
 import { AuthService } from './auth';
@@ -7,13 +7,19 @@ const TABLE_NAME = 'games';
 
 export class GameService extends BaseService {
   static async getPaginated(
-    options: PaginationOptions,
+    options: PaginationOptions<Record<string, FilterValue>>,
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<Game>>> {
     try {
+      const searchableFields = ['game_number', 'match_id', 'created_at'];
+      const optionsWithSearchableFields = {
+        ...options,
+        searchableFields
+      };
+
       const result = await this.getPaginatedData<Game, typeof TABLE_NAME>(
         TABLE_NAME,
-        options,
+        optionsWithSearchableFields,
         selectQuery
       );
 
@@ -46,19 +52,23 @@ export class GameService extends BaseService {
   static async getCount(): Promise<ServiceResponse<number>> {
     try {
       const supabase = await this.getClient();
-      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+      const { count, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
 
       if (error) {
         throw error;
       }
-      
+
       return { success: true, data: count || 0 };
     } catch (err) {
       return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
     }
   }
 
-  static async getRecent(limit: number = 5): Promise<ServiceResponse<Pick<Game, 'id' | 'game_number' | 'created_at' | 'match_id'>[]>> {
+  static async getRecent(
+    limit: number = 5
+  ): Promise<ServiceResponse<Pick<Game, 'id' | 'game_number' | 'created_at' | 'match_id'>[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
@@ -77,7 +87,7 @@ export class GameService extends BaseService {
     }
   }
 
-  static async getById(id: string): Promise<ServiceResponse<Game>> {
+  static async getById(id: number): Promise<ServiceResponse<Game>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase.from(TABLE_NAME).select().eq('id', id).single();
@@ -92,7 +102,7 @@ export class GameService extends BaseService {
     }
   }
 
-  static async getByMatchId(matchId: string): Promise<ServiceResponse<Game[]>> {
+  static async getByMatchId(matchId: number): Promise<ServiceResponse<Game[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
@@ -188,9 +198,8 @@ export class GameService extends BaseService {
           throw gamesError;
         }
 
-        const nextGameNumber = existingGames && existingGames.length > 0 
-          ? existingGames[0].game_number + 1 
-          : 1;
+        const nextGameNumber =
+          existingGames && existingGames.length > 0 ? existingGames[0].game_number + 1 : 1;
 
         if (nextGameNumber > matchExists.best_of) {
           return {
@@ -206,7 +215,7 @@ export class GameService extends BaseService {
       if (data.start_at && data.end_at) {
         const startTime = new Date(data.start_at);
         const endTime = new Date(data.end_at);
-        
+
         if (startTime >= endTime) {
           return {
             success: false,
@@ -219,7 +228,7 @@ export class GameService extends BaseService {
           const actualDurationMs = endTime.getTime() - startTime.getTime();
           const [hours, minutes, seconds] = data.duration.split(':').map(Number);
           const expectedDurationMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
-          
+
           // Allow 1 second tolerance
           if (Math.abs(actualDurationMs - expectedDurationMs) > 1000) {
             return {
@@ -326,7 +335,7 @@ export class GameService extends BaseService {
       // Validate game_number if provided and staying in same match
       if (data.game_number && (!data.match_id || data.match_id === currentGame.match_id)) {
         const matchId = data.match_id || currentGame.match_id;
-        
+
         // Get match's best_of
         const { data: matchData, error: matchError } = await supabase
           .from('matches')
@@ -376,7 +385,7 @@ export class GameService extends BaseService {
       if (startAt && endAt) {
         const startTime = new Date(startAt);
         const endTime = new Date(endAt);
-        
+
         if (startTime >= endTime) {
           return {
             success: false,
@@ -389,7 +398,7 @@ export class GameService extends BaseService {
           const actualDurationMs = endTime.getTime() - startTime.getTime();
           const [hours, minutes, seconds] = duration.split(':').map(Number);
           const expectedDurationMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
-          
+
           // Allow 1 second tolerance
           if (Math.abs(actualDurationMs - expectedDurationMs) > 1000) {
             return {
@@ -412,7 +421,7 @@ export class GameService extends BaseService {
     }
   }
 
-  static async deleteById(id: string): Promise<ServiceResponse<undefined>> {
+  static async deleteById(id: number): Promise<ServiceResponse<undefined>> {
     try {
       if (!id) {
         return { success: false, error: 'Entity ID is required to delete.' };
@@ -439,7 +448,7 @@ export class GameService extends BaseService {
       const { data: scores, error: scoresError } = await supabase
         .from('game_scores')
         .select('id')
-        .eq('games_id', id)
+        .eq('game_id', id)
         .limit(1);
 
       if (scoresError) {
@@ -465,10 +474,7 @@ export class GameService extends BaseService {
     }
   }
 
-  /**
-   * Calculate total duration for all games in a match
-   */
-  static async calculateMatchDuration(matchId: string): Promise<ServiceResponse<string>> {
+  static async calculateMatchDuration(matchId: number): Promise<ServiceResponse<string>> {
     try {
       const supabase = await this.getClient();
       const { data: games, error } = await supabase

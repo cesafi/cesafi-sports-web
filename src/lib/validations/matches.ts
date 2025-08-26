@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const MatchInsertSchema = z
+export const createMatchSchema = z
   .object({
     name: z
       .string({ message: 'Match name is required.' })
@@ -14,19 +14,10 @@ export const MatchInsertSchema = z
       .int({ message: 'Best of must be an integer.' })
       .positive({ message: 'Best of must be positive.' })
       .default(1),
-    sports_seasons_stages_id: z.uuid({ message: 'Sports seasons stages ID must be a valid UUID.' }),
-    scheduled_at: z.iso
-      .datetime({ message: 'Scheduled date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable(),
-    start_at: z.iso
-      .datetime({ message: 'Start date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable(),
-    end_at: z.iso
-      .datetime({ message: 'End date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable()
+    sports_seasons_stage_id: z.number({ message: 'Sports seasons stage ID is required.' }),
+    scheduled_at: z.string().optional().nullable(),
+    start_at: z.string().optional().nullable(),
+    end_at: z.string().optional().nullable()
   })
   .refine(
     (data) => {
@@ -53,9 +44,9 @@ export const MatchInsertSchema = z
     }
   );
 
-export const MatchUpdateSchema = z
+export const updateMatchSchema = z
   .object({
-    id: z.uuid({ message: 'ID is required for updating a match.' }),
+    id: z.number({ message: 'ID is required for updating a match.' }),
     name: z
       .string()
       .min(1, { message: 'Match name cannot be empty.' })
@@ -67,21 +58,12 @@ export const MatchUpdateSchema = z
       .int({ message: 'Best of must be an integer.' })
       .positive({ message: 'Best of must be positive.' })
       .optional(),
-    sports_seasons_stages_id: z
-      .uuid({ message: 'Sports seasons stages ID must be a valid UUID.' })
+    sports_seasons_stage_id: z
+      .number({ message: 'Sports seasons stage ID is required.' })
       .optional(),
-    scheduled_at: z.iso
-      .datetime({ message: 'Scheduled date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable(),
-    start_at: z.iso
-      .datetime({ message: 'Start date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable(),
-    end_at: z.iso
-      .datetime({ message: 'End date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable()
+    scheduled_at: z.string().optional().nullable(),
+    start_at: z.string().optional().nullable(),
+    end_at: z.string().optional().nullable()
   })
   .refine(
     (data) => {
@@ -107,3 +89,7 @@ export const MatchUpdateSchema = z
       path: ['start_at']
     }
   );
+
+// Legacy exports for backward compatibility
+export const MatchInsertSchema = createMatchSchema;
+export const MatchUpdateSchema = updateMatchSchema;

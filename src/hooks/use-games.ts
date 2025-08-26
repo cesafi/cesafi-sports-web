@@ -24,9 +24,9 @@ import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 export const gameKeys = {
   all: ['games'] as const,
   paginated: (options: GamePaginationOptions) => [...gameKeys.all, 'paginated', options] as const,
-  details: (id: string) => [...gameKeys.all, id] as const,
-  byMatch: (matchId: string) => [...gameKeys.all, 'match', matchId] as const,
-  matchDuration: (matchId: string) => [...gameKeys.all, 'duration', matchId] as const
+  details: (id: number) => [...gameKeys.all, id] as const,
+  byMatch: (matchId: number) => [...gameKeys.all, 'match', matchId] as const,
+  matchDuration: (matchId: number) => [...gameKeys.all, 'duration', matchId] as const
 };
 
 export function usePaginatedGames(
@@ -67,7 +67,7 @@ export function useAllGames(
 }
 
 export function useGameById(
-  id: string,
+  id: number,
   queryOptions?: UseQueryOptions<ServiceResponse<Game>, Error, Game>
 ) {
   return useQuery({
@@ -85,7 +85,7 @@ export function useGameById(
 }
 
 export function useGamesByMatchId(
-  matchId: string,
+  matchId: number,
   queryOptions?: UseQueryOptions<ServiceResponse<Game[]>, Error, Game[]>
 ) {
   return useQuery({
@@ -103,7 +103,7 @@ export function useGamesByMatchId(
 }
 
 export function useMatchDuration(
-  matchId: string,
+  matchId: number,
   queryOptions?: UseQueryOptions<ServiceResponse<string>, Error, string>
 ) {
   return useQuery({
@@ -191,7 +191,7 @@ export function useUpdateGame(
 }
 
 export function useDeleteGame(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, string>
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, number>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

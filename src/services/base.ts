@@ -39,7 +39,7 @@ export abstract class BaseService {
   ): Promise<ServiceResponse<PaginatedResponse<T>>> {
     try {
       const { page, pageSize, filters, searchQuery, searchableFields, sortBy, sortOrder } = options;
-      
+
       const supabase = await this.getClient();
 
       const offset = (page - 1) * pageSize;
@@ -48,9 +48,8 @@ export abstract class BaseService {
 
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
-          // Skip the 'search' property as it's not a database column
           if (key === 'search') return;
-          
+
           if (value !== undefined && value !== null) {
             if (Array.isArray(value)) {
               const nonNullValues = value.filter((item): item is NonNullPrimitive => item !== null);
@@ -77,7 +76,14 @@ export abstract class BaseService {
       }
 
       if (searchQuery && searchQuery.trim() && searchableFields && searchableFields.length > 0) {
-        const searchConditions = searchableFields.map((field) => `${field}.ilike.%${searchQuery}%`);
+        const searchConditions = searchableFields.map((field) => {
+          const numericValue = Number(searchQuery);
+          if (!isNaN(numericValue)) {
+            return `or(${field}.eq.${numericValue},${field}.ilike.%${searchQuery}%)`;
+          } else {
+            return `${field}.ilike.%${searchQuery}%`;
+          }
+        });
         query = query.or(searchConditions.join(','));
       }
 

@@ -1,4 +1,9 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
+import {
+  PaginatedResponse,
+  PaginationOptions,
+  ServiceResponse,
+  FilterValue
+} from '@/lib/types/base';
 import { BaseService } from './base';
 import { School, SchoolInsert, SchoolUpdate } from '@/lib/types/schools';
 import { AuthService } from './auth';
@@ -6,39 +11,23 @@ import { AuthService } from './auth';
 const TABLE_NAME = 'schools';
 
 export class SchoolService extends BaseService {
-  static async testConnection(): Promise<ServiceResponse<number>> {
-    try {
-      const supabase = await this.getClient();
-      const { data, error } = await supabase.from(TABLE_NAME).select('id', { count: 'exact', head: true });
-      
-      if (error) {
-        throw error;
-      }
-      
-      return { success: true, data: data?.length || 0 };
-    } catch (err) {
-      return this.formatError(err, `Failed to test connection to ${TABLE_NAME}`);
-    }
-  }
-
   static async getPaginated(
     options: PaginationOptions<Record<string, FilterValue>>,
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<School>>> {
     try {
-      // Define searchable fields for schools table
       const searchableFields = ['name', 'abbreviation'];
       const optionsWithSearchableFields = {
         ...options,
         searchableFields
       };
-      
+
       const result = await this.getPaginatedData<School, typeof TABLE_NAME>(
         TABLE_NAME,
         optionsWithSearchableFields,
         selectQuery
       );
-      
+
       return result;
     } catch (err) {
       return this.formatError(err, `Failed to retrieve paginated schools`);
@@ -63,7 +52,9 @@ export class SchoolService extends BaseService {
   static async getCount(): Promise<ServiceResponse<number>> {
     try {
       const supabase = await this.getClient();
-      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+      const { count, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
 
       if (error) {
         throw error;

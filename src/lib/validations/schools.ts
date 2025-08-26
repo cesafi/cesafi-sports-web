@@ -11,12 +11,14 @@ export const createSchoolSchema = z.object({
 });
 
 export const updateSchoolSchema = z.object({
-  id: z.string().uuid({ message: 'ID is required for updating a school.' }),
+  id: z.string({ message: 'ID is required for updating a school.' }),
   name: z.string().min(1, { message: 'School name cannot be empty.' }).optional(),
   abbreviation: z
-    .string()
-    .min(2, { message: 'Abbreviation must be at least 2 characters.' })
-    .max(10, { message: 'Abbreviation cannot exceed 10 characters.' })
+    .union([
+      z.string().min(2, { message: 'Abbreviation must be at least 2 characters.' }).max(10, { message: 'Abbreviation cannot exceed 10 characters.' }),
+      z.literal(''),
+      z.undefined()
+    ])
     .optional(),
   logo_url: z.string().nullable().optional(),
   is_active: z.boolean().optional()

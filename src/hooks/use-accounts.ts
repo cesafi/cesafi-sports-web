@@ -1,143 +1,203 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { AccountData, CreateAccountData } from '@/services/accounts';
-import { UpdateAccountFormData } from '@/lib/validations/accounts';
-import { 
-  getAllAccountsAction, 
-  createAccountAction, 
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryOptions,
+  UseMutationOptions
+} from '@tanstack/react-query';
+
+import {
+  getPaginatedAccounts,
+  createAccountAction,
   updateAccountAction,
-  updateAccountRoleAction, 
-  resetPasswordAction, 
-  deleteAccountAction 
+  updateAccountRoleAction,
+  deleteAccountAction
 } from '@/actions/accounts';
+
+import { AccountData, CreateAccountData, AccountEntity } from '@/services/accounts';
+import { UpdateAccountFormData } from '@/lib/validations/accounts';
+import { PaginatedResponse, ServiceResponse, FilterValue, PaginationOptions } from '@/lib/types/base';
+import { useTable } from './use-table';
+import { TableFilters } from '@/lib/types/table';
 import { toast } from 'sonner';
 
-export function useAccounts() {
-  const [accounts, setAccounts] = useState<AccountData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const accountKeys = {
+  all: ['accounts'] as const,
+  paginated: (options: PaginationOptions) =>
+    [...accountKeys.all, 'paginated', options] as const,
+  details: (id: string) => [...accountKeys.all, id] as const
+};
 
-  const fetchAccounts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await getAllAccountsAction();
-      
-      if (result.success && 'data' in result && result.data) {
-        setAccounts(result.data);
-      } else {
-        setError(result.error || 'Failed to fetch accounts');
+// Table-specific hook for accounts
+export function useAccountsTable() {
+  const {
+    tableState,
+    setPage,
+    setPageSize,
+    setSortBy,
+    setSearch,
+    setFilters,
+    resetFilters,
+    paginationOptions
+  } = useTable<AccountEntity>({
+    initialPage: 1,
+    initialPageSize: 10,
+    initialSortBy: 'createdAt',
+    initialSortOrder: 'desc',
+    pageSizeOptions: [5, 10, 25, 50, 100]
+  });
+
+  // Fetch paginated accounts
+  const {
+    data: accountsData,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useQuery({
+    queryKey: ['accounts', 'paginated', paginationOptions],
+    queryFn: () => getPaginatedAccounts(paginationOptions),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch accounts');
       }
-    } catch {
-      setError('An unexpected error occurred');
-    } finally {
-      setLoading(false);
+      return data.data;
     }
-  };
+  });
 
-  const updateAccount = async (userId: string, accountData: UpdateAccountFormData) => {
-    try {
-      const result = await updateAccountAction(userId, accountData);
-      
-      if (result.success) {
-        toast.success('Account updated successfully');
-        await fetchAccounts(); // Refresh the list
-        return true;
-      } else {
-        toast.error(result.error || 'Failed to update account');
-        return false;
-      }
-    } catch {
-      toast.error('An unexpected error occurred');
-      return false;
-    }
-  };
+  // Show table body loading when fetching (for sorting, searching, filtering)
+  // but not on initial load
+  const tableBodyLoading = isFetching && !isLoading;
 
-  const createAccount = async (accountData: CreateAccountData) => {
-    try {
-      const result = await createAccountAction(accountData);
-      
+  const queryClient = useQueryClient();
+
+  // Create account mutation
+  const createAccountMutation = useMutation({
+    mutationFn: createAccountAction,
+    onSuccess: (result) => {
       if (result.success) {
         toast.success('Account created successfully');
-        await fetchAccounts(); // Refresh the list
-        return true;
+        queryClient.invalidateQueries({ queryKey: ['accounts'] });
       } else {
         toast.error(result.error || 'Failed to create account');
-        return false;
       }
-    } catch {
+    },
+    onError: () => {
       toast.error('An unexpected error occurred');
-      return false;
     }
-  };
+  });
 
-  const updateAccountRole = async (userId: string, newRole: string) => {
-    try {
-      const result = await updateAccountRoleAction(userId, newRole);
-      
+  // Update account mutation
+  const updateAccountMutation = useMutation({
+    mutationFn: ({ userId, accountData }: { userId: string; accountData: UpdateAccountFormData }) =>
+      updateAccountAction(userId, accountData),
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Account updated successfully');
+        queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      } else {
+        toast.error(result.error || 'Failed to update account');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
+
+  // Update account role mutation
+  const updateAccountRoleMutation = useMutation({
+    mutationFn: ({ userId, newRole }: { userId: string; newRole: string }) =>
+      updateAccountRoleAction(userId, newRole),
+    onSuccess: (result) => {
       if (result.success) {
         toast.success('Account role updated successfully');
-        await fetchAccounts(); // Refresh the list
-        return true;
+        queryClient.invalidateQueries({ queryKey: ['accounts'] });
       } else {
         toast.error(result.error || 'Failed to update account role');
-        return false;
       }
-    } catch {
+    },
+    onError: () => {
       toast.error('An unexpected error occurred');
-      return false;
     }
-  };
+  });
 
-  const resetPassword = async (userId: string, newPassword: string) => {
-    try {
-      const result = await resetPasswordAction(userId, newPassword);
-      
-      if (result.success) {
-        toast.success('Password reset successfully');
-        return true;
-      } else {
-        toast.error(result.error || 'Failed to reset password');
-        return false;
-      }
-    } catch {
-      toast.error('An unexpected error occurred');
-      return false;
-    }
-  };
-
-  const deleteAccount = async (userId: string) => {
-    try {
-      const result = await deleteAccountAction(userId);
-      
+  // Delete account mutation
+  const deleteAccountMutation = useMutation({
+    mutationFn: deleteAccountAction,
+    onSuccess: (result) => {
       if (result.success) {
         toast.success('Account deleted successfully');
-        await fetchAccounts(); // Refresh the list
-        return true;
+        queryClient.invalidateQueries({ queryKey: ['accounts'] });
       } else {
         toast.error(result.error || 'Failed to delete account');
-        return false;
       }
-    } catch {
+    },
+    onError: () => {
       toast.error('An unexpected error occurred');
-      return false;
     }
+  });
+
+  // Handle search with debouncing
+  const handleSearch = (search: string) => {
+    setSearch(search);
   };
 
-  useEffect(() => {
-    fetchAccounts();
-  }, []);
+  // Handle filters
+  const handleFilters = (filters: TableFilters) => {
+    setFilters(filters);
+  };
+
+  // Handle sorting
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    setSortBy(sortBy, sortOrder);
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setPage(page);
+  };
+
+  const handlePageSizeChange = (pageSize: number) => {
+    setPageSize(pageSize);
+  };
 
   return {
-    accounts,
-    loading,
-    error,
-    fetchAccounts,
-    createAccount,
-    updateAccount,
-    updateAccountRole,
-    resetPassword,
-    deleteAccount
+    // Table state
+    tableState,
+    
+    // Data
+    accounts: accountsData?.data || [],
+    totalCount: accountsData?.totalCount || 0,
+    pageCount: accountsData?.pageCount || 0,
+    currentPage: tableState.page,
+    pageSize: tableState.pageSize,
+    loading: isLoading,
+    tableBodyLoading,
+    error: error?.message || null,
+    
+    // Actions
+    createAccount: createAccountMutation.mutate,
+    updateAccount: updateAccountMutation.mutate,
+    updateAccountRole: updateAccountRoleMutation.mutate,
+    deleteAccount: deleteAccountMutation.mutate,
+    
+    // Mutations state
+    isCreating: createAccountMutation.isPending,
+    isUpdating: updateAccountMutation.isPending,
+    isDeleting: deleteAccountMutation.isPending,
+    
+    // Event handlers
+    onPageChange: handlePageChange,
+    onPageSizeChange: handlePageSizeChange,
+    onSortChange: handleSort,
+    onSearchChange: handleSearch,
+    onFiltersChange: handleFilters,
+    
+    // Utilities
+    resetFilters,
+    paginationOptions,
+    refetch
   };
 }

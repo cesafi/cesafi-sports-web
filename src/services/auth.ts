@@ -52,8 +52,6 @@ export class AuthService extends BaseService {
     }
   }
 
-
-
   static async checkAuth(requiredRoles: string[] = []): Promise<AuthCheckResult> {
     try {
       const supabase = await this.getClient();

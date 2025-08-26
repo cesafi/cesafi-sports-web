@@ -2,13 +2,19 @@
 
 import { useState } from 'react';
 import { DataTable } from '@/components/table';
-import { useSchoolsTable } from '@/hooks/use-schools-table';
+import { useSchoolsTable } from '@/hooks/use-schools';
 import { getSchoolsTableColumns, getSchoolsTableActions } from '@/components/admin/schools';
 import { School } from '@/lib/types/schools';
 import { SchoolModal } from '@/components/admin/schools';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Filter } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -81,7 +87,7 @@ export default function SchoolsManagementPage() {
     if (filterType === 'status') {
       setStatusFilter(value);
     }
-    
+
     if (value === 'all') {
       resetFilters();
     } else {
@@ -108,18 +114,21 @@ export default function SchoolsManagementPage() {
   const actions = getSchoolsTableActions(handleEditSchool, handleDeleteSchool);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Simple Filter Bar */}
-      <div className="flex items-center gap-4 mb-4">
+      <div className="mb-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Filter className="text-muted-foreground h-4 w-4" />
           <span className="text-sm font-medium">Filters:</span>
         </div>
-        
+
         {/* Status Filter */}
         <div className="flex items-center gap-2">
           <Label htmlFor="status-filter">Status:</Label>
-          <Select value={statusFilter} onValueChange={(value) => handleFilterChange('status', value)}>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => handleFilterChange('status', value)}
+          >
             <SelectTrigger id="status-filter" className="w-32">
               <SelectValue />
             </SelectTrigger>
@@ -131,27 +140,22 @@ export default function SchoolsManagementPage() {
           </Select>
         </div>
 
-        {(statusFilter !== 'all') && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearFilters}
-            className="h-9"
-          >
+        {statusFilter !== 'all' && (
+          <Button variant="outline" size="sm" onClick={clearFilters} className="h-9">
             Clear Filters
           </Button>
         )}
       </div>
 
       {/* Filter Badges */}
-      {(statusFilter !== 'all') && (
-        <div className="flex flex-wrap gap-2 mb-4">
+      {statusFilter !== 'all' && (
+        <div className="mb-4 flex flex-wrap gap-2">
           {statusFilter !== 'all' && (
             <Badge variant="secondary" className="flex items-center gap-1">
               Status: {statusFilter}
               <button
                 onClick={() => handleFilterChange('status', 'all')}
-                className="ml-1 hover:text-destructive"
+                className="hover:text-destructive ml-1"
               >
                 ×
               </button>
@@ -192,6 +196,8 @@ export default function SchoolsManagementPage() {
         }}
         className=""
         emptyMessage="No schools found"
+        initialSortBy="name"
+        initialSortOrder="asc"
       />
 
       {/* Modal */}

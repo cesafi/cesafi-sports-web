@@ -22,8 +22,8 @@ import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 export const matchKeys = {
   all: ['matches'] as const,
   paginated: (options: MatchPaginationOptions) => [...matchKeys.all, 'paginated', options] as const,
-  details: (id: string) => [...matchKeys.all, id] as const,
-  byStage: (stageId: string) => [...matchKeys.all, 'stage', stageId] as const
+  details: (id: number) => [...matchKeys.all, id] as const,
+  byStage: (stageId: number) => [...matchKeys.all, 'stage', stageId] as const
 };
 
 export function usePaginatedMatches(
@@ -64,7 +64,7 @@ export function useAllMatches(
 }
 
 export function useMatchById(
-  id: string,
+  id: number,
   queryOptions?: UseQueryOptions<ServiceResponse<Match>, Error, Match>
 ) {
   return useQuery({
@@ -90,10 +90,10 @@ export function useCreateMatch(
     onSuccess: (result, variables, context) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: matchKeys.all });
-        // Invalidate stage-specific queries if sports_seasons_stages_id is provided
-        if (variables.sports_seasons_stages_id) {
+        // Invalidate stage-specific queries if stage_id is provided
+        if (variables.stage_id) {
           queryClient.invalidateQueries({
-            queryKey: matchKeys.byStage(variables.sports_seasons_stages_id)
+            queryKey: matchKeys.byStage(variables.stage_id)
           });
         }
       }
@@ -119,10 +119,10 @@ export function useUpdateMatch(
         if (variables.id) {
           queryClient.invalidateQueries({ queryKey: matchKeys.details(variables.id) });
         }
-        // Invalidate stage-specific queries if sports_seasons_stages_id is provided
-        if (variables.sports_seasons_stages_id) {
+        // Invalidate stage-specific queries if stage_id is provided
+        if (variables.stage_id) {
           queryClient.invalidateQueries({
-            queryKey: matchKeys.byStage(variables.sports_seasons_stages_id)
+            queryKey: matchKeys.byStage(variables.stage_id)
           });
         }
         // Also invalidate games and participants that might be related
@@ -140,7 +140,7 @@ export function useUpdateMatch(
 }
 
 export function useDeleteMatch(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, string>
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, number>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

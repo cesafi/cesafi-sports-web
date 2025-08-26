@@ -32,7 +32,7 @@ export type ServiceResponse<T> =
   | {
       success: true;
       data: T;
-      id?: string;
+      id?: string | number;
     }
   | {
       success: false;

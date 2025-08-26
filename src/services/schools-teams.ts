@@ -1,76 +1,184 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
-import { BaseService } from './base';
-import { SchoolsTeam, SchoolsTeamInsert, SchoolsTeamUpdate } from '@/lib/types/schools-teams';
 import { AuthService } from './auth';
+import { ServiceResponse } from '@/lib/types/base';
+import {
+  SchoolsTeamInsert,
+  SchoolsTeamUpdate,
+  SchoolsTeamWithSportDetails,
+  SchoolsTeamWithSchoolDetails,
+  SchoolsTeamWithFullDetails
+} from '@/lib/types/schools-teams';
+import { BaseService } from './base';
 
 const TABLE_NAME = 'schools_teams';
 
 export class SchoolsTeamService extends BaseService {
-  static async getPaginated(
-    options: PaginationOptions,
-    selectQuery: string = '*'
-  ): Promise<ServiceResponse<PaginatedResponse<SchoolsTeam>>> {
-    try {
-      const result = await this.getPaginatedData<SchoolsTeam, typeof TABLE_NAME>(
-        TABLE_NAME,
-        options,
-        selectQuery
-      );
-
-      return result;
-    } catch (err) {
-      return this.formatError(err, `Failed to retrieve paginated schools teams.`);
-    }
-  }
-
-  static async getAll(): Promise<ServiceResponse<SchoolsTeam[]>> {
+  static async getBySchoolId(
+    schoolId: string
+  ): Promise<ServiceResponse<SchoolsTeamWithSportDetails[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select()
-        .order('name', { ascending: true });
+        .select(
+          `
+          *,
+          sports_categories!inner(
+            id,
+            division,
+            levels,
+            sports!inner(name)
+          )
+        `
+        )
+        .eq('school_id', schoolId)
+        .order('created_at', { ascending: true });
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data };
+      return { success: true, data: data || [] };
     } catch (err) {
-      return this.formatError(err, `Failed to fetch all ${TABLE_NAME} entity.`);
+      return this.formatError(err, `Failed to fetch teams for school ${schoolId}.`);
     }
   }
 
-  static async getCount(): Promise<ServiceResponse<number>> {
+  static async getBySeasonId(
+    seasonId: number
+  ): Promise<ServiceResponse<SchoolsTeamWithSchoolDetails[]>> {
     try {
       const supabase = await this.getClient();
-      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          schools!inner(name, abbreviation, logo_url),
+          sports_categories!inner(
+            id,
+            division,
+            levels,
+            sports!inner(name)
+          )
+        `
+        )
+        .eq('season_id', seasonId)
+        .order('created_at', { ascending: true });
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data: count || 0 };
+      return { success: true, data: data || [] };
     } catch (err) {
-      return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
+      return this.formatError(err, `Failed to fetch teams for season ${seasonId}.`);
     }
   }
 
-  static async getById(id: string): Promise<ServiceResponse<SchoolsTeam>> {
+  static async getBySportCategoryId(
+    sportCategoryId: number
+  ): Promise<ServiceResponse<SchoolsTeamWithSchoolDetails[]>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase.from(TABLE_NAME).select().eq('id', id).single();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          schools!inner(name, abbreviation, logo_url)
+        `
+        )
+        .eq('sport_category_id', sportCategoryId)
+        .order('created_at', { ascending: true });
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data };
+      return { success: true, data: data || [] };
     } catch (err) {
-      return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity.`);
+      return this.formatError(err, `Failed to fetch teams for sport category ${sportCategoryId}.`);
     }
-  }  
-static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>> {
+  }
+
+  static async getBySchoolAndSeason(
+    schoolId: string,
+    seasonId: number
+  ): Promise<ServiceResponse<SchoolsTeamWithSportDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          sports_categories!inner(
+            id,
+            division,
+            levels,
+            sports!inner(name)
+          )
+        `
+        )
+        .eq('school_id', schoolId)
+        .eq('season_id', seasonId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(
+        err,
+        `Failed to fetch teams for school ${schoolId} and season ${seasonId}.`
+      );
+    }
+  }
+
+  static async getBySchoolAndSportCategory(
+    schoolId: string,
+    sportCategoryId: number
+  ): Promise<ServiceResponse<SchoolsTeamWithFullDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          sports_categories!inner(
+            id,
+            division,
+            levels,
+            sports!inner(name)
+          ),
+          seasons!inner(
+            id,
+            start_at,
+            end_at
+          )
+        `
+        )
+        .eq('school_id', schoolId)
+        .eq('sport_category_id', sportCategoryId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(
+        err,
+        `Failed to fetch teams for school ${schoolId} and sport category ${sportCategoryId}.`
+      );
+    }
+  }
+
+  static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>> {
     try {
       const roles = ['admin', 'league_operator'];
 
@@ -93,12 +201,13 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
       const { data: existingTeam, error: checkError } = await supabase
         .from(TABLE_NAME)
         .select('id, name')
-        .eq('schools_id', data.schools_id)
-        .eq('seasons_id', data.seasons_id)
-        .eq('sports_id', data.sports_id)
+        .eq('school_id', data.school_id)
+        .eq('season_id', data.season_id)
+        .eq('sport_category_id', data.sport_category_id)
         .single();
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 is "not found" error
         throw checkError;
       }
 
@@ -111,9 +220,9 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
 
       // Verify that the referenced entities exist
       const [schoolCheck, seasonCheck, sportCheck] = await Promise.all([
-        supabase.from('schools').select('id').eq('id', data.schools_id).single(),
-        supabase.from('seasons').select('id').eq('id', data.seasons_id).single(),
-        supabase.from('sports').select('id').eq('id', data.sports_id).single()
+        supabase.from('schools').select('id').eq('id', data.school_id).single(),
+        supabase.from('seasons').select('id').eq('id', data.season_id).single(),
+        supabase.from('sports_categories').select('id').eq('id', data.sport_category_id).single()
       ]);
 
       if (schoolCheck.error) {
@@ -134,14 +243,14 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
 
       return { success: true, data: undefined };
     } catch (err) {
-      return this.formatError(err, `Failed to insert new ${TABLE_NAME} entity.`);
+      return this.formatError(err, `Failed to insert new team.`);
     }
   }
 
   static async updateById(data: SchoolsTeamUpdate): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
-        return { success: false, error: 'Entity ID is required to update.' };
+        return { success: false, error: 'Team ID is required to update.' };
       }
 
       const roles = ['admin', 'league_operator'];
@@ -162,11 +271,11 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
       const supabase = await this.getClient();
 
       // If updating relationship fields, check for duplicates
-      if (data.schools_id || data.seasons_id || data.sports_id) {
+      if (data.school_id || data.season_id || data.sport_category_id) {
         // Get current team data to fill in missing relationship IDs
         const { data: currentTeam, error: currentError } = await supabase
           .from(TABLE_NAME)
-          .select('schools_id, seasons_id, sports_id')
+          .select('school_id, season_id, sport_category_id')
           .eq('id', data.id)
           .single();
 
@@ -174,21 +283,22 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
           throw currentError;
         }
 
-        const schoolsId = data.schools_id || currentTeam.schools_id;
-        const seasonsId = data.seasons_id || currentTeam.seasons_id;
-        const sportsId = data.sports_id || currentTeam.sports_id;
+        const schoolsId = data.school_id || currentTeam.school_id;
+        const seasonsId = data.season_id || currentTeam.season_id;
+        const sportsId = data.sport_category_id || currentTeam.sport_category_id;
 
         // Check if the combination already exists (excluding current team)
         const { data: existingTeam, error: checkError } = await supabase
           .from(TABLE_NAME)
           .select('id, name')
-          .eq('schools_id', schoolsId)
-          .eq('seasons_id', seasonsId)
-          .eq('sports_id', sportsId)
+          .eq('school_id', schoolsId)
+          .eq('season_id', seasonsId)
+          .eq('sport_category_id', sportsId)
           .neq('id', data.id)
           .single();
 
-        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+        if (checkError && checkError.code !== 'PGRST116') {
+          // PGRST116 is "not found" error
           throw checkError;
         }
 
@@ -201,31 +311,37 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
 
         // Verify that the referenced entities exist if they're being updated
         const checks = [];
-        if (data.schools_id) {
-          checks.push(supabase.from('schools').select('id').eq('id', data.schools_id).single());
+        if (data.school_id) {
+          checks.push(supabase.from('schools').select('id').eq('id', data.school_id).single());
         }
-        if (data.seasons_id) {
-          checks.push(supabase.from('seasons').select('id').eq('id', data.seasons_id).single());
+        if (data.season_id) {
+          checks.push(supabase.from('seasons').select('id').eq('id', data.season_id).single());
         }
-        if (data.sports_id) {
-          checks.push(supabase.from('sports').select('id').eq('id', data.sports_id).single());
+        if (data.sport_category_id) {
+          checks.push(
+            supabase
+              .from('sports_categories')
+              .select('id')
+              .eq('id', data.sport_category_id)
+              .single()
+          );
         }
 
         if (checks.length > 0) {
           const results = await Promise.all(checks);
           let index = 0;
-          
-          if (data.schools_id && results[index]?.error) {
+
+          if (data.school_id && results[index]?.error) {
             return { success: false, error: 'Referenced school does not exist.' };
           }
-          if (data.schools_id) index++;
-          
-          if (data.seasons_id && results[index]?.error) {
+          if (data.school_id) index++;
+
+          if (data.season_id && results[index]?.error) {
             return { success: false, error: 'Referenced season does not exist.' };
           }
-          if (data.seasons_id) index++;
-          
-          if (data.sports_id && results[index]?.error) {
+          if (data.season_id) index++;
+
+          if (data.sport_category_id && results[index]?.error) {
             return { success: false, error: 'Referenced sport does not exist.' };
           }
         }
@@ -239,14 +355,14 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
 
       return { success: true, data: undefined };
     } catch (err) {
-      return this.formatError(err, `Failed to update ${TABLE_NAME} entity.`);
+      return this.formatError(err, `Failed to update team.`);
     }
   }
 
   static async deleteById(id: string): Promise<ServiceResponse<undefined>> {
     try {
       if (!id) {
-        return { success: false, error: 'Entity ID is required to delete.' };
+        return { success: false, error: 'Team ID is required to delete.' };
       }
 
       const roles = ['admin', 'league_operator'];
@@ -270,7 +386,7 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
       const { data: matchParticipants, error: checkError } = await supabase
         .from('match_participants')
         .select('id')
-        .eq('schools_teams_id', id)
+        .eq('team_id', id)
         .limit(1);
 
       if (checkError) {
@@ -280,7 +396,8 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
       if (matchParticipants && matchParticipants.length > 0) {
         return {
           success: false,
-          error: 'Cannot delete team that has participated in matches. Please remove match participations first.'
+          error:
+            'Cannot delete team that has participated in matches. Please remove match participations first.'
         };
       }
 
@@ -292,7 +409,79 @@ static async insert(data: SchoolsTeamInsert): Promise<ServiceResponse<undefined>
 
       return { success: true, data: undefined };
     } catch (err) {
-      return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);
+      return this.formatError(err, `Failed to delete team.`);
+    }
+  }
+
+  // Utility methods for specific use cases
+  static async getTeamsWithFullDetails(
+    schoolId: string
+  ): Promise<ServiceResponse<SchoolsTeamWithFullDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          sports_categories!inner(
+            id,
+            division,
+            levels,
+            sports!inner(name)
+          ),
+          seasons!inner(
+            id,
+            start_at,
+            end_at
+          )
+        `
+        )
+        .eq('school_id', schoolId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(
+        err,
+        `Failed to fetch teams with full details for school ${schoolId}.`
+      );
+    }
+  }
+
+  static async getActiveTeamsBySchool(
+    schoolId: string
+  ): Promise<ServiceResponse<SchoolsTeamWithSportDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          sports_categories!inner(
+            id,
+            division,
+            levels,
+            sports!inner(name)
+          )
+        `
+        )
+        .eq('school_id', schoolId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch active teams for school ${schoolId}.`);
     }
   }
 }

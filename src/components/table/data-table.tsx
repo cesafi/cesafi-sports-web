@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { TableSearchAndFilters } from './table-search-filters';
@@ -42,10 +42,24 @@ export function DataTable<T extends BaseEntity>({
 
   // Styling
   className = '',
-  emptyMessage = 'No data available'
+  emptyMessage = 'No data available',
+
+  // Initial sort state
+  initialSortBy,
+  initialSortOrder = 'asc'
 }: TableProps<T>) {
-  const [sortBy, setSortBy] = useState<string | undefined>();
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortBy, setSortBy] = useState<string | undefined>(initialSortBy);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder);
+
+  // Update local sort state when initial sort props change
+  useEffect(() => {
+    if (initialSortBy !== undefined) {
+      setSortBy(initialSortBy);
+    }
+    if (initialSortOrder !== undefined) {
+      setSortOrder(initialSortOrder);
+    }
+  }, [initialSortBy, initialSortOrder]);
 
   const handleSort = (key: string, order: 'asc' | 'desc') => {
     setSortBy(key);

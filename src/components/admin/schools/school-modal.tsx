@@ -38,7 +38,7 @@ export function SchoolModal({
     abbreviation: '',
     logo_url: null,
     is_active: true
-  } as SchoolInsert | SchoolUpdate);
+  });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isDragOver, setIsDragOver] = useState(false);
@@ -56,7 +56,7 @@ export function SchoolModal({
   useEffect(() => {
     if (open) {
       if (mode === 'edit' && school) {
-        const editData = {
+        const editData: SchoolUpdate = {
           id: school.id, // Include the ID for updates
           name: school.name || '',
           abbreviation: school.abbreviation || '',
@@ -65,7 +65,7 @@ export function SchoolModal({
         };
         setFormData(editData);
       } else {
-        const addData = {
+        const addData: SchoolInsert = {
           name: '',
           abbreviation: '',
           logo_url: null,
@@ -109,7 +109,7 @@ export function SchoolModal({
   const validateForm = () => {
     try {
       const schema = mode === 'add' ? createSchoolSchema : updateSchoolSchema;
-      schema.parse(formData);
+      const result = schema.parse(formData);
       setErrors({});
       return true;
     } catch (error) {
@@ -129,7 +129,9 @@ export function SchoolModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       await onSubmit(formData);
@@ -153,7 +155,7 @@ export function SchoolModal({
     // TODO: Implement Cloudinary upload
     // For now, just show a placeholder message
     toast.info('Logo upload functionality will be implemented with Cloudinary integration');
-    
+
     // Simulate getting a URL (remove this when implementing actual upload)
     const mockUrl = `https://example.com/logo-${Date.now()}.jpg`;
     handleInputChange('logo_url', mockUrl);
@@ -195,6 +197,22 @@ export function SchoolModal({
       title={mode === 'add' ? 'Add New School' : 'Edit School'}
       maxWidth="max-w-2xl"
       height="h-[700px]"
+      footer={
+        <div className="flex gap-3 border-t pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            className="flex-1"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" onClick={handleSubmit} className="flex-1" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : mode === 'add' ? 'Create School' : 'Update School'}
+          </Button>
+        </div>
+      }
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
@@ -359,22 +377,6 @@ export function SchoolModal({
             </p>
           </CardContent>
         </Card>
-
-        {/* Form Actions */}
-        <div className="flex gap-3 border-t pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            className="flex-1"
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" className="flex-1" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : mode === 'add' ? 'Create School' : 'Update School'}
-          </Button>
-        </div>
       </form>
     </ModalLayout>
   );

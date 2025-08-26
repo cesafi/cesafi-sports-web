@@ -3,7 +3,7 @@ import { PaginationOptions, FilterValue } from './base';
 
 // Base interface that all entities must implement
 export interface BaseEntity {
-  id: string;
+  id: string | number;
   [key: string]: unknown; // Allow additional properties
 }
 
@@ -80,6 +80,10 @@ export interface TableProps<T extends BaseEntity> {
   // Styling
   className?: string;
   emptyMessage?: string;
+
+  // Initial sort state
+  initialSortBy?: string;
+  initialSortOrder?: 'asc' | 'desc';
 }
 
 export interface UseTableOptions<T extends BaseEntity> {
