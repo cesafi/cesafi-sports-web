@@ -50,7 +50,7 @@ export const getArticlesTableColumns = (config: ArticleTableConfig = defaultAdmi
         <div className="font-medium text-sm">{article.title}</div>
         {config.showAuthorId && (
           <div className="text-xs text-muted-foreground">
-            Author ID: {article.author_id}
+            Author ID: {article.authored_by}
           </div>
         )}
       </div>
@@ -66,7 +66,8 @@ export const getArticlesTableColumns = (config: ArticleTableConfig = defaultAdmi
         review: 'bg-yellow-100 text-yellow-800',
         approved: 'bg-green-100 text-green-800',
         revise: 'bg-orange-100 text-orange-800',
-        canceled: 'bg-red-100 text-red-800'
+        cancelled: 'bg-red-100 text-red-800',
+        published: 'bg-blue-100 text-blue-800'
       };
       
       return (
@@ -82,8 +83,8 @@ export const getArticlesTableColumns = (config: ArticleTableConfig = defaultAdmi
     sortable: true,
     width: '15%',
     render: (article: Article) => (
-      <Badge variant={article.is_published ? 'default' : 'secondary'}>
-        {article.is_published ? 'Yes' : 'No'}
+      <Badge variant={article.published_at ? 'default' : 'secondary'}>
+        {article.published_at ? 'Yes' : 'No'}
       </Badge>
     )
   },
@@ -175,4 +176,4 @@ export const getAdminArticlesTableActions = (
 export const getHeadWriterArticlesTableActions = (
   onEdit: (article: Article) => void,
   onView: (article: Article) => void
-) => getArticlesTableActions(onEdit, undefined, onView, defaultHeadWriterConfig);
+) => getArticlesTableActions(onEdit, () => {}, onView, defaultHeadWriterConfig);

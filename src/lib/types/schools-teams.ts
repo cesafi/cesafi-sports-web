@@ -1,5 +1,6 @@
 import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
+import { BaseEntity } from './table';
 
 export type SchoolsTeam = Database['public']['Tables']['schools_teams']['Row'];
 export type SchoolsTeamInsert = Database['public']['Tables']['schools_teams']['Insert'];
@@ -21,7 +22,7 @@ export type SchoolsTeamPaginationOptions = PaginationOptions<
 >;
 
 // Detailed view types for service responses
-export interface SchoolsTeamWithSportDetails {
+export interface SchoolsTeamWithSportDetails extends BaseEntity {
   id: string;
   name: string;
   school_id: string;
