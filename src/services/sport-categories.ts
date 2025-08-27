@@ -6,6 +6,45 @@ import { BaseService } from './base';
 const TABLE_NAME = 'sports_categories';
 
 export class SportCategoryService extends BaseService {
+  static async getAll(): Promise<ServiceResponse<SportCategory[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .order('sport_id', { ascending: true })
+        .order('division', { ascending: true })
+        .order('levels', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch all sport categories.`);
+    }
+  }
+
+  static async getById(id: number): Promise<ServiceResponse<SportCategory>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch sport category with ID ${id}.`);
+    }
+  }
+
   static async getBySportId(sportId: number): Promise<ServiceResponse<SportCategory[]>> {
     try {
       const supabase = await this.getClient();

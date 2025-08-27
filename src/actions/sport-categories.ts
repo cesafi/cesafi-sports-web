@@ -26,6 +26,14 @@ export async function getSportCategoriesBySportAndLevel(sportId: number, level: 
 }
 
 // Utility methods
+export async function getAllSportCategories() {
+  return await SportCategoryService.getAll();
+}
+
+export async function getSportCategoryById(id: number) {
+  return await SportCategoryService.getById(id);
+}
+
 export async function getCategoriesWithSportDetails() {
   return await SportCategoryService.getCategoriesWithSportDetails();
 }

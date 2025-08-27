@@ -24,7 +24,7 @@ export async function createSportsSeasonsStage(data: SportsSeasonsStageInsert) {
   const result = await SportsSeasonsStageService.insert(data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/seasons');
+    revalidatePath('/admin/league-stage');
   }
 
   return result;
@@ -34,7 +34,7 @@ export async function updateSportsSeasonsStageById(data: SportsSeasonsStageUpdat
   const result = await SportsSeasonsStageService.updateById(data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/seasons');
+    revalidatePath('/admin/league-stage');
   }
 
   return result;
@@ -44,7 +44,7 @@ export async function deleteSportsSeasonsStageById(id: number) {
   const result = await SportsSeasonsStageService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/seasons');
+    revalidatePath('/admin/league-stage');
   }
 
   return result;

@@ -22,6 +22,7 @@ import {
   getSportCategoriesBySportAndDivision,
   getSportCategoriesBySportAndLevel,
   getCategoriesWithSportDetails,
+  getAllSportCategories,
   getUniqueDivisions,
   getUniqueLevels,
   createSportCategory,
@@ -99,6 +100,22 @@ export function useAllSports(
     select: (data) => {
       if (!data.success || !data.data) {
         throw new Error(data.success === false ? data.error : 'Failed to fetch all sports.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useAllSportCategories(
+  queryOptions?: UseQueryOptions<ServiceResponse<SportCategory[]>, Error, SportCategory[]>
+) {
+  return useQuery({
+    queryKey: sportCategoryKeys.all,
+    queryFn: getAllSportCategories,
+    select: (data) => {
+      if (!data.success || !data.data) {
+        throw new Error(data.success === false ? data.error : 'Failed to fetch all sport categories.');
       }
       return data.data;
     },

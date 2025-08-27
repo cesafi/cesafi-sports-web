@@ -11,7 +11,8 @@ import {
   Volleyball,
   Calendar,
   Target,
-  Shield
+  Shield,
+  Group
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -74,9 +75,10 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
 
   const getSeasonalNavigationItems = (): NavigationItem[] => {
     return [
-      { href: '/admin/matches', label: 'Matches', icon: Target },
+      { href: '/admin/league-stage', label: 'League Stages', icon: Group },
       { href: '/admin/school-teams', label: 'School Teams', icon: Shield },
       { href: '/admin/volunteers', label: 'Volunteers', icon: Users },
+      { href: '/admin/matches', label: 'Matches', icon: Target },
       { href: '/admin/games', label: 'Games', icon: Calendar },
       { href: '/admin/game-scores', label: 'Game Scores', icon: Trophy }
     ];

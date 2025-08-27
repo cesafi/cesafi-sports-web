@@ -17,52 +17,73 @@ export class VolunteerService extends BaseService {
   ): Promise<ServiceResponse<PaginatedResponse<Volunteer>>> {
     try {
       const searchableFields = ['full_name', 'department_id'];
-      const optionsWithSearchableFields = {
-        ...options,
-        searchableFields
-      };
+      const { page, pageSize, filters, searchQuery, sortBy, sortOrder } = options;
 
-      // Filter by season_id if provided
-      if (options.filters?.season_id) {
-        const supabase = await this.getClient();
-        const { data, error } = await supabase
-          .from(TABLE_NAME)
-          .select('*')
-          .eq('season_id', options.filters.season_id)
-          .order(options.sortBy || 'created_at', { ascending: options.sortOrder === 'asc' });
+      const supabase = await this.getClient();
+      const offset = (page - 1) * pageSize;
 
-        if (error) {
-          throw error;
-        }
+      let query = supabase.from(TABLE_NAME).select(selectQuery, { count: 'exact' });
 
-        // Get total count for pagination
-        const { count } = await supabase
-          .from(TABLE_NAME)
-          .select('*', { count: 'exact', head: true })
-          .eq('season_id', options.filters.season_id);
+      // Apply filters
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (key === 'search') return;
 
-        const totalCount = count || 0;
-        const pageCount = Math.ceil(totalCount / (options.pageSize || 10));
-        const currentPage = options.page || 1;
-
-        return {
-          success: true,
-          data: {
-            data: (data || []) as Volunteer[],
-            totalCount,
-            pageCount,
-            currentPage
+          if (value !== undefined && value !== null) {
+            if (Array.isArray(value)) {
+              const nonNullValues = value.filter((item) => item !== null);
+              if (nonNullValues.length > 0) {
+                query = query.in(key, nonNullValues);
+              }
+            } else {
+              query = query.eq(key, value);
+            }
           }
-        };
+        });
       }
 
-      const result = await this.getPaginatedData<Volunteer, typeof TABLE_NAME>(
-        TABLE_NAME,
-        optionsWithSearchableFields,
-        selectQuery
-      );
+      // Apply search
+      if (searchQuery && searchQuery.trim() && searchableFields.length > 0) {
+        const searchConditions = searchableFields.map((field) => {
+          const numericValue = Number(searchQuery);
+          if (!isNaN(numericValue)) {
+            return `or(${field}.eq.${numericValue},${field}.ilike.%${searchQuery}%)`;
+          } else {
+            return `${field}.ilike.%${searchQuery}%`;
+          }
+        });
+        query = query.or(searchConditions.join(','));
+      }
 
-      return result;
+      // Apply custom sorting: department_id first, then full_name
+      if (sortBy && sortBy !== 'department_id') {
+        // If sorting by a specific field other than department_id, use that
+        query = query.order(sortBy, { ascending: sortOrder !== 'desc' });
+      }
+      
+      // Always apply the default sorting: department_id first, then full_name
+      query = query.order('department_id', { ascending: true });
+      query = query.order('full_name', { ascending: true });
+
+      const { data, error, count } = await query.range(offset, offset + pageSize - 1);
+
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
+
+      const totalCount = count || 0;
+      const pageCount = Math.ceil(totalCount / pageSize);
+
+      return {
+        success: true,
+        data: {
+          data: (data || []) as unknown as Volunteer[],
+          totalCount,
+          pageCount,
+          currentPage: page
+        }
+      };
     } catch (err) {
       return this.formatError(err, `Failed to retrieve paginated volunteers.`);
     }
