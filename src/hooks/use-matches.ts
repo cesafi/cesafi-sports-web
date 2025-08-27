@@ -10,14 +10,20 @@ import {
   getPaginatedMatches,
   getAllMatches,
   getMatchById,
+  getMatchesByStageId,
+  getMatchesBySportAndCategory,
+  getMatchesBySeason,
   createMatch,
   updateMatchById,
   deleteMatchById
 } from '@/actions/matches';
 
-import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match } from '@/lib/types/matches';
+import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match, MatchWithStageDetails } from '@/lib/types/matches';
 
 import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
+import { useTable } from './use-table';
+import { TableFilters } from '@/lib/types/table';
+import { toast } from 'sonner';
 
 export const matchKeys = {
   all: ['matches'] as const,
@@ -162,4 +168,158 @@ export function useDeleteMatch(
     },
     ...mutationOptions
   });
+}
+
+// Table-specific hook for matches management
+export function useMatchesTable(selectedStageId: number | null) {
+  const {
+    tableState,
+    setPage,
+    setPageSize,
+    setSortBy,
+    setSearch,
+    setFilters,
+    resetFilters,
+    paginationOptions
+  } = useTable<MatchWithStageDetails>({
+    initialPage: 1,
+    initialPageSize: 10,
+    initialSortBy: 'scheduled_at',
+    initialSortOrder: 'asc',
+    pageSizeOptions: [5, 10, 25, 50, 100]
+  });
+
+  // Fetch matches for selected stage
+  const {
+    data: matches,
+    isLoading,
+    error,
+    isFetching,
+    refetch
+  } = useQuery({
+    queryKey: ['matches', 'byStage', selectedStageId, paginationOptions],
+    queryFn: () => getMatchesByStageId(selectedStageId!),
+    enabled: !!selectedStageId,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch matches for stage');
+      }
+      return data.data;
+    }
+  });
+
+  // Show table body loading when fetching (for sorting, searching, filtering)
+  // but not on initial load
+  const tableBodyLoading = isFetching && !isLoading;
+
+  const queryClient = useQueryClient();
+
+  // Create match mutation
+  const createMatchMutation = useMutation({
+    mutationFn: createMatch,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Match created successfully');
+        if (selectedStageId) {
+          queryClient.invalidateQueries({ queryKey: matchKeys.byStage(selectedStageId) });
+        }
+      } else {
+        toast.error(result.error || 'Failed to create match');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
+
+  // Update match mutation
+  const updateMatchMutation = useMutation({
+    mutationFn: (data: MatchUpdate) => updateMatchById(data),
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Match updated successfully');
+        if (selectedStageId) {
+          queryClient.invalidateQueries({ queryKey: matchKeys.byStage(selectedStageId) });
+        }
+      } else {
+        toast.error(result.error || 'Failed to update match');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
+
+  // Delete match mutation
+  const deleteMatchMutation = useMutation({
+    mutationFn: deleteMatchById,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Match deleted successfully');
+        if (selectedStageId) {
+          queryClient.invalidateQueries({ queryKey: matchKeys.byStage(selectedStageId) });
+        }
+      } else {
+        toast.error(result.error || 'Failed to delete match');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
+
+  // Handle search with debouncing
+  const handleSearch = (search: string) => {
+    setSearch(search);
+  };
+
+  // Handle filters
+  const handleFilters = (filters: TableFilters) => {
+    setFilters(filters);
+  };
+
+  // Handle sorting
+  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
+    setSortBy(sortBy, sortOrder);
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setPage(page);
+  };
+
+  const handlePageSizeChange = (pageSize: number) => {
+    setPageSize(pageSize);
+  };
+
+  return {
+    // Data
+    matches: matches || [],
+    totalCount: matches?.length || 0,
+    pageCount: Math.ceil((matches?.length || 0) / tableState.pageSize),
+    currentPage: tableState.page,
+    pageSize: tableState.pageSize,
+    loading: isLoading,
+    tableBodyLoading,
+    error: error?.message || null,
+
+    // Mutations
+    createMatch: createMatchMutation.mutate,
+    updateMatch: updateMatchMutation.mutate,
+    deleteMatch: deleteMatchMutation.mutate,
+
+    // Loading states
+    isCreating: createMatchMutation.isPending,
+    isUpdating: updateMatchMutation.isPending,
+    isDeleting: deleteMatchMutation.isPending,
+
+    // Actions
+    refetch,
+    onPageChange: handlePageChange,
+    onPageSizeChange: handlePageSizeChange,
+    onSortChange: handleSort,
+    onSearchChange: handleSearch,
+    onFiltersChange: handleFilters,
+    resetFilters
+  };
 }

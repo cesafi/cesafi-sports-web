@@ -1,6 +1,6 @@
 import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
 import { BaseService } from './base';
-import { Match, MatchInsert, MatchUpdate } from '@/lib/types/matches';
+import { Match, MatchInsert, MatchUpdate, MatchWithStageDetails } from '@/lib/types/matches';
 import { AuthService } from './auth';
 
 const TABLE_NAME = 'matches';
@@ -94,6 +94,132 @@ export class MatchService extends BaseService {
       return { success: true, data };
     } catch (err) {
       return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async getByStageId(stageId: number): Promise<ServiceResponse<MatchWithStageDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(`
+          *,
+          sports_seasons_stages!inner(
+            id,
+            competition_stage,
+            season_id,
+            sport_category_id,
+            sports_categories!inner(
+              id,
+              division,
+              levels,
+              sports!inner(
+                id,
+                name
+              )
+            ),
+            seasons!inner(
+              id,
+              start_at,
+              end_at
+            )
+          )
+        `)
+        .eq('stage_id', stageId)
+        .order('scheduled_at', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch matches for stage ${stageId}.`);
+    }
+  }
+
+  static async getBySportAndCategory(sportId: number, sportCategoryId: number): Promise<ServiceResponse<Match[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(`
+          *,
+          sports_seasons_stages!inner(
+            id,
+            competition_stage,
+            season_id,
+            sport_category_id,
+            sports_categories!inner(
+              id,
+              division,
+              levels,
+              sports!inner(
+                id,
+                name
+              )
+            ),
+            seasons!inner(
+              id,
+              start_at,
+              end_at
+            )
+          )
+        `)
+        .eq('sports_seasons_stages.sport_category_id', sportCategoryId)
+        .order('scheduled_at', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch matches for sport category ${sportCategoryId}.`);
+    }
+  }
+
+  static async getBySeason(seasonId: number): Promise<ServiceResponse<Match[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(`
+          *,
+          sports_seasons_stages!inner(
+            id,
+            competition_stage,
+            season_id,
+            sport_category_id,
+            sports_categories!inner(
+              id,
+              division,
+              levels,
+              sports!inner(
+                id,
+                name
+              )
+            ),
+            seasons!inner(
+              id,
+              start_at,
+              end_at
+            )
+          )
+        `)
+        .eq('sports_seasons_stages.season_id', seasonId)
+        .order('scheduled_at', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch matches for season ${seasonId}.`);
     }
   }
 

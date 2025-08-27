@@ -17,6 +17,18 @@ export async function getMatchById(id: number) {
   return await MatchService.getById(id);
 }
 
+export async function getMatchesByStageId(stageId: number) {
+  return await MatchService.getByStageId(stageId);
+}
+
+export async function getMatchesBySportAndCategory(sportId: number, sportCategoryId: number) {
+  return await MatchService.getBySportAndCategory(sportId, sportCategoryId);
+}
+
+export async function getMatchesBySeason(seasonId: number) {
+  return await MatchService.getBySeason(seasonId);
+}
+
 export async function createMatch(data: MatchInsert) {
   const result = await MatchService.insert(data);
 
