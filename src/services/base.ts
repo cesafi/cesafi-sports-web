@@ -4,25 +4,26 @@ import {
   PaginationOptions,
   RangeOrEqualityFilter,
   ServiceResponse
-} from '@/lib/types/base';
+} from '../lib/types/base';
 import { Database } from '../../database.types';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 export abstract class BaseService {
-  protected static async getClient() {
+  protected static async getClient(): Promise<SupabaseClient<Database>> {
     const isServer = typeof window === 'undefined';
 
     if (isServer) {
-      const { createClient: createServerClient } = await import('@/lib/supabase/server');
-      return createServerClient();
+      const { createClient: createServerClient } = await import('../lib/supabase/server');
+      return createServerClient() as any;
     } else {
-      const { createClient: createBrowserClient } = await import('@/lib/supabase/client');
-      return createBrowserClient();
+      const { createClient: createBrowserClient } = await import('../lib/supabase/client');
+      return createBrowserClient() as any;
     }
   }
 
-  protected static async getAdminClient() {
-    const { createAdminClient } = await import('@/lib/supabase/admin');
-    return createAdminClient();
+  protected static async getAdminClient(): Promise<SupabaseClient<Database>> {
+    const { createAdminClient } = await import('../lib/supabase/admin');
+    return createAdminClient() as any;
   }
 
   protected static formatError<T>(error: unknown, message: string): ServiceResponse<T> {

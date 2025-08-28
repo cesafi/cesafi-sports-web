@@ -1,4 +1,4 @@
-import { Database } from '@/../database.types';
+import { Database } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
 
 export type MatchParticipant = Database['public']['Tables']['match_participants']['Row'];
@@ -64,6 +64,11 @@ export interface MatchParticipantWithFullDetails {
       logo_url: string | null;
     };
   };
+  matches: {
+    id: number;
+    name: string;
+    scheduled_at: string | null;
+  }
 }
 
 export interface MatchParticipantWithMatchHistory {

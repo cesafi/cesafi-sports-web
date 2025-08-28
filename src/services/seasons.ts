@@ -6,7 +6,6 @@ import {
 } from '@/lib/types/base';
 import { BaseService } from './base';
 import { Season, SeasonInsert, SeasonUpdate } from '@/lib/types/seasons';
-import { AuthService } from './auth';
 
 const TABLE_NAME = 'seasons';
 
@@ -84,23 +83,9 @@ export class SeasonService extends BaseService {
 
   static async insert(data: SeasonInsert): Promise<ServiceResponse<undefined>> {
     try {
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
-      // Check for date range overlap with existing seasons
       const supabase = await this.getClient();
+      
+      // Check for date range overlap with existing seasons
       const { data: existingSeasons, error: checkError } = await supabase
         .from(TABLE_NAME)
         .select('id, start_at, end_at')
@@ -139,21 +124,6 @@ export class SeasonService extends BaseService {
     try {
       if (!data.id) {
         return { success: false, error: 'Season ID is required to update.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();
@@ -252,21 +222,6 @@ export class SeasonService extends BaseService {
     try {
       if (!id) {
         return { success: false, error: 'Season ID is required to delete.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();

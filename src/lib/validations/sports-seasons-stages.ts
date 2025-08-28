@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Constants } from '@/../database.types';
+import { Constants } from '../../../database.types';
 
 const COMPETITION_STAGES = Constants.public.Enums.competition_stage;
 

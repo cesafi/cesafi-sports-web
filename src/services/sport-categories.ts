@@ -1,6 +1,5 @@
 import { ServiceResponse } from '@/lib/types/base';
 import { SportCategory, SportCategoryInsert, SportCategoryUpdate } from '@/lib/types/sports';
-import { AuthService } from './auth';
 import { BaseService } from './base';
 
 const TABLE_NAME = 'sports_categories';
@@ -174,21 +173,6 @@ export class SportCategoryService extends BaseService {
   // CRUD operations
   static async insert(data: SportCategoryInsert): Promise<ServiceResponse<undefined>> {
     try {
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
 
       // Check for duplicate sport category with same sport, division, and level
@@ -228,21 +212,6 @@ export class SportCategoryService extends BaseService {
     try {
       if (!data.id) {
         return { success: false, error: 'Sport category ID is required to update.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();
@@ -302,21 +271,6 @@ export class SportCategoryService extends BaseService {
     try {
       if (!id) {
         return { success: false, error: 'Sport category ID is required to delete.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();

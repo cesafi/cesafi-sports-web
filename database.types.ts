@@ -204,6 +204,7 @@ export type Database = {
           scheduled_at: string | null
           stage_id: number
           start_at: string | null
+          status: Database["public"]["Enums"]["match_status"]
           updated_at: string
           venue: string
         }
@@ -217,6 +218,7 @@ export type Database = {
           scheduled_at?: string | null
           stage_id: number
           start_at?: string | null
+          status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
           venue: string
         }
@@ -230,6 +232,7 @@ export type Database = {
           scheduled_at?: string | null
           stage_id?: number
           start_at?: string | null
+          status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
           venue?: string
         }
@@ -516,7 +519,7 @@ export type Database = {
         | "cancelled"
         | "approved"
       competition_stage: "group_stage" | "playins" | "playoffs" | "finals"
-      match_status: "upcoming" | "ongoing" | "finished" | "canceled"
+      match_status: "upcoming" | "ongoing" | "finished" | "cancelled"
       sport_divisions: "men" | "women" | "mixed"
       sport_levels: "elementary" | "high_school" | "college"
       user_roles: "admin" | "head_writer" | "league_operator" | "writer"
@@ -655,7 +658,7 @@ export const Constants = {
         "approved",
       ],
       competition_stage: ["group_stage", "playins", "playoffs", "finals"],
-      match_status: ["upcoming", "ongoing", "finished", "canceled"],
+      match_status: ["upcoming", "ongoing", "finished", "cancelled"],
       sport_divisions: ["men", "women", "mixed"],
       sport_levels: ["elementary", "high_school", "college"],
       user_roles: ["admin", "head_writer", "league_operator", "writer"],

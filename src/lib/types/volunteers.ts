@@ -1,4 +1,4 @@
-import { Database } from '@/../database.types';
+import { Database } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
 
 export type Volunteer = Database['public']['Tables']['volunteers']['Row'];

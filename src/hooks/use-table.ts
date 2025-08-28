@@ -32,19 +32,36 @@ export function useTable<T extends BaseEntity>(options: UseTableOptions<T> = {})
   }, []);
 
   const setSearch = useCallback((search: string) => {
-    setTableState(prev => ({ 
-      ...prev, 
-      filters: { ...prev.filters, search },
-      page: 1 // Reset to first page when searching
-    }));
+    setTableState(prev => {
+      // Only reset to page 1 if the search term actually changed
+      const currentSearch = prev.filters.search || '';
+      const shouldResetPage = currentSearch !== search;
+      
+      return {
+        ...prev, 
+        filters: { ...prev.filters, search },
+        page: shouldResetPage ? 1 : prev.page
+      };
+    });
   }, []);
 
   const setFilters = useCallback((filters: TableFilters) => {
-    setTableState(prev => ({ 
-      ...prev, 
-      filters: { ...prev.filters, ...filters },
-      page: 1 // Reset to first page when filtering
-    }));
+    setTableState(prev => {
+      // Only reset to page 1 if filters actually changed
+      const currentFilters = prev.filters;
+      const newFilters = { ...currentFilters, ...filters };
+      
+      // Check if any filter values actually changed
+      const filtersChanged = Object.keys(filters).some(
+        key => currentFilters[key] !== filters[key]
+      );
+      
+      return {
+        ...prev, 
+        filters: newFilters,
+        page: filtersChanged ? 1 : prev.page
+      };
+    });
   }, []);
 
   const resetFilters = useCallback(() => {

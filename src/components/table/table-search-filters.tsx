@@ -27,7 +27,10 @@ export function TableSearchAndFilters({
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      onSearchChange(localSearch);
+      // Only trigger search change if the value actually changed from the prop
+      if (localSearch !== (search || '')) {
+        onSearchChange(localSearch);
+      }
     }, 300); // 300ms delay
 
     return () => {
@@ -35,7 +38,7 @@ export function TableSearchAndFilters({
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [localSearch, onSearchChange]);
+  }, [localSearch, onSearchChange, search]);
 
   return (
     <div className="flex items-center justify-between mb-6">

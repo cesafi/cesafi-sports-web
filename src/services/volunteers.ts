@@ -6,7 +6,6 @@ import {
   VolunteerUpdate,
   VolunteersPaginationOptions
 } from '@/lib/types/volunteers';
-import { AuthService } from './auth';
 
 const TABLE_NAME = 'volunteers';
 
@@ -16,74 +15,19 @@ export class VolunteerService extends BaseService {
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<Volunteer>>> {
     try {
-      const searchableFields = ['full_name', 'department_id'];
-      const { page, pageSize, filters, searchQuery, sortBy, sortOrder } = options;
-
-      const supabase = await this.getClient();
-      const offset = (page - 1) * pageSize;
-
-      let query = supabase.from(TABLE_NAME).select(selectQuery, { count: 'exact' });
-
-      // Apply filters
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (key === 'search') return;
-
-          if (value !== undefined && value !== null) {
-            if (Array.isArray(value)) {
-              const nonNullValues = value.filter((item) => item !== null);
-              if (nonNullValues.length > 0) {
-                query = query.in(key, nonNullValues);
-              }
-            } else {
-              query = query.eq(key, value);
-            }
-          }
-        });
-      }
-
-      // Apply search
-      if (searchQuery && searchQuery.trim() && searchableFields.length > 0) {
-        const searchConditions = searchableFields.map((field) => {
-          const numericValue = Number(searchQuery);
-          if (!isNaN(numericValue)) {
-            return `or(${field}.eq.${numericValue},${field}.ilike.%${searchQuery}%)`;
-          } else {
-            return `${field}.ilike.%${searchQuery}%`;
-          }
-        });
-        query = query.or(searchConditions.join(','));
-      }
-
-      // Apply custom sorting: department_id first, then full_name
-      if (sortBy && sortBy !== 'department_id') {
-        // If sorting by a specific field other than department_id, use that
-        query = query.order(sortBy, { ascending: sortOrder !== 'desc' });
-      }
-      
-      // Always apply the default sorting: department_id first, then full_name
-      query = query.order('department_id', { ascending: true });
-      query = query.order('full_name', { ascending: true });
-
-      const { data, error, count } = await query.range(offset, offset + pageSize - 1);
-
-      if (error) {
-        console.error('Supabase query error:', error);
-        throw error;
-      }
-
-      const totalCount = count || 0;
-      const pageCount = Math.ceil(totalCount / pageSize);
-
-      return {
-        success: true,
-        data: {
-          data: (data || []) as unknown as Volunteer[],
-          totalCount,
-          pageCount,
-          currentPage: page
-        }
+      const searchableFields = ['full_name'];
+      const optionsWithSearchableFields = {
+        ...options,
+        searchableFields
       };
+
+      const result = await this.getPaginatedData<Volunteer, typeof TABLE_NAME>(
+        TABLE_NAME,
+        optionsWithSearchableFields,
+        selectQuery
+      );
+
+      return result;
     } catch (err) {
       return this.formatError(err, `Failed to retrieve paginated volunteers.`);
     }
@@ -161,21 +105,6 @@ export class VolunteerService extends BaseService {
 
   static async insert(data: VolunteerInsert): Promise<ServiceResponse<undefined>> {
     try {
-      const roles = ['admin', 'head_writer'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
 
       // Validate required fields
@@ -223,21 +152,6 @@ export class VolunteerService extends BaseService {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
-      }
-
-      const roles = ['admin', 'head_writer'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();
@@ -292,21 +206,6 @@ export class VolunteerService extends BaseService {
     try {
       if (!id) {
         return { success: false, error: 'Entity ID is required to delete.' };
-      }
-
-      const roles = ['admin', 'head_writer'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();

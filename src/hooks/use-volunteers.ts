@@ -267,6 +267,7 @@ export function useVolunteersTable(seasonId?: string) {
 
   // Handle pagination
   const handlePageChange = (page: number) => {
+    console.log("page set: " + page)
     setPage(page);
   };
 

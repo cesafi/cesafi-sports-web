@@ -1,6 +1,5 @@
-import { AuthService } from './auth';
-import { ServiceResponse } from '@/lib/types/base';
-import { GameScoreInsert, GameScoreUpdate, GameScoreDetailedView } from '@/lib/types/game-scores';
+import { ServiceResponse } from '../lib/types/base';
+import { GameScoreInsert, GameScoreUpdate, GameScoreDetailedView } from '../lib/types/game-scores';
 import { BaseService } from './base';
 
 const TABLE_NAME = 'game_scores';
@@ -72,21 +71,6 @@ export class GameScoreService extends BaseService {
 
   static async insert(data: GameScoreInsert): Promise<ServiceResponse<undefined>> {
     try {
-      const roles = ['admin', 'league_operator', 'score_keeper'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
 
       const [gameCheck, participantCheck] = await Promise.all([
@@ -121,21 +105,6 @@ export class GameScoreService extends BaseService {
     try {
       if (!data.id) {
         return { success: false, error: 'Game score ID is required to update.' };
-      }
-
-      const roles = ['admin', 'league_operator', 'score_keeper'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();
@@ -188,21 +157,6 @@ export class GameScoreService extends BaseService {
     try {
       if (!id) {
         return { success: false, error: 'Game score ID is required to delete.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();

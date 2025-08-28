@@ -1,7 +1,6 @@
 import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
 import { BaseService } from './base';
 import { Match, MatchInsert, MatchUpdate, MatchWithStageDetails } from '@/lib/types/matches';
-import { AuthService } from './auth';
 
 const TABLE_NAME = 'matches';
 
@@ -225,21 +224,6 @@ export class MatchService extends BaseService {
 
   static async insert(data: MatchInsert): Promise<ServiceResponse<undefined>> {
     try {
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
 
       // Validate that the sports_seasons_stage_id exists
@@ -302,21 +286,6 @@ export class MatchService extends BaseService {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();
@@ -417,21 +386,6 @@ export class MatchService extends BaseService {
     try {
       if (!id) {
         return { success: false, error: 'Entity ID is required to delete.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();

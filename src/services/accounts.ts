@@ -10,6 +10,7 @@ export interface CreateAccountData {
 }
 
 import { BaseEntity } from '@/lib/types/table';
+import { User } from '@supabase/supabase-js';
 
 export interface AccountEntity extends BaseEntity {
   id: string;
@@ -64,7 +65,7 @@ export class AccountsService extends BaseService {
     }
   }
 
-  static async getAllAccounts(): Promise<ServiceResponse<AccountData[]>> {
+  static async getAll(): Promise<ServiceResponse<AccountData[]>> {
     try {
       const supabase = await this.getAdminClient();
 
@@ -74,7 +75,8 @@ export class AccountsService extends BaseService {
         return { success: false, error: error.message };
       }
 
-      const accounts: AccountData[] = users.users.map((user) => ({
+
+      const accounts: AccountData[] = users.users.map((user: User) => ({
         id: user.id,
         email: user.email || '',
         role: (user.app_metadata?.role as UserRole) || 'writer',

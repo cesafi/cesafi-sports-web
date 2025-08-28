@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Constants } from '@/../database.types';
+import { Constants } from '../../../database.types';
 
 const SPORT_DIVISIONS = Constants.public.Enums.sport_divisions;
 const SPORT_LEVELS = Constants.public.Enums.sport_levels;

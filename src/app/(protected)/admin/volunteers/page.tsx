@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable } from '@/components/table';
 import { useVolunteersTable } from '@/hooks/use-volunteers';
 import { useAllDepartments } from '@/hooks/use-departments';
@@ -61,6 +61,10 @@ export default function VolunteersManagementPage() {
     onFiltersChange,
     resetFilters
   } = useVolunteersTable(currentSeason?.id?.toString());
+
+  useEffect(() => {
+    console.log('Current Page:', currentPage)
+  }, [currentPage])
 
   const handleEditVolunteer = (volunteer: Volunteer) => {
     setEditingVolunteer(volunteer);

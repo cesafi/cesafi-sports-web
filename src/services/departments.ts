@@ -1,7 +1,6 @@
 import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
 import { BaseService } from './base';
 import { Department, DepartmentInsert, DepartmentUpdate } from '@/lib/types/departments';
-import { AuthService } from './auth';
 
 const TABLE_NAME = 'departments';
 
@@ -11,7 +10,7 @@ export class DepartmentService extends BaseService {
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<Department>>> {
     try {
-      const searchableFields = ['name']; // Only search by name since description doesn't exist
+      const searchableFields = ['name'];
       const optionsWithSearchableFields = {
         ...options,
         searchableFields
@@ -81,21 +80,6 @@ export class DepartmentService extends BaseService {
 
   static async insert(data: DepartmentInsert): Promise<ServiceResponse<undefined>> {
     try {
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
 
       const { data: existingDepartment, error: checkError } = await supabase
@@ -134,21 +118,6 @@ export class DepartmentService extends BaseService {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();
@@ -194,21 +163,6 @@ export class DepartmentService extends BaseService {
     try {
       if (!id) {
         return { success: false, error: 'Entity ID is required to delete.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();

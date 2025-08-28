@@ -1,4 +1,4 @@
-import { Database } from '@/../database.types';
+import { Database } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
 
 export type Game = Database['public']['Tables']['games']['Row'];

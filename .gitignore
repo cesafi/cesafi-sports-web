@@ -31,6 +31,7 @@ Thumbs.db
 *.log              
 *.tmp            
 *.~               
+.kiro/
 
 # debug
 npm-debug.log*

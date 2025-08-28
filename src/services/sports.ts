@@ -6,13 +6,13 @@ import {
 } from '@/lib/types/base';
 import { BaseService } from './base';
 import { Sport, SportInsert, SportUpdate, SportCategoryFormData } from '@/lib/types/sports';
-import { AuthService } from './auth';
 
 const TABLE_NAME = 'sports';
 
 export class SportService extends BaseService {
   static async getPaginated(
-    options: PaginationOptions<Record<string, FilterValue>>
+    options: PaginationOptions<Record<string, FilterValue>>,
+    selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<Sport>>> {
     try {
       const searchableFields = ['name', 'created_at', 'updated_at'];
@@ -21,11 +21,11 @@ export class SportService extends BaseService {
         searchableFields
       };
 
-      // Use a custom select query to include category count
-      const customSelectQuery = `
+      // Use a custom select query to include category count, or the provided selectQuery
+      const customSelectQuery = selectQuery === '*' ? `
         *,
         _count: sports_categories(count)
-      `;
+      ` : selectQuery;
 
       const result = await this.getPaginatedData<Sport, typeof TABLE_NAME>(
         TABLE_NAME,
@@ -91,21 +91,6 @@ export class SportService extends BaseService {
 
   static async insert(data: SportInsert): Promise<ServiceResponse<undefined>> {
     try {
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
 
       // Check for duplicate sport name
@@ -144,20 +129,6 @@ export class SportService extends BaseService {
     categories: SportCategoryFormData[]
   ): Promise<ServiceResponse<{ sportId: number }>> {
     try {
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
 
       const supabase = await this.getClient();
 
@@ -237,21 +208,6 @@ export class SportService extends BaseService {
     categories: SportCategoryFormData[]
   ): Promise<ServiceResponse<undefined>> {
     try {
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
 
       // Verify the sport exists
@@ -335,21 +291,6 @@ export class SportService extends BaseService {
         return { success: false, error: 'Entity ID is required to update.' };
       }
 
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
 
       // If updating name, check for duplicates
@@ -390,21 +331,6 @@ export class SportService extends BaseService {
     try {
       if (!id) {
         return { success: false, error: 'Entity ID is required to delete.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();
