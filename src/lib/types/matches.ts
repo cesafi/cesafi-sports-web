@@ -37,6 +37,7 @@ export interface MatchWithStageDetails extends BaseEntity {
   end_at: string | null;
   best_of: number;
   stage_id: number;
+  status: MatchStatus;
   created_at: string;
   updated_at: string;
   sports_seasons_stages: {
@@ -71,6 +72,7 @@ export interface MatchWithFullDetails extends BaseEntity {
   end_at: string | null;
   best_of: number;
   stage_id: number;
+  status: MatchStatus;
   created_at: string;
   updated_at: string;
   sports_seasons_stages: {

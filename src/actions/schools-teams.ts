@@ -33,6 +33,10 @@ export async function getActiveTeamsBySchool(schoolId: string) {
   return await SchoolsTeamService.getActiveTeamsBySchool(schoolId);
 }
 
+export async function getTeamsByStage(stageId: number) {
+  return await SchoolsTeamService.getTeamsForStage(stageId);
+}
+
 export async function createSchoolsTeam(data: SchoolsTeamInsert) {
   const result = await SchoolsTeamService.insert(data);
 

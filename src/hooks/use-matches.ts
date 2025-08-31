@@ -14,11 +14,12 @@ import {
   getMatchesBySportAndCategory,
   getMatchesBySeason,
   createMatch,
+  createMatchWithParticipants,
   updateMatchById,
   deleteMatchById
 } from '@/actions/matches';
 
-import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match, MatchWithStageDetails } from '@/lib/types/matches';
+import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match, MatchWithStageDetails, MatchWithFullDetails } from '@/lib/types/matches';
 
 import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 import { useTable } from './use-table';
@@ -69,23 +70,7 @@ export function useAllMatches(
   });
 }
 
-export function useMatchById(
-  id: number,
-  queryOptions?: UseQueryOptions<ServiceResponse<Match>, Error, Match>
-) {
-  return useQuery({
-    queryKey: matchKeys.details(id),
-    queryFn: () => getMatchById(id),
-    enabled: !!id,
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error || `Match with ID ${id} not found.`);
-      }
-      return data.data;
-    },
-    ...queryOptions
-  });
-}
+
 
 export function useCreateMatch(
   mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, MatchInsert>
@@ -216,7 +201,13 @@ export function useMatchesTable(selectedStageId: number | null) {
 
   // Create match mutation
   const createMatchMutation = useMutation({
-    mutationFn: createMatch,
+    mutationFn: ({ matchData, participantTeamIds }: { matchData: MatchInsert; participantTeamIds?: string[] }) => {
+      if (participantTeamIds && participantTeamIds.length > 0) {
+        return createMatchWithParticipants(matchData, participantTeamIds);
+      } else {
+        return createMatch(matchData);
+      }
+    },
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Match created successfully');
@@ -304,7 +295,8 @@ export function useMatchesTable(selectedStageId: number | null) {
     error: error?.message || null,
 
     // Mutations
-    createMatch: createMatchMutation.mutate,
+    createMatch: (matchData: MatchInsert, participantTeamIds?: string[]) => 
+      createMatchMutation.mutate({ matchData, participantTeamIds }),
     updateMatch: updateMatchMutation.mutate,
     deleteMatch: deleteMatchMutation.mutate,
 

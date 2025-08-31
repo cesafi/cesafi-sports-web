@@ -8,9 +8,9 @@ import { UserRole } from '@/lib/types/auth';
 import { TableFilters } from '@/lib/types/table';
 import crypto from 'crypto';
 
-export async function getAllAccountsAction(): Promise<{ success: boolean; data?: AccountData[]; error?: string }> {
+export async function getAllAccouns(): Promise<{ success: boolean; data?: AccountData[]; error?: string }> {
   try {
-    const result = await AccountsService.getAllAccounts();
+    const result = await AccountsService.getAll();
     return result;
   } catch (error) {
     return {
@@ -23,35 +23,28 @@ export async function getAllAccountsAction(): Promise<{ success: boolean; data?:
 export async function getPaginatedAccounts(options: PaginationOptions<TableFilters>): Promise<{ success: boolean; data?: { data: AccountData[]; totalCount: number; pageCount: number; currentPage: number }; error?: string }> {
   try {
     const { page = 1, pageSize = 10, searchQuery, filters } = options;
-    
-    console.log('Server received filters:', filters);
-    
-    // Get all accounts from the service
-    const accountsResponse = await AccountsService.getAllAccounts();
-    
+
+
+    const accountsResponse = await AccountsService.getAll();
+
     if (!accountsResponse.success || !accountsResponse.data) {
       return { success: false, error: accountsResponse.success === false ? accountsResponse.error : 'Failed to fetch accounts' };
     }
 
     let filteredAccounts = accountsResponse.data;
-    console.log('Initial accounts count:', filteredAccounts.length);
 
     // Apply search filter
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
-      filteredAccounts = filteredAccounts.filter(account => 
+      filteredAccounts = filteredAccounts.filter(account =>
         account.email.toLowerCase().includes(searchLower) ||
         (account.displayName && account.displayName.toLowerCase().includes(searchLower))
       );
-      console.log('After search filter:', filteredAccounts.length);
     }
 
     // Apply role filter
     if (filters?.role && typeof filters.role === 'string' && filters.role !== 'all') {
       filteredAccounts = filteredAccounts.filter(account => account.role === filters.role);
-      console.log('After role filter:', filteredAccounts.length, 'for role:', filters.role);
-    } else {
-      console.log('No role filter applied or role is "all"');
     }
 
     // Calculate pagination
@@ -61,7 +54,6 @@ export async function getPaginatedAccounts(options: PaginationOptions<TableFilte
     const endIndex = startIndex + pageSize;
     const paginatedAccounts = filteredAccounts.slice(startIndex, endIndex);
 
-    console.log('Final result:', { totalCount, totalPages, currentPage: page, returnedCount: paginatedAccounts.length });
 
     return {
       success: true,
@@ -77,10 +69,9 @@ export async function getPaginatedAccounts(options: PaginationOptions<TableFilte
   }
 }
 
-export async function updateAccountAction(userId: string, accountData: UpdateAccountFormData): Promise<{ success: boolean; data?: AccountData; error?: string }> {
+export async function updateAccount(userId: string, accountData: UpdateAccountFormData): Promise<{ success: boolean; data?: AccountData; error?: string }> {
   try {
-    console.log('updateAccountAction called with:', { userId, accountData });
-    
+
     const updates: { displayName?: string; role?: UserRole; password?: string } = {
       displayName: accountData.displayName,
       role: accountData.role
@@ -91,12 +82,10 @@ export async function updateAccountAction(userId: string, accountData: UpdateAcc
       updates.password = accountData.password;
     }
 
-    console.log('Updates to apply:', updates);
     const result = await AccountsService.updateAccount(userId, updates);
-    
+
     return result;
   } catch {
-    console.error('Error in updateAccountAction');
     return {
       success: false,
       error: 'Failed to update account'
@@ -104,7 +93,7 @@ export async function updateAccountAction(userId: string, accountData: UpdateAcc
   }
 }
 
-export async function createAccountAction(accountData: CreateAccountData): Promise<{ success: boolean; data?: AccountData; error?: string }> {
+export async function createAccount(accountData: CreateAccountData): Promise<{ success: boolean; data?: AccountData; error?: string }> {
   try {
     const result = await AccountsService.createAccount(accountData);
     return result;
@@ -116,7 +105,7 @@ export async function createAccountAction(accountData: CreateAccountData): Promi
   }
 }
 
-export async function updateAccountRoleAction(userId: string, newRole: string): Promise<{ success: boolean; data?: AccountData; error?: string }> {
+export async function updateAccountRole(userId: string, newRole: string): Promise<{ success: boolean; data?: AccountData; error?: string }> {
   try {
     const result = await AccountsService.updateAccountRole(userId, newRole as UserRole);
     return result;
@@ -128,7 +117,7 @@ export async function updateAccountRoleAction(userId: string, newRole: string): 
   }
 }
 
-export async function resetPasswordAction(userId: string, newPassword: string): Promise<{ success: boolean; data?: undefined; error?: string }> {
+export async function resetPassword(userId: string, newPassword: string): Promise<{ success: boolean; data?: undefined; error?: string }> {
   try {
     const result = await AccountsService.resetPassword(userId, newPassword);
     return result;
@@ -140,7 +129,7 @@ export async function resetPasswordAction(userId: string, newPassword: string): 
   }
 }
 
-export async function deleteAccountAction(userId: string): Promise<{ success: boolean; data?: undefined; error?: string }> {
+export async function deleteAccount(userId: string): Promise<{ success: boolean; data?: undefined; error?: string }> {
   try {
     const result = await AccountsService.deleteAccount(userId);
     return result;
@@ -154,7 +143,7 @@ export async function deleteAccountAction(userId: string): Promise<{ success: bo
 
 export async function generateSecurePasswordAction() {
   const authCheck = await checkAuthAction(['admin']);
-  
+
   if (!authCheck.authenticated || !authCheck.authorized) {
     return { success: false, error: 'Unauthorized' };
   }

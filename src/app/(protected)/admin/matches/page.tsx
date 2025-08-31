@@ -15,6 +15,7 @@ import {
   MatchInsert,
   MatchUpdate
 } from '@/lib/types/matches';
+import { useRouter } from 'next/navigation';
 
 export default function MatchesManagementPage() {
   const [selectedSportId, setSelectedSportId] = useState<number | null>(null);
@@ -25,6 +26,7 @@ export default function MatchesManagementPage() {
   const [editingMatch, setEditingMatch] = useState<MatchWithStageDetails | undefined>();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [matchToDelete, setMatchToDelete] = useState<MatchWithStageDetails | undefined>();
+  const router = useRouter();
 
   const {
     matches,
@@ -47,6 +49,10 @@ export default function MatchesManagementPage() {
     onSearchChange,
     onFiltersChange
   } = useMatchesTable(selectedStageId);
+
+  const handleViewMatchDetails = (match: MatchWithStageDetails) => {
+    router.push(`/admin/matches/${match.id}`);
+  }
 
   const handleEditMatch = (match: MatchWithStageDetails) => {
     setEditingMatch(match);
@@ -72,16 +78,17 @@ export default function MatchesManagementPage() {
     }
   };
 
-  const handleSubmit = async (data: MatchInsert | MatchUpdate) => {
+  const handleSubmit = async (data: MatchInsert | MatchUpdate, participantTeamIds?: string[]) => {
     if (modalMode === 'add') {
-      createMatch(data as MatchInsert);
+      // For add mode, we need to handle participants
+      createMatch(data as MatchInsert, participantTeamIds);
     } else {
       updateMatch(data as MatchUpdate);
     }
   };
 
   const columns = getMatchesTableColumns();
-  const actions = getMatchesTableActions(handleEditMatch, handleDeleteMatch);
+  const actions = getMatchesTableActions(handleEditMatch, handleDeleteMatch, handleViewMatchDetails);
 
   // Show loading state while waiting for initial data
   if (!selectedStageId) {
@@ -99,7 +106,7 @@ export default function MatchesManagementPage() {
             className="max-w-2xl"
           />
         </div>
-        
+
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>

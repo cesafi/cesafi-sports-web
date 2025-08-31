@@ -1,4 +1,4 @@
-import { Search, Filter, Plus } from 'lucide-react';
+import { Search, Filter, Plus, X } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { SearchAndFiltersProps } from '@/lib/types/table';
@@ -50,8 +50,19 @@ export function TableSearchAndFilters({
             placeholder={searchPlaceholder}
             value={localSearch}
             onChange={(e) => setLocalSearch(e.target.value)}
-            className="pl-10 pr-4"
+            className="pl-10 pr-10"
           />
+          {localSearch && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocalSearch('')}
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted-foreground/10"
+              title="Clear search"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
         </div>
         
         {showFilters && (

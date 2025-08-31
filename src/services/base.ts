@@ -6,24 +6,24 @@ import {
   ServiceResponse
 } from '../lib/types/base';
 import { Database } from '../../database.types';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { AdminSupabaseClient } from '../lib/supabase/admin';
+import { createClient as createBrowserClient } from '../lib/supabase/client';
+import { createClient as createServerClient } from '../lib/supabase/server';
+import { createAdminClient } from '../lib/supabase/admin';
 
 export abstract class BaseService {
-  protected static async getClient(): Promise<SupabaseClient<Database>> {
+  protected static async getClient() {
     const isServer = typeof window === 'undefined';
 
     if (isServer) {
-      const { createClient: createServerClient } = await import('../lib/supabase/server');
-      return createServerClient() as any;
+      return createServerClient();
     } else {
-      const { createClient: createBrowserClient } = await import('../lib/supabase/client');
-      return createBrowserClient() as any;
+      return createBrowserClient();
     }
   }
 
-  protected static async getAdminClient(): Promise<SupabaseClient<Database>> {
-    const { createAdminClient } = await import('../lib/supabase/admin');
-    return createAdminClient() as any;
+  protected static async getAdminClient(): Promise<AdminSupabaseClient> {
+    return createAdminClient();
   }
 
   protected static formatError<T>(error: unknown, message: string): ServiceResponse<T> {

@@ -1,7 +1,7 @@
 import { TableColumn } from '@/lib/types/table';
 import { MatchWithStageDetails } from '@/lib/types/matches';
 import { formatTableDate } from '@/lib/utils/date';
-import { Pencil, Trash2, MapPin, Trophy } from 'lucide-react';
+import { Pencil, Trash2, MapPin, Trophy, Eye } from 'lucide-react';
 import { formatCategoryName } from '@/lib/utils/sports';
 
 export const getMatchesTableColumns = (): TableColumn<MatchWithStageDetails>[] => [
@@ -102,22 +102,31 @@ export const getMatchesTableColumns = (): TableColumn<MatchWithStageDetails>[] =
 
 export const getMatchesTableActions = (
   onEdit: (match: MatchWithStageDetails) => void,
-  onDelete: (match: MatchWithStageDetails) => void
+  onDelete: (match: MatchWithStageDetails) => void,
+  onView: (match: MatchWithStageDetails) => void,
 ) => [
-  {
-    key: 'edit',
-    label: 'Edit Match',
-    icon: <Pencil className="h-4 w-4" />,
-    onClick: onEdit,
-    variant: 'ghost' as const,
-    size: 'sm' as const
-  },
-  {
-    key: 'delete',
-    label: 'Delete Match',
-    icon: <Trash2 className="h-4 w-4" />,
-    onClick: onDelete,
-    variant: 'ghost' as const,
-    size: 'sm' as const
-  }
-];
+    {
+      key: 'view',
+      label: 'View Match Details',
+      icon: <Eye className='h-4 w-4' />,
+      onClick: onView,
+      variant: 'ghost' as const,
+      size: 'sm' as const
+    },
+    {
+      key: 'edit',
+      label: 'Edit Match',
+      icon: <Pencil className="h-4 w-4" />,
+      onClick: onEdit,
+      variant: 'ghost' as const,
+      size: 'sm' as const
+    },
+    {
+      key: 'delete',
+      label: 'Delete Match',
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: onDelete,
+      variant: 'ghost' as const,
+      size: 'sm' as const
+    }
+  ];

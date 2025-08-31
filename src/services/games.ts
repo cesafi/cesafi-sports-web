@@ -120,6 +120,61 @@ export class GameService extends BaseService {
     }
   }
 
+  static async getPaginatedByMatch(
+    matchId: number,
+    options: PaginationOptions
+  ): Promise<ServiceResponse<PaginatedResponse<Game>>> {
+    try {
+      const supabase = await this.getClient();
+      const { page = 1, pageSize = 10, search, filters } = options;
+      const offset = (page - 1) * pageSize;
+
+      let query = supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact' })
+        .eq('match_id', matchId);
+
+      // Apply search if provided
+      if (search) {
+        query = query.or(`game_number.eq.${search}`);
+      }
+
+      // Apply filters if provided
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            query = query.eq(key, value);
+          }
+        });
+      }
+
+      // Apply pagination and ordering
+      const { data, error, count } = await query
+        .order('game_number', { ascending: true })
+        .range(offset, offset + pageSize - 1);
+
+      if (error) {
+        throw error;
+      }
+
+      const totalCount = count || 0;
+      const pageCount = Math.ceil(totalCount / pageSize);
+
+      return {
+        success: true,
+        data: {
+          data: data || [],
+          totalCount,
+          pageCount,
+          currentPage: page,
+          pageSize
+        }
+      };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch paginated games for match ${matchId}.`);
+    }
+  }
+
   static async insert(data: GameInsert): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();

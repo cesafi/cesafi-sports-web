@@ -76,7 +76,7 @@ export class GameScoreService extends BaseService {
       const [gameCheck, participantCheck] = await Promise.all([
         supabase.from('games').select('id').eq('id', data.game_id!).single(),
         supabase
-          .from('match_participants')
+          .from(TABLE_NAME)
           .select('id')
           .eq('id', data.match_participant_id!)
           .single()
@@ -89,7 +89,9 @@ export class GameScoreService extends BaseService {
         return { success: false, error: 'Referenced match participant does not exist.' };
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(data);
+      const { error } = await supabase
+        .from(TABLE_NAME)
+        .insert(data);
 
       if (error) {
         throw error;
@@ -141,7 +143,10 @@ export class GameScoreService extends BaseService {
         }
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+      const { error } = await supabase
+        .from(TABLE_NAME)
+        .update(data)
+        .eq('id', data.id);
 
       if (error) {
         throw error;

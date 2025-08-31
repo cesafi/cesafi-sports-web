@@ -17,6 +17,12 @@ export async function getMatchById(id: number) {
   return await MatchService.getById(id);
 }
 
+
+
+export async function getMatchByIdBasic(id: number) {
+  return await MatchService.getByIdBasic(id);
+}
+
 export async function getMatchesByStageId(stageId: number) {
   return await MatchService.getByStageId(stageId);
 }
@@ -31,6 +37,17 @@ export async function getMatchesBySeason(seasonId: number) {
 
 export async function createMatch(data: MatchInsert) {
   const result = await MatchService.insert(data);
+
+  if (result.success) {
+    revalidatePath('/admin/dashboard/matches');
+  }
+
+  return result;
+}
+
+export async function createMatchWithParticipants(data: MatchInsert, participantTeamIds: string[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (MatchService as any).insertWithParticipants(data, participantTeamIds);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');

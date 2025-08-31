@@ -79,8 +79,6 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
       { href: '/admin/school-teams', label: 'School Teams', icon: Shield },
       { href: '/admin/volunteers', label: 'Volunteers', icon: Users },
       { href: '/admin/matches', label: 'Matches', icon: Target },
-      { href: '/admin/games', label: 'Games', icon: Calendar },
-      { href: '/admin/game-scores', label: 'Game Scores', icon: Trophy }
     ];
   };
 

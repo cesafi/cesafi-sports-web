@@ -438,4 +438,55 @@ export class SchoolsTeamService extends BaseService {
       return this.formatError(err, `Failed to fetch active teams for school ${schoolId}.`);
     }
   }
+
+  static async getTeamsForStage(
+    stageId: number
+  ): Promise<ServiceResponse<SchoolsTeamWithSchoolDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      
+      // First get the stage details to know which sport category and season
+      const { data: stage, error: stageError } = await supabase
+        .from('sports_seasons_stages')
+        .select('sport_category_id, season_id')
+        .eq('id', stageId)
+        .single();
+
+      if (stageError) {
+        throw stageError;
+      }
+
+      if (!stage.sport_category_id || !stage.season_id) {
+        return { success: false, error: 'Stage must have both sport category and season defined.' };
+      }
+
+      // Get teams for this sport category and season
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          schools!inner(name, abbreviation, logo_url),
+          sports_categories!inner(
+            id,
+            division,
+            levels,
+            sports!inner(name)
+          )
+        `
+        )
+        .eq('sport_category_id', stage.sport_category_id)
+        .eq('season_id', stage.season_id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch teams for stage ${stageId}.`);
+    }
+  }
 }

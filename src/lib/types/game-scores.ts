@@ -5,7 +5,9 @@ export type GameScore = Database['public']['Tables']['game_scores']['Row'];
 export type GameScoreInsert = Database['public']['Tables']['game_scores']['Insert'];
 export type GameScoreUpdate = Database['public']['Tables']['game_scores']['Update'];
 
-export type GameScoreDetailedView = GameScore;
+export interface GameScoreDetailedView extends GameScore {
+  [key: string]: unknown;
+}
 
 export interface GameScoreSearchFilters {
   match_id?: number;

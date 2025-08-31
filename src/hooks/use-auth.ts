@@ -43,32 +43,3 @@ export function useCheckAuth(requiredRoles: string[] = []) {
   });
 }
 
-export function useCurrentUser() {
-  return useQuery({
-    queryKey: ['auth', 'current-user'],
-    queryFn: async () => {
-      const supabase = await import('@/lib/supabase/client').then((m) => m.createClient());
-      const {
-        data: { user },
-        error
-      } = await supabase.auth.getUser();
-
-      if (error || !user) {
-        console.log('useCurrentUser: No user found or error:', error);
-        return null;
-      }
-
-      const userData = {
-        id: user.id,
-        email: user.email,
-        userRole: user.app_metadata?.role as string | undefined,
-        userName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
-      };
-
-      console.log('useCurrentUser: User data retrieved:', userData);
-      return userData;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000 // 10 minutes
-  });
-}

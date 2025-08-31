@@ -37,6 +37,15 @@ export function useTable<T extends BaseEntity>(options: UseTableOptions<T> = {})
       const currentSearch = prev.filters.search || '';
       const shouldResetPage = currentSearch !== search;
       
+      // If search is empty, reset all filters and search query
+      if (search.trim() === '') {
+        return {
+          ...prev,
+          filters: {},
+          page: 1
+        };
+      }
+      
       return {
         ...prev, 
         filters: { ...prev.filters, search },

@@ -10,10 +10,10 @@ import {
 
 import {
   getPaginatedAccounts,
-  createAccountAction,
-  updateAccountAction,
-  updateAccountRoleAction,
-  deleteAccountAction
+  createAccount,
+  updateAccount,
+  updateAccountRole,
+  deleteAccount
 } from '@/actions/accounts';
 
 import { AccountData, CreateAccountData, AccountEntity } from '@/services/accounts';
@@ -75,7 +75,7 @@ export function useAccountsTable() {
 
   // Create account mutation
   const createAccountMutation = useMutation({
-    mutationFn: createAccountAction,
+    mutationFn: createAccount,
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Account created successfully');
@@ -92,7 +92,7 @@ export function useAccountsTable() {
   // Update account mutation
   const updateAccountMutation = useMutation({
     mutationFn: ({ userId, accountData }: { userId: string; accountData: UpdateAccountFormData }) =>
-      updateAccountAction(userId, accountData),
+      updateAccount(userId, accountData),
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Account updated successfully');
@@ -109,7 +109,7 @@ export function useAccountsTable() {
   // Update account role mutation
   const updateAccountRoleMutation = useMutation({
     mutationFn: ({ userId, newRole }: { userId: string; newRole: string }) =>
-      updateAccountRoleAction(userId, newRole),
+      updateAccountRole(userId, newRole),
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Account role updated successfully');
@@ -125,7 +125,7 @@ export function useAccountsTable() {
 
   // Delete account mutation
   const deleteAccountMutation = useMutation({
-    mutationFn: deleteAccountAction,
+    mutationFn: deleteAccount,
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Account deleted successfully');
@@ -166,7 +166,7 @@ export function useAccountsTable() {
   return {
     // Table state
     tableState,
-    
+
     // Data
     accounts: accountsData?.data || [],
     totalCount: accountsData?.totalCount || 0,
@@ -176,25 +176,25 @@ export function useAccountsTable() {
     loading: isLoading,
     tableBodyLoading,
     error: error?.message || null,
-    
+
     // Actions
     createAccount: createAccountMutation.mutate,
     updateAccount: updateAccountMutation.mutate,
     updateAccountRole: updateAccountRoleMutation.mutate,
     deleteAccount: deleteAccountMutation.mutate,
-    
+
     // Mutations state
     isCreating: createAccountMutation.isPending,
     isUpdating: updateAccountMutation.isPending,
     isDeleting: deleteAccountMutation.isPending,
-    
+
     // Event handlers
     onPageChange: handlePageChange,
     onPageSizeChange: handlePageSizeChange,
     onSortChange: handleSort,
     onSearchChange: handleSearch,
     onFiltersChange: handleFilters,
-    
+
     // Utilities
     resetFilters,
     paginationOptions,

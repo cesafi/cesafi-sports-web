@@ -21,6 +21,10 @@ export async function getGamesByMatchId(matchId: number) {
   return await GameService.getByMatchId(matchId);
 }
 
+export async function getPaginatedGamesByMatch(matchId: number, options: PaginationOptions) {
+  return await GameService.getPaginatedByMatch(matchId, options);
+}
+
 export async function createGame(data: GameInsert) {
   const result = await GameService.insert(data);
 

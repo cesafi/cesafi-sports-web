@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { ArticlesTable } from '@/components/shared/articles-table';
 import {
   getAdminArticlesTableColumns,
@@ -8,12 +9,9 @@ import {
 import { Article } from '@/lib/types/articles';
 
 export default function ArticlesManagementPage() {
+  const router = useRouter();
   const handleEditArticle = (article: Article) => {
-    // For now, we'll just log the edit action since we don't have the modal
-    // In the future, this will navigate to the article edit page
-    console.log('Edit article:', article);
-    // TODO: Navigate to article edit page
-    // router.push(`/admin/articles/${article.id}/edit`);
+    router.push(`/admin/articles/${article.id}`);
   };
 
   const handleDeleteArticle = (article: Article) => {
@@ -23,11 +21,7 @@ export default function ArticlesManagementPage() {
   };
 
   const handleCreateArticle = () => {
-    // For now, we'll just log the create action
-    // In the future, this will navigate to the article creation page
-    console.log('Create new article');
-    // TODO: Navigate to article creation page
-    // router.push('/admin/articles/create');
+    router.push('/admin/articles/new');
   };
 
   return (

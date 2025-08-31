@@ -68,7 +68,8 @@ export interface MatchParticipantWithFullDetails {
     id: number;
     name: string;
     scheduled_at: string | null;
-  }
+  };
+  [key: string]: unknown;
 }
 
 export interface MatchParticipantWithMatchHistory {
