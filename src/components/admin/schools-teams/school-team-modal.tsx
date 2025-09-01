@@ -24,6 +24,7 @@ import { useSeason } from '@/components/contexts/season-provider';
 import { useAllSports } from '@/hooks/use-sports';
 import { useAllSportCategories } from '@/hooks/use-sports';
 import { formatCategoryName } from '@/lib/utils/sports';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface SchoolTeamModalProps {
   open: boolean;
@@ -199,89 +200,126 @@ export function SchoolTeamModal({
         </div>
       }
     >
-      <form id="school-team-form" onSubmit={handleSubmit} className="space-y-4">
-        {/* Team Name */}
-        <div className="space-y-2">
-          <Label htmlFor="teamName">Team Name *</Label>
-          <Input
-            id="teamName"
-            value={formData.name}
-            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="Enter team name"
-            className={errors.name ? 'border-red-500' : ''}
-          />
-          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
-        </div>
-
-        {/* Sport Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="sport">Sport *</Label>
-          <Select value={selectedSportId?.toString()} onValueChange={handleSportChange}>
-            <SelectTrigger className={errors.sport_category_id ? 'border-red-500' : ''}>
-              <SelectValue placeholder="Select a sport" />
-            </SelectTrigger>
-            <SelectContent>
-              {sports?.map((sport) => (
-                <SelectItem key={sport.id} value={sport.id.toString()}>
-                  {sport.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.sport_category_id && (
-            <p className="text-sm text-red-500">{errors.sport_category_id}</p>
-          )}
-        </div>
-
-        {/* Sport Category Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="sportCategory">Sport Category *</Label>
-          <Select
-            value={formData.sport_category_id?.toString()}
-            onValueChange={handleSportCategoryChange}
-            disabled={!selectedSportId}
-          >
-            <SelectTrigger className={errors.sport_category_id ? 'border-red-500' : ''}>
-              <SelectValue
-                placeholder={selectedSportId ? 'Select a category' : 'Select a sport first'}
+      <form id="school-team-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Basic Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Team Name */}
+            <div className="space-y-2">
+              <Label htmlFor="teamName">Team Name *</Label>
+              <Input
+                id="teamName"
+                value={formData.name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter team name"
+                className={errors.name ? 'border-red-500' : ''}
               />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredSportCategories.map((category) => (
-                <SelectItem key={category.id} value={category.id.toString()}>
-                  {formatCategoryName(category.division, category.levels)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.sport_category_id && (
-            <p className="text-sm text-red-500">{errors.sport_category_id}</p>
-          )}
-        </div>
+              {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Season Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="season">Season *</Label>
-          <Select value={formData.season_id?.toString()} onValueChange={handleSeasonChange}>
-            <SelectTrigger className={errors.season_id ? 'border-red-500' : ''}>
-              <SelectValue placeholder="Select a season" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableSeasons?.map((season) => (
-                <SelectItem key={season.id} value={season.id.toString()}>
-                  Season {season.id} {season.id === currentSeason?.id ? '(Current)' : ''}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.season_id && <p className="text-sm text-red-500">{errors.season_id}</p>}
-        </div>
+        {/* Sport Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Sport Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Sport Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="sport">Sport *</Label>
+              <Select value={selectedSportId?.toString()} onValueChange={handleSportChange}>
+                <SelectTrigger className={errors.sport_category_id ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="Select a sport" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sports?.map((sport) => (
+                    <SelectItem key={sport.id} value={sport.id.toString()}>
+                      {sport.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.sport_category_id && (
+                <p className="text-sm text-red-500">{errors.sport_category_id}</p>
+              )}
+            </div>
 
-        {/* Active Status */}
-        <div className="flex items-center space-x-2">
-          <Switch id="isActive" checked={formData.is_active} onCheckedChange={handleActiveChange} />
-          <Label htmlFor="isActive">Team is active</Label>
-        </div>
+            {/* Sport Category Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="sportCategory">Sport Category *</Label>
+              <Select
+                value={formData.sport_category_id?.toString()}
+                onValueChange={handleSportCategoryChange}
+                disabled={!selectedSportId}
+              >
+                <SelectTrigger className={errors.sport_category_id ? 'border-red-500' : ''}>
+                  <SelectValue
+                    placeholder={selectedSportId ? 'Select a category' : 'Select a sport first'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredSportCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {formatCategoryName(category.division, category.levels)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.sport_category_id && (
+                <p className="text-sm text-red-500">{errors.sport_category_id}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Season & Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Season & Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Season Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="season">Season *</Label>
+              <Select value={formData.season_id?.toString()} onValueChange={handleSeasonChange}>
+                <SelectTrigger className={errors.season_id ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="Select a season" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableSeasons?.map((season) => (
+                    <SelectItem key={season.id} value={season.id.toString()}>
+                      Season {season.id} {season.id === currentSeason?.id ? '(Current)' : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.season_id && (
+                <p className="text-sm text-red-500">{errors.season_id}</p>
+              )}
+            </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Switch id="isActive" checked={formData.is_active} onCheckedChange={handleActiveChange} />
+                <Label htmlFor="isActive">Active Team</Label>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Active teams are visible in the system and can participate in matches.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </form>
     </ModalLayout>
   );

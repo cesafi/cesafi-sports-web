@@ -143,6 +143,11 @@ export function useDeleteSeason(
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: seasonKeys.all });
         queryClient.invalidateQueries({ queryKey: seasonKeys.details(id) });
+        // CRITICAL: Invalidate related entities that depend on this season
+        queryClient.invalidateQueries({ queryKey: ['schools-teams'] });
+        queryClient.invalidateQueries({ queryKey: ['sports-seasons-stages'] });
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
       }
       mutationOptions?.onSuccess?.(result, id, context);
     },

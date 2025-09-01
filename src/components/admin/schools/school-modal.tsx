@@ -302,7 +302,7 @@ export function SchoolModal({
                 <div
                   className={`h-32 w-full rounded-lg border-2 border-dashed transition-colors duration-200 ${
                     isDragOver
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
+                      ? 'border-primary bg-primary/10'
                       : 'border-gray-300 hover:border-gray-400'
                   } flex flex-col items-center justify-center`}
                   onDragOver={handleDragOver}
@@ -311,12 +311,12 @@ export function SchoolModal({
                 >
                   <ImageIcon
                     className={`mb-2 h-8 w-8 transition-colors duration-200 ${
-                      isDragOver ? 'text-blue-500' : 'text-gray-400'
+                      isDragOver ? 'text-primary' : 'text-gray-400'
                     }`}
                   />
                   <p
                     className={`mb-2 text-sm transition-colors duration-200 ${
-                      isDragOver ? 'text-blue-600' : 'text-gray-600'
+                      isDragOver ? 'text-primary' : 'text-gray-600'
                     }`}
                   >
                     {isDragOver ? 'Drop your logo here' : 'Upload school logo'}

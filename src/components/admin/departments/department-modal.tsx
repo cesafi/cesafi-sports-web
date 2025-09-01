@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Department, DepartmentInsert, DepartmentUpdate } from '@/lib/types/departments';
 import { createDepartmentSchema, updateDepartmentSchema } from '@/lib/validations/departments';
 import { ZodError } from 'zod';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface DepartmentModalProps {
   open: boolean;
@@ -128,18 +129,28 @@ export function DepartmentModal({
         </div>
       }
     >
-      <form id="department-form" onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Department Name</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-            placeholder="Enter department name"
-            className={errors.name ? 'border-red-500' : ''}
-          />
-          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
-        </div>
+      <form id="department-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Basic Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Department Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter department name"
+                className={errors.name ? 'border-red-500' : ''}
+              />
+              {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+            </div>
+          </CardContent>
+        </Card>
       </form>
     </ModalLayout>
   );

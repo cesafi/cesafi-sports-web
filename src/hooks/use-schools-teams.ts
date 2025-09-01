@@ -264,6 +264,9 @@ export function useDeleteSchoolsTeam(
         queryClient.invalidateQueries({ queryKey: schoolKeys.all });
         queryClient.invalidateQueries({ queryKey: seasonKeys.all });
         queryClient.invalidateQueries({ queryKey: sportKeys.all });
+        // CRITICAL: Invalidate match participants since this team might be in matches
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
       }
       mutationOptions?.onSuccess?.(result, id, context);
     },

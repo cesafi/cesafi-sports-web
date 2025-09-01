@@ -12,16 +12,13 @@ export const getMatchParticipantsTableColumns = (): TableColumn<MatchParticipant
     render: (participant) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-            <Trophy className="text-blue-600 dark:text-blue-400 h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <Trophy className="text-primary h-5 w-5" />
           </div>
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium text-foreground">
             {participant.schools_teams.schools.abbreviation} {participant.schools_teams.name}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Team ID: {participant.team_id}
           </div>
         </div>
       </div>
@@ -46,7 +43,7 @@ export const getMatchParticipantsTableColumns = (): TableColumn<MatchParticipant
     header: 'Status',
     sortable: false,
     render: (participant) => (
-      <Badge variant="secondary" className="bg-green-100 text-green-800">
+      <Badge variant="default">
         Active
       </Badge>
     )
@@ -66,12 +63,12 @@ export const getMatchParticipantsTableColumns = (): TableColumn<MatchParticipant
 export const getMatchParticipantsTableActions = (
   onRemove: (participant: MatchParticipantWithFullDetails) => void
 ): TableAction<MatchParticipantWithFullDetails>[] => [
-  {
-    key: 'remove',
-    label: 'Remove from Match',
-    icon: <Trash2 className="h-4 w-4" />,
-    onClick: onRemove,
-    variant: 'destructive',
-    size: 'sm'
-  }
-];
+    {
+      key: 'remove',
+      label: 'Remove from Match',
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: onRemove,
+      variant: 'ghost',
+      size: 'sm'
+    }
+  ];

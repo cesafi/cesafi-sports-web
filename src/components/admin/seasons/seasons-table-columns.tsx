@@ -13,8 +13,8 @@ export const getSeasonsTableColumns = (): TableColumn<Season>[] => [
     render: (season: Season) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-            <Hash className="text-blue-600 dark:text-blue-400 h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <Hash className="text-primary h-5 w-5" />
           </div>
         </div>
         <div className="min-w-0 flex-1">

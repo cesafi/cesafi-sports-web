@@ -19,7 +19,8 @@ import {
   SportsSeasonsStageInsert,
   SportsSeasonsStageUpdate,
   SportsSeasonsStagesPaginationOptions,
-  SportsSeasonsStage
+  SportsSeasonsStage,
+  SportsSeasonsStageWithDetails
 } from '@/lib/types/sports-seasons-stages';
 
 import { PaginatedResponse, ServiceResponse, FilterValue, PaginationOptions } from '@/lib/types/base';
@@ -56,7 +57,7 @@ export function usePaginatedSportsSeasonsStages(
 }
 
 export function useAllSportsSeasonsStages(
-  queryOptions?: UseQueryOptions<ServiceResponse<SportsSeasonsStage[]>, Error, SportsSeasonsStage[]>
+  queryOptions?: UseQueryOptions<ServiceResponse<SportsSeasonsStageWithDetails[]>, Error, SportsSeasonsStageWithDetails[]>
 ) {
   return useQuery({
     queryKey: sportsSeasonsStageKeys.all,

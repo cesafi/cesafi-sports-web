@@ -195,6 +195,12 @@ export function useDeleteSport(
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: sportKeys.all });
         queryClient.invalidateQueries({ queryKey: sportKeys.details(id) });
+        // CRITICAL: Invalidate related entities that depend on this sport
+        queryClient.invalidateQueries({ queryKey: sportCategoryKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['schools-teams'] });
+        queryClient.invalidateQueries({ queryKey: ['sports-seasons-stages'] });
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
       }
       mutationOptions?.onSuccess?.(result, id, context);
     },
@@ -400,6 +406,11 @@ export function useDeleteSportCategory(
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: sportCategoryKeys.all });
         queryClient.invalidateQueries({ queryKey: sportCategoryKeys.details(id) });
+        // CRITICAL: Invalidate related entities that depend on this sport category
+        queryClient.invalidateQueries({ queryKey: ['schools-teams'] });
+        queryClient.invalidateQueries({ queryKey: ['sports-seasons-stages'] });
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
       }
       mutationOptions?.onSuccess?.(result, id, context);
     },

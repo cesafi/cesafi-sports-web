@@ -11,6 +11,7 @@ import { Clock, Play, Square, Calendar, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { MatchWithFullDetails, MatchUpdate } from '@/lib/types/matches';
 import { formatTableDate } from '@/lib/utils/date';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface MatchStatusModalProps {
   open: boolean;
@@ -25,13 +26,13 @@ type MatchStatus = 'upcoming' | 'ongoing' | 'finished' | 'cancelled';
 const statusConfig = {
   upcoming: {
     label: 'Upcoming',
-    color: 'bg-yellow-100 text-yellow-800',
+    color: 'bg-amber-100 text-amber-800',
     icon: Calendar,
     description: 'Match is scheduled but not started'
   },
   ongoing: {
     label: 'Ongoing',
-    color: 'bg-blue-100 text-blue-800',
+    color: 'bg-primary/10 text-primary',
     icon: Play,
     description: 'Match is currently in progress'
   },
@@ -196,148 +197,188 @@ export function MatchStatusModal({
     >
       <div className="space-y-6">
         {/* Current Match Info */}
-        <div className="bg-muted/50 rounded-lg p-4">
-          <h3 className="font-semibold mb-2">{match.name}</h3>
-          <div className="text-sm text-muted-foreground">
-            <p>{match.description}</p>
-            <p className="mt-1">Venue: {match.venue}</p>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Match Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted/50 rounded-lg p-4">
+              <h3 className="font-semibold mb-2">{match.name}</h3>
+              <div className="text-sm text-muted-foreground">
+                <p>{match.description}</p>
+                <p className="mt-1">Venue: {match.venue}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Status Selection */}
-        <div className="space-y-3">
-          <Label htmlFor="status">Match Status *</Label>
-          <Select value={formData.status} onValueChange={handleStatusChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select match status" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(statusConfig).map(([value, config]) => {
-                const Icon = config.icon;
-                return (
-                  <SelectItem key={value} value={value}>
-                    <div className="flex items-center space-x-2">
-                      <Icon className="h-4 w-4" />
-                      <span>{config.label}</span>
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-          
-          {/* Status Preview */}
-          <div className="flex items-center space-x-2">
-            <StatusIcon className="h-4 w-4" />
-            <Badge variant="secondary" className={currentStatus.color}>
-              {currentStatus.label}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
-              {currentStatus.description}
-            </span>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Status Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <Label htmlFor="status">Match Status *</Label>
+              <Select value={formData.status} onValueChange={handleStatusChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select match status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(statusConfig).map(([value, config]) => {
+                    const Icon = config.icon;
+                    return (
+                      <SelectItem key={value} value={value}>
+                        <div className="flex items-center space-x-2">
+                          <Icon className="h-4 w-4" />
+                          <span>{config.label}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              
+              {/* Status Preview */}
+              <div className="flex items-center space-x-2">
+                <StatusIcon className="h-4 w-4" />
+                <Badge variant="secondary" className={currentStatus.color}>
+                  {currentStatus.label}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  {currentStatus.description}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Timing Fields */}
-        <div className="space-y-4">
-          <h4 className="font-semibold">Match Timing</h4>
-          
-          {/* Scheduled Time */}
-          <div className="space-y-2">
-            <Label htmlFor="scheduled_at">Scheduled Time</Label>
-            <Input
-              id="scheduled_at"
-              type="datetime-local"
-              value={formData.scheduled_at}
-              onChange={(e) => handleDateTimeChange('scheduled_at', e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              When the match is scheduled to begin
-            </p>
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Match Timing
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Scheduled Time */}
+            <div className="space-y-2">
+              <Label htmlFor="scheduled_at">Scheduled Time</Label>
+              <Input
+                id="scheduled_at"
+                type="datetime-local"
+                value={formData.scheduled_at}
+                onChange={(e) => handleDateTimeChange('scheduled_at', e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                When the match is scheduled to begin
+              </p>
+            </div>
 
-          {/* Start Time */}
-          <div className="space-y-2">
-            <Label htmlFor="start_at">
-              Actual Start Time
-              {(formData.status === 'ongoing' || formData.status === 'finished') && (
-                <span className="text-red-500 ml-1">*</span>
+            {/* Start Time */}
+            <div className="space-y-2">
+              <Label htmlFor="start_at">
+                Actual Start Time
+                {(formData.status === 'ongoing' || formData.status === 'finished') && (
+                  <span className="text-red-500 ml-1">*</span>
+                )}
+              </Label>
+              <Input
+                id="start_at"
+                type="datetime-local"
+                value={formData.start_at}
+                onChange={(e) => handleDateTimeChange('start_at', e.target.value)}
+                className={errors.start_at ? 'border-red-500' : ''}
+              />
+              {errors.start_at && (
+                <p className="text-sm text-red-500">{errors.start_at}</p>
               )}
-            </Label>
-            <Input
-              id="start_at"
-              type="datetime-local"
-              value={formData.start_at}
-              onChange={(e) => handleDateTimeChange('start_at', e.target.value)}
-              className={errors.start_at ? 'border-red-500' : ''}
-            />
-            {errors.start_at && (
-              <p className="text-sm text-red-500">{errors.start_at}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              When the match actually started
-            </p>
-          </div>
+              <p className="text-xs text-muted-foreground">
+                When the match actually started
+              </p>
+            </div>
 
-          {/* End Time */}
-          <div className="space-y-2">
-            <Label htmlFor="end_at">
-              End Time
-              {formData.status === 'finished' && (
-                <span className="text-red-500 ml-1">*</span>
+            {/* End Time */}
+            <div className="space-y-2">
+              <Label htmlFor="end_at">
+                End Time
+                {formData.status === 'finished' && (
+                  <span className="text-red-500 ml-1">*</span>
+                )}
+              </Label>
+              <Input
+                id="end_at"
+                type="datetime-local"
+                value={formData.end_at}
+                onChange={(e) => handleDateTimeChange('end_at', e.target.value)}
+                className={errors.end_at ? 'border-red-500' : ''}
+                disabled={formData.status === 'upcoming'}
+              />
+              {errors.end_at && (
+                <p className="text-sm text-red-500">{errors.end_at}</p>
               )}
-            </Label>
-            <Input
-              id="end_at"
-              type="datetime-local"
-              value={formData.end_at}
-              onChange={(e) => handleDateTimeChange('end_at', e.target.value)}
-              className={errors.end_at ? 'border-red-500' : ''}
-              disabled={formData.status === 'upcoming'}
-            />
-            {errors.end_at && (
-              <p className="text-sm text-red-500">{errors.end_at}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              When the match ended (only for finished matches)
-            </p>
-          </div>
-        </div>
+              <p className="text-xs text-muted-foreground">
+                When the match ended (only for finished matches)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Current Timing Display */}
         {(match.scheduled_at || match.start_at || match.end_at) && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-semibold text-blue-800 mb-2">Current Timing</h4>
-            <div className="space-y-1 text-sm">
-              {match.scheduled_at && (
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-blue-600" />
-                  <span className="text-blue-700">Scheduled: {formatTableDate(match.scheduled_at)}</span>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Current Timing
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-muted border rounded-lg p-4">
+                <div className="space-y-1 text-sm">
+                  {match.scheduled_at && (
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4 text-primary" />
+                      <span className="text-foreground">Scheduled: {formatTableDate(match.scheduled_at)}</span>
+                    </div>
+                  )}
+                  {match.start_at && (
+                    <div className="flex items-center space-x-2">
+                      <Play className="h-4 w-4 text-green-600" />
+                      <span className="text-foreground">Started: {formatTableDate(match.start_at)}</span>
+                    </div>
+                  )}
+                  {match.end_at && (
+                    <div className="flex items-center space-x-2">
+                      <Square className="h-4 w-4 text-red-600" />
+                      <span className="text-foreground">Ended: {formatTableDate(match.end_at)}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              {match.start_at && (
-                <div className="flex items-center space-x-2">
-                  <Play className="h-4 w-4 text-green-600" />
-                  <span className="text-blue-700">Started: {formatTableDate(match.start_at)}</span>
-                </div>
-              )}
-              {match.end_at && (
-                <div className="flex items-center space-x-2">
-                  <Square className="h-4 w-4 text-red-600" />
-                  <span className="text-blue-700">Ended: {formatTableDate(match.end_at)}</span>
-                </div>
-              )}
-            </div>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Info Note */}
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-sm text-amber-800">
-            <strong>Note:</strong> Changing the match status will affect how the match appears throughout the system. 
-            Make sure to set accurate timing information for proper tracking and reporting.
-          </p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-3 bg-muted border rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong>Note:</strong> Changing the match status will affect how the match appears throughout the system. 
+                Make sure to set accurate timing information for proper tracking and reporting.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </ModalLayout>
   );

@@ -14,8 +14,8 @@ export const getSchoolsTeamsTableColumns = (): TableColumn<SchoolsTeamWithSportD
     render: (team: SchoolsTeamWithSportDetails) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-            <Trophy className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+          <Trophy className="h-5 w-5 text-primary" />
           </div>
         </div>
         <div className="min-w-0 flex-1">

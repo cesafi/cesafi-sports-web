@@ -141,6 +141,10 @@ export function useDeleteSchool(
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: schoolKeys.all });
         queryClient.invalidateQueries({ queryKey: schoolKeys.details(id) });
+        // CRITICAL: Invalidate related entities that depend on this school
+        queryClient.invalidateQueries({ queryKey: ['schools-teams'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
       }
       mutationOptions?.onSuccess?.(result, id, context);
     },

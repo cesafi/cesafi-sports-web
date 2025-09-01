@@ -13,8 +13,8 @@ export const getMatchGamesTableColumns = (): TableColumn<GameWithDetails>[] => [
     render: (game: GameWithDetails) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-            <Trophy className="text-blue-600 dark:text-blue-400 h-5 w-5" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+          <Trophy className="text-primary h-5 w-5" />
           </div>
         </div>
         <div className="min-w-0 flex-1">
@@ -35,11 +35,11 @@ export const getMatchGamesTableColumns = (): TableColumn<GameWithDetails>[] => [
     width: '15%',
     render: (game: GameWithDetails) => {
       if (game.start_at && game.end_at) {
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Completed</Badge>;
+        return <Badge variant="default">Completed</Badge>;
       } else if (game.start_at) {
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">In Progress</Badge>;
+        return <Badge variant="secondary">In Progress</Badge>;
       } else {
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Scheduled</Badge>;
+        return <Badge variant="secondary">Scheduled</Badge>;
       }
     }
   },
@@ -123,14 +123,6 @@ export const getMatchGamesTableActions = (
       label: 'Manage Scores',
       icon: <Target className="h-4 w-4" />,
       onClick: onManageScores,
-      variant: 'default' as const,
-      size: 'sm' as const
-    },
-    {
-      key: 'edit',
-      label: 'Edit Game',
-      icon: <Pencil className="h-4 w-4" />,
-      onClick: onEdit,
       variant: 'ghost' as const,
       size: 'sm' as const
     },

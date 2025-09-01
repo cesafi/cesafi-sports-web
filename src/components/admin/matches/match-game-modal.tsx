@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { GameWithDetails, GameInsert, GameUpdate } from '@/lib/types/games';
 import { ZodError } from 'zod';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface MatchGameModalProps {
   open: boolean;
@@ -145,55 +146,74 @@ export function MatchGameModal({
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         <p className="text-sm text-muted-foreground">
           {mode === 'add' ? 'Create a new game for this match' : 'Update game information'}
         </p>
         
-        <form id="game-form" onSubmit={handleSubmit} className="space-y-4">
-        {/* Game Number */}
-        <div className="space-y-2">
-          <Label htmlFor="gameNumber">Game Number *</Label>
-          <Select 
-            value={formData.game_number?.toString()} 
-            onValueChange={handleGameNumberChange}
-          >
-            <SelectTrigger className={errors.game_number ? 'border-red-500' : ''}>
-              <SelectValue placeholder="Select game number" />
-            </SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5, 6, 7].map((num) => (
-                <SelectItem key={num} value={num.toString()}>
-                  Game {num}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.game_number && (
-            <p className="text-sm text-red-500">{errors.game_number}</p>
-          )}
-        </div>
+        <form id="game-form" onSubmit={handleSubmit} className="space-y-6">
+          {/* Game Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Game Configuration
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Game Number */}
+              <div className="space-y-2">
+                <Label htmlFor="gameNumber">Game Number *</Label>
+                <Select 
+                  value={formData.game_number?.toString()} 
+                  onValueChange={handleGameNumberChange}
+                >
+                  <SelectTrigger className={errors.game_number ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="Select game number" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>
+                        Game {num}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.game_number && (
+                  <p className="text-sm text-red-500">{errors.game_number}</p>
+                )}
+              </div>
 
-        {/* Start Time */}
-        <div className="space-y-2">
-          <Label htmlFor="startAt">Start Time</Label>
-          <Input
-            id="startAt"
-            type="datetime-local"
-            value={formData.start_at ? new Date(formData.start_at).toISOString().slice(0, 16) : ''}
-            onChange={(e) => handleDateChange('start_at', e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            When the game actually started (optional)
-          </p>
-        </div>
+              {/* Start Time */}
+              <div className="space-y-2">
+                <Label htmlFor="startAt">Start Time</Label>
+                <Input
+                  id="startAt"
+                  type="datetime-local"
+                  value={formData.start_at ? new Date(formData.start_at).toISOString().slice(0, 16) : ''}
+                  onChange={(e) => handleDateChange('start_at', e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  When the game actually started (optional)
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Info Note */}
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> You can set the start time now or edit it later. End time and duration can be added when editing the game after it's created.
-          </p>
-        </div>
+          {/* Info Note */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-3 bg-muted border rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Note:</strong> You can set the start time now or edit it later. End time and duration can be added when editing the game after it's created.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </form>
       </div>
     </ModalLayout>

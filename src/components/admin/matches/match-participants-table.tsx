@@ -7,6 +7,9 @@ import { TeamSelectionModal } from './team-selection-modal';
 import { MatchParticipantWithFullDetails } from '@/lib/types/match-participants';
 import { useMatchParticipantsTable } from '@/hooks/use-match-participants-table';
 import { getMatchParticipantsTableColumns, getMatchParticipantsTableActions } from './match-participants-table-columns';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Users, Plus } from 'lucide-react';
 
 interface MatchParticipantsTableProps {
   matchId: number;
@@ -65,53 +68,74 @@ export function MatchParticipantsTable({ matchId, isLoading: externalLoading }: 
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">Participating Teams</h3>
-            <p className="text-sm text-muted-foreground">Loading participating teams for this match...</p>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Users className="h-6 w-6 text-primary" />
+            Participating Teams
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading participants...</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center justify-center h-64 border rounded-lg">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading participants...</p>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <DataTable
-        data={participants}
-        totalCount={totalCount}
-        loading={false}
-        tableBodyLoading={tableBodyLoading}
-        error={participantsError}
-        columns={columns}
-        actions={actions}
-        currentPage={currentPage}
-        pageCount={pageCount}
-        pageSize={pageSize}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-        onSortChange={onSortChange}
-        onSearchChange={onSearchChange}
-        onFiltersChange={onFiltersChange}
-        title="Participating Teams"
-        subtitle={`Managing teams participating in this match. Currently showing ${participants.length} teams.`}
-        searchPlaceholder="Search teams..."
-        showSearch={true}
-        showFilters={false}
-        addButton={{
-          label: 'Add Team',
-          onClick: () => setIsAddModalOpen(true)
-        }}
-        className=""
-        emptyMessage="No teams participating in this match"
-      />
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Users className="h-6 w-6 text-primary" />
+              Participating Teams
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Managing teams participating in this match • {participants.length} team{participants.length !== 1 ? 's' : ''} total
+            </p>
+          </div>
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Team
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <DataTable
+          data={participants}
+          totalCount={totalCount}
+          loading={false}
+          tableBodyLoading={tableBodyLoading}
+          error={participantsError}
+          columns={columns}
+          actions={actions}
+          currentPage={currentPage}
+          pageCount={pageCount}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          onSortChange={onSortChange}
+          onSearchChange={onSearchChange}
+          onFiltersChange={onFiltersChange}
+          title=""
+          subtitle=""
+          searchPlaceholder="Search teams..."
+          showSearch={true}
+          showFilters={false}
+          addButton={undefined}
+          className=""
+          emptyMessage="No teams participating in this match"
+        />
+      </CardContent>
 
       {/* Team Selection Modal */}
       <TeamSelectionModal
@@ -142,6 +166,6 @@ export function MatchParticipantsTable({ matchId, isLoading: externalLoading }: 
         destructive={true}
         isLoading={isRemoving}
       />
-    </div>
+    </Card>
   );
 }

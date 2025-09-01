@@ -13,6 +13,7 @@ import { SchoolsTeamWithSchoolDetails } from '@/lib/types/schools-teams';
 import { useStageTeams } from '@/hooks/use-stage-teams';
 import { useCreateMatchParticipant } from '@/hooks/use-match-participants-management';
 import { toast } from 'sonner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface TeamSelectionModalProps {
   matchId: number;
@@ -109,75 +110,95 @@ export function TeamSelectionModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col space-y-4">
+        <div className="flex-1 overflow-hidden flex flex-col space-y-6">
           {/* Search */}
-          <div className="space-y-2">
-            <Label htmlFor="teamSearch">Search Teams</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="teamSearch"
-                placeholder="Search by team name or school..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Search className="h-5 w-5" />
+                Search Teams
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="teamSearch">Search Teams</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="teamSearch"
+                    placeholder="Search by team name or school..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
 
-          {/* Selected teams count */}
-          {selectedTeams.length > 0 && (
-            <div className="flex items-center space-x-2">
-              <Badge variant="secondary">
-                {selectedTeams.length} team(s) selected
-              </Badge>
-            </div>
-          )}
+              {/* Selected teams count */}
+              {selectedTeams.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary">
+                    {selectedTeams.length} team(s) selected
+                  </Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Teams list */}
-          <div className="flex-1 overflow-y-auto">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
-                  <p className="text-sm text-muted-foreground">Loading teams...</p>
-                </div>
-              </div>
-            ) : filteredTeams.length === 0 ? (
-              <div className="flex items-center justify-center h-32">
-                <div className="text-center">
-                  <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    {eligibleTeams.length === 0 
-                      ? 'No eligible teams available for this match'
-                      : 'No teams found matching your search'
-                    }
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filteredTeams.map((team) => (
-                  <div key={team.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
-                    <Checkbox
-                      id={`team-${team.id}`}
-                      checked={selectedTeams.includes(team.id)}
-                      onCheckedChange={(checked) => handleTeamSelection(team.id, checked as boolean)}
-                    />
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Trophy className="h-5 w-5 text-primary" />
-                      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Users className="h-5 w-5" />
+                Available Teams
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex-1 overflow-y-auto">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                      <p className="text-sm text-muted-foreground">Loading teams...</p>
                     </div>
-                    <Label htmlFor={`team-${team.id}`} className="flex-1 cursor-pointer">
-                      <div className="font-medium">{team.schools.abbreviation} {team.name}</div>
-                      <div className="text-sm text-muted-foreground">{team.schools.name}</div>
-                    </Label>
                   </div>
-                ))}
+                ) : filteredTeams.length === 0 ? (
+                  <div className="flex items-center justify-center h-32">
+                    <div className="text-center">
+                      <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">
+                        {eligibleTeams.length === 0 
+                          ? 'No eligible teams available for this match'
+                          : 'No teams found matching your search'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredTeams.map((team) => (
+                      <div key={team.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
+                        <Checkbox
+                          id={`team-${team.id}`}
+                          checked={selectedTeams.includes(team.id)}
+                          onCheckedChange={(checked) => handleTeamSelection(team.id, checked as boolean)}
+                        />
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                            <Trophy className="h-5 w-5 text-primary" />
+                          </div>
+                        </div>
+                        <Label htmlFor={`team-${team.id}`} className="flex-1 cursor-pointer">
+                          <div className="font-medium">{team.schools.abbreviation} {team.name}</div>
+                          <div className="text-sm text-muted-foreground">{team.schools.name}</div>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Actions */}

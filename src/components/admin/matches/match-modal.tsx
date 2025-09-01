@@ -14,6 +14,8 @@ import { ZodError } from 'zod';
 import { useAllSportsSeasonsStages } from '@/hooks/use-sports-seasons-stages';
 import { useStageTeams } from '@/hooks/use-stage-teams';
 import { generateMatchName, generateMatchDescription } from '@/lib/utils/match-naming';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Power } from 'lucide-react';
 
 interface MatchModalProps {
   open: boolean;
@@ -35,7 +37,7 @@ export function MatchModal({
   isSubmitting
 }: MatchModalProps) {
   const { data: stages } = useAllSportsSeasonsStages();
-  const { data: availableTeams = [], isLoading: teamsLoading } = useStageTeams(selectedStageId);
+  const { data: availableTeams = [], isLoading: teamsLoading } = useStageTeams(selectedStageId || 0);
   
   const [formData, setFormData] = useState<MatchInsert | MatchUpdate>({
     name: '',
@@ -74,11 +76,10 @@ export function MatchModal({
           }
         }));
 
-        // For now, use placeholder values since we don't have full stage details
-        // In a real implementation, you'd fetch the full stage details with sport info
-        const sportName = 'Sport'; // selectedStage.sports_categories?.sports?.name || 'Unknown Sport';
-        const division = 'mixed'; // selectedStage.sports_categories?.division || 'mixed';
-        const level = 'college'; // selectedStage.sports_categories?.levels || 'college';
+        // Use actual sport and category data from the selected stage
+        const sportName = selectedStage.sports_categories?.sports?.name || 'Unknown Sport';
+        const division = selectedStage.sports_categories?.division || 'mixed';
+        const level = selectedStage.sports_categories?.levels || 'college';
         
         const generatedName = generateMatchName(matchParticipants);
         const generatedDescription = generateMatchDescription(
@@ -222,175 +223,202 @@ export function MatchModal({
         </div>
       }
     >
-      <form id="match-form" onSubmit={handleSubmit} className="space-y-4">
+      <form id="match-form" onSubmit={handleSubmit} className="space-y-6">
         {/* League Stage Display */}
         {selectedStage && (
-          <div className="space-y-2">
-            <Label>League Stage</Label>
-            <div className="p-3 bg-muted rounded-lg text-sm">
-              <div className="font-medium">
-                {selectedStage.competition_stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                League Stage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="p-3 bg-muted rounded-lg text-sm">
+                <div className="font-medium">
+                  {selectedStage.competition_stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </div>
+                <div className="text-muted-foreground">
+                  Stage ID: {selectedStage.id}
+                </div>
               </div>
-              <div className="text-muted-foreground">
-                Stage ID: {selectedStage.id}
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Match Participants - Only for Add Mode */}
         {mode === 'add' && (
-          <div className="space-y-2">
-            <Label>Match Participants *</Label>
-            {teamsLoading ? (
-              <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">
-                Loading available teams...
-              </div>
-            ) : availableTeams.length === 0 ? (
-              <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">
-                No teams available for this stage. Please ensure teams are registered for this sport category and season.
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
-                {availableTeams.map((team) => (
-                  <div key={team.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`team-${team.id}`}
-                      checked={selectedTeamIds.includes(team.id)}
-                      onCheckedChange={(checked) => handleTeamSelection(team.id, checked as boolean)}
-                    />
-                    <Label htmlFor={`team-${team.id}`} className="flex-1 cursor-pointer">
-                      <div className="font-medium">{team.schools.abbreviation} {team.name}</div>
-                      <div className="text-sm text-muted-foreground">{team.schools.name}</div>
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            )}
-            {errors.participants && (
-              <p className="text-sm text-red-500">{errors.participants}</p>
-            )}
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Match Participants
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+
+              
+              {teamsLoading ? (
+                <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">
+                  Loading available teams...
+                </div>
+              ) : availableTeams.length === 0 ? (
+                <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">
+                  No teams available for this stage. Please ensure teams are registered for this sport category and season.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3">
+                  {availableTeams.map((team) => (
+                    <div key={team.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`team-${team.id}`}
+                        checked={selectedTeamIds.includes(team.id)}
+                        onCheckedChange={(checked) => handleTeamSelection(team.id, checked as boolean)}
+                      />
+                      <Label htmlFor={`team-${team.id}`} className="flex-1 cursor-pointer">
+                        <div className="font-medium">{team.schools.abbreviation} {team.name}</div>
+                        <div className="text-sm text-muted-foreground">{team.schools.name}</div>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {errors.participants && (
+                <p className="text-sm text-red-500">{errors.participants}</p>
+              )}
+            </CardContent>
+          </Card>
         )}
 
-        {/* Auto-generated Match Name - Display Only */}
-        {mode === 'add' && formData.name && (
-          <div className="space-y-2">
-            <Label>Generated Match Name</Label>
+        {/* Match Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Match Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Auto-generated Match Name - Display Only */}
+            {mode === 'add' && formData.name && (
+              <div className="space-y-2">
+                <Label>Generated Match Name</Label>
+                <div className="p-3 bg-muted rounded-lg text-sm">
+                  <div className="font-medium">{formData.name}</div>
+                </div>
+              </div>
+            )}
+
+            {/* Match Name - Editable for Edit Mode */}
+            {mode === 'edit' && (
+              <div className="space-y-2">
+                <Label htmlFor="matchName">Match Name *</Label>
+                <Input
+                  id="matchName"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Enter match name"
+                  className={errors.name ? 'border-red-500' : ''}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name}</p>
+                )}
+              </div>
+            )}
+
+            {/* Auto-generated Description - Display Only */}
+            {mode === 'add' && formData.description && (
+              <div className="space-y-2">
+                <Label>Generated Description</Label>
+                <div className="p-3 bg-muted rounded-lg text-sm">
+                  {formData.description}
+                </div>
+              </div>
+            )}
+
+            {/* Match Description - Editable for Edit Mode */}
+            {mode === 'edit' && (
+              <div className="space-y-2">
+                <Label htmlFor="matchDescription">Description *</Label>
+                <Textarea
+                  id="matchDescription"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Enter match description"
+                  className={errors.description ? 'border-red-500' : ''}
+                  rows={3}
+                />
+                {errors.description && (
+                  <p className="text-sm text-red-500">{errors.description}</p>
+                )}
+              </div>
+            )}
+
+            {/* Venue */}
+            <div className="space-y-2">
+              <Label htmlFor="venue">Venue *</Label>
+              <Input
+                id="venue"
+                value={formData.venue}
+                onChange={(e) => setFormData(prev => ({ ...prev, venue: e.target.value }))}
+                placeholder="Enter venue"
+                className={errors.venue ? 'border-red-500' : ''}
+              />
+              {errors.venue && (
+                <p className="text-sm text-red-500">{errors.venue}</p>
+              )}
+            </div>
+
+            {/* Best of */}
+            <div className="space-y-2">
+              <Label htmlFor="bestOf">Best of *</Label>
+              <Select value={formData.best_of?.toString()} onValueChange={handleBestOfChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select best of" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1</SelectItem>
+                  <SelectItem value="3">3</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="7">7</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Scheduled Date */}
+            <div className="space-y-2">
+              <Label htmlFor="scheduledAt">Scheduled Date</Label>
+              <Input
+                id="scheduledAt"
+                type="datetime-local"
+                value={formData.scheduled_at ? new Date(formData.scheduled_at).toISOString().slice(0, 16) : ''}
+                onChange={(e) => handleDateChange('scheduled_at', e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                When the match is scheduled to take place
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Power className="h-5 w-5" />
+              Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="p-3 bg-muted rounded-lg text-sm">
-              <div className="font-medium">{formData.name}</div>
+              <div className="font-medium text-primary">Upcoming</div>
+              <div className="text-muted-foreground text-xs">
+                Status is automatically set to &quot;upcoming&quot; for new matches
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Match Name - Editable for Edit Mode */}
-        {mode === 'edit' && (
-          <div className="space-y-2">
-            <Label htmlFor="matchName">Match Name *</Label>
-            <Input
-              id="matchName"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter match name"
-              className={errors.name ? 'border-red-500' : ''}
-            />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name}</p>
-            )}
-          </div>
-        )}
-
-        {/* Auto-generated Description - Display Only */}
-        {mode === 'add' && formData.description && (
-          <div className="space-y-2">
-            <Label>Generated Description</Label>
-            <div className="p-3 bg-muted rounded-lg text-sm">
-              {formData.description}
-            </div>
-          </div>
-        )}
-
-        {/* Match Description - Editable for Edit Mode */}
-        {mode === 'edit' && (
-          <div className="space-y-2">
-            <Label htmlFor="matchDescription">Description *</Label>
-            <Textarea
-              id="matchDescription"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter match description"
-              className={errors.description ? 'border-red-500' : ''}
-              rows={3}
-            />
-            {errors.description && (
-              <p className="text-sm text-red-500">{errors.description}</p>
-            )}
-          </div>
-        )}
-
-        {/* Venue */}
-        <div className="space-y-2">
-          <Label htmlFor="venue">Venue *</Label>
-          <Input
-            id="venue"
-            value={formData.venue}
-            onChange={(e) => setFormData(prev => ({ ...prev, venue: e.target.value }))}
-            placeholder="Enter venue"
-            className={errors.venue ? 'border-red-500' : ''}
-          />
-          {errors.venue && (
-            <p className="text-sm text-red-500">{errors.venue}</p>
-          )}
-        </div>
-
-        {/* Best of */}
-        <div className="space-y-2">
-          <Label htmlFor="bestOf">Best of *</Label>
-          <Select value={formData.best_of?.toString()} onValueChange={handleBestOfChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select best of" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">1</SelectItem>
-              <SelectItem value="3">3</SelectItem>
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="7">7</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Scheduled Date */}
-        <div className="space-y-2">
-          <Label htmlFor="scheduledAt">Scheduled Date</Label>
-          <Input
-            id="scheduledAt"
-            type="datetime-local"
-            value={formData.scheduled_at ? new Date(formData.scheduled_at).toISOString().slice(0, 16) : ''}
-            onChange={(e) => handleDateChange('scheduled_at', e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            When the match is scheduled to take place
-          </p>
-        </div>
-
-        {/* Status Display - Auto-set to upcoming */}
-        <div className="space-y-2">
-          <Label>Match Status</Label>
-          <div className="p-3 bg-muted rounded-lg text-sm">
-            <div className="font-medium text-blue-600">Upcoming</div>
-            <div className="text-muted-foreground text-xs">
-              Status is automatically set to &quot;upcoming&quot; for new matches
-            </div>
-          </div>
-        </div>
-
-        {/* Note about start_at and end_at */}
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> Match start and end times will be set when the match actually begins and ends. 
-            These can be updated later during match management.
-          </p>
-        </div>
+            <p className="text-muted-foreground mt-2 text-xs">
+              Match start and end times will be set when the match actually begins and ends. 
+              These can be updated later during match management.
+            </p>
+          </CardContent>
+        </Card>
       </form>
     </ModalLayout>
   );

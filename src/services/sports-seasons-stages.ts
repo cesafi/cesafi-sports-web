@@ -1,6 +1,6 @@
 import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
 import { BaseService } from './base';
-import { SportsSeasonsStage, SportsSeasonsStageInsert, SportsSeasonsStageUpdate } from '@/lib/types/sports-seasons-stages';
+import { SportsSeasonsStage, SportsSeasonsStageInsert, SportsSeasonsStageUpdate, SportsSeasonsStageWithDetails } from '@/lib/types/sports-seasons-stages';
 
 const TABLE_NAME = 'sports_seasons_stages';
 
@@ -28,12 +28,28 @@ export class SportsSeasonsStageService extends BaseService {
     }
   }
 
-  static async getAll(): Promise<ServiceResponse<SportsSeasonsStage[]>> {
+  static async getAll(): Promise<ServiceResponse<SportsSeasonsStageWithDetails[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select()
+        .select(`
+          *,
+          sports_categories!inner(
+            id,
+            division,
+            levels,
+            sports!inner(
+              id,
+              name
+            )
+          ),
+          seasons!inner(
+            id,
+            start_at,
+            end_at
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {

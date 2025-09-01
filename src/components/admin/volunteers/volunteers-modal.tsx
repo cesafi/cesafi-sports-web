@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Power } from 'lucide-react';
 
 interface VolunteersModalProps {
   open: boolean;
@@ -105,6 +107,10 @@ export function VolunteersModal({
     }
   }, [handleClose, isSubmitting, mode]);
 
+  const handleInputChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -154,82 +160,102 @@ export function VolunteersModal({
         </div>
       }
     >
-      <form id="volunteer-form" onSubmit={handleSubmit} className="space-y-4">
-        {/* Full Name */}
-        <div className="space-y-2">
-          <Label htmlFor="full_name">Full Name *</Label>
-          <Input
-            id="full_name"
-            value={formData.full_name}
-            onChange={(e) => setFormData((prev) => ({ ...prev, full_name: e.target.value }))}
-            placeholder="Enter volunteer's full name"
-            className={errors.full_name ? 'border-red-500' : ''}
-          />
-          {errors.full_name && <p className="text-sm text-red-500">{errors.full_name}</p>}
-        </div>
+      <form id="volunteer-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Basic Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Full Name */}
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Full Name *</Label>
+              <Input
+                id="full_name"
+                value={formData.full_name}
+                onChange={(e) => handleInputChange('full_name', e.target.value)}
+                placeholder="Enter volunteer's full name"
+                className={errors.full_name ? 'border-red-500' : ''}
+              />
+              {errors.full_name && <p className="text-sm text-red-500">{errors.full_name}</p>}
+            </div>
 
-        {/* Image URL */}
-        <div className="space-y-2">
-          <Label htmlFor="image_url">Image URL</Label>
-          <Input
-            id="image_url"
-            type="url"
-            value={formData.image_url || ''}
-            onChange={(e) => setFormData((prev) => ({ ...prev, image_url: e.target.value || '' }))}
-            placeholder="https://example.com/image.jpg (optional)"
-            className={errors.image_url ? 'border-red-500' : ''}
-          />
-          {errors.image_url && <p className="text-sm text-red-500">{errors.image_url}</p>}
-        </div>
+            {/* Image URL */}
+            <div className="space-y-2">
+              <Label htmlFor="image_url">Image URL</Label>
+              <Input
+                id="image_url"
+                type="url"
+                value={formData.image_url || ''}
+                onChange={(e) => handleInputChange('image_url', e.target.value || '')}
+                placeholder="https://example.com/image.jpg (optional)"
+                className={errors.image_url ? 'border-red-500' : ''}
+              />
+              {errors.image_url && <p className="text-sm text-red-500">{errors.image_url}</p>}
+            </div>
 
-        {/* Department */}
-        <div className="space-y-2">
-          <Label htmlFor="department_id">Department</Label>
-          <Select
-            value={formData.department_id?.toString() || 'none'}
-            onValueChange={(value) =>
-              setFormData((prev) => ({
-                ...prev,
-                department_id: value === 'none' ? null : parseInt(value)
-              }))
-            }
-          >
-            <SelectTrigger
-              id="department_id"
-              className={errors.department_id ? 'border-red-500' : ''}
-            >
-              <SelectValue placeholder="Select a department (optional)" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No Department</SelectItem>
-              {departments?.map((dept) => (
-                <SelectItem key={dept.id} value={dept.id.toString()}>
-                  {dept.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.department_id && <p className="text-sm text-red-500">{errors.department_id}</p>}
-        </div>
+            {/* Department */}
+            <div className="space-y-2">
+              <Label htmlFor="department_id">Department</Label>
+              <Select
+                value={formData.department_id?.toString() || 'none'}
+                onValueChange={(value) =>
+                  handleInputChange('department_id', value === 'none' ? null : parseInt(value))
+                }
+              >
+                <SelectTrigger
+                  id="department_id"
+                  className={errors.department_id ? 'border-red-500' : ''}
+                >
+                  <SelectValue placeholder="Select a department (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Department</SelectItem>
+                  {departments?.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id.toString()}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.department_id && <p className="text-sm text-red-500">{errors.department_id}</p>}
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Active Status */}
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="is_active"
-            checked={formData.is_active || false}
-            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_active: checked }))}
-          />
-          <Label htmlFor="is_active">Active</Label>
-        </div>
+        {/* Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Power className="h-5 w-5" />
+              Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is_active"
+                checked={formData.is_active || false}
+                onCheckedChange={(checked) => handleInputChange('is_active', checked)}
+              />
+              <Label htmlFor="is_active">Active Volunteer</Label>
+            </div>
+            <p className="text-muted-foreground mt-2 text-xs">
+              Active volunteers are visible in the system and can be assigned to events.
+            </p>
 
-        {/* Season ID (hidden, auto-filled) */}
-        <input type="hidden" value={formData.season_id || ''} />
+            {/* Season ID (hidden, auto-filled) */}
+            <input type="hidden" value={formData.season_id || ''} />
 
-        {currentSeason && (
-          <div className="text-muted-foreground text-sm">
-            This volunteer will be assigned to Season {currentSeason.id}
-          </div>
-        )}
+            {currentSeason && (
+              <div className="text-muted-foreground text-sm mt-2">
+                This volunteer will be assigned to Season {currentSeason.id}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </form>
     </ModalLayout>
   );

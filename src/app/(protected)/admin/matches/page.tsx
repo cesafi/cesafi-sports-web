@@ -161,6 +161,10 @@ export default function MatchesManagementPage() {
         addButton={{
           label: 'Add Match',
           onClick: () => {
+            if (!selectedStageId) {
+              toast.error('Please select a league stage first before adding a match.');
+              return;
+            }
             setModalMode('add');
             setEditingMatch(undefined);
             setIsModalOpen(true);

@@ -10,6 +10,9 @@ import { useGamesTable } from '@/hooks/use-games';
 import { useGameScoresByGameId, useCreateGameScore, useUpdateGameScore } from '@/hooks/use-game-scores';
 import { useMatchParticipantsDetails } from '@/hooks/use-match-participants-details';
 import { toast } from 'sonner';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Target, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface MatchGamesTableProps {
   matchId: number;
@@ -87,6 +90,16 @@ export function MatchGamesTable({ matchId, isLoading: externalLoading }: MatchGa
     setIsScoresModalOpen(true);
   };
 
+  const handleUpdateGame = async (gameUpdate: GameUpdate) => {
+    try {
+      await updateGame(gameUpdate);
+      toast.success('Game updated successfully');
+    } catch (error) {
+      toast.error('Failed to update game');
+      throw error;
+    }
+  };
+
   const confirmDeleteGame = async () => {
     if (!gameToDelete) return;
     deleteGame(gameToDelete.id);
@@ -148,39 +161,58 @@ export function MatchGamesTable({ matchId, isLoading: externalLoading }: MatchGa
   }
 
   return (
-    <div className="space-y-4">
-      <DataTable
-        data={games}
-        totalCount={totalCount}
-        loading={false}
-        tableBodyLoading={tableBodyLoading}
-        error={gamesError}
-        columns={columns}
-        actions={actions}
-        currentPage={currentPage}
-        pageCount={pageCount}
-        pageSize={pageSize}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-        onSortChange={onSortChange}
-        onSearchChange={onSearchChange}
-        onFiltersChange={onFiltersChange}
-        title="Games"
-        subtitle={`Managing games for this match. Currently showing ${games.length} games.`}
-        searchPlaceholder="Search games..."
-        showSearch={true}
-        showFilters={false}
-        addButton={{
-          label: 'Add Game',
-          onClick: () => {
-            setGameModalMode('add');
-            setEditingGame(undefined);
-            setIsGameModalOpen(true);
-          }
-        }}
-        className=""
-        emptyMessage="No games found for this match"
-      />
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Target className="h-6 w-6 text-primary" />
+              Games
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Managing games for this match • {games.length} game{games.length !== 1 ? 's' : ''} total
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              setGameModalMode('add');
+              setEditingGame(undefined);
+              setIsGameModalOpen(true);
+            }}
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Game
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <DataTable
+          data={games}
+          totalCount={totalCount}
+          loading={false}
+          tableBodyLoading={tableBodyLoading}
+          error={gamesError}
+          columns={columns}
+          actions={actions}
+          currentPage={currentPage}
+          pageCount={pageCount}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          onSortChange={onSortChange}
+          onSearchChange={onSearchChange}
+          onFiltersChange={onFiltersChange}
+          title=""
+          subtitle=""
+          searchPlaceholder="Search games..."
+          showSearch={true}
+          showFilters={false}
+          addButton={undefined}
+          className=""
+          emptyMessage="No games found for this match"
+        />
+      </CardContent>
 
       {/* Game Modal */}
       <MatchGameModal
@@ -202,6 +234,7 @@ export function MatchGamesTable({ matchId, isLoading: externalLoading }: MatchGa
           participants={participants}
           gameScores={gameScores}
           onSaveScores={handleSaveScores}
+          onUpdateGame={handleUpdateGame}
           isSubmitting={createGameScoreMutation.isPending || updateGameScoreMutation.isPending}
         />
       )}
@@ -219,6 +252,6 @@ export function MatchGamesTable({ matchId, isLoading: externalLoading }: MatchGa
         destructive={true}
         isLoading={isDeleting}
       />
-    </div>
+    </Card>
   );
 }
