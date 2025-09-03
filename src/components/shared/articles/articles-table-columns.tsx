@@ -30,15 +30,6 @@ const defaultAdminConfig: ArticleTableConfig = {
   showDeleteAction: true
 };
 
-// Default configuration for head writers
-const defaultHeadWriterConfig: ArticleTableConfig = {
-  showAuthorId: true,
-  showActions: true,
-  showViewAction: true,
-  showEditAction: true,
-  showDeleteAction: false
-};
-
 export const getArticlesTableColumns = (config: ArticleTableConfig = defaultAdminConfig): TableColumn<Article>[] => [
   {
     key: 'articleInfo',
@@ -166,14 +157,8 @@ export const getArticlesTableActions = (
 
 // Convenience functions for different user roles
 export const getAdminArticlesTableColumns = () => getArticlesTableColumns(defaultAdminConfig);
-export const getHeadWriterArticlesTableColumns = () => getArticlesTableColumns(defaultHeadWriterConfig);
 
 export const getAdminArticlesTableActions = (
   onEdit: (article: Article) => void,
   onDelete: (article: Article) => void
 ) => getArticlesTableActions(onEdit, onDelete, undefined, defaultAdminConfig);
-
-export const getHeadWriterArticlesTableActions = (
-  onEdit: (article: Article) => void,
-  onView: (article: Article) => void
-) => getArticlesTableActions(onEdit, () => {}, onView, defaultHeadWriterConfig);

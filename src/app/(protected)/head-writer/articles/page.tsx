@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ArticlesTable } from '@/components/shared/articles-table';
+import { ArticlesTable } from '@/components/shared/articles/articles-table';
 import { Article } from '@/lib/types/articles';
 
 export default function HeadWriterArticlesPage() {

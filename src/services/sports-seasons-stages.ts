@@ -96,6 +96,41 @@ export class SportsSeasonsStageService extends BaseService {
     }
   }
 
+  static async getBySeason(seasonId: number): Promise<ServiceResponse<SportsSeasonsStageWithDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(`
+          *,
+          sports_categories!inner(
+            id,
+            division,
+            levels,
+            sports!inner(
+              id,
+              name
+            )
+          ),
+          seasons!inner(
+            id,
+            start_at,
+            end_at
+          )
+        `)
+        .eq('season_id', seasonId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch ${TABLE_NAME} entities by season.`);
+    }
+  }
+
   static async insert(data: SportsSeasonsStageInsert): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();

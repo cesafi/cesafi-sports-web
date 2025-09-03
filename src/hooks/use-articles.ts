@@ -302,3 +302,10 @@ export function useArticlesTable() {
     resetFilters
   };
 }
+
+// ============================================================================
+// DETAILS HOOKS (for backward compatibility)
+// ============================================================================
+
+// Simple alias for useArticleById to match the naming convention used in other detail pages
+export const useArticleDetails = useArticleById;

@@ -838,3 +838,149 @@ If you have existing separate table hooks:
 3. **Delete Files**: Remove separate table hook files
 4. **Test**: Ensure all functionality works after consolidation
 
+## 🆕 **New: Role-Specific Components**
+
+### **When to Use Role-Specific Components**
+
+Instead of runtime role checking, create dedicated components for different user roles:
+
+#### **1. Writer Components**
+- **Use Case**: When users have restricted permissions
+- **Example**: `WriterArticleForm` - status field is disabled, can only edit 'revise' status
+- **File**: `src/components/admin/articles/writer-article-form.tsx`
+
+#### **2. Head Writer Components**  
+- **Use Case**: When users have full permissions but are not admins
+- **Example**: `HeadWriterArticleForm` - full status control, can edit and delete
+- **File**: `src/components/admin/articles/head-writer-article-form.tsx`
+
+#### **3. Admin Components**
+- **Use Case**: When users have full system access
+- **Example**: Can reuse `HeadWriterArticleForm` since permissions are identical
+- **File**: `src/components/admin/articles/head-writer-article-form.tsx`
+
+### **Benefits of Role-Specific Components**
+
+1. **No Runtime Role Checking** - Each component has permissions built-in
+2. **Type Safety** - No undefined variable errors
+3. **Better Performance** - No conditional logic at runtime
+4. **Easier Maintenance** - Clear separation of concerns
+5. **Consistent UX** - Each role gets exactly what they need
+
+### **Implementation Pattern**
+
+```typescript
+// Instead of this (runtime role checking):
+{userRole === 'writer' ? (
+  <ArticleForm userRole="writer" />
+) : (
+  <ArticleForm userRole="admin" />
+)}
+
+// Do this (dedicated components):
+{userRole === 'writer' ? (
+  <WriterArticleForm />
+) : (
+  <HeadWriterArticleForm />
+)}
+```
+
+### **Component Naming Convention**
+
+- `Writer[Entity]Form` - For restricted permissions
+- `HeadWriter[Entity]Form` - For full permissions (non-admin)
+- `Admin[Entity]Form` - For admin-specific functionality (if needed)
+
+### **When to Create New Role Components**
+
+1. **Different Permissions**: When roles have different capabilities
+2. **Different UI**: When roles need different interfaces
+3. **Different Validation**: When roles have different form requirements
+4. **Different Actions**: When roles can perform different operations
+
+### **Example: Article Management**
+
+```typescript
+// Writers: Restricted access
+<WriterArticleForm /> // Status disabled, edit 'revise' only
+
+// Head Writers & Admins: Full access  
+<HeadWriterArticleForm /> // Full status control, edit/delete
+
+// Reuse for efficiency
+// Admin pages use HeadWriterArticleForm since permissions are identical
+```
+
+## 🆕 **New: Role-Specific Components**
+
+### **When to Use Role-Specific Components**
+
+Instead of runtime role checking, create dedicated components for different user roles:
+
+#### **1. Writer Components**
+- **Use Case**: When users have restricted permissions
+- **Example**: `WriterArticleForm` - status field is disabled, can only edit 'revise' status
+- **File**: `src/components/admin/articles/writer-article-form.tsx`
+
+#### **2. Head Writer Components**  
+- **Use Case**: When users have full permissions but are not admins
+- **Example**: `HeadWriterArticleForm` - full status control, can edit and delete
+- **File**: `src/components/admin/articles/head-writer-article-form.tsx`
+
+#### **3. Admin Components**
+- **Use Case**: When users have full system access
+- **Example**: Can reuse `HeadWriterArticleForm` since permissions are identical
+- **File**: `src/components/admin/articles/head-writer-article-form.tsx`
+
+### **Benefits of Role-Specific Components**
+
+1. **No Runtime Role Checking** - Each component has permissions built-in
+2. **Type Safety** - No undefined variable errors
+3. **Better Performance** - No conditional logic at runtime
+4. **Easier Maintenance** - Clear separation of concerns
+5. **Consistent UX** - Each role gets exactly what they need
+
+### **Implementation Pattern**
+
+```typescript
+// Instead of this (runtime role checking):
+{userRole === 'writer' ? (
+  <ArticleForm userRole="writer" />
+) : (
+  <ArticleForm userRole="admin" />
+)}
+
+// Do this (dedicated components):
+{userRole === 'writer' ? (
+  <WriterArticleForm />
+) : (
+  <HeadWriterArticleForm />
+)}
+```
+
+### **Component Naming Convention**
+
+- `Writer[Entity]Form` - For restricted permissions
+- `HeadWriter[Entity]Form` - For full permissions (non-admin)
+- `Admin[Entity]Form` - For admin-specific functionality (if needed)
+
+### **When to Create New Role Components**
+
+1. **Different Permissions**: When roles have different capabilities
+2. **Different UI**: When roles need different interfaces
+3. **Different Validation**: When roles have different form requirements
+4. **Different Actions**: When roles can perform different operations
+
+### **Example: Article Management**
+
+```typescript
+// Writers: Restricted access
+<WriterArticleForm /> // Status disabled, edit 'revise' only
+
+// Head Writers & Admins: Full access  
+<HeadWriterArticleForm /> // Full status control, edit/delete
+
+// Reuse for efficiency
+// Admin pages use HeadWriterArticleForm since permissions are identical
+```
+

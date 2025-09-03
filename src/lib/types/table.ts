@@ -84,6 +84,9 @@ export interface TableProps<T extends BaseEntity> {
   // Initial sort state
   initialSortBy?: string;
   initialSortOrder?: 'asc' | 'desc';
+
+  // Refetch function for keeping data in sync with mutations
+  refetch?: () => void;
 }
 
 export interface UseTableOptions<T extends BaseEntity> {

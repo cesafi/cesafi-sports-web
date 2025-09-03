@@ -14,8 +14,10 @@ import {
   SportsSeasonsStageInsert,
   SportsSeasonsStageUpdate
 } from '@/lib/types/sports-seasons-stages';
+import { useSeason } from '@/components/contexts/season-provider';
 
 export default function LeagueStageManagementPage() {
+  const { currentSeason } = useSeason();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [editingStage, setEditingStage] = useState<SportsSeasonsStage | undefined>();
@@ -41,8 +43,23 @@ export default function LeagueStageManagementPage() {
     onPageSizeChange,
     onSortChange,
     onSearchChange,
-    onFiltersChange
+    onFiltersChange,
+    refetch
   } = useSportsSeasonsStagesTable();
+
+  // Show message when no season is selected
+  if (!currentSeason) {
+    return (
+      <div className="w-full space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold mb-2">No Season Selected</h2>
+            <p className="text-muted-foreground">Please select a season from the season switcher to view league stages.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleEditStage = (stage: SportsSeasonsStage) => {
     setEditingStage(stage);
@@ -98,8 +115,8 @@ export default function LeagueStageManagementPage() {
         onSortChange={onSortChange}
         onSearchChange={onSearchChange}
         onFiltersChange={onFiltersChange}
-        title="League Stages Management"
-        subtitle="View and manage competition stages for sports seasons."
+        title={`League Stages - Season ${currentSeason.id}`}
+        subtitle={`View and manage competition stages for Season ${currentSeason.id}.`}
         searchPlaceholder="Search stages..."
         showSearch={true}
         showFilters={false}
@@ -113,6 +130,7 @@ export default function LeagueStageManagementPage() {
         }}
         className=""
         emptyMessage="No league stages found"
+        refetch={refetch}
       />
 
       {/* Modal */}

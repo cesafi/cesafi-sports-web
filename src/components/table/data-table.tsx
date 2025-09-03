@@ -46,7 +46,10 @@ export function DataTable<T extends BaseEntity>({
 
   // Initial sort state
   initialSortBy,
-  initialSortOrder = 'asc'
+  initialSortOrder = 'asc',
+
+  // Refetch function for keeping data in sync
+  refetch
 }: TableProps<T>) {
   const [sortBy, setSortBy] = useState<string | undefined>(initialSortBy);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder);
@@ -60,6 +63,18 @@ export function DataTable<T extends BaseEntity>({
       setSortOrder(initialSortOrder);
     }
   }, [initialSortBy, initialSortOrder]);
+
+  // Auto-refetch data when component mounts or when data changes
+  useEffect(() => {
+    if (refetch && !loading) {
+      // Small delay to ensure any pending mutations have completed
+      const timer = setTimeout(() => {
+        refetch();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [refetch, loading]);
 
   const handleSort = (key: string, order: 'asc' | 'desc') => {
     setSortBy(key);

@@ -200,6 +200,7 @@ export default function AccountsManagementPage() {
         // Styling
         className=""
         emptyMessage="No accounts found"
+        refetch={refetch}
       />
 
       {/* Account Modal */}

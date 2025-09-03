@@ -16,6 +16,10 @@ export async function getAllSportsSeasonsStages() {
   return await SportsSeasonsStageService.getAll();
 }
 
+export async function getSportsSeasonsStagesBySeason(seasonId: number) {
+  return await SportsSeasonsStageService.getBySeason(seasonId);
+}
+
 export async function getSportsSeasonsStageById(id: number) {
   return await SportsSeasonsStageService.getById(id);
 }

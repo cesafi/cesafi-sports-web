@@ -2,17 +2,19 @@
 
 import { useState } from 'react';
 import { DataTable } from '@/components/table';
-import { MatchGameModal, MatchGameScoresModal, getMatchGamesTableColumns, getMatchGamesTableActions } from '@/components/admin/matches';
+import { MatchGameModal, MatchGameScoresModal, getMatchGamesTableColumns, getMatchGamesTableActions } from '@/components/shared/matches';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { GameWithDetails, GameInsert, GameUpdate } from '@/lib/types/games';
 import { GameScoreInsert, GameScoreUpdate } from '@/lib/types/game-scores';
 import { useGamesTable } from '@/hooks/use-games';
 import { useGameScoresByGameId, useCreateGameScore, useUpdateGameScore } from '@/hooks/use-game-scores';
-import { useMatchParticipantsDetails } from '@/hooks/use-match-participants-details';
+import { useMatchParticipantsDetails } from '@/hooks/use-match-participants';
 import { toast } from 'sonner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Target, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useQueryClient } from '@tanstack/react-query';
+import { gameKeys } from '@/hooks/use-games';
 
 interface MatchGamesTableProps {
   matchId: number;
@@ -27,6 +29,15 @@ export function MatchGamesTable({ matchId, isLoading: externalLoading }: MatchGa
   const [gameToDelete, setGameToDelete] = useState<GameWithDetails | undefined>();
   const [isScoresModalOpen, setIsScoresModalOpen] = useState(false);
   const [scoresGame, setScoresGame] = useState<GameWithDetails | undefined>();
+
+  const queryClient = useQueryClient();
+
+  // Refetch function for the DataTable
+  const refetch = () => {
+    if (matchId) {
+      queryClient.invalidateQueries({ queryKey: gameKeys.byMatch(matchId) });
+    }
+  };
 
   // Fetch games for this match
   const {
@@ -115,22 +126,35 @@ export function MatchGamesTable({ matchId, isLoading: externalLoading }: MatchGa
 
   const handleSaveScores = async (scores: (GameScoreInsert | GameScoreUpdate)[]) => {
     try {
-      // Process each score
+      // Process each score sequentially to avoid race conditions
+      const results = [];
       for (const score of scores) {
         if ('id' in score && score.id) {
           // Update existing score
-          await updateGameScoreMutation.mutateAsync(score);
+          const result = await updateGameScoreMutation.mutateAsync(score);
+          if (!result.success) {
+            throw new Error(`Failed to update score: ${result.error}`);
+          }
+          results.push(result);
         } else {
           // Create new score
-          await createGameScoreMutation.mutateAsync(score as GameScoreInsert);
+          const result = await createGameScoreMutation.mutateAsync(score as GameScoreInsert);
+          if (!result.success) {
+            throw new Error(`Failed to create score: ${result.error}`);
+          }
+          results.push(result);
         }
       }
       
       toast.success('Game scores saved successfully');
       setIsScoresModalOpen(false);
       setScoresGame(undefined);
+      
+      // Refetch the games data to show updated scores
+      refetch();
     } catch (error) {
-      toast.error('Failed to save game scores');
+      console.error('Failed to save game scores:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save game scores');
       throw error;
     }
   };
@@ -211,6 +235,7 @@ export function MatchGamesTable({ matchId, isLoading: externalLoading }: MatchGa
           addButton={undefined}
           className=""
           emptyMessage="No games found for this match"
+          refetch={refetch}
         />
       </CardContent>
 

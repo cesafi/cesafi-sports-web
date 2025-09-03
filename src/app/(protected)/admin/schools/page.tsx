@@ -50,7 +50,8 @@ export default function SchoolsManagementPage() {
     onSortChange,
     onSearchChange,
     onFiltersChange,
-    resetFilters
+    resetFilters,
+    refetch
   } = useSchoolsTable();
 
   const handleEditSchool = (school: School) => {
@@ -198,6 +199,7 @@ export default function SchoolsManagementPage() {
         emptyMessage="No schools found"
         initialSortBy="name"
         initialSortOrder="asc"
+        refetch={refetch}
       />
 
       {/* Modal */}

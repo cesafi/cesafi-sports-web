@@ -1,18 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ModalLayout } from '@/components/ui/modal-layout';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Trophy, Users, Clock, Play, Square, Calendar, Timer } from 'lucide-react';
+import { ModalLayout } from '@/components/ui/modal-layout';
 import { toast } from 'sonner';
+import { Play, Square, Timer, Trophy, Users, Clock, Calendar } from 'lucide-react';
 import { GameWithDetails, GameUpdate } from '@/lib/types/games';
-import { MatchParticipantWithFullDetails } from '@/lib/types/match-participants';
 import { GameScore, GameScoreInsert, GameScoreUpdate } from '@/lib/types/game-scores';
+import { MatchParticipantWithFullDetails } from '@/lib/types/match-participants';
+import { 
+  gameTimingUpdateSchema, 
+  scoreSubmissionSchema,
+  scoreSchema,
+  formatDurationToHHMMSS,
+  validateAndFormatDuration
+} from '@/lib/validations/match-game-scores-modal';
+import { z } from 'zod';
 import { formatSmartDate } from '@/lib/utils/date';
 
 interface MatchGameScoresModalProps {
@@ -22,7 +30,7 @@ interface MatchGameScoresModalProps {
   participants: MatchParticipantWithFullDetails[];
   gameScores: GameScore[];
   onSaveScores: (scores: (GameScoreInsert | GameScoreUpdate)[]) => Promise<void>;
-  onUpdateGame?: (gameUpdate: GameUpdate) => Promise<void>;
+  onUpdateGame?: (game: GameUpdate) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -36,28 +44,30 @@ export function MatchGameScoresModal({
   onUpdateGame,
   isSubmitting
 }: MatchGameScoresModalProps) {
-  const [scores, setScores] = useState<Record<number, number>>({});
+  const [scores, setScores] = useState<Record<number, string>>({});
   const [errors, setErrors] = useState<Record<number, string>>({});
   const [gameStatus, setGameStatus] = useState<'scheduled' | 'in_progress' | 'completed'>();
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
+  const [duration, setDuration] = useState<string>('');
+  const [durationError, setDurationError] = useState<string>('');
 
   // Initialize scores and game status when modal opens or data changes
   useEffect(() => {
     if (open) {
-      const initialScores: Record<number, number> = {};
+      const initialScores: Record<number, string> = {};
 
       // Set existing scores
       gameScores.forEach(score => {
         if (score.match_participant_id) {
-          initialScores[score.match_participant_id] = score.score;
+          initialScores[score.match_participant_id] = score.score.toString();
         }
       });
 
       // Set default scores for participants without scores
       participants.forEach(participant => {
         if (!(participant.id in initialScores)) {
-          initialScores[participant.id] = 0;
+          initialScores[participant.id] = '0';
         }
       });
 
@@ -76,6 +86,8 @@ export function MatchGameScoresModal({
       // Set time inputs
       setStartTime(game.start_at ? new Date(game.start_at).toISOString().slice(0, 16) : '');
       setEndTime(game.end_at ? new Date(game.end_at).toISOString().slice(0, 16) : '');
+      setDuration(game.duration || '');
+      setDurationError('');
     }
   }, [open, gameScores, participants, game]);
 
@@ -90,21 +102,36 @@ export function MatchGameScoresModal({
   };
 
   const handleScoreChange = (participantId: number, value: string) => {
-    const numValue = parseInt(value) || 0;
-
-    // Validation
-    if (numValue < 0) {
-      setErrors(prev => ({ ...prev, [participantId]: 'Score cannot be negative' }));
-      return;
-    } else {
+    if (value === '') { // Allow empty string
+      setScores(prev => ({ ...prev, [participantId]: '' }));
       setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[participantId];
         return newErrors;
       });
+      return;
     }
 
-    setScores(prev => ({ ...prev, [participantId]: numValue }));
+    // Validate score using Zod schema
+    try {
+      scoreSchema.parse(value);
+      // Clear error if validation passes
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[participantId];
+        return newErrors;
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setErrors(prev => ({ 
+          ...prev, 
+          [participantId]: error.issues[0]?.message || 'Invalid score format' 
+        }));
+        return;
+      }
+    }
+
+    setScores(prev => ({ ...prev, [participantId]: value }));
   };
 
   const handleStartGame = async () => {
@@ -119,7 +146,7 @@ export function MatchGameScoresModal({
       setGameStatus('in_progress');
       setStartTime(now.slice(0, 16));
       toast.success('Game started successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to start game');
     }
   };
@@ -136,7 +163,7 @@ export function MatchGameScoresModal({
       setGameStatus('completed');
       setEndTime(now.slice(0, 16));
       toast.success('Game ended successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to end game');
     }
   };
@@ -145,6 +172,26 @@ export function MatchGameScoresModal({
     if (!onUpdateGame) return;
 
     try {
+      // Validate timing data
+      const timingData = {
+        startTime,
+        endTime,
+        duration
+      };
+
+      const validationResult = gameTimingUpdateSchema.safeParse(timingData);
+      if (!validationResult.success) {
+        validationResult.error.issues.forEach((error: z.ZodIssue) => {
+          if (error.path.includes('duration')) {
+            setDurationError(error.message);
+          }
+        });
+        return;
+      }
+
+      // Clear any previous errors
+      setDurationError('');
+
       const updateData: GameUpdate = { id: game.id };
 
       if (startTime) {
@@ -153,11 +200,20 @@ export function MatchGameScoresModal({
       if (endTime) {
         updateData.end_at = new Date(endTime).toISOString();
       }
+      if (duration) {
+        // Format duration to HH:MM:SS before saving
+        const formattedDuration = formatDurationToHHMMSS(duration);
+        updateData.duration = formattedDuration;
+      }
 
       await onUpdateGame(updateData);
       toast.success('Game timing updated successfully');
     } catch (error) {
-      toast.error('Failed to update game timing');
+      if (error instanceof z.ZodError) {
+        toast.error('Validation failed. Please check your input.');
+      } else {
+        toast.error('Failed to update game timing');
+      }
     }
   };
 
@@ -165,17 +221,32 @@ export function MatchGameScoresModal({
     // Clear any existing errors
     setErrors({});
 
-    // Validate all scores
-    const newErrors: Record<number, string> = {};
-    Object.entries(scores).forEach(([participantId, score]) => {
-      if (score < 0) {
-        newErrors[parseInt(participantId)] = 'Score cannot be negative';
-      }
-    });
+    // Validate score submission data
+    const scoreData = {
+      scores,
+      gameId: game.id
+    };
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
+    const validationResult = scoreSubmissionSchema.safeParse(scoreData);
+    if (!validationResult.success) {
+      const newErrors: Record<number, string> = {};
+      validationResult.error.issues.forEach((issue: z.ZodIssue) => {
+        if (issue.path.includes('scores')) {
+          // Handle nested score validation errors
+          const scoreErrors = issue.message;
+          if (typeof scoreErrors === 'string') {
+            // If it's a general scores error, apply to all scores
+            Object.keys(scores).forEach(participantId => {
+              newErrors[parseInt(participantId)] = scoreErrors;
+            });
+          }
+        }
+      });
+      
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
     }
 
     try {
@@ -192,14 +263,14 @@ export function MatchGameScoresModal({
             id: existingScore.id,
             match_participant_id: participantIdNum,
             game_id: game.id,
-            score: score
+            score: parseInt(score)
           });
         } else {
           // Create new score
           scoreUpdates.push({
             match_participant_id: participantIdNum,
             game_id: game.id,
-            score: score
+            score: parseInt(score)
           });
         }
       });
@@ -327,18 +398,39 @@ export function MatchGameScoresModal({
             {/* Duration Input */}
             <div className="space-y-2">
               <Label htmlFor="duration" className="text-sm font-medium">
-                Duration (e.g. 1h 30m or 90m)
+                Duration (HH:MM:SS format)
               </Label>
               <Input
                 id="duration"
                 type="text"
-                value={game.duration || ''}
+                value={duration}
+                placeholder="00:00:00"
                 onChange={e => {
-                  if (onUpdateGame) onUpdateGame({ id: game.id, duration: e.target.value });
+                  const value = e.target.value;
+                  setDuration(value);
+                  
+                  // Clear error when user starts typing
+                  if (durationError) {
+                    setDurationError('');
+                  }
+                  
+                  // Validate in real-time but don't save
+                  if (value) {
+                    const validation = validateAndFormatDuration(value);
+                    if (!validation.isValid) {
+                      setDurationError(validation.error || 'Invalid duration format');
+                    }
+                  }
                 }}
-                placeholder="e.g. 1h 30m"
                 disabled={!onUpdateGame}
+                className={durationError ? 'border-red-500' : ''}
               />
+              {durationError && (
+                <p className="text-xs text-red-500">{durationError}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Enter duration in HH:MM:SS format (01:30:45) or natural format (1h 30m, 90m)
+              </p>
             </div>
 
             {onUpdateGame && (
@@ -441,11 +533,11 @@ export function MatchGameScoresModal({
                       <div className="relative">
                         <Input
                           id={`score-${participant.id}`}
-                          type="number"
-                          min="0"
-                          value={scores[participant.id] || 0}
+                          type="text"
+                          value={scores[participant.id] || ''}
                           onChange={(e) => handleScoreChange(participant.id, e.target.value)}
                           className={`w-20 text-center ${errors[participant.id] ? 'border-red-500' : ''}`}
+                          placeholder="0"
                           disabled={isSubmitting}
                         />
                         <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground">

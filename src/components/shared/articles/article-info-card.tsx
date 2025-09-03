@@ -151,7 +151,6 @@ export function ArticleInfoCard({ article, onManageStatus, compact = false }: Ar
             <span>Article Information</span>
           </CardTitle>
           <div className="flex items-center space-x-2">
-            {getStatusBadge(article.status)}
             {onManageStatus && (
               <Button
                 variant="outline"

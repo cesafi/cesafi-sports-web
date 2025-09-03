@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { schoolKeys } from './use-schools';
 import { seasonKeys } from './use-seasons';
 import { sportKeys } from './use-sports';
+import { useSeason } from '@/components/contexts/season-provider';
 
 export const schoolsTeamKeys = {
   all: ['schools-teams'] as const,
@@ -280,6 +281,7 @@ export function useDeleteSchoolsTeam(
 
 // Table-specific hook for schools teams management
 export function useSchoolsTeamsTable(selectedSchoolId: string | null) {
+  const { currentSeason } = useSeason();
   const {
     tableState,
     setPage,
@@ -297,7 +299,7 @@ export function useSchoolsTeamsTable(selectedSchoolId: string | null) {
     pageSizeOptions: [5, 10, 25, 50, 100]
   });
 
-  // Fetch teams for selected school
+  // Fetch teams for selected school and current season
   const {
     data: teams,
     isLoading,
@@ -305,12 +307,18 @@ export function useSchoolsTeamsTable(selectedSchoolId: string | null) {
     isFetching,
     refetch
   } = useQuery({
-    queryKey: ['schools-teams', 'bySchool', selectedSchoolId, paginationOptions],
-    queryFn: () => getSchoolsTeamsBySchoolId(selectedSchoolId!),
-    enabled: !!selectedSchoolId,
+    queryKey: ['schools-teams', 'bySchoolAndSeason', selectedSchoolId, currentSeason?.id, paginationOptions],
+    queryFn: async () => {
+      if (selectedSchoolId && currentSeason) {
+        const result = await getSchoolsTeamsBySchoolAndSeason(selectedSchoolId, currentSeason.id);
+        return result;
+      }
+      return { success: false, error: 'School and season are required' };
+    },
+    enabled: !!selectedSchoolId && !!currentSeason,
     select: (data) => {
       if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch teams for school');
+        throw new Error(data.error || 'Failed to fetch teams for school and season');
       }
       return data.data;
     }

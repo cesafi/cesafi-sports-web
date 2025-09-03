@@ -11,7 +11,7 @@ import { Search, Trophy, Users } from 'lucide-react';
 import { MatchParticipantWithFullDetails } from '@/lib/types/match-participants';
 import { SchoolsTeamWithSchoolDetails } from '@/lib/types/schools-teams';
 import { useStageTeams } from '@/hooks/use-stage-teams';
-import { useCreateMatchParticipant } from '@/hooks/use-match-participants-management';
+import { useCreateMatchParticipant } from '@/hooks/use-match-participants';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 

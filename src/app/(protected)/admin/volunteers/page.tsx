@@ -59,7 +59,8 @@ export default function VolunteersManagementPage() {
     onSortChange,
     onSearchChange,
     onFiltersChange,
-    resetFilters
+    resetFilters,
+    refetch
   } = useVolunteersTable(currentSeason?.id?.toString());
 
   useEffect(() => {
@@ -212,6 +213,7 @@ export default function VolunteersManagementPage() {
         emptyMessage="No volunteers found for this season"
         initialSortBy="department_id"
         initialSortOrder="asc"
+        refetch={refetch}
       />
 
       {/* Modal */}

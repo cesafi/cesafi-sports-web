@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useCreateArticle } from '@/hooks/use-articles';
-import { HeadWriterArticleForm, ArticleEditorCard, ArticleEditorLayout } from '@/components/shared/articles';
+import { WriterArticleForm, ArticleEditorCard, ArticleEditorLayout } from '@/components/shared/articles';
 import { ArticleInsert } from '@/lib/types/articles';
 import { toast } from 'sonner';
 
-export default function HeadWriterNewArticlePage() {
+export default function WriterNewArticlePage() {
   const router = useRouter();
   const [articleData, setArticleData] = useState<Partial<ArticleInsert>>({
     title: '',
@@ -18,6 +18,7 @@ export default function HeadWriterNewArticlePage() {
     content: { blocks: [] },
     status: 'review'
   });
+  const [createdArticleId, setCreatedArticleId] = useState<string | null>(null);
 
   // Create article mutation
   const createArticleMutation = useCreateArticle();
@@ -31,8 +32,8 @@ export default function HeadWriterNewArticlePage() {
       const result = await createArticleMutation.mutateAsync(data);
       if (result.success) {
         toast.success('Article created successfully');
-        // Redirect to the edit page of the newly created article
-        router.push(`/head-writer/articles/${data.id}`);
+        // Redirect to the article details page
+        router.push(`/writer/articles/${data.id}`);
       } else {
         toast.error(result.error || 'Failed to create article');
       }
@@ -89,7 +90,7 @@ export default function HeadWriterNewArticlePage() {
         />
       }
       sidebarContent={
-        <HeadWriterArticleForm
+        <WriterArticleForm
           onSubmit={handleFormSubmit}
           isSubmitting={createArticleMutation.isPending}
           initialData={articleData}

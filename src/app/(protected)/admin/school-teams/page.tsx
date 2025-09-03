@@ -16,8 +16,10 @@ import {
   SchoolsTeamUpdate
 } from '@/lib/types/schools-teams';
 import { useAllSchools } from '@/hooks/use-schools';
+import { useSeason } from '@/components/contexts/season-provider';
 
 export default function SchoolsTeamsManagementPage() {
+  const { currentSeason } = useSeason();
   const { data: schools } = useAllSchools();
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,10 +54,25 @@ export default function SchoolsTeamsManagementPage() {
     onPageSizeChange,
     onSortChange,
     onSearchChange,
-    onFiltersChange
+    onFiltersChange,
+    refetch
   } = useSchoolsTeamsTable(selectedSchoolId);
 
   const selectedSchool = schools?.find(school => school.id === selectedSchoolId);
+
+  // Show message when no season is selected
+  if (!currentSeason) {
+    return (
+      <div className="w-full space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-lg font-semibold mb-2">No Season Selected</h2>
+            <p className="text-muted-foreground">Please select a season from the season switcher to view school teams.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleEditTeam = (team: SchoolsTeamWithSportDetails) => {
     setEditingTeam(team);
@@ -149,6 +166,7 @@ export default function SchoolsTeamsManagementPage() {
         }}
         className=""
         emptyMessage={`No teams found for ${selectedSchool?.name}`}
+        refetch={refetch}
       />
 
       {/* Team Modal */}

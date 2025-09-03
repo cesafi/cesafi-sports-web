@@ -9,6 +9,7 @@ import {
 import {
   getPaginatedSportsSeasonsStages,
   getAllSportsSeasonsStages,
+  getSportsSeasonsStagesBySeason,
   getSportsSeasonsStageById,
   createSportsSeasonsStage,
   updateSportsSeasonsStageById,
@@ -27,6 +28,7 @@ import { PaginatedResponse, ServiceResponse, FilterValue, PaginationOptions } fr
 import { useTable } from './use-table';
 import { TableFilters } from '@/lib/types/table';
 import { toast } from 'sonner';
+import { useSeason } from '@/components/contexts/season-provider';
 
 export const sportsSeasonsStageKeys = {
   all: ['sports-seasons-stages'] as const,
@@ -59,9 +61,12 @@ export function usePaginatedSportsSeasonsStages(
 export function useAllSportsSeasonsStages(
   queryOptions?: UseQueryOptions<ServiceResponse<SportsSeasonsStageWithDetails[]>, Error, SportsSeasonsStageWithDetails[]>
 ) {
+  const { currentSeason } = useSeason();
+  
   return useQuery({
-    queryKey: sportsSeasonsStageKeys.all,
-    queryFn: getAllSportsSeasonsStages,
+    queryKey: [...sportsSeasonsStageKeys.all, 'bySeason', currentSeason?.id],
+    queryFn: () => currentSeason ? getSportsSeasonsStagesBySeason(currentSeason.id) : getAllSportsSeasonsStages(),
+    enabled: !!currentSeason,
     select: (data) => {
       if (!data.success || !data.data) {
         throw new Error(data.success === false ? data.error : 'Failed to fetch all sports seasons stages.');
@@ -165,6 +170,7 @@ export function useDeleteSportsSeasonsStage(
 
 // Table-specific hook that extends the base sports seasons stage functionality
 export function useSportsSeasonsStagesTable() {
+  const { currentSeason } = useSeason();
   const {
     tableState,
     setPage,
@@ -182,7 +188,7 @@ export function useSportsSeasonsStagesTable() {
     pageSizeOptions: [5, 10, 25, 50, 100]
   });
 
-  // Fetch paginated data
+  // Fetch data filtered by current season
   const {
     data: stagesData,
     isLoading,
@@ -190,8 +196,9 @@ export function useSportsSeasonsStagesTable() {
     isFetching,
     refetch
   } = useQuery({
-    queryKey: ['sports-seasons-stages', 'paginated', paginationOptions],
-    queryFn: () => getPaginatedSportsSeasonsStages(paginationOptions as PaginationOptions<Record<string, FilterValue>>),
+    queryKey: ['sports-seasons-stages', 'bySeason', currentSeason?.id, paginationOptions],
+    queryFn: () => currentSeason ? getSportsSeasonsStagesBySeason(currentSeason.id) : Promise.resolve({ success: false, error: 'No season selected' }),
+    enabled: !!currentSeason,
     select: (data) => {
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch sports seasons stages');

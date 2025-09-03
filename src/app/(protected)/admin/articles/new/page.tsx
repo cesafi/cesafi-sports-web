@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useCreateArticle } from '@/hooks/use-articles';
-import { ArticleCreateForm, ArticleEditorCard, ArticleEditorLayout } from '@/components/admin/articles';
+import { HeadWriterArticleForm, ArticleEditorCard, ArticleEditorLayout } from '@/components/shared/articles';
 import { ArticleInsert } from '@/lib/types/articles';
 import { toast } from 'sonner';
 
@@ -90,7 +90,7 @@ export default function NewArticlePage() {
         />
       }
       sidebarContent={
-        <ArticleCreateForm
+        <HeadWriterArticleForm
           onSubmit={handleFormSubmit}
           isSubmitting={createArticleMutation.isPending}
           initialData={articleData}

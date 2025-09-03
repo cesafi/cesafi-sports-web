@@ -67,6 +67,32 @@ export function AccountModal({ isOpen, onClose, mode, account, onSuccess }: Acco
     setErrors({});
   }, [mode, account]);
 
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      if (mode === 'edit' && account) {
+        setFormData({
+          displayName: account.displayName || '',
+          email: account.email || '',
+          password: undefined, // Don't pre-fill password for security
+          role: account.role || 'writer'
+        });
+      } else {
+        // Reset form for add mode
+        setFormData({
+          displayName: '',
+          email: '',
+          password: '',
+          role: 'writer'
+        });
+      }
+      // Clear errors and reset mutation tracking
+      setErrors({});
+      hasStartedCreating.current = false;
+      hasStartedUpdating.current = false;
+    }
+  }, [isOpen, mode, account]);
+
   // Track when mutations start
   useEffect(() => {
     if (isCreating && !hasStartedCreating.current) {

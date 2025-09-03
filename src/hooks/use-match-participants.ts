@@ -27,7 +27,9 @@ import {
   MatchParticipantWithMatchHistory
 } from '@/lib/types/match-participants';
 
-import { ServiceResponse } from '@/lib/types/base';
+import { ServiceResponse, PaginationOptions } from '@/lib/types/base';
+import { useTable } from './use-table';
+import { toast } from 'sonner';
 
 import { matchKeys } from './use-matches';
 import { schoolsTeamKeys } from './use-schools-teams';
@@ -40,8 +42,18 @@ export const matchParticipantKeys = {
   byMatchAndTeam: (matchId: number, teamId: string) =>
     [...matchParticipantKeys.all, 'match-team', matchId, teamId] as const,
   withDetails: (matchId: number) => [...matchParticipantKeys.all, 'details', matchId] as const,
-  teamHistory: (teamId: string) => [...matchParticipantKeys.all, 'history', teamId] as const
+  teamHistory: (teamId: string) => [...matchParticipantKeys.all, 'history', teamId] as const,
+  // Table-specific keys
+  table: (matchId: number, options?: PaginationOptions) => [...matchParticipantKeys.all, 'table', matchId, options] as const,
+  // Detail keys (for backward compatibility)
+  detailKeys: {
+    participants: (matchId: number) => ['match-participant-details', matchId] as const,
+  }
 };
+
+// ============================================================================
+// BASIC QUERY HOOKS
+// ============================================================================
 
 export function useMatchParticipantsByMatchId(
   matchId: number,
@@ -100,11 +112,7 @@ export function useMatchParticipantByMatchAndTeam(
 
 export function useMatchParticipantsWithDetails(
   matchId: number,
-  queryOptions?: UseQueryOptions<
-    ServiceResponse<MatchParticipantWithFullDetails[]>,
-    Error,
-    MatchParticipantWithFullDetails[]
-  >
+  queryOptions?: UseQueryOptions<ServiceResponse<MatchParticipantWithFullDetails[]>, Error, MatchParticipantWithFullDetails[]>
 ) {
   return useQuery({
     queryKey: matchParticipantKeys.withDetails(matchId),
@@ -116,17 +124,14 @@ export function useMatchParticipantsWithDetails(
       }
       return data.data;
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes
     ...queryOptions
   });
 }
 
 export function useTeamMatchHistory(
   teamId: string,
-  queryOptions?: UseQueryOptions<
-    ServiceResponse<MatchParticipantWithMatchHistory[]>,
-    Error,
-    MatchParticipantWithMatchHistory[]
-  >
+  queryOptions?: UseQueryOptions<ServiceResponse<MatchParticipantWithMatchHistory[]>, Error, MatchParticipantWithMatchHistory[]>
 ) {
   return useQuery({
     queryKey: matchParticipantKeys.teamHistory(teamId),
@@ -142,43 +147,55 @@ export function useTeamMatchHistory(
   });
 }
 
+// ============================================================================
+// DETAILS HOOKS (for backward compatibility)
+// ============================================================================
+
+export function useMatchParticipantsDetails(matchId: number) {
+  return useQuery({
+    queryKey: matchParticipantKeys.detailKeys.participants(matchId),
+    queryFn: async (): Promise<MatchParticipantWithFullDetails[]> => {
+      const result: ServiceResponse<MatchParticipantWithFullDetails[]> = await getMatchParticipantsWithDetails(matchId);
+      if (!result.success) {
+        throw new Error(result.error || `Failed to fetch match participants for match ${matchId}.`);
+      }
+      return result.data || [];
+    },
+    enabled: !!matchId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+// ============================================================================
+// MUTATION HOOKS
+// ============================================================================
+
 export function useCreateMatchParticipant(
   mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, MatchParticipantInsert>
 ) {
   const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: createMatchParticipant,
-    onSuccess: (result, variables, context) => {
+    onSuccess: (result, variables) => {
       if (result.success) {
-        queryClient.invalidateQueries({ queryKey: matchParticipantKeys.all });
-
-        if (variables.match_id) {
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.byMatch(variables.match_id)
-          });
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.withDetails(variables.match_id)
-          });
-          queryClient.invalidateQueries({ queryKey: matchKeys.all });
-          queryClient.invalidateQueries({
-            queryKey: matchKeys.details(variables.match_id)
-          });
-        }
-
-        if (variables.team_id) {
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.byTeam(variables.team_id)
-          });
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.teamHistory(variables.team_id)
-          });
-          queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
-          queryClient.invalidateQueries({
-            queryKey: schoolsTeamKeys.details(variables.team_id)
-          });
-        }
+        // Invalidate match participants queries
+        queryClient.invalidateQueries({
+          queryKey: matchParticipantKeys.byMatch(variables.match_id)
+        });
+        queryClient.invalidateQueries({
+          queryKey: matchParticipantKeys.withDetails(variables.match_id)
+        });
+        // Also invalidate match details to update participant count
+        queryClient.invalidateQueries({
+          queryKey: ['match-details', variables.match_id]
+        });
+        // Invalidate team history
+        queryClient.invalidateQueries({
+          queryKey: matchParticipantKeys.byTeam(variables.team_id)
+        });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      mutationOptions?.onSuccess?.(result, variables);
     },
     onError: (error, variables, context) => {
       console.error('Failed to create match participant:', error);
@@ -192,42 +209,16 @@ export function useUpdateMatchParticipant(
   mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, MatchParticipantUpdate>
 ) {
   const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: updateMatchParticipantById,
-    onSuccess: (result, variables, context) => {
+    onSuccess: (result, variables) => {
       if (result.success) {
+        // Invalidate related queries
+        queryClient.invalidateQueries({ queryKey: matchParticipantKeys.details(variables.id) });
         queryClient.invalidateQueries({ queryKey: matchParticipantKeys.all });
-        if (variables.id) {
-          queryClient.invalidateQueries({ queryKey: matchParticipantKeys.details(variables.id) });
-        }
-
-        if (variables.match_id) {
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.byMatch(variables.match_id)
-          });
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.withDetails(variables.match_id)
-          });
-          queryClient.invalidateQueries({ queryKey: matchKeys.all });
-          queryClient.invalidateQueries({
-            queryKey: matchKeys.details(variables.match_id)
-          });
-        }
-
-        if (variables.team_id) {
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.byTeam(variables.team_id)
-          });
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.teamHistory(variables.team_id)
-          });
-          queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
-          queryClient.invalidateQueries({
-            queryKey: schoolsTeamKeys.details(variables.team_id)
-          });
-        }
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      mutationOptions?.onSuccess?.(result, variables);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update match participant:', error);
@@ -241,15 +232,15 @@ export function useDeleteMatchParticipant(
   mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, number>
 ) {
   const queryClient = useQueryClient();
+  
   return useMutation({
     mutationFn: deleteMatchParticipantById,
     onSuccess: (result, id, context) => {
       if (result.success) {
+        // Invalidate all match participant queries
         queryClient.invalidateQueries({ queryKey: matchParticipantKeys.all });
-        queryClient.invalidateQueries({ queryKey: matchParticipantKeys.details(id) });
-
-        queryClient.invalidateQueries({ queryKey: matchKeys.all });
-        queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
+        // Also invalidate match details to update participant count
+        queryClient.invalidateQueries({ queryKey: ['match-details'] });
       }
       mutationOptions?.onSuccess?.(result, id, context);
     },
@@ -259,6 +250,115 @@ export function useDeleteMatchParticipant(
     },
     ...mutationOptions
   });
+}
+
+// ============================================================================
+// TABLE HOOKS
+// ============================================================================
+
+export function useMatchParticipantsTable(matchId: number) {
+  const queryClient = useQueryClient();
+  const {
+    tableState,
+    setPage,
+    setPageSize,
+    setSortBy,
+    setSearch,
+    setFilters,
+    resetFilters,
+    paginationOptions
+  } = useTable<MatchParticipantWithFullDetails>({
+    initialPage: 1,
+    initialPageSize: 10,
+  });
+
+  // Fetch participants for the match
+  const {
+    data: participants = [],
+    isLoading: loading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: matchParticipantKeys.table(matchId, paginationOptions as PaginationOptions),
+    queryFn: async () => {
+      const result = await getMatchParticipantsWithDetails(matchId);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch match participants');
+      }
+      return result.data || [];
+    },
+    staleTime: 30 * 1000, // 30 seconds
+  });
+
+  // For now, we'll use simple pagination on the client side
+  // In the future, this could be moved to server-side pagination
+  const startIndex = (tableState.page - 1) * tableState.pageSize;
+  const endIndex = startIndex + tableState.pageSize;
+  const paginatedParticipants = participants.slice(startIndex, endIndex);
+  const totalCount = participants.length;
+  const pageCount = Math.ceil(totalCount / tableState.pageSize);
+
+  // Add participant mutation (placeholder for future implementation)
+  const addParticipantMutation = useMutation({
+    mutationFn: async (teamId: string) => {
+      // This would be implemented when we add the team selection functionality
+      throw new Error('Add participant not implemented yet');
+    },
+    onSuccess: () => {
+      toast.success('Team added to match successfully');
+      queryClient.invalidateQueries({ queryKey: matchParticipantKeys.table(matchId) });
+    },
+    onError: () => {
+      toast.error('Failed to add team to match');
+    }
+  });
+
+  // Remove participant mutation
+  const removeParticipantMutation = useMutation({
+    mutationFn: deleteMatchParticipantById,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Team removed from match successfully');
+        queryClient.invalidateQueries({ queryKey: matchParticipantKeys.table(matchId) });
+      } else {
+        toast.error(result.error || 'Failed to remove team from match');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
+
+  return {
+    // Data
+    participants: paginatedParticipants,
+    totalCount,
+    pageCount,
+    currentPage: tableState.page,
+    pageSize: tableState.pageSize,
+    loading,
+    tableBodyLoading: loading,
+    error: error?.message,
+
+    // Table controls
+    onPageChange: setPage,
+    onPageSizeChange: setPageSize,
+    onSortChange: setSortBy,
+    onSearchChange: setSearch,
+    onFiltersChange: setFilters,
+    resetFilters,
+
+    // Mutations
+    addParticipant: addParticipantMutation.mutate,
+    removeParticipant: removeParticipantMutation.mutate,
+
+    // Loading states
+    isAdding: addParticipantMutation.isPending,
+    isRemoving: removeParticipantMutation.isPending,
+
+    // Actions
+    refetch
+  };
 }
 
 

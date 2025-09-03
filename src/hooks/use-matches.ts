@@ -16,7 +16,8 @@ import {
   createMatch,
   createMatchWithParticipants,
   updateMatchById,
-  deleteMatchById
+  deleteMatchById,
+  getMatchByIdBasic
 } from '@/actions/matches';
 
 import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match, MatchWithStageDetails, MatchWithFullDetails } from '@/lib/types/matches';
@@ -25,13 +26,22 @@ import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 import { useTable } from './use-table';
 import { TableFilters } from '@/lib/types/table';
 import { toast } from 'sonner';
+import { useSeason } from '@/components/contexts/season-provider';
 
 export const matchKeys = {
   all: ['matches'] as const,
   paginated: (options: MatchPaginationOptions) => [...matchKeys.all, 'paginated', options] as const,
   details: (id: number) => [...matchKeys.all, id] as const,
-  byStage: (stageId: number) => [...matchKeys.all, 'stage', stageId] as const
+  byStage: (stageId: number) => [...matchKeys.all, 'stage', stageId] as const,
+  // Detail keys (for backward compatibility)
+  detailKeys: {
+    match: (id: number) => ['match-details', id] as const,
+  }
 };
+
+// ============================================================================
+// BASIC QUERY HOOKS
+// ============================================================================
 
 export function usePaginatedMatches(
   options: MatchPaginationOptions,
@@ -70,7 +80,46 @@ export function useAllMatches(
   });
 }
 
+export function useMatchById(
+  id: number,
+  queryOptions?: UseQueryOptions<ServiceResponse<Match>, Error, Match>
+) {
+  return useQuery({
+    queryKey: matchKeys.details(id),
+    queryFn: () => getMatchById(id),
+    enabled: !!id,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || `Match with ID ${id} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
 
+// ============================================================================
+// DETAILS HOOKS (for backward compatibility)
+// ============================================================================
+
+export function useMatchDetails(matchId: number) {
+  return useQuery({
+    queryKey: matchKeys.detailKeys.match(matchId),
+    queryFn: async (): Promise<MatchWithFullDetails> => {
+      const result: ServiceResponse<MatchWithFullDetails> = await getMatchByIdBasic(matchId);
+      if (!result.success) {
+        throw new Error(result.error || `Match with ID ${matchId} not found.`);
+      }
+      return result.data;
+    },
+    enabled: !!matchId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+// ============================================================================
+// MUTATION HOOKS
+// ============================================================================
 
 export function useCreateMatch(
   mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, MatchInsert>
@@ -155,8 +204,13 @@ export function useDeleteMatch(
   });
 }
 
+// ============================================================================
+// TABLE HOOKS
+// ============================================================================
+
 // Table-specific hook for matches management
 export function useMatchesTable(selectedStageId: number | null) {
+  const { currentSeason } = useSeason();
   const {
     tableState,
     setPage,
@@ -174,7 +228,7 @@ export function useMatchesTable(selectedStageId: number | null) {
     pageSizeOptions: [5, 10, 25, 50, 100]
   });
 
-  // Fetch matches for selected stage
+  // Fetch matches for selected stage and current season
   const {
     data: matches,
     isLoading,
@@ -182,12 +236,26 @@ export function useMatchesTable(selectedStageId: number | null) {
     isFetching,
     refetch
   } = useQuery({
-    queryKey: ['matches', 'byStage', selectedStageId, paginationOptions],
-    queryFn: () => getMatchesByStageId(selectedStageId!),
-    enabled: !!selectedStageId,
+    queryKey: ['matches', 'byStageAndSeason', selectedStageId, currentSeason?.id, paginationOptions],
+    queryFn: async () => {
+      if (selectedStageId && currentSeason) {
+        // First get matches by stage, then filter by season
+        const result = await getMatchesByStageId(selectedStageId);
+        if (result.success && result.data) {
+          // Filter matches by current season
+          const filteredMatches = result.data.filter(match => 
+            match.sports_seasons_stages?.season_id === currentSeason?.id
+          );
+          return { success: true, data: filteredMatches };
+        }
+        return result;
+      }
+      return { success: false, error: 'Stage and season are required' };
+    },
+    enabled: !!selectedStageId && !!currentSeason,
     select: (data) => {
       if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch matches for stage');
+        throw new Error(data.error || 'Failed to fetch matches for stage and season');
       }
       return data.data;
     }

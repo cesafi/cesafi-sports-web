@@ -38,7 +38,8 @@ export default function SportsManagementPage() {
     onPageSizeChange,
     onSortChange,
     onSearchChange,
-    onFiltersChange
+    onFiltersChange,
+    refetch
   } = useSportsTable();
 
   const handleEditSport = (sport: Sport) => {
@@ -164,6 +165,7 @@ export default function SportsManagementPage() {
         emptyMessage="No sports found"
         initialSortBy="name"
         initialSortOrder="asc"
+        refetch={refetch}
       />
 
       {/* Modal */}

@@ -7,7 +7,7 @@ import {
   getArticlesTableColumns, 
   getArticlesTableActions,
   ArticleTableConfig 
-} from '@/components/admin/articles';
+} from '@/components/shared/articles';
 import { Article } from '@/lib/types/articles';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 
@@ -54,7 +54,8 @@ export function ArticlesTable({
     onPageSizeChange,
     onSortChange,
     onSearchChange,
-    onFiltersChange
+    onFiltersChange,
+    refetch
   } = useArticlesTable();
 
   const handleEditArticle = (article: Article) => {
@@ -135,6 +136,7 @@ export function ArticlesTable({
         } : undefined}
         className=""
         emptyMessage="No articles found"
+        refetch={refetch}
       />
 
       {/* Confirmation Modal - Only show if we're handling delete internally */}

@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useArticleDetails } from '@/hooks/use-article-details';
+import { useArticleDetails } from '@/hooks/use-articles';
 import { useUpdateArticle } from '@/hooks/use-articles';
-import { ArticleInfoCard, ArticleStatusModal, ArticleEditorCard, ArticleEditorLayout } from '@/components/admin/articles';
+import { ArticleInfoCard, ArticleStatusModal, ArticleEditorCard, ArticleEditorLayout } from '@/components/shared/articles';
 import { ArticleUpdate } from '@/lib/types/articles';
 import { toast } from 'sonner';
 

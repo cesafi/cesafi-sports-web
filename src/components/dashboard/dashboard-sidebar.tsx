@@ -58,15 +58,12 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
       case 'writer':
         return [
           ...baseItems,
-          { href: '/writer/articles', label: 'My Articles', icon: FileText },
-          { href: '/writer/drafts', label: 'Drafts', icon: FileText }
+          { href: '/writer/articles', label: 'My Articles', icon: FileText }
         ];
       case 'league_operator':
         return [
           ...baseItems,
-          { href: '/league-operator/schedules', label: 'Schedules', icon: BarChart3 },
-          { href: '/league-operator/results', label: 'Results', icon: Trophy },
-          { href: '/league-operator/standings', label: 'Standings', icon: BarChart3 }
+          { href: '/league-operator/matches', label: 'Matches', icon: Target }
         ];
       default:
         return baseItems;
@@ -171,8 +168,8 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
       {/* Footer */}
       <div className="border-border border-t p-4">
         <div className="text-sidebar-foreground flex flex-col items-center justify-center space-y-1 text-xs">
-          <p className="font-medium">Cebu Schools Athletics Foundation, Inc.</p>
-          <p>© 2025</p>
+          <p className="font-medium text-center">Cebu Schools Athletics Foundation, Inc.</p>
+          <p>© 2025. All rights reserved.</p>
         </div>
       </div>
     </aside>

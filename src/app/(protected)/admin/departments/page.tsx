@@ -38,7 +38,8 @@ export default function DepartmentsManagementPage() {
     onPageSizeChange,
     onSortChange,
     onSearchChange,
-    onFiltersChange
+    onFiltersChange,
+    refetch
   } = useDepartmentsTable();
 
   const handleEditDepartment = (department: Department) => {
@@ -109,6 +110,7 @@ export default function DepartmentsManagementPage() {
         }}
         className=""
         emptyMessage="No departments found"
+        refetch={refetch}
       />
 
       {/* Modal */}

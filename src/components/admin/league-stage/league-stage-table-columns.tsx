@@ -49,7 +49,7 @@ export const getLeagueStageTableColumns = (): TableColumn<SportsSeasonsStage>[] 
     key: 'stageInfo',
     header: 'Stage Information',
     sortable: false,
-    width: '35%',
+    width: '40%',
     render: (stage: SportsSeasonsStage) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
@@ -72,22 +72,12 @@ export const getLeagueStageTableColumns = (): TableColumn<SportsSeasonsStage>[] 
     key: 'sportInfo',
     header: 'Sport & Category',
     sortable: false,
-    width: '35%',
+    width: '45%',
     render: (stage: SportsSeasonsStage) => (
       <SportInfo sportCategoryId={stage.sport_category_id} />
     )
   },
-  {
-    key: 'seasonInfo',
-    header: 'Season',
-    sortable: false,
-    width: '15%',
-    render: (stage: SportsSeasonsStage) => (
-      <div className="text-sm">
-        Season {stage.season_id || 'N/A'}
-      </div>
-    )
-  },
+
   {
     key: 'created_at',
     header: 'Created',

@@ -35,7 +35,8 @@ export default function SeasonsManagementPage() {
     onPageSizeChange,
     onSortChange,
     onSearchChange,
-    onFiltersChange
+    onFiltersChange,
+    refetch
   } = useSeasonsTable();
 
   const handleEditSeason = (season: Season) => {
@@ -109,6 +110,7 @@ export default function SeasonsManagementPage() {
         emptyMessage="No seasons found"
         initialSortBy="id"
         initialSortOrder="asc"
+        refetch={refetch}
       />
 
       {/* Modal */}

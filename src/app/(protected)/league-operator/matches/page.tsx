@@ -2,7 +2,7 @@
 
 import { MatchesTable } from '@/components/shared';
 
-export default function MatchesManagementPage() {
+export default function LeagueOperatorMatchesPage() {
   return (
     <div className="w-full space-y-6">
       {/* Page Header */}
@@ -15,7 +15,7 @@ export default function MatchesManagementPage() {
 
       {/* Matches Table */}
       <MatchesTable 
-        userRole="admin" 
+        userRole="league_operator" 
         showLeagueStageSelector={true}
       />
     </div>

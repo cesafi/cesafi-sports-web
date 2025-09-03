@@ -5,7 +5,7 @@ import { DataTable } from '@/components/table';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { TeamSelectionModal } from './team-selection-modal';
 import { MatchParticipantWithFullDetails } from '@/lib/types/match-participants';
-import { useMatchParticipantsTable } from '@/hooks/use-match-participants-table';
+import { useMatchParticipantsTable } from '@/hooks/use-match-participants';
 import { getMatchParticipantsTableColumns, getMatchParticipantsTableActions } from './match-participants-table-columns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -134,6 +134,7 @@ export function MatchParticipantsTable({ matchId, isLoading: externalLoading }: 
           addButton={undefined}
           className=""
           emptyMessage="No teams participating in this match"
+          refetch={refetch}
         />
       </CardContent>
 

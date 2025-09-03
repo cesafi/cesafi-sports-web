@@ -52,7 +52,7 @@ export default function DashboardHeader({
 
   return (
     <header className="border-border bg-background flex h-16 items-center justify-between border-b px-6">
-      {/* Left side - Breadcrumbs and Season Context */}
+      {/* Left side - Breadcrumbs */}
       <div className="flex items-center gap-4">
         <SmartBreadcrumbs 
           maxVisibleItems={5}
