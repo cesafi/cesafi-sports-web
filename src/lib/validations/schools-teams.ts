@@ -1,26 +1,25 @@
 import { z } from 'zod';
 
-export const SchoolsTeamInsertSchema = z.object({
-  name: z
+export const createSchoolsTeamSchema = z.object({
+  team_name: z
     .string({ message: 'Team name is required.' })
     .min(1, { message: 'Team name cannot be empty.' })
-    .max(100, { message: 'Team name cannot exceed 100 characters.' })
-    .optional(),
-  is_active: z.boolean({ message: 'Active status must be a boolean.' }).default(true),
-  schools_id: z.uuid({ message: 'School ID must be a valid UUID.' }),
-  seasons_id: z.uuid({ message: 'Season ID must be a valid UUID.' }),
-  sports_id: z.uuid({ message: 'Sport ID must be a valid UUID.' })
+    .max(100, { message: 'Team name cannot exceed 100 characters.' }),
+  school_id: z.number({ message: 'School ID is required.' }),
+  sport_category_id: z.number({ message: 'Sport category ID is required.' })
 });
 
-export const SchoolsTeamUpdateSchema = z.object({
-  id: z.uuid({ message: 'ID must be a valid UUID.' }),
-  name: z
+export const updateSchoolsTeamSchema = z.object({
+  id: z.number({ message: 'ID is required for updating a schools team.' }),
+  team_name: z
     .string()
     .min(1, { message: 'Team name cannot be empty.' })
     .max(100, { message: 'Team name cannot exceed 100 characters.' })
     .optional(),
-  is_active: z.boolean({ message: 'Active status must be a boolean.' }).optional(),
-  schools_id: z.uuid({ message: 'School ID must be a valid UUID.' }).optional(),
-  seasons_id: z.uuid({ message: 'Season ID must be a valid UUID.' }).optional(),
-  sports_id: z.uuid({ message: 'Sport ID must be a valid UUID.' }).optional()
+  school_id: z.number({ message: 'School ID is required.' }).optional(),
+  sport_category_id: z.number({ message: 'Sport category ID is required.' }).optional()
 });
+
+// Legacy exports for backward compatibility
+export const SchoolsTeamInsertSchema = createSchoolsTeamSchema;
+export const SchoolsTeamUpdateSchema = updateSchoolsTeamSchema;

@@ -1,167 +1,231 @@
-import { 
-  Eye, 
-  Filter, 
-  MoreHorizontal, 
-  Plus, 
-  Search, 
-  Trash2 
-} from 'lucide-react';
-import { DashboardLayout } from '@/components/dashboard';
+'use client';
+
+import { useState } from 'react';
+import { DataTable } from '@/components/table';
+import { useSchoolsTable } from '@/hooks/use-schools';
+import { getSchoolsTableColumns, getSchoolsTableActions } from '@/components/admin/schools';
+import { School } from '@/lib/types/schools';
+import { SchoolModal } from '@/components/admin/schools';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Filter } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { SchoolInsert, SchoolUpdate } from '@/lib/types/schools';
 
 export default function SchoolsManagementPage() {
-  // Mock data - replace with actual data from your API
-  const schools = [
-    {
-      id: 1,
-      name: 'Cebu Eastern College',
-      abbreviation: 'CEC',
-      logo: '🔵', // Placeholder for actual logo
-      createdAt: '8/14/2025'
-    },
-    {
-      id: 2,
-      name: 'Cebu Institute of Technology - University',
-      abbreviation: 'CIT-U',
-      logo: '🟠', // Placeholder for actual logo
-      createdAt: '8/14/2025'
-    },
-    {
-      id: 3,
-      name: 'University of San Carlos',
-      abbreviation: 'USC',
-      logo: '🟢', // Placeholder for actual logo
-      createdAt: '8/14/2025'
-    },
-    {
-      id: 4,
-      name: 'University of the Philippines Cebu',
-      abbreviation: 'UPC',
-      logo: '🟤', // Placeholder for actual logo
-      createdAt: '8/14/2025'
-    },
-    {
-      id: 5,
-      name: 'University of the Visayas',
-      abbreviation: 'UV',
-      logo: '🟢', // Placeholder for actual logo
-      createdAt: '8/14/2025'
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [editingSchool, setEditingSchool] = useState<School | undefined>();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [schoolToDelete, setSchoolToDelete] = useState<School | undefined>();
+
+  // Simple filter states
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const {
+    schools,
+    totalCount,
+    pageCount,
+    currentPage,
+    pageSize,
+    loading,
+    tableBodyLoading,
+    error,
+    createSchool,
+    updateSchool,
+    deleteSchool,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    onPageChange,
+    onPageSizeChange,
+    onSortChange,
+    onSearchChange,
+    onFiltersChange,
+    resetFilters,
+    refetch
+  } = useSchoolsTable();
+
+  const handleEditSchool = (school: School) => {
+    setEditingSchool(school);
+    setModalMode('edit');
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteSchool = (school: School) => {
+    setSchoolToDelete(school);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteSchool = async () => {
+    if (!schoolToDelete) return;
+
+    try {
+      deleteSchool(schoolToDelete.id);
+      setIsDeleteModalOpen(false);
+      setSchoolToDelete(undefined);
+    } catch {
+      setIsDeleteModalOpen(false);
+      setSchoolToDelete(undefined);
     }
-  ];
+  };
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    resetFilters();
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (filterType: string, value: string) => {
+    if (filterType === 'status') {
+      setStatusFilter(value);
+    }
+
+    if (value === 'all') {
+      resetFilters();
+    } else {
+      const filters = { is_active: value === 'active' };
+      onFiltersChange(filters);
+    }
+  };
+
+  const handleSubmit = async (data: SchoolInsert | SchoolUpdate) => {
+    if (modalMode === 'add') {
+      createSchool(data as SchoolInsert);
+    } else {
+      // The modal now includes the ID in the data, so we can use it directly
+      updateSchool(data as SchoolUpdate);
+    }
+  };
+
+  const handleSuccess = () => {
+    // This will be called when the modal closes after successful submission
+    // The useSchoolsTable hook will automatically refetch the data
+  };
+
+  const columns = getSchoolsTableColumns();
+  const actions = getSchoolsTableActions(handleEditSchool, handleDeleteSchool);
 
   return (
-    <DashboardLayout userRole="admin" userRoleDisplay="Admin">
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Schools Management</h1>
-          <p className="text-muted-foreground">
-            View and manage CESAFI affiliated schools and their respective teams.
-          </p>
+    <div className="w-full space-y-6">
+      {/* Simple Filter Bar */}
+      <div className="mb-4 flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Filter className="text-muted-foreground h-4 w-4" />
+          <span className="text-sm font-medium">Filters:</span>
         </div>
 
-        {/* Action Bar */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search schools by name, or abbreviation"
-              className="pl-10"
-            />
-          </div>
-          
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
-          
-          <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="mr-2 h-4 w-4" />
-            Add School
-          </Button>
+        {/* Status Filter */}
+        <div className="flex items-center gap-2">
+          <Label htmlFor="status-filter">Status:</Label>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => handleFilterChange('status', value)}
+          >
+            <SelectTrigger id="status-filter" className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Schools Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Affiliated Schools</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Table Headers */}
-              <div className="grid grid-cols-3 gap-4 px-4 py-2 text-sm font-medium text-muted-foreground border-b">
-                <div>School Information</div>
-                <div>Abbreviation</div>
-                <div>Actions</div>
-              </div>
-
-              {/* Table Rows */}
-              {schools.map((school) => (
-                <div key={school.id} className="grid grid-cols-3 gap-4 px-4 py-3 items-center border-b last:border-b-0">
-                  {/* School Information */}
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-lg">
-                      {school.logo}
-                    </div>
-                    <div>
-                      <p className="font-medium">{school.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Created at {school.createdAt}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Abbreviation */}
-                  <div>
-                    <span className="font-mono text-lg font-bold text-primary">
-                      {school.abbreviation}
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex items-center justify-between mt-6">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Rows per page:</span>
-                <select className="border rounded px-2 py-1">
-                  <option>5</option>
-                  <option>10</option>
-                  <option>25</option>
-                </select>
-                <span>1-5 of 99</span>
-              </div>
-              
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm">{"<<"}</Button>
-                <Button variant="outline" size="sm">{"<"}</Button>
-                <Button variant="default" size="sm">1</Button>
-                <Button variant="outline" size="sm">2</Button>
-                <Button variant="outline" size="sm">3</Button>
-                <span className="px-2">...</span>
-                <Button variant="outline" size="sm">99</Button>
-                <Button variant="outline" size="sm">{">"}</Button>
-                <Button variant="outline" size="sm">{">>"}</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {statusFilter !== 'all' && (
+          <Button variant="outline" size="sm" onClick={clearFilters} className="h-9">
+            Clear Filters
+          </Button>
+        )}
       </div>
-    </DashboardLayout>
+
+      {/* Filter Badges */}
+      {statusFilter !== 'all' && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {statusFilter !== 'all' && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Status: {statusFilter}
+              <button
+                onClick={() => handleFilterChange('status', 'all')}
+                className="hover:text-destructive ml-1"
+              >
+                ×
+              </button>
+            </Badge>
+          )}
+        </div>
+      )}
+
+      {/* Data Table */}
+      <DataTable
+        data={schools}
+        totalCount={totalCount}
+        loading={loading}
+        tableBodyLoading={tableBodyLoading}
+        error={error}
+        columns={columns}
+        actions={actions}
+        currentPage={currentPage}
+        pageCount={pageCount}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        onSortChange={onSortChange}
+        onSearchChange={onSearchChange}
+        onFiltersChange={onFiltersChange}
+        title="Schools Management"
+        subtitle="View and manage CESAFI affiliated schools and their respective teams."
+        searchPlaceholder="Search schools by name or abbreviation..."
+        showSearch={true}
+        showFilters={false}
+        addButton={{
+          label: 'Add School',
+          onClick: () => {
+            setModalMode('add');
+            setEditingSchool(undefined);
+            setIsModalOpen(true);
+          }
+        }}
+        className=""
+        emptyMessage="No schools found"
+        initialSortBy="name"
+        initialSortOrder="asc"
+        refetch={refetch}
+      />
+
+      {/* Modal */}
+      <SchoolModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        mode={modalMode}
+        school={editingSchool}
+        onSubmit={handleSubmit}
+        isSubmitting={isCreating || isUpdating}
+        onSuccess={handleSuccess}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteSchool}
+        type="delete"
+        title="Delete School"
+        message={`Are you sure you want to delete "${schoolToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        destructive={true}
+        isLoading={isDeleting}
+      />
+    </div>
   );
 }

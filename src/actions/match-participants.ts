@@ -1,22 +1,23 @@
 'use server';
 
-import { PaginationOptions } from '@/lib/types/base';
 import { MatchParticipantInsert, MatchParticipantUpdate } from '@/lib/types/match-participants';
 import { MatchParticipantService } from '@/services/match-participants';
 import { revalidatePath } from 'next/cache';
 
-export async function getPaginatedMatchParticipants(options: PaginationOptions) {
-  return await MatchParticipantService.getPaginated(options);
+// Core context-based fetching actions
+export async function getMatchParticipantsByMatchId(matchId: number) {
+  return await MatchParticipantService.getByMatchId(matchId);
 }
 
-export async function getAllMatchParticipants() {
-  return await MatchParticipantService.getAll();
+export async function getMatchParticipantsByTeamId(teamId: string) {
+  return await MatchParticipantService.getByTeamId(teamId);
 }
 
-export async function getMatchParticipantById(id: string) {
-  return await MatchParticipantService.getById(id);
+export async function getMatchParticipantByMatchAndTeam(matchId: number, teamId: string) {
+  return await MatchParticipantService.getByMatchAndTeam(matchId, teamId);
 }
 
+// CRUD operations
 export async function createMatchParticipant(data: MatchParticipantInsert) {
   const result = await MatchParticipantService.insert(data);
 
@@ -39,7 +40,7 @@ export async function updateMatchParticipantById(data: MatchParticipantUpdate) {
   return result;
 }
 
-export async function deleteMatchParticipantById(id: string) {
+export async function deleteMatchParticipantById(id: number) {
   const result = await MatchParticipantService.deleteById(id);
 
   if (result.success) {
@@ -48,4 +49,13 @@ export async function deleteMatchParticipantById(id: string) {
   }
 
   return result;
+}
+
+// Utility actions for specific business logic
+export async function getMatchParticipantsWithDetails(matchId: number) {
+  return await MatchParticipantService.getMatchParticipantsWithDetails(matchId);
+}
+
+export async function getTeamMatchHistory(teamId: string) {
+  return await MatchParticipantService.getTeamMatchHistory(teamId);
 }

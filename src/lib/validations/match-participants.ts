@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-export const MatchParticipantInsertSchema = z.object({
-  matches_id: z.uuid({ message: 'Match ID must be a valid UUID.' }),
-  schools_teams_id: z.uuid({ message: 'Schools team ID must be a valid UUID.' }),
+export const createMatchParticipantSchema = z.object({
+  match_id: z.number({ message: 'Match ID is required.' }),
+  schools_team_id: z.number({ message: 'Schools team ID is required.' }),
   placement: z
     .number({ message: 'Placement must be a number.' })
     .int({ message: 'Placement must be an integer.' })
@@ -11,10 +11,10 @@ export const MatchParticipantInsertSchema = z.object({
     .optional()
 });
 
-export const MatchParticipantUpdateSchema = z.object({
-  id: z.uuid({ message: 'ID must be a valid UUID.' }),
-  matches_id: z.uuid({ message: 'Match ID must be a valid UUID.' }).optional(),
-  schools_teams_id: z.uuid({ message: 'Schools team ID must be a valid UUID.' }).optional(),
+export const updateMatchParticipantSchema = z.object({
+  id: z.number({ message: 'ID is required for updating a match participant.' }),
+  match_id: z.number({ message: 'Match ID is required.' }).optional(),
+  schools_team_id: z.number({ message: 'Schools team ID is required.' }).optional(),
   placement: z
     .number({ message: 'Placement must be a number.' })
     .int({ message: 'Placement must be an integer.' })
@@ -22,3 +22,6 @@ export const MatchParticipantUpdateSchema = z.object({
     .max(100, { message: 'Placement cannot exceed 100.' })
     .optional()
 });
+
+export const MatchParticipantInsertSchema = createMatchParticipantSchema;
+export const MatchParticipantUpdateSchema = updateMatchParticipantSchema;

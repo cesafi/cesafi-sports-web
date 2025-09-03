@@ -1,20 +1,40 @@
 'use server';
 
-import { PaginationOptions } from '@/lib/types/base';
 import { SchoolsTeamInsert, SchoolsTeamUpdate } from '@/lib/types/schools-teams';
 import { SchoolsTeamService } from '@/services/schools-teams';
 import { revalidatePath } from 'next/cache';
 
-export async function getPaginatedSchoolsTeams(options: PaginationOptions) {
-  return await SchoolsTeamService.getPaginated(options);
+// Context-based fetching methods
+export async function getSchoolsTeamsBySchoolId(schoolId: string) {
+  return await SchoolsTeamService.getBySchoolId(schoolId);
 }
 
-export async function getAllSchoolsTeams() {
-  return await SchoolsTeamService.getAll();
+export async function getSchoolsTeamsBySeasonId(seasonId: number) {
+  return await SchoolsTeamService.getBySeasonId(seasonId);
 }
 
-export async function getSchoolsTeamById(id: string) {
-  return await SchoolsTeamService.getById(id);
+export async function getSchoolsTeamsBySportCategoryId(sportCategoryId: number) {
+  return await SchoolsTeamService.getBySportCategoryId(sportCategoryId);
+}
+
+export async function getSchoolsTeamsBySchoolAndSeason(schoolId: string, seasonId: number) {
+  return await SchoolsTeamService.getBySchoolAndSeason(schoolId, seasonId);
+}
+
+export async function getSchoolsTeamsBySchoolAndSportCategory(schoolId: string, sportCategoryId: number) {
+  return await SchoolsTeamService.getBySchoolAndSportCategory(schoolId, sportCategoryId);
+}
+
+export async function getTeamsWithFullDetails(schoolId: string) {
+  return await SchoolsTeamService.getTeamsWithFullDetails(schoolId);
+}
+
+export async function getActiveTeamsBySchool(schoolId: string) {
+  return await SchoolsTeamService.getActiveTeamsBySchool(schoolId);
+}
+
+export async function getTeamsByStage(stageId: number) {
+  return await SchoolsTeamService.getTeamsForStage(stageId);
 }
 
 export async function createSchoolsTeam(data: SchoolsTeamInsert) {

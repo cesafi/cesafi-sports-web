@@ -1,30 +1,23 @@
 'use server';
 
-import { PaginationOptions } from '@/lib/types/base';
 import { GameScoreInsert, GameScoreUpdate } from '@/lib/types/game-scores';
 import { GameScoreService } from '@/services/game-scores';
 import { revalidatePath } from 'next/cache';
 
-export async function getPaginatedGameScores(options: PaginationOptions) {
-  return await GameScoreService.getPaginated(options);
-}
-
-export async function getAllGameScores() {
-  return await GameScoreService.getAll();
-}
-
-export async function getGameScoreById(id: string) {
-  return await GameScoreService.getById(id);
-}
-
-export async function getGameScoresByGameId(gameId: string) {
+// Core context-based fetching actions
+export async function getGameScoresByGameId(gameId: number) {
   return await GameScoreService.getByGameId(gameId);
 }
 
-export async function getGameScoresByParticipantId(participantId: string) {
+export async function getGameScoresByParticipantId(participantId: number) {
   return await GameScoreService.getByParticipantId(participantId);
 }
 
+export async function getGameScoresByMatchId(matchId: number) {
+  return await GameScoreService.getByMatchId(matchId);
+}
+
+// CRUD operations
 export async function createGameScore(data: GameScoreInsert) {
   const result = await GameScoreService.insert(data);
 
@@ -45,7 +38,7 @@ export async function updateGameScoreById(data: GameScoreUpdate) {
   return result;
 }
 
-export async function deleteGameScoreById(id: string) {
+export async function deleteGameScoreById(id: number) {
   const result = await GameScoreService.deleteById(id);
 
   if (result.success) {
@@ -55,10 +48,11 @@ export async function deleteGameScoreById(id: string) {
   return result;
 }
 
-export async function getParticipantMatchAggregate(participantId: string) {
-  return await GameScoreService.getParticipantMatchAggregate(participantId);
+// Utility actions for specific business logic
+export async function getParticipantMatchAggregate(matchId: number, participantId: number) {
+  return await GameScoreService.getParticipantMatchAggregate(matchId, participantId);
 }
 
-export async function getGameScoresWithDetails(gameId: string) {
+export async function getGameScoresWithDetails(gameId: number) {
   return await GameScoreService.getScoresWithDetails(gameId);
 }

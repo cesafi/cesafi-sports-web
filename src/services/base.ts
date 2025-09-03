@@ -4,26 +4,32 @@ import {
   PaginationOptions,
   RangeOrEqualityFilter,
   ServiceResponse
-} from '@/lib/types/base';
+} from '../lib/types/base';
 import { Database } from '../../database.types';
+import { AdminSupabaseClient } from '../lib/supabase/admin';
+import { createClient as createBrowserClient } from '../lib/supabase/client';
+import { createClient as createServerClient } from '../lib/supabase/server';
+import { createAdminClient } from '../lib/supabase/admin';
 
 export abstract class BaseService {
   protected static async getClient() {
     const isServer = typeof window === 'undefined';
 
     if (isServer) {
-      const { createClient: createServerClient } = await import('@/lib/supabase/server');
       return createServerClient();
     } else {
-      const { createClient: createBrowserClient } = await import('@/lib/supabase/client');
       return createBrowserClient();
     }
+  }
+
+  protected static async getAdminClient(): Promise<AdminSupabaseClient> {
+    return createAdminClient();
   }
 
   protected static formatError<T>(error: unknown, message: string): ServiceResponse<T> {
     return {
       success: false,
-      error: message
+      error: error instanceof Error ? error.message : message
     };
   }
 
@@ -34,6 +40,7 @@ export abstract class BaseService {
   ): Promise<ServiceResponse<PaginatedResponse<T>>> {
     try {
       const { page, pageSize, filters, searchQuery, searchableFields, sortBy, sortOrder } = options;
+
       const supabase = await this.getClient();
 
       const offset = (page - 1) * pageSize;
@@ -42,6 +49,8 @@ export abstract class BaseService {
 
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
+          if (key === 'search') return;
+
           if (value !== undefined && value !== null) {
             if (Array.isArray(value)) {
               const nonNullValues = value.filter((item): item is NonNullPrimitive => item !== null);
@@ -68,7 +77,14 @@ export abstract class BaseService {
       }
 
       if (searchQuery && searchQuery.trim() && searchableFields && searchableFields.length > 0) {
-        const searchConditions = searchableFields.map((field) => `${field}.ilike.%${searchQuery}%`);
+        const searchConditions = searchableFields.map((field) => {
+          const numericValue = Number(searchQuery);
+          if (!isNaN(numericValue)) {
+            return `or(${field}.eq.${numericValue},${field}.ilike.%${searchQuery}%)`;
+          } else {
+            return `${field}.ilike.%${searchQuery}%`;
+          }
+        });
         query = query.or(searchConditions.join(','));
       }
 
@@ -79,14 +95,15 @@ export abstract class BaseService {
       const { data, error, count } = await query.range(offset, offset + pageSize - 1);
 
       if (error) {
+        console.error('Supabase query error:', error);
         throw error;
       }
 
       const totalCount = count || 0;
       const pageCount = Math.ceil(totalCount / pageSize);
 
-      return {
-        success: true,
+      const result = {
+        success: true as const,
         data: {
           data: data as T[],
           totalCount,
@@ -94,9 +111,10 @@ export abstract class BaseService {
           currentPage: page
         }
       };
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_) {
-      return this.formatError(false, `Failed to fetch paginated ${tableName}`);
+      return result;
+    } catch (error) {
+      console.error('BaseService.getPaginatedData error:', error);
+      return this.formatError(error, `Failed to fetch paginated ${tableName}`);
     }
   }
 }
