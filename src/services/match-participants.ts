@@ -344,4 +344,35 @@ export class MatchParticipantService extends BaseService {
       return this.formatError(err, `Failed to fetch team match history.`);
     }
   }
+
+  static async updateMatchScores(
+    scoreUpdates: Array<{ match_id: number; team_id: string; match_score: number | null }>
+  ): Promise<ServiceResponse<undefined>> {
+    try {
+      if (!scoreUpdates || scoreUpdates.length === 0) {
+        return { success: false, error: 'No score updates provided.' };
+      }
+
+      const supabase = await this.getClient();
+
+      // Update each score individually to handle potential errors gracefully
+      const updatePromises = scoreUpdates.map(async (update) => {
+        const { error } = await supabase
+          .from(TABLE_NAME)
+          .update({ match_score: update.match_score })
+          .eq('match_id', update.match_id)
+          .eq('team_id', update.team_id);
+
+        if (error) {
+          throw new Error(`Failed to update score for team ${update.team_id}: ${error.message}`);
+        }
+      });
+
+      await Promise.all(updatePromises);
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to update match scores.`);
+    }
+  }
 }

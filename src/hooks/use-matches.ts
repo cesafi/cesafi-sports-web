@@ -3,7 +3,8 @@ import {
   useMutation,
   useQueryClient,
   UseQueryOptions,
-  UseMutationOptions
+  UseMutationOptions,
+  useInfiniteQuery
 } from '@tanstack/react-query';
 
 import {
@@ -17,7 +18,9 @@ import {
   createMatchWithParticipants,
   updateMatchById,
   deleteMatchById,
-  getMatchByIdBasic
+  getMatchByIdBasic,
+  getScheduleMatches,
+  getScheduleMatchesByDate
 } from '@/actions/matches';
 
 import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match, MatchWithStageDetails, MatchWithFullDetails } from '@/lib/types/matches';
@@ -33,6 +36,9 @@ export const matchKeys = {
   paginated: (options: MatchPaginationOptions) => [...matchKeys.all, 'paginated', options] as const,
   details: (id: number) => [...matchKeys.all, id] as const,
   byStage: (stageId: number) => [...matchKeys.all, 'stage', stageId] as const,
+  // Schedule keys
+  schedule: (options: any) => [...matchKeys.all, 'schedule', options] as const,
+  scheduleByDate: (options: any) => [...matchKeys.all, 'scheduleByDate', options] as const,
   // Detail keys (for backward compatibility)
   detailKeys: {
     match: (id: number) => ['match-details', id] as const,
@@ -382,4 +388,137 @@ export function useMatchesTable(selectedStageId: number | null) {
     onFiltersChange: handleFilters,
     resetFilters
   };
+}
+
+// ============================================================================
+// SCHEDULE HOOKS
+// ============================================================================
+
+export function useScheduleMatches(
+  options: {
+    cursor?: string;
+    limit: number;
+    direction: 'future' | 'past';
+    filters?: {
+      season_id?: number;
+      sport_id?: number;
+      sport_category_id?: number;
+      stage_id?: number;
+      status?: string;
+      date_from?: string;
+      date_to?: string;
+      search?: string;
+    };
+  },
+  queryOptions?: UseQueryOptions<
+    ServiceResponse<{
+      matches: any[];
+      nextCursor?: string;
+      prevCursor?: string;
+      hasMore: boolean;
+      totalCount: number;
+    }>,
+    Error,
+    {
+      matches: any[];
+      nextCursor?: string;
+      prevCursor?: string;
+      hasMore: boolean;
+      totalCount: number;
+    }
+  >
+) {
+  return useQuery({
+    queryKey: matchKeys.schedule(options),
+    queryFn: () => getScheduleMatches(options),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch schedule matches.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useScheduleMatchesByDate(
+  options: {
+    season_id?: number;
+    sport_id?: number;
+    sport_category_id?: number;
+    stage_id?: number;
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+  },
+  queryOptions?: UseQueryOptions<
+    ServiceResponse<Record<string, any[]>>,
+    Error,
+    Record<string, any[]>
+  >
+) {
+  return useQuery({
+    queryKey: matchKeys.scheduleByDate(options),
+    queryFn: () => getScheduleMatchesByDate(options),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch schedule matches by date.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+// ============================================================================
+// INFINITE QUERY HOOKS FOR SCHEDULE
+// ============================================================================
+
+export function useInfiniteScheduleMatches(
+  options: {
+    limit: number;
+    direction: 'future' | 'past';
+    filters?: {
+      season_id?: number;
+      sport_id?: number;
+      sport_category_id?: number;
+      stage_id?: number;
+      status?: string;
+      date_from?: string;
+      date_to?: string;
+      search?: string;
+    };
+  },
+  queryOptions?: any
+) {
+  return useInfiniteQuery({
+    queryKey: matchKeys.schedule(options),
+    queryFn: ({ pageParam }) => getScheduleMatches({
+      ...options,
+      cursor: pageParam as string | undefined
+    }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      if (lastPage.success && lastPage.data) {
+        return lastPage.data.nextCursor;
+      }
+      return undefined;
+    },
+    getPreviousPageParam: (firstPage) => {
+      if (firstPage.success && firstPage.data) {
+        return firstPage.data.prevCursor;
+      }
+      return undefined;
+    },
+    select: (data) => ({
+      pages: data.pages,
+      pageParams: data.pageParams,
+      matches: data.pages.flatMap(page => page.success ? page.data.matches : []),
+      hasNextPage: data.pages[data.pages.length - 1]?.success ? data.pages[data.pages.length - 1].data.hasMore : false,
+      hasPreviousPage: data.pages[0]?.success ? data.pages[0].data.hasMore : false,
+      totalCount: data.pages[0]?.success ? data.pages[0].data.totalCount : 0
+    }),
+    ...queryOptions
+  });
 }

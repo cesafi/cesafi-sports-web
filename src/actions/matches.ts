@@ -75,3 +75,39 @@ export async function deleteMatchById(id: number) {
 
   return result;
 }
+
+// New server actions for schedule feature
+export async function getScheduleMatches(
+  options: {
+    cursor?: string;
+    limit: number;
+    direction: 'future' | 'past';
+    filters?: {
+      season_id?: number;
+      sport_id?: number;
+      sport_category_id?: number;
+      stage_id?: number;
+      status?: string;
+      date_from?: string;
+      date_to?: string;
+      search?: string;
+    };
+  }
+) {
+  return await MatchService.getScheduleMatches(options);
+}
+
+export async function getScheduleMatchesByDate(
+  options: {
+    season_id?: number;
+    sport_id?: number;
+    sport_category_id?: number;
+    stage_id?: number;
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+  }
+) {
+  return await MatchService.getScheduleMatchesByDate(options);
+}
