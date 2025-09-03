@@ -1,3 +1,3 @@
+export { default as Navbar } from './navbar';
+export { default as Footer } from './footer';
 export { default as SmartBreadcrumbs } from './smart-breadcrumbs';
-export { ArticlesTable } from './articles/articles-table';
-export { MatchesTable } from './matches-table';
