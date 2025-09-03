@@ -59,3 +59,22 @@ export async function getMatchParticipantsWithDetails(matchId: number) {
 export async function getTeamMatchHistory(teamId: string) {
   return await MatchParticipantService.getTeamMatchHistory(teamId);
 }
+
+export async function updateMatchScores(
+  scoreUpdates: Array<{ match_id: number; team_id: string; match_score: number | null }>
+) {
+  const result = await MatchParticipantService.updateMatchScores(scoreUpdates);
+
+  if (result.success) {
+    // Revalidate relevant paths
+    revalidatePath('/admin/dashboard/matches');
+    revalidatePath('/admin/dashboard/schools');
+    // Also revalidate any match detail pages
+    if (scoreUpdates.length > 0) {
+      const matchId = scoreUpdates[0].match_id;
+      revalidatePath(`/admin/dashboard/matches/${matchId}`);
+    }
+  }
+
+  return result;
+}

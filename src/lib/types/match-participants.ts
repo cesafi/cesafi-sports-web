@@ -24,6 +24,7 @@ export interface MatchParticipantWithTeamDetails {
   id: number;
   match_id: number;
   team_id: string;
+  match_score: number | null;
   created_at: string;
   updated_at: string;
   schools_teams: {
@@ -40,6 +41,7 @@ export interface MatchParticipantWithMatchDetails {
   id: number;
   match_id: number;
   team_id: string;
+  match_score: number | null;
   created_at: string;
   updated_at: string;
   matches: {
@@ -53,6 +55,7 @@ export interface MatchParticipantWithFullDetails {
   id: number;
   match_id: number;
   team_id: string;
+  match_score: number | null;
   created_at: string;
   updated_at: string;
   schools_teams: {
@@ -76,6 +79,7 @@ export interface MatchParticipantWithMatchHistory {
   id: number;
   match_id: number;
   team_id: string;
+  match_score: number | null;
   created_at: string;
   updated_at: string;
   matches: {
@@ -88,9 +92,8 @@ export interface MatchParticipantWithMatchHistory {
       sports_categories: {
         division: Database['public']['Enums']['sport_divisions'];
         levels: Database['public']['Enums']['sport_levels'];
-        sports: {
-          name: string;
-        };
+      sports: {
+        name: string;
       };
     };
   };

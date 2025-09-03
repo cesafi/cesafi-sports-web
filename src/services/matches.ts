@@ -320,6 +320,323 @@ export class MatchService extends BaseService {
     }
   }
 
+  // New method for schedule feature with infinite scrolling
+  static async getScheduleMatches(
+    options: {
+      cursor?: string;
+      limit: number;
+      direction: 'future' | 'past';
+      filters?: {
+        season_id?: number;
+        sport_id?: number;
+        sport_category_id?: number;
+        stage_id?: number;
+        status?: string;
+        date_from?: string;
+        date_to?: string;
+        search?: string;
+      };
+    }
+  ): Promise<ServiceResponse<{
+    matches: any[];
+    nextCursor?: string;
+    prevCursor?: string;
+    hasMore: boolean;
+    totalCount: number;
+  }>> {
+    try {
+      const supabase = await this.getClient();
+      let query = supabase
+        .from(TABLE_NAME)
+        .select(`
+          *,
+          sports_seasons_stages!inner(
+            id,
+            competition_stage,
+            season_id,
+            sport_category_id,
+            sports_categories!inner(
+              id,
+              division,
+              levels,
+              sports!inner(
+                id,
+                name
+              )
+            ),
+            seasons!inner(
+              id,
+              start_at,
+              end_at
+            )
+          ),
+          match_participants!inner(
+            id,
+            match_id,
+            team_id,
+            match_score,
+            schools_teams!inner(
+              id,
+              name,
+              schools!inner(
+                name,
+                abbreviation,
+                logo_url
+              )
+            )
+          )
+        `);
+
+      // Apply filters
+      if (options.filters?.season_id) {
+        query = query.eq('sports_seasons_stages.season_id', options.filters.season_id);
+      }
+      if (options.filters?.sport_id) {
+        query = query.eq('sports_seasons_stages.sports_categories.sport_id', options.filters.sport_id);
+      }
+      if (options.filters?.sport_category_id) {
+        query = query.eq('sports_seasons_stages.sport_category_id', options.filters.sport_category_id);
+      }
+      if (options.filters?.stage_id) {
+        query = query.eq('stage_id', options.filters.stage_id);
+      }
+      if (options.filters?.status) {
+        query = query.eq('status', options.filters.status);
+      }
+      if (options.filters?.date_from) {
+        query = query.gte('scheduled_at', options.filters.date_from);
+      }
+      if (options.filters?.date_to) {
+        query = query.lte('scheduled_at', options.filters.date_to);
+      }
+      if (options.filters?.search) {
+        query = query.or(`name.ilike.%${options.filters.search}%,description.ilike.%${options.filters.search}%`);
+      }
+
+      // Apply cursor-based pagination
+      if (options.cursor) {
+        if (options.direction === 'future') {
+          query = query.gt('scheduled_at', options.cursor);
+        } else {
+          query = query.lt('scheduled_at', options.cursor);
+        }
+      }
+
+      // Order by scheduled_at (future matches ascending, past matches descending)
+      if (options.direction === 'future') {
+        query = query.order('scheduled_at', { ascending: true, nullsFirst: false });
+      } else {
+        query = query.order('scheduled_at', { ascending: false, nullsFirst: false });
+      }
+
+      // Add secondary ordering
+      query = query.order('created_at', { ascending: false });
+
+      // Get one extra to check if there are more
+      const { data, error } = await query.limit(options.limit + 1);
+
+      if (error) {
+        throw error;
+      }
+
+      const hasMore = data && data.length > options.limit;
+      const matches = data ? data.slice(0, options.limit) : [];
+      
+      let nextCursor: string | undefined;
+      let prevCursor: string | undefined;
+
+      if (matches.length > 0) {
+        if (options.direction === 'future') {
+          nextCursor = (matches[matches.length - 1] as any)?.scheduled_at;
+          prevCursor = (matches[0] as any)?.scheduled_at;
+        } else {
+          nextCursor = (matches[0] as any)?.scheduled_at;
+          prevCursor = (matches[matches.length - 1] as any)?.scheduled_at;
+        }
+      }
+
+      // Get total count for the filtered results
+      const countQuery = supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
+
+      // Apply same filters to count query
+      if (options.filters?.season_id) {
+        countQuery.eq('sports_seasons_stages.season_id', options.filters.season_id);
+      }
+      if (options.filters?.sport_id) {
+        countQuery.eq('sports_seasons_stages.sports_categories.sport_id', options.filters.sport_id);
+      }
+      if (options.filters?.sport_category_id) {
+        countQuery.eq('sports_seasons_stages.sport_category_id', options.filters.sport_category_id);
+      }
+      if (options.filters?.stage_id) {
+        countQuery.eq('stage_id', options.filters.stage_id);
+      }
+      if (options.filters?.status) {
+        countQuery.eq('status', options.filters.status);
+      }
+      if (options.filters?.date_from) {
+        countQuery.gte('scheduled_at', options.filters.date_from);
+      }
+      if (options.filters?.date_to) {
+        countQuery.lte('scheduled_at', options.filters.date_to);
+      }
+      if (options.filters?.search) {
+        countQuery.or(`name.ilike.%${options.filters.search}%,description.ilike.%${options.filters.search}%`);
+      }
+
+      const { count } = await countQuery;
+
+      return {
+        success: true,
+        data: {
+          matches: matches || [],
+          nextCursor,
+          prevCursor,
+          hasMore,
+          totalCount: count || 0
+        }
+      };
+    } catch (err) {
+      return this.formatError(err, 'Failed to fetch schedule matches.');
+    }
+  }
+
+  // Method to get matches grouped by date for the schedule view
+  static async getScheduleMatchesByDate(
+    options: {
+      season_id?: number;
+      sport_id?: number;
+      sport_category_id?: number;
+      stage_id?: number;
+      status?: string;
+      date_from?: string;
+      date_to?: string;
+      search?: string;
+    }
+  ): Promise<ServiceResponse<Record<string, any[]>>> {
+    try {
+      const supabase = await this.getClient();
+      let query = supabase
+        .from(TABLE_NAME)
+        .select(`
+          *,
+          sports_seasons_stages!inner(
+            id,
+            competition_stage,
+            season_id,
+            sport_category_id,
+            sports_categories!inner(
+              id,
+              division,
+              levels,
+              sports!inner(
+                id,
+                name
+              )
+            ),
+            seasons!inner(
+              id,
+              start_at,
+              end_at
+            )
+          ),
+          match_participants!inner(
+            id,
+            match_id,
+            team_id,
+            match_score,
+            schools_teams!inner(
+              id,
+              name,
+              schools!inner(
+                name,
+                abbreviation,
+                logo_url
+              )
+            )
+          )
+        `);
+
+      // Apply filters
+      if (options.season_id) {
+        query = query.eq('sports_seasons_stages.season_id', options.season_id);
+      }
+      if (options.sport_id) {
+        query = query.eq('sports_seasons_stages.sports_categories.sport_id', options.sport_id);
+      }
+      if (options.sport_category_id) {
+        query = query.eq('sports_seasons_stages.sport_category_id', options.sport_category_id);
+      }
+      if (options.stage_id) {
+        query = query.eq('stage_id', options.stage_id);
+      }
+      if (options.status) {
+        query = query.eq('status', options.status);
+      }
+      if (options.date_from) {
+        query = query.gte('scheduled_at', options.date_from);
+      }
+      if (options.date_to) {
+        query = query.lte('scheduled_at', options.date_to);
+      }
+      if (options.search) {
+        query = query.or(`name.ilike.%${options.search}%,description.ilike.%${options.search}%`);
+      }
+
+      // Order by scheduled_at
+      query = query.order('scheduled_at', { ascending: true, nullsFirst: false });
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      // Group matches by date
+      const groupedMatches: Record<string, any[]> = {};
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      if (data) {
+        data.forEach(match => {
+          if (match.scheduled_at) {
+            const matchDate = new Date(match.scheduled_at);
+            const dateKey = matchDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+            
+            if (!groupedMatches[dateKey]) {
+              groupedMatches[dateKey] = [];
+            }
+            
+            // Add display properties
+            const displayMatch = {
+              ...match,
+              displayDate: dateKey,
+              displayTime: matchDate.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+              }),
+              isToday: dateKey === today.toISOString().split('T')[0],
+              isPast: matchDate < now,
+              isUpcoming: matchDate > now
+            };
+            
+            groupedMatches[dateKey].push(displayMatch);
+          }
+        });
+      }
+
+      return {
+        success: true,
+        data: groupedMatches
+      };
+    } catch (err) {
+      return this.formatError(err, 'Failed to fetch schedule matches by date.');
+    }
+  }
+
   static async insert(data: MatchInsert): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();

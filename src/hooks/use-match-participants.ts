@@ -252,6 +252,48 @@ export function useDeleteMatchParticipant(
   });
 }
 
+export function useUpdateMatchScores(
+  mutationOptions?: UseMutationOptions<
+    ServiceResponse<undefined>, 
+    Error, 
+    Array<{ match_id: number; team_id: string; match_score: number | null }>
+  >
+) {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (scoreUpdates) => {
+      // Import the service function
+      const { MatchParticipantService } = await import('@/services/match-participants');
+      return MatchParticipantService.updateMatchScores(scoreUpdates);
+    },
+    onSuccess: (result, variables) => {
+      if (result.success) {
+        // Invalidate match participants queries for the affected match
+        const matchId = variables[0]?.match_id;
+        if (matchId) {
+          queryClient.invalidateQueries({
+            queryKey: matchParticipantKeys.byMatch(matchId)
+          });
+          queryClient.invalidateQueries({
+            queryKey: matchParticipantKeys.withDetails(matchId)
+          });
+          // Also invalidate match details to update any score-related displays
+          queryClient.invalidateQueries({
+            queryKey: ['match-details', matchId]
+          });
+        }
+      }
+      mutationOptions?.onSuccess?.(result, variables);
+    },
+    onError: (error, variables, context) => {
+      console.error('Failed to update match scores:', error);
+      mutationOptions?.onError?.(error, variables, context);
+    },
+    ...mutationOptions
+  });
+}
+
 // ============================================================================
 // TABLE HOOKS
 // ============================================================================

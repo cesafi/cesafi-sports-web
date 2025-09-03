@@ -26,6 +26,13 @@ export type MatchPaginationOptions = PaginationOptions<
   MatchSearchFilters & Record<string, FilterValue>
 >;
 
+// Type for updating match scores
+export interface MatchScoreUpdate {
+  match_id: number;
+  team_id: string;
+  match_score: number | null;
+}
+
 // Detailed view types for service responses
 export interface MatchWithStageDetails extends BaseEntity {
   id: number;
@@ -99,6 +106,7 @@ export interface MatchWithFullDetails extends BaseEntity {
     id: number;
     match_id: number;
     team_id: string;
+    match_score: number | null;
     schools_teams: {
       id: string;
       name: string;
@@ -109,4 +117,40 @@ export interface MatchWithFullDetails extends BaseEntity {
       };
     };
   }[];
+}
+
+// Schedule-specific types for the LOL Esports-style schedule feature
+export interface ScheduleMatch extends MatchWithFullDetails {
+  // Additional fields for schedule display
+  displayDate: string; // Formatted date for grouping
+  displayTime: string; // Formatted time
+  isToday: boolean;
+  isPast: boolean;
+  isUpcoming: boolean;
+}
+
+export interface ScheduleFilters {
+  season_id?: number;
+  sport_id?: number;
+  sport_category_id?: number;
+  stage_id?: number;
+  status?: MatchStatus;
+  date_from?: string;
+  date_to?: string;
+  search?: string;
+}
+
+export interface SchedulePaginationOptions {
+  cursor?: string; // ISO date string for cursor-based pagination
+  limit: number;
+  direction: 'future' | 'past'; // For infinite scrolling
+  filters?: ScheduleFilters;
+}
+
+export interface ScheduleResponse {
+  matches: ScheduleMatch[];
+  nextCursor?: string;
+  prevCursor?: string;
+  hasMore: boolean;
+  totalCount: number;
 }

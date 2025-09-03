@@ -1,159 +1,249 @@
-# Matches Management System
+# Schedule Feature Implementation
 
-This directory contains the components for managing matches in the admin dashboard with advanced filtering capabilities.
+This document describes the implementation of the schedule feature for the CESAFI Esports League website, inspired by the LOL Esports schedule layout.
 
 ## Overview
 
-The Matches Management System allows administrators to:
-- Select a sport, sport category, and league stage to filter matches
-- View all matches for the selected league stage
-- Create new matches with detailed information
-- Edit existing match details
-- Delete matches (with confirmation)
-- Switch between different league stages seamlessly
+The schedule feature provides:
+- **Infinite scrolling** with cursor-based pagination
+- **Date grouping** for organized display
+- **Multiple participant support** for sports like track & field and swimming
+- **LOL Esports-style scrolling** (down for future, up for past)
+- **Comprehensive filtering** by season, sport, category, etc.
 
 ## Architecture
 
-### **Multi-Level Filtering System**
-- **Sport Selection**: First level filter for sports
-- **Sport Category Selection**: Second level filter based on selected sport
-- **League Stage Selection**: Third level filter based on selected sport category
-- **Page-Exclusive Context**: All filtering is local to the page component
+### 1. Types (`src/lib/types/matches.ts`)
 
-## Components
+```typescript
+// Schedule-specific types
+export interface ScheduleMatch extends MatchWithFullDetails {
+  displayDate: string;
+  displayTime: string;
+  isToday: boolean;
+  isPast: boolean;
+  isUpcoming: boolean;
+}
 
-### `league-stage-selector.tsx`
-Multi-level selector component that allows users to filter matches:
-- **Sport Selection**: Dropdown to select a sport
-- **Sport Category Selection**: Filtered dropdown based on selected sport
-- **League Stage Selection**: Filtered dropdown based on selected sport category
-- **Auto-Selection**: Automatically selects first available options
-- **Current Selection Display**: Shows the complete filter path
-- **Cascading Filters**: Each selection filters the next level
+export interface ScheduleFilters {
+  season_id?: number;
+  sport_id?: number;
+  sport_category_id?: number;
+  stage_id?: number;
+  status?: string;
+  date_from?: string;
+  date_to?: string;
+  search?: string;
+}
 
-### `matches-table-columns.tsx`
-Defines the table columns and actions for displaying matches:
-- **Match Information**: Shows match name and description with trophy icon
-- **Sport & Category**: Displays sport name and formatted category details
-- **League Stage**: Shows the competition stage (e.g., "Group Stage", "Playoffs")
-- **Venue**: Shows match venue with location icon
-- **Scheduled**: Shows scheduled date and start time
-- **Actions**: Edit and delete buttons
+export interface SchedulePaginationOptions {
+  cursor?: string;
+  limit: number;
+  direction: 'future' | 'past';
+  filters?: ScheduleFilters;
+}
+```
 
-### `match-modal.tsx`
-Modal component for creating and editing matches:
-- **Match Name**: Text input for match name
-- **Description**: Textarea for match description
-- **Venue**: Text input for venue
-- **League Stage Display**: Shows selected stage information (read-only)
-- **Best of**: Dropdown for match format (1, 3, 5, 7)
-- **Scheduled Date**: DateTime picker for scheduled time
-- **Start Date**: DateTime picker for start time
-- **End Date**: DateTime picker for end time
+### 2. Server Actions (`src/actions/matches.ts`)
 
-**Form Pattern**: Uses the established form ID pattern for proper submission behavior.
+```typescript
+// Get matches with infinite scrolling support
+export async function getScheduleMatches(options: SchedulePaginationOptions)
 
-### `page.tsx`
-Main page component that integrates all functionality:
-- **League Stage Selector**: At the top for multi-level filtering
-- **Matches Table**: Below showing matches for selected stage
-- **Modal Management**: Handles match creation, editing, and deletion
-- **State Management**: Manages all filter selections and match operations
+// Get matches grouped by date
+export async function getScheduleMatchesByDate(options: ScheduleFilters)
+```
 
-## Data Flow
+### 3. Service Layer (`src/services/matches.ts`)
 
-1. **Page Load**: Fetches available sports and auto-selects the first one
-2. **Sport Selection**: User selects a sport, filters available categories
-3. **Category Selection**: User selects a sport category, filters available stages
-4. **Stage Selection**: User selects a league stage, fetches matches
-5. **CRUD Operations**: All match operations are scoped to the selected stage
-6. **Real-time Updates**: Table refreshes after successful operations
+The `MatchService` class provides two new methods:
+- `getScheduleMatches()` - For infinite scrolling with cursor-based pagination
+- `getScheduleMatchesByDate()` - For date-grouped views
+
+### 4. Hooks (`src/hooks/use-schedule.ts`)
+
+#### Primary Hooks
+
+```typescript
+// Infinite scrolling schedule
+const { data, fetchNextPage, fetchPreviousPage, hasNextPage, hasPreviousPage } = 
+  useInfiniteSchedule({ limit: 20, direction: 'future' });
+
+// Date-grouped schedule
+const { data: { groupedMatches, sortedDateKeys } } = 
+  useScheduleByDate({ sport_id: 1 });
+```
+
+#### Utility Hooks
+
+```typescript
+// Get upcoming matches
+const upcomingMatches = useUpcomingMatches(10);
+
+// Get today's matches
+const todayMatches = useTodayMatches();
+
+// Get this week's matches
+const weekMatches = useThisWeekMatches();
+```
+
+### 5. Utilities (`src/lib/utils/schedule-utils.ts`)
+
+Helper functions for:
+- Date/time formatting
+- Match grouping
+- Status colors
+- Sport information formatting
+
+## Usage Examples
+
+### Basic Infinite Scrolling
+
+```typescript
+import { useInfiniteSchedule } from '@/hooks/use-schedule';
+
+function ScheduleComponent() {
+  const { 
+    data, 
+    fetchNextPage, 
+    fetchPreviousPage, 
+    hasNextPage, 
+    hasPreviousPage,
+    isLoading 
+  } = useInfiniteSchedule({
+    limit: 20,
+    direction: 'future',
+    filters: { sport_id: 1 }
+  });
+
+  return (
+    <div>
+      {/* Past matches - scroll up */}
+      {hasPreviousPage && (
+        <button onClick={() => fetchPreviousPage()}>
+          Load More Past Matches
+        </button>
+      )}
+      
+      {/* Current matches */}
+      {data?.matches.map(match => (
+        <MatchCard key={match.id} match={match} />
+      ))}
+      
+      {/* Future matches - scroll down */}
+      {hasNextPage && (
+        <button onClick={() => fetchNextPage()}>
+          Load More Future Matches
+        </button>
+      )}
+    </div>
+  );
+}
+```
+
+### Date-Grouped Display
+
+```typescript
+import { useScheduleByDate } from '@/hooks/use-schedule';
+
+function CalendarSchedule() {
+  const { data, isLoading } = useScheduleByDate({
+    sport_id: 1,
+    season_id: 1
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      {data?.sortedDateKeys.map(dateKey => (
+        <div key={dateKey}>
+          <h3>{formatScheduleDate(dateKey)}</h3>
+          {data.groupedMatches[dateKey].map(match => (
+            <MatchCard key={match.id} match={match} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Filtering and Search
+
+```typescript
+const { data } = useInfiniteSchedule({
+  limit: 20,
+  direction: 'future',
+  filters: {
+    sport_id: 1,
+    sport_category_id: 2,
+    status: 'upcoming',
+    search: 'championship',
+    date_from: '2024-01-01',
+    date_to: '2024-12-31'
+  }
+});
+```
 
 ## Key Features
 
-### Multi-Level Filtering
-- **Cascading Selection**: Each choice filters the next level
-- **Auto-Selection**: Automatically selects first available options
-- **Visual Feedback**: Clear display of current filter path
-- **Smart Filtering**: Only shows relevant options at each level
+### 1. Infinite Scrolling
+- **Cursor-based pagination** for efficient data loading
+- **Bidirectional scrolling** (up for past, down for future)
+- **Configurable page sizes** for optimal performance
 
-### Match Management
-- **Full CRUD**: Create, read, update, and delete matches
-- **Stage Integration**: Matches are linked to specific league stages
-- **DateTime Management**: Comprehensive scheduling capabilities
-- **Format Control**: Best-of series configuration
+### 2. Multiple Participants Support
+- Handles matches with multiple teams (track & field, swimming)
+- Each participant shows school logo, abbreviation, and score
+- Flexible display for varying participant counts
 
-### User Experience
-- **Loading States**: Visual feedback during data fetching
-- **Error Handling**: Graceful error handling and user feedback
-- **Responsive Design**: Works well on different screen sizes
-- **Consistent UI**: Follows established admin patterns
+### 3. Date Grouping
+- Automatic grouping by date
+- Smart date labels (Today, Tomorrow, Yesterday)
+- Chronological sorting within date groups
 
-## State Management
+### 4. Comprehensive Filtering
+- Season, sport, and category filtering
+- Date range filtering
+- Status filtering (upcoming, ongoing, finished, cancelled)
+- Text search across match names and descriptions
 
-### Local State (Page-Exclusive)
-```tsx
-const [selectedSportId, setSelectedSportId] = useState<number | null>(null);
-const [selectedSportCategoryId, setSelectedSportCategoryId] = useState<number | null>(null);
-const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
-const [isModalOpen, setIsModalOpen] = useState(false);
-const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-const [editingMatch, setEditingMatch] = useState<MatchWithStageDetails | undefined>();
-```
+### 5. Performance Optimizations
+- Efficient database queries with proper joins
+- Cursor-based pagination reduces memory usage
+- React Query caching for better UX
+- Lazy loading of match details
 
-### Hook Integration
-```tsx
-const {
-  matches,
-  createMatch,
-  updateMatch,
-  deleteMatch,
-  // ... other properties
-} = useMatchesTable(selectedStageId);
-```
+## Database Queries
 
-## Database Schema
+The schedule feature uses optimized Supabase queries that:
+- Join multiple tables for complete match information
+- Apply filters at the database level
+- Use proper indexing on `scheduled_at` field
+- Support cursor-based pagination efficiently
 
-The system works with the `matches` table and related entities:
-- **matches**: Primary table with match information
-- **sports_seasons_stages**: Links sports, categories, and competition stages
-- **sports_categories**: Defines sport divisions and levels
-- **sports**: Basic sport information
-- **seasons**: Season information
+## Error Handling
 
-## Dependencies
+All hooks and server actions include proper error handling:
+- Network errors are caught and displayed
+- Validation errors are handled gracefully
+- Fallback states for loading and error conditions
 
-- **React Query**: For data fetching and caching
-- **Shadcn/UI**: For UI components
-- **Lucide React**: For icons
-- **Sports Utils**: For formatting sport category names
-- **Date Utils**: For date formatting and manipulation
+## Future Enhancements
 
-## Usage
+Potential improvements for the schedule feature:
+- **Spoiler hiding** functionality
+- **Real-time updates** for live matches
+- **Advanced filtering** (venue, team-based)
+- **Export functionality** (calendar, PDF)
+- **Mobile-optimized** scrolling behavior
+- **Accessibility improvements** for screen readers
 
-Navigate to `/admin/matches` to access the management interface. The system:
-1. Automatically loads available sports
-2. Allows selection of sport, category, and stage
-3. Shows matches for the selected league stage
-4. Provides full match management capabilities
-5. Maintains filter context throughout the session
+## Notes
 
-## Implementation Notes
-
-### Filtering Pattern
-- **Cascading Logic**: Each selection filters the next level
-- **Auto-Selection**: First available options are automatically selected
-- **State Synchronization**: All filter states are properly synchronized
-- **Performance**: Efficient filtering with minimal API calls
-
-### Match Operations
-- **Stage-Scoped**: All operations are limited to the selected stage
-- **Real-time Updates**: Table refreshes after successful operations
-- **Error Handling**: Comprehensive error handling with user feedback
-- **Validation**: Client-side validation for all form fields
-
-### Performance Considerations
-- **Conditional Fetching**: Matches are only fetched when a stage is selected
-- **Query Invalidation**: Proper cache invalidation after mutations
-- **Loading States**: Separate loading states for initial load vs. operations
-- **Optimistic Updates**: Immediate UI feedback for better UX
+- The feature follows the LOL Esports scrolling pattern (opposite to CESAFI Esports League)
+- All matches include complete participant information
+- The system automatically handles timezone conversions
+- Season context is automatically applied to all queries
+- Infinite scrolling is optimized for large datasets

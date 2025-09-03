@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Clock, Play, Square, Calendar, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { MatchWithFullDetails, MatchUpdate } from '@/lib/types/matches';
+import { MatchWithFullDetails, MatchUpdate, MatchScoreUpdate } from '@/lib/types/matches';
 import { formatTableDate } from '@/lib/utils/date';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { updateMatchScores } from '@/actions/match-participants';
 
 interface MatchStatusModalProps {
   open: boolean;
@@ -62,22 +63,31 @@ export function MatchStatusModal({
     scheduled_at: string;
     start_at: string;
     end_at: string;
+    scores: { [teamId: string]: number | null };
   }>({
     status: 'upcoming',
     scheduled_at: '',
     start_at: '',
-    end_at: ''
+    end_at: '',
+    scores: {}
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Initialize form data when modal opens
   useEffect(() => {
     if (open && match) {
+      // Initialize scores from match participants
+      const initialScores: { [teamId: string]: number | null } = {};
+      match.match_participants.forEach(participant => {
+        initialScores[participant.team_id] = participant.match_score;
+      });
+
       setFormData({
         status: (match.status as MatchStatus) || 'upcoming',
         scheduled_at: match.scheduled_at ? new Date(match.scheduled_at).toISOString().slice(0, 16) : '',
         start_at: match.start_at ? new Date(match.start_at).toISOString().slice(0, 16) : '',
-        end_at: match.end_at ? new Date(match.end_at).toISOString().slice(0, 16) : ''
+        end_at: match.end_at ? new Date(match.end_at).toISOString().slice(0, 16) : '',
+        scores: initialScores
       });
       setErrors({});
     }
@@ -101,6 +111,17 @@ export function MatchStatusModal({
 
   const handleDateTimeChange = (field: 'scheduled_at' | 'start_at' | 'end_at', value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleScoreChange = (teamId: string, value: string) => {
+    const score = value === '' ? null : parseInt(value);
+    setFormData(prev => ({
+      ...prev,
+      scores: {
+        ...prev.scores,
+        [teamId]: score
+      }
+    }));
   };
 
   const validateForm = () => {
@@ -149,6 +170,22 @@ export function MatchStatusModal({
       };
 
       await onUpdateMatch(updateData);
+
+      // Update scores using the action
+      const scoreUpdates: MatchScoreUpdate[] = Object.entries(formData.scores).map(([teamId, score]) => ({
+        match_id: match.id,
+        team_id: teamId,
+        match_score: score
+      }));
+      
+      if (scoreUpdates.length > 0) {
+        const scoreResult = await updateMatchScores(scoreUpdates);
+        if (!scoreResult.success) {
+          toast.error(scoreResult.error || 'Failed to update match scores');
+          return;
+        }
+        toast.success('Match scores updated successfully');
+      }
     } catch (error) {
       console.error('Failed to update match status:', error);
     }
@@ -325,6 +362,88 @@ export function MatchStatusModal({
                 When the match ended (only for finished matches)
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Match Scores */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              Match Scores
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {match.match_participants.map((participant) => (
+                <div key={participant.team_id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">{participant.schools_teams.schools.abbreviation} {participant.schools_teams.name}</div>
+                    <div className="text-sm text-muted-foreground">{participant.schools_teams.schools.name}</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor={`score-${participant.team_id}`} className="text-sm font-medium">
+                      Score:
+                    </Label>
+                    <Input
+                      id={`score-${participant.team_id}`}
+                      type="number"
+                      min="0"
+                      value={formData.scores[participant.team_id] || ''}
+                      onChange={(e) => handleScoreChange(participant.team_id, e.target.value)}
+                      className="w-20 text-center"
+                      placeholder="0"
+                      disabled={formData.status === 'upcoming'}
+                    />
+                  </div>
+                </div>
+              ))}
+              {match.match_participants.length === 0 && (
+                <div className="p-3 bg-muted rounded-lg text-sm text-muted-foreground">
+                  No participants found for this match.
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              {formData.status === 'upcoming' 
+                ? 'Scores can be entered once the match starts.'
+                : 'Enter the final scores for each team when the match is finished.'
+              }
+            </p>
+            
+            {/* Winner Display */}
+            {formData.status === 'finished' && Object.values(formData.scores).some(score => score !== null) && (
+              <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <div className="text-sm font-medium text-primary mb-2">Match Result:</div>
+                {(() => {
+                  const scores = Object.entries(formData.scores);
+                  const validScores = scores.filter(([_, score]) => score !== null);
+                  
+                  if (validScores.length < 2) return <span className="text-muted-foreground">Enter scores for both teams to see the result.</span>;
+                  
+                  const [team1Id, score1] = validScores[0];
+                  const [team2Id, score2] = validScores[1];
+                  const team1 = match.match_participants.find(p => p.team_id === team1Id);
+                  const team2 = match.match_participants.find(p => p.team_id === team2Id);
+                  
+                  if (!team1 || !team2) return <span className="text-muted-foreground">Team information not found.</span>;
+                  
+                  const winner = (score1 as number) > (score2 as number) ? team1 : team2;
+                  const winnerScore = Math.max(score1 as number, score2 as number);
+                  const loserScore = Math.min(score1 as number, score2 as number);
+                  
+                  return (
+                    <div className="space-y-1">
+                      <div className="font-semibold text-green-600">
+                        🏆 {winner.schools_teams.schools.abbreviation} {winner.schools_teams.name} wins!
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Final Score: {winnerScore} - {loserScore}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </CardContent>
         </Card>
 
