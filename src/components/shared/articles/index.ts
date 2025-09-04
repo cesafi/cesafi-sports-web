@@ -1,5 +1,5 @@
-export { 
-  getArticlesTableColumns, 
+export {
+  getArticlesTableColumns,
   getArticlesTableActions,
   getAdminArticlesTableColumns,
   getAdminArticlesTableActions,
@@ -12,3 +12,5 @@ export { ArticleEditorCard } from './article-editor-card';
 export { ArticleEditorLayout } from './article-editor-layout';
 export { WriterArticleForm } from './writer-article-form';
 export { HeadWriterArticleForm } from './head-writer-article-form';
+
+export { ArticlesTable } from './articles-table';

@@ -1,12 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ArticlesTable } from '@/components/shared';
+import { ArticlesTable } from '@/components/shared/articles';
 import { Article } from '@/lib/types/articles';
 
 export default function AdminArticlesPage() {
   const router = useRouter();
-  
+
   const config = {
     showAuthorId: true,
     showActions: true,
@@ -35,13 +35,11 @@ export default function AdminArticlesPage() {
       {/* Page Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Articles Management</h1>
-        <p className="text-muted-foreground">
-          Create, edit, and manage articles for the league.
-        </p>
+        <p className="text-muted-foreground">Create, edit, and manage articles for the league.</p>
       </div>
 
       {/* Articles Table */}
-      <ArticlesTable 
+      <ArticlesTable
         config={config}
         onEdit={handleEdit}
         onDelete={handleDelete}

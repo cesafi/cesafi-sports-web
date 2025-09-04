@@ -1,6 +1,6 @@
 'use client';
 
-import { MatchesTable } from '@/components/shared';
+import { MatchesTable } from '@/components/shared/matches';
 
 export default function MatchesManagementPage() {
   return (
@@ -9,15 +9,13 @@ export default function MatchesManagementPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Matches Management</h1>
         <p className="text-muted-foreground">
-          Create, edit, and manage matches for the league. Select a league stage to view and manage matches.
+          Create, edit, and manage matches for the league. Select a league stage to view and manage
+          matches.
         </p>
       </div>
 
       {/* Matches Table */}
-      <MatchesTable 
-        userRole="admin" 
-        showLeagueStageSelector={true}
-      />
+      <MatchesTable userRole="admin" showLeagueStageSelector={true} />
     </div>
   );
 }

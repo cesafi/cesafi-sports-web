@@ -10,3 +10,5 @@ export { LeagueStageSelector } from './league-stage-selector';
 export { TeamSelectionModal } from './team-selection-modal';
 export { getMatchesTableColumns, getMatchesTableActions } from './matches-table-columns';
 export { getMatchGamesTableColumns, getMatchGamesTableActions } from './match-games-table-columns';
+
+export { MatchesTable } from './matches-table';
