@@ -7,11 +7,9 @@ import {
 } from '@tanstack/react-query';
 
 import {
-  getPaginatedGameScores,
-  getAllGameScores,
-  getGameScoreById,
   getGameScoresByGameId,
   getGameScoresByParticipantId,
+  getGameScoresByMatchId,
   createGameScore,
   updateGameScoreById,
   deleteGameScoreById,
@@ -22,12 +20,11 @@ import {
 import {
   GameScoreInsert,
   GameScoreUpdate,
-  GameScorePaginationOptions,
   GameScore,
   GameScoreDetailedView
 } from '@/lib/types/game-scores';
 
-import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
+import { ServiceResponse } from '@/lib/types/base';
 
 import { gameKeys } from './use-games';
 import { matchParticipantKeys } from './use-match-participants';
@@ -35,74 +32,18 @@ import { matchKeys } from './use-matches';
 
 export const gameScoreKeys = {
   all: ['game-scores'] as const,
-  paginated: (options: GameScorePaginationOptions) =>
-    [...gameScoreKeys.all, 'paginated', options] as const,
-  details: (id: string) => [...gameScoreKeys.all, id] as const,
-  byGame: (gameId: string) => [...gameScoreKeys.all, 'game', gameId] as const,
-  byParticipant: (participantId: string) =>
+  details: (id: number) => [...gameScoreKeys.all, id] as const,
+  byGame: (gameId: number) => [...gameScoreKeys.all, 'game', gameId] as const,
+  byParticipant: (participantId: number) =>
     [...gameScoreKeys.all, 'participant', participantId] as const,
-  participantAggregate: (participantId: string) =>
-    [...gameScoreKeys.all, 'aggregate', participantId] as const,
-  withDetails: (gameId: string) => [...gameScoreKeys.all, 'details', gameId] as const
+  byMatch: (matchId: number) => [...gameScoreKeys.all, 'match', matchId] as const,
+  participantAggregate: (matchId: number, participantId: number) =>
+    [...gameScoreKeys.all, 'aggregate', matchId, participantId] as const,
+  withDetails: (gameId: number) => [...gameScoreKeys.all, 'details', gameId] as const
 };
 
-export function usePaginatedGameScores(
-  options: GameScorePaginationOptions,
-  queryOptions?: UseQueryOptions<
-    ServiceResponse<PaginatedResponse<GameScore>>,
-    Error,
-    PaginatedResponse<GameScore>
-  >
-) {
-  return useQuery({
-    queryKey: gameScoreKeys.paginated(options),
-    queryFn: () => getPaginatedGameScores(options),
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch paginated game scores.');
-      }
-      return data.data;
-    },
-    ...queryOptions
-  });
-}
-
-export function useAllGameScores(
-  queryOptions?: UseQueryOptions<ServiceResponse<GameScore[]>, Error, GameScore[]>
-) {
-  return useQuery({
-    queryKey: gameScoreKeys.all,
-    queryFn: getAllGameScores,
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch all game scores.');
-      }
-      return data.data;
-    },
-    ...queryOptions
-  });
-}
-
-export function useGameScoreById(
-  id: string,
-  queryOptions?: UseQueryOptions<ServiceResponse<GameScore>, Error, GameScore>
-) {
-  return useQuery({
-    queryKey: gameScoreKeys.details(id),
-    queryFn: () => getGameScoreById(id),
-    enabled: !!id,
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error || `Game score with ID ${id} not found.`);
-      }
-      return data.data;
-    },
-    ...queryOptions
-  });
-}
-
 export function useGameScoresByGameId(
-  gameId: string,
+  gameId: number,
   queryOptions?: UseQueryOptions<ServiceResponse<GameScore[]>, Error, GameScore[]>
 ) {
   return useQuery({
@@ -120,7 +61,7 @@ export function useGameScoresByGameId(
 }
 
 export function useGameScoresByParticipantId(
-  participantId: string,
+  participantId: number,
   queryOptions?: UseQueryOptions<ServiceResponse<GameScore[]>, Error, GameScore[]>
 ) {
   return useQuery({
@@ -139,34 +80,49 @@ export function useGameScoresByParticipantId(
   });
 }
 
+export function useGameScoresByMatchId(
+  matchId: number,
+  queryOptions?: UseQueryOptions<ServiceResponse<GameScore[]>, Error, GameScore[]>
+) {
+  return useQuery({
+    queryKey: gameScoreKeys.byMatch(matchId),
+    queryFn: () => getGameScoresByMatchId(matchId),
+    enabled: !!matchId,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(
+          data.error || `Failed to fetch game scores for match ${matchId}.`
+        );
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
 export function useParticipantMatchAggregate(
-  participantId: string,
+  matchId: number,
+  participantId: number,
   queryOptions?: UseQueryOptions<
     ServiceResponse<{
       totalScore: number;
-      averageScore: number;
-      gameCount: number;
-      highestScore: number;
-      lowestScore: number;
+      gamesPlayed: number;
     }>,
     Error,
     {
       totalScore: number;
-      averageScore: number;
-      gameCount: number;
-      highestScore: number;
-      lowestScore: number;
+      gamesPlayed: number;
     }
   >
 ) {
   return useQuery({
-    queryKey: gameScoreKeys.participantAggregate(participantId),
-    queryFn: () => getParticipantMatchAggregate(participantId),
-    enabled: !!participantId,
+    queryKey: gameScoreKeys.participantAggregate(matchId, participantId),
+    queryFn: () => getParticipantMatchAggregate(matchId, participantId),
+    enabled: !!matchId && !!participantId,
     select: (data) => {
       if (!data.success) {
         throw new Error(
-          data.error || `Failed to fetch aggregate for participant ${participantId}.`
+          data.error || `Failed to fetch aggregate for match ${matchId}, participant ${participantId}.`
         );
       }
       return data.data;
@@ -176,7 +132,7 @@ export function useParticipantMatchAggregate(
 }
 
 export function useGameScoresWithDetails(
-  gameId: string,
+  gameId: number,
   queryOptions?: UseQueryOptions<
     ServiceResponse<GameScoreDetailedView[]>,
     Error,
@@ -185,10 +141,8 @@ export function useGameScoresWithDetails(
 ) {
   return useQuery({
     queryKey: gameScoreKeys.withDetails(gameId),
-
     queryFn: () => getGameScoresWithDetails(gameId),
     enabled: !!gameId,
-
     select: (response) => {
       if (!response.success) {
         throw new Error(`Failed to fetch detailed game scores for game ${gameId}`);
@@ -209,30 +163,24 @@ export function useCreateGameScore(
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: gameScoreKeys.all });
 
-        if (variables.games_id) {
+        if (variables.game_id) {
           queryClient.invalidateQueries({
-            queryKey: gameScoreKeys.byGame(variables.games_id)
+            queryKey: gameScoreKeys.byGame(variables.game_id)
           });
           queryClient.invalidateQueries({
-            queryKey: gameScoreKeys.withDetails(variables.games_id)
+            queryKey: gameScoreKeys.withDetails(variables.game_id)
           });
           queryClient.invalidateQueries({ queryKey: gameKeys.all });
           queryClient.invalidateQueries({
-            queryKey: gameKeys.details(variables.games_id)
+            queryKey: gameKeys.details(variables.game_id)
           });
         }
 
-        if (variables.match_participants_id) {
+        if (variables.match_participant_id) {
           queryClient.invalidateQueries({
-            queryKey: gameScoreKeys.byParticipant(variables.match_participants_id)
-          });
-          queryClient.invalidateQueries({
-            queryKey: gameScoreKeys.participantAggregate(variables.match_participants_id)
+            queryKey: gameScoreKeys.byParticipant(variables.match_participant_id)
           });
           queryClient.invalidateQueries({ queryKey: matchParticipantKeys.all });
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.details(variables.match_participants_id)
-          });
         }
 
         queryClient.invalidateQueries({ queryKey: matchKeys.all });
@@ -260,30 +208,24 @@ export function useUpdateGameScore(
           queryClient.invalidateQueries({ queryKey: gameScoreKeys.details(variables.id) });
         }
 
-        if (variables.games_id) {
+        if (variables.game_id) {
           queryClient.invalidateQueries({
-            queryKey: gameScoreKeys.byGame(variables.games_id)
+            queryKey: gameScoreKeys.byGame(variables.game_id)
           });
           queryClient.invalidateQueries({
-            queryKey: gameScoreKeys.withDetails(variables.games_id)
+            queryKey: gameScoreKeys.withDetails(variables.game_id)
           });
           queryClient.invalidateQueries({ queryKey: gameKeys.all });
           queryClient.invalidateQueries({
-            queryKey: gameKeys.details(variables.games_id)
+            queryKey: gameKeys.details(variables.game_id)
           });
         }
 
-        if (variables.match_participants_id) {
+        if (variables.match_participant_id) {
           queryClient.invalidateQueries({
-            queryKey: gameScoreKeys.byParticipant(variables.match_participants_id)
-          });
-          queryClient.invalidateQueries({
-            queryKey: gameScoreKeys.participantAggregate(variables.match_participants_id)
+            queryKey: gameScoreKeys.byParticipant(variables.match_participant_id)
           });
           queryClient.invalidateQueries({ queryKey: matchParticipantKeys.all });
-          queryClient.invalidateQueries({
-            queryKey: matchParticipantKeys.details(variables.match_participants_id)
-          });
         }
 
         queryClient.invalidateQueries({ queryKey: matchKeys.all });
@@ -299,7 +241,7 @@ export function useUpdateGameScore(
 }
 
 export function useDeleteGameScore(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, string>
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, number>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

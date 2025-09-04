@@ -1,4 +1,3 @@
-
 import { getCldImageUrl, getCldOgImageUrl } from 'next-cloudinary';
 import {
   CloudinaryUploadOptions,
@@ -17,11 +16,11 @@ class CloudinaryService {
       // Create FormData for upload
       const formData = new FormData();
       formData.append('file', file);
-      
+
       // Use unsigned upload preset for client-side uploads
       const uploadPreset = 'cesafi-uploads';
       formData.append('upload_preset', uploadPreset);
-      
+
       // Add folder if specified
       if (options.folder) {
         formData.append('folder', options.folder);
@@ -36,13 +35,10 @@ class CloudinaryService {
 
       // Upload to Cloudinary using next-cloudinary approach
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        {
-          method: 'POST',
-          body: formData
-        }
-      );
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
       const result = await response.json();
 
       if (!response.ok) {
@@ -83,16 +79,16 @@ class CloudinaryService {
       // Fallback to manual URL construction if next-cloudinary fails
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
       const transforms = [];
-      
+
       if (transformations.width) transforms.push(`w_${transformations.width}`);
       if (transformations.height) transforms.push(`h_${transformations.height}`);
       if (transformations.crop) transforms.push(`c_${transformations.crop}`);
       if (transformations.quality) transforms.push(`q_${transformations.quality}`);
       if (transformations.format) transforms.push(`f_${transformations.format}`);
       if (transformations.gravity) transforms.push(`g_${transformations.gravity}`);
-      
+
       const transformString = transforms.length > 0 ? `${transforms.join(',')}/` : '';
-      
+
       return `https://res.cloudinary.com/${cloudName}/image/upload/${transformString}${publicId}`;
     }
   }
@@ -121,13 +117,13 @@ class CloudinaryService {
   ): Promise<CloudinaryServiceResponse<CloudinaryDeleteResult>> {
     try {
       const { resourceType = 'image', invalidate = false } = options;
-      
+
       // For client-side delete operations, we need to use a different approach
       // Since we can't access API secrets on the client side, we'll use the upload API
       // with a "destroy" transformation or return a mock success for testing purposes
-      
+
       const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      
+
       if (!cloudName) {
         return {
           success: false,
@@ -140,10 +136,10 @@ class CloudinaryService {
       // 1. Create a server-side API endpoint that handles the delete operation
       // 2. Use that endpoint from the client
       // 3. The server endpoint would have access to the API secret
-      
+
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // For now, we'll return a mock successful response
       // This allows testing the UI flow while indicating the limitation
       return {
@@ -164,7 +160,6 @@ class CloudinaryService {
       };
     }
   }
-
 
   static getOgImageUrl(
     publicId: string,

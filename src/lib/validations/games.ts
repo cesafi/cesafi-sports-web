@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-export const GameInsertSchema = z
+export const createGameSchema = z
   .object({
-    match_id: z.uuid({ message: 'Match ID must be a valid UUID.' }),
+    match_id: z.number({ message: 'Match ID is required.' }),
     game_number: z
       .number({ message: 'Game number must be a number.' })
       .int({ message: 'Game number must be an integer.' })
@@ -15,14 +15,8 @@ export const GameInsertSchema = z
       })
       .default('00:00:00'),
 
-    start_at: z.iso
-      .datetime({ message: 'Start date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable(),
-    end_at: z.iso
-      .datetime({ message: 'End date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable()
+    start_at: z.string().optional().nullable(),
+    end_at: z.string().optional().nullable()
   })
   .refine(
     (data) => {
@@ -37,10 +31,10 @@ export const GameInsertSchema = z
     }
   );
 
-export const GameUpdateSchema = z
+export const updateGameSchema = z
   .object({
-    id: z.uuid({ message: 'ID is required for updating a game.' }),
-    match_id: z.uuid({ message: 'Match ID must be a valid UUID.' }).optional(),
+    id: z.number({ message: 'ID is required for updating a game.' }),
+    match_id: z.number({ message: 'Match ID is required.' }).optional(),
     game_number: z
       .number({ message: 'Game number must be a number.' })
       .int({ message: 'Game number must be an integer.' })
@@ -52,14 +46,8 @@ export const GameUpdateSchema = z
         message: 'Duration must be in HH:MM:SS format.'
       })
       .optional(),
-    start_at: z.iso
-      .datetime({ message: 'Start date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable(),
-    end_at: z.iso
-      .datetime({ message: 'End date must be a valid ISO datetime string.' })
-      .optional()
-      .nullable()
+    start_at: z.string().optional().nullable(),
+    end_at: z.string().optional().nullable()
   })
   .refine(
     (data) => {
@@ -73,3 +61,6 @@ export const GameUpdateSchema = z
       path: ['end_at']
     }
   );
+
+export const GameInsertSchema = createGameSchema;
+export const GameUpdateSchema = updateGameSchema;

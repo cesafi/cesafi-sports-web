@@ -13,7 +13,7 @@ export async function getAllSeasons() {
   return await SeasonService.getAll();
 }
 
-export async function getSeasonById(id: string) {
+export async function getSeasonById(id: number) {
   return await SeasonService.getById(id);
 }
 
@@ -37,7 +37,20 @@ export async function updateSeasonById(data: SeasonUpdate) {
   return result;
 }
 
-export async function deleteSeasonById(id: string) {
+// New utility methods
+export async function getCurrentSeason() {
+  return await SeasonService.getCurrentSeason();
+}
+
+export async function getUpcomingSeasons() {
+  return await SeasonService.getUpcomingSeasons();
+}
+
+export async function getSeasonsByYear(year: number) {
+  return await SeasonService.getSeasonsByYear(year);
+}
+
+export async function deleteSeasonById(id: number) {
   const result = await SeasonService.deleteById(id);
 
   if (result.success) {

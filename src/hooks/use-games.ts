@@ -5,28 +5,31 @@ import {
   UseQueryOptions,
   UseMutationOptions
 } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { useTable } from './use-table';
 
 import {
   getPaginatedGames,
   getAllGames,
   getGameById,
   getGamesByMatchId,
+  getPaginatedGamesByMatch,
   createGame,
   updateGameById,
   deleteGameById,
   calculateMatchDuration
 } from '@/actions/games';
 
-import { GameInsert, GameUpdate, GamePaginationOptions, Game } from '@/lib/types/games';
+import { GameInsert, GameUpdate, GamePaginationOptions, Game, GameWithDetails } from '@/lib/types/games';
 
-import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
+import { PaginatedResponse, ServiceResponse, PaginationOptions } from '@/lib/types/base';
 
 export const gameKeys = {
   all: ['games'] as const,
   paginated: (options: GamePaginationOptions) => [...gameKeys.all, 'paginated', options] as const,
-  details: (id: string) => [...gameKeys.all, id] as const,
-  byMatch: (matchId: string) => [...gameKeys.all, 'match', matchId] as const,
-  matchDuration: (matchId: string) => [...gameKeys.all, 'duration', matchId] as const
+  details: (id: number) => [...gameKeys.all, id] as const,
+  byMatch: (matchId: number, options?: PaginationOptions) => [...gameKeys.all, 'match', matchId, options] as const,
+  matchDuration: (matchId: number) => [...gameKeys.all, 'duration', matchId] as const
 };
 
 export function usePaginatedGames(
@@ -67,7 +70,7 @@ export function useAllGames(
 }
 
 export function useGameById(
-  id: string,
+  id: number,
   queryOptions?: UseQueryOptions<ServiceResponse<Game>, Error, Game>
 ) {
   return useQuery({
@@ -85,7 +88,7 @@ export function useGameById(
 }
 
 export function useGamesByMatchId(
-  matchId: string,
+  matchId: number,
   queryOptions?: UseQueryOptions<ServiceResponse<Game[]>, Error, Game[]>
 ) {
   return useQuery({
@@ -103,7 +106,7 @@ export function useGamesByMatchId(
 }
 
 export function useMatchDuration(
-  matchId: string,
+  matchId: number,
   queryOptions?: UseQueryOptions<ServiceResponse<string>, Error, string>
 ) {
   return useQuery({
@@ -191,7 +194,7 @@ export function useUpdateGame(
 }
 
 export function useDeleteGame(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, string>
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, number>
 ) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -213,4 +216,143 @@ export function useDeleteGame(
     },
     ...mutationOptions
   });
+}
+
+// Table-specific hook for games management
+export function useGamesTable(matchId: number | null, callbacks?: {
+  onGameCreated?: () => void;
+  onGameUpdated?: () => void;
+  onGameDeleted?: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const {
+    tableState,
+    setPage,
+    setPageSize,
+    setSortBy,
+    setSearch,
+    setFilters,
+    resetFilters,
+    paginationOptions
+  } = useTable<GameWithDetails>({
+    initialPage: 1,
+    initialPageSize: 10,
+  });
+
+  // Fetch games for the match
+  const {
+    data: paginatedData,
+    isLoading: loading,
+    error
+  } = useQuery({
+    queryKey: gameKeys.byMatch(matchId || 0, paginationOptions as PaginationOptions),
+    queryFn: async () => {
+      if (!matchId) return { data: [], totalCount: 0, pageCount: 0 };
+      
+      const result = await getPaginatedGamesByMatch(matchId, paginationOptions as PaginationOptions);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch games');
+      }
+      return result.data;
+    },
+    enabled: !!matchId,
+    staleTime: 30 * 1000, // 30 seconds
+  });
+
+  const games = paginatedData?.data || [];
+  const totalCount = paginatedData?.totalCount || 0;
+  const pageCount = paginatedData?.pageCount || 0;
+
+  // Create game mutation
+  const createGameMutation = useMutation({
+    mutationFn: createGame,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Game created successfully');
+        if (matchId) {
+          queryClient.invalidateQueries({ queryKey: gameKeys.byMatch(matchId) });
+          // Also invalidate the general games queries
+          queryClient.invalidateQueries({ queryKey: gameKeys.all });
+        }
+        callbacks?.onGameCreated?.();
+      } else {
+        toast.error(result.error || 'Failed to create game');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
+
+  // Update game mutation
+  const updateGameMutation = useMutation({
+    mutationFn: updateGameById,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Game updated successfully');
+        if (matchId) {
+          queryClient.invalidateQueries({ queryKey: gameKeys.byMatch(matchId) });
+          // Also invalidate the general games queries
+          queryClient.invalidateQueries({ queryKey: gameKeys.all });
+        }
+        callbacks?.onGameUpdated?.();
+      } else {
+        toast.error(result.error || 'Failed to update game');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
+
+  // Delete game mutation
+  const deleteGameMutation = useMutation({
+    mutationFn: deleteGameById,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Game deleted successfully');
+        if (matchId) {
+          queryClient.invalidateQueries({ queryKey: gameKeys.byMatch(matchId) });
+          // Also invalidate the general games queries
+          queryClient.invalidateQueries({ queryKey: gameKeys.all });
+        }
+        callbacks?.onGameDeleted?.();
+      } else {
+        toast.error(result.error || 'Failed to delete game');
+      }
+    },
+    onError: () => {
+      toast.error('An unexpected error occurred');
+    }
+  });
+
+  return {
+    // Data
+    games,
+    totalCount,
+    pageCount,
+    currentPage: tableState.page,
+    pageSize: tableState.pageSize,
+    loading,
+    tableBodyLoading: loading,
+    error: error?.message,
+
+    // Table controls
+    onPageChange: setPage,
+    onPageSizeChange: setPageSize,
+    onSortChange: setSortBy,
+    onSearchChange: setSearch,
+    onFiltersChange: setFilters,
+    resetFilters,
+
+    // Mutations
+    createGame: createGameMutation.mutate,
+    updateGame: updateGameMutation.mutate,
+    deleteGame: deleteGameMutation.mutate,
+
+    // Loading states
+    isCreating: createGameMutation.isPending,
+    isUpdating: updateGameMutation.isPending,
+    isDeleting: deleteGameMutation.isPending
+  };
 }

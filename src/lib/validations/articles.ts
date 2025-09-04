@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Constants } from '@/../database.types';
+import { Constants } from '../../../database.types';
 
 const ArticleContentSchema = z.record(z.string(), z.any()).refine(
   (content) => {

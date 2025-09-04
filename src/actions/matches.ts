@@ -13,12 +13,41 @@ export async function getAllMatches() {
   return await MatchService.getAll();
 }
 
-export async function getMatchById(id: string) {
+export async function getMatchById(id: number) {
   return await MatchService.getById(id);
+}
+
+
+
+export async function getMatchByIdBasic(id: number) {
+  return await MatchService.getByIdBasic(id);
+}
+
+export async function getMatchesByStageId(stageId: number) {
+  return await MatchService.getByStageId(stageId);
+}
+
+export async function getMatchesBySportAndCategory(sportId: number, sportCategoryId: number) {
+  return await MatchService.getBySportAndCategory(sportId, sportCategoryId);
+}
+
+export async function getMatchesBySeason(seasonId: number) {
+  return await MatchService.getBySeason(seasonId);
 }
 
 export async function createMatch(data: MatchInsert) {
   const result = await MatchService.insert(data);
+
+  if (result.success) {
+    revalidatePath('/admin/dashboard/matches');
+  }
+
+  return result;
+}
+
+export async function createMatchWithParticipants(data: MatchInsert, participantTeamIds: string[]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await (MatchService as any).insertWithParticipants(data, participantTeamIds);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');
@@ -37,7 +66,7 @@ export async function updateMatchById(data: MatchUpdate) {
   return result;
 }
 
-export async function deleteMatchById(id: string) {
+export async function deleteMatchById(id: number) {
   const result = await MatchService.deleteById(id);
 
   if (result.success) {
@@ -45,4 +74,40 @@ export async function deleteMatchById(id: string) {
   }
 
   return result;
+}
+
+// New server actions for schedule feature
+export async function getScheduleMatches(
+  options: {
+    cursor?: string;
+    limit: number;
+    direction: 'future' | 'past';
+    filters?: {
+      season_id?: number;
+      sport_id?: number;
+      sport_category_id?: number;
+      stage_id?: number;
+      status?: string;
+      date_from?: string;
+      date_to?: string;
+      search?: string;
+    };
+  }
+) {
+  return await MatchService.getScheduleMatches(options);
+}
+
+export async function getScheduleMatchesByDate(
+  options: {
+    season_id?: number;
+    sport_id?: number;
+    sport_category_id?: number;
+    stage_id?: number;
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+    search?: string;
+  }
+) {
+  return await MatchService.getScheduleMatchesByDate(options);
 }

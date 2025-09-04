@@ -1,25 +1,35 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse } from '@/lib/types/base';
+import {
+  PaginatedResponse,
+  PaginationOptions,
+  ServiceResponse,
+  FilterValue
+} from '@/lib/types/base';
 import { BaseService } from './base';
 import { School, SchoolInsert, SchoolUpdate } from '@/lib/types/schools';
-import { AuthService } from './auth';
 
 const TABLE_NAME = 'schools';
 
 export class SchoolService extends BaseService {
   static async getPaginated(
-    options: PaginationOptions,
+    options: PaginationOptions<Record<string, FilterValue>>,
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<School>>> {
     try {
+      const searchableFields = ['name', 'abbreviation'];
+      const optionsWithSearchableFields = {
+        ...options,
+        searchableFields
+      };
+
       const result = await this.getPaginatedData<School, typeof TABLE_NAME>(
         TABLE_NAME,
-        options,
+        optionsWithSearchableFields,
         selectQuery
       );
 
       return result;
     } catch (err) {
-      return this.formatError(err, `Failed to retrieve paginated schools.`);
+      return this.formatError(err, `Failed to retrieve paginated schools`);
     }
   }
 
@@ -35,6 +45,23 @@ export class SchoolService extends BaseService {
       return { success: true, data };
     } catch (err) {
       return this.formatError(err, `Failed to fetch all ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async getCount(): Promise<ServiceResponse<number>> {
+    try {
+      const supabase = await this.getClient();
+      const { count, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: count || 0 };
+    } catch (err) {
+      return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
     }
   }
 
@@ -55,21 +82,6 @@ export class SchoolService extends BaseService {
 
   static async insert(data: SchoolInsert): Promise<ServiceResponse<undefined>> {
     try {
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
       const { error } = await supabase.from(TABLE_NAME).insert(data);
 
@@ -89,21 +101,6 @@ export class SchoolService extends BaseService {
         return { success: false, error: 'Entity ID is required to update.' };
       }
 
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
-      }
-
       const supabase = await this.getClient();
       const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
 
@@ -121,21 +118,6 @@ export class SchoolService extends BaseService {
     try {
       if (!id) {
         return { success: false, error: 'Entity ID is required to delete.' };
-      }
-
-      const roles = ['admin', 'league_operator'];
-
-      const authResult = await AuthService.checkAuth(roles);
-
-      if (!authResult.authenticated) {
-        return { success: false, error: authResult.error || 'Authentication failed.' };
-      }
-
-      if (!authResult.authorized) {
-        return {
-          success: false,
-          error: authResult.error || 'Authorization failed: insufficient permissions.'
-        };
       }
 
       const supabase = await this.getClient();

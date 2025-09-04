@@ -1,4 +1,4 @@
-import { Database } from '@/../database.types';
+import { Database } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
 
 export type Volunteer = Database['public']['Tables']['volunteers']['Row'];
@@ -7,12 +7,12 @@ export type VolunteerUpdate = Database['public']['Tables']['volunteers']['Update
 
 export interface VolunteersSearchFilters {
   full_name?: string;
-  department?: string | string[];
-  created_at?: string;
-  updated_at?: string;
-  date_range?: {
-    start?: string;
-    end?: string;
+  department_id?: number;
+  season_id?: number;
+  is_active?: boolean;
+  created_at?: {
+    gte?: string;
+    lte?: string;
   };
 }
 

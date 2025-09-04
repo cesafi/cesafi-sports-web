@@ -2,20 +2,34 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { Database } from '../../../database.types';
 import { type NextRequest, NextResponse } from 'next/server';
 
+type UserRole = Database['public']['Enums']['user_roles'];
+
+const publicRoutes = [
+  '/',
+  '/favicon.ico',
+  '/_next/public',
+  '/sitemap.xml',
+  '/robots.txt',
+  '/login',
+  '/forgot-password',
+  '/test-cloudinary'
+];
+
+const roleDashboards: Record<UserRole, string> = {
+  admin: '/admin',
+  head_writer: '/head-writer',
+  league_operator: '/league-operator',
+  writer: '/writer'
+};
+
 export const updateSession = async (request: NextRequest) => {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers
+    }
+  });
+
   try {
-    let response = NextResponse.next({
-      request: {
-        headers: request.headers
-      }
-    });
-
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    response.headers.set('X-Frame-Options', 'DENY');
-    response.headers.set('X-XSS-Protection', '1; mode=block');
-    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-
     const cookieOptions: CookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -33,9 +47,9 @@ export const updateSession = async (request: NextRequest) => {
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-            response = NextResponse.next({
-              request
-            });
+
+            response = NextResponse.next({ request });
+
             cookiesToSet.forEach(({ name, value, options }) =>
               response.cookies.set(name, value, { ...cookieOptions, ...options })
             );
@@ -44,31 +58,38 @@ export const updateSession = async (request: NextRequest) => {
       }
     );
 
-    const { error: userError } = await supabase.auth.getUser();
-    const url = request.nextUrl.pathname;
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser();
 
-    const publicRoutes = [
-      '/',
-      '/favicon.ico',
-      '/_next/public',
-      '/sitemap.xml',
-      '/robots.txt',
-      '/login',
-      '/forgot-password',
-      '/test-cloudinary'
-    ];
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[middleware.ts]: User check result:', {
+        hasUser: !!user,
+        userEmail: user?.email,
+        userRole: user?.app_metadata?.role,
+        error: userError?.message
+      });
+    }
+
+    const url = request.nextUrl.pathname;
 
     const isProtectedRoute = !publicRoutes.some(
       (route) => url === route || url.startsWith(route + '/')
     );
 
-    if (isProtectedRoute && userError) {
-      return NextResponse.redirect(new URL('/', request.url));
+    if (isProtectedRoute && (userError || !user)) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    if (!userError) {
+    if (user) {
+      const role = user.app_metadata?.role as UserRole | undefined;
       const isAtLoginPage = url === '/login';
+
       if (url === '/' || isAtLoginPage) {
+        if (role && role in roleDashboards) {
+          return NextResponse.redirect(new URL(roleDashboards[role], request.url));
+        }
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
     }
@@ -76,21 +97,6 @@ export const updateSession = async (request: NextRequest) => {
     return response;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_) {
-    const errorResponse = NextResponse.next({
-      request: {
-        headers: request.headers
-      }
-    });
-
-    errorResponse.headers.set('X-Content-Type-Options', 'nosniff');
-    errorResponse.headers.set('X-Frame-Options', 'DENY');
-    errorResponse.headers.set('X-XSS-Protection', '1; mode=block');
-    errorResponse.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    errorResponse.headers.set(
-      'Permissions-Policy',
-      'camera=(), microphone=(), geolocation=(), interest-cohort=()'
-    );
-
-    return errorResponse;
+    return response;
   }
 };
