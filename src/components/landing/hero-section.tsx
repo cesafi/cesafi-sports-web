@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Users, Trophy, Calendar, Target } from 'lucide-react';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { moderniz, roboto } from '@/lib/fonts';
 
 export default function HeroSection() {
   const stats = [
@@ -46,7 +46,7 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="space-y-6"
           >
-            <h1 className={`${mangoGrotesque.className} text-5xl sm:text-6xl lg:text-7xl font-black leading-tight`}>
+            <h1 className={`${moderniz.className} text-5xl sm:text-6xl lg:text-7xl font-black leading-tight`}>
               <span className="text-foreground">CEBU SCHOOLS</span>
               <br />
               <span className="text-primary">ATHLETIC FOUNDATION</span>
@@ -65,10 +65,10 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-8"
           >
-            <button className={`${mangoGrotesque.className} bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-5 rounded-2xl font-bold text-xl uppercase tracking-wider transition-all duration-300 hover:scale-105 shadow-2xl`}>
+            <button className={`${moderniz.className} bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-5 rounded-2xl font-bold text-xl uppercase tracking-wider transition-all duration-300 hover:scale-105 shadow-2xl`}>
               Explore Sports
             </button>
-            <button className={`${mangoGrotesque.className} bg-transparent border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-10 py-5 rounded-2xl font-bold text-xl uppercase tracking-wider transition-all duration-300 hover:scale-105`}>
+            <button className={`${moderniz.className} bg-transparent border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-10 py-5 rounded-2xl font-bold text-xl uppercase tracking-wider transition-all duration-300 hover:scale-105`}>
               View Schedule
             </button>
           </motion.div>
@@ -91,7 +91,7 @@ export default function HeroSection() {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/20 rounded-2xl mb-4 group-hover:bg-primary/30 transition-colors duration-300">
                   <stat.icon className="w-8 h-8 text-primary" />
                 </div>
-                <div className={`${mangoGrotesque.className} text-3xl font-bold text-foreground mb-2`}>
+                <div className={`${moderniz.className} text-3xl font-bold text-foreground mb-2`}>
                   {stat.value}
                 </div>
                 <div className={`${roboto.className} text-sm text-muted-foreground font-medium`}>

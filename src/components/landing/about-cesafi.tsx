@@ -2,7 +2,7 @@
 
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Image from 'next/image';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { moderniz, roboto } from '@/lib/fonts';
 
 export default function AboutCesafi() {
   const { scrollYProgress } = useScroll();
@@ -29,7 +29,7 @@ export default function AboutCesafi() {
           </div>
           
           {/* Big Text */}
-          <h2 className={`${mangoGrotesque.className} text-5xl lg:text-6xl xl:text-7xl font-black text-foreground mb-8 leading-tight`}>
+          <h2 className={`${moderniz.className} text-5xl lg:text-6xl xl:text-7xl font-black text-foreground mb-8 leading-tight`}>
             ABOUT
             <br />
             <span className="text-primary">CESAFI</span>
@@ -50,7 +50,7 @@ export default function AboutCesafi() {
             viewport={{ once: true }}
             className="space-y-6"
           >
-            <h3 className={`${mangoGrotesque.className} text-3xl lg:text-4xl font-bold text-foreground`}>
+            <h3 className={`${moderniz.className} text-3xl lg:text-4xl font-bold text-foreground`}>
               Our Mission
             </h3>
             <p className={`${roboto.className} text-lg lg:text-xl text-muted-foreground leading-relaxed`}>
@@ -68,7 +68,7 @@ export default function AboutCesafi() {
             viewport={{ once: true }}
             className="space-y-6"
           >
-            <h3 className={`${mangoGrotesque.className} text-3xl lg:text-4xl font-bold text-foreground`}>
+            <h3 className={`${moderniz.className} text-3xl lg:text-4xl font-bold text-foreground`}>
               Our Vision
             </h3>
             <p className={`${roboto.className} text-lg lg:text-xl text-muted-foreground leading-relaxed`}>
@@ -87,7 +87,7 @@ export default function AboutCesafi() {
           viewport={{ once: true }}
           className="text-center"
         >
-          <h3 className={`${mangoGrotesque.className} text-3xl lg:text-4xl font-bold text-foreground mb-8`}>
+          <h3 className={`${moderniz.className} text-3xl lg:text-4xl font-bold text-foreground mb-8`}>
             What We Do
           </h3>
           <p className={`${roboto.className} text-lg lg:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>

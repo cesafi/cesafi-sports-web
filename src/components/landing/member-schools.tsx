@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { moderniz, roboto } from '@/lib/fonts';
 
 const memberSchools = [
   { 
@@ -69,7 +69,7 @@ export default function MemberSchools() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className={`${mangoGrotesque.className} text-4xl lg:text-5xl font-bold text-foreground mb-6`}>
+          <h2 className={`${moderniz.className} text-4xl lg:text-5xl font-bold text-foreground mb-6`}>
             MEMBER SCHOOLS
           </h2>
           <p className={`${roboto.className} text-xl text-muted-foreground max-w-3xl mx-auto`}>
@@ -108,7 +108,7 @@ export default function MemberSchools() {
                 </div>
                 
                 {/* School Name */}
-                <h3 className={`${mangoGrotesque.className} text-lg font-semibold text-foreground text-center group-hover:text-primary transition-colors duration-300`}>
+                <h3 className={`${moderniz.className} text-lg font-semibold text-foreground text-center group-hover:text-primary transition-colors duration-300`}>
                   {school.name}
                 </h3>
               </a>

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Users, Trophy } from 'lucide-react';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { moderniz, roboto } from '@/lib/fonts';
 
 // Mock upcoming games data - in production this would come from your matches database
 const upcomingGames = [
@@ -94,7 +94,7 @@ export default function UpcomingGames() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className={`${mangoGrotesque.className} text-4xl lg:text-5xl font-bold text-foreground mb-6`}>
+          <h2 className={`${moderniz.className} text-4xl lg:text-5xl font-bold text-foreground mb-6`}>
             UPCOMING GAMES
           </h2>
           <p className={`${roboto.className} text-xl text-muted-foreground max-w-3xl mx-auto`}>
@@ -129,13 +129,13 @@ export default function UpcomingGames() {
 
                 {/* Teams */}
                 <div className="text-center mb-6">
-                  <div className={`${mangoGrotesque.className} text-xl font-bold text-foreground mb-2`}>
+                  <div className={`${moderniz.className} text-xl font-bold text-foreground mb-2`}>
                     {game.homeTeam}
                   </div>
                   <div className={`${roboto.className} text-2xl font-bold text-primary mb-2`}>
                     VS
                   </div>
-                  <div className={`${mangoGrotesque.className} text-xl font-bold text-foreground`}>
+                  <div className={`${moderniz.className} text-xl font-bold text-foreground`}>
                     {game.awayTeam}
                   </div>
                 </div>
@@ -171,7 +171,7 @@ export default function UpcomingGames() {
 
                 {/* Action Button */}
                 <div className="mt-6">
-                  <button className={`${mangoGrotesque.className} w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-xl font-semibold text-lg uppercase tracking-wide transition-all duration-200 hover:scale-105 shadow-lg`}>
+                  <button className={`${moderniz.className} w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-xl font-semibold text-lg uppercase tracking-wide transition-all duration-200 hover:scale-105 shadow-lg`}>
                     View Details
                   </button>
                 </div>
@@ -188,7 +188,7 @@ export default function UpcomingGames() {
           viewport={{ once: true }}
           className="text-center mt-12"
         >
-          <button className={`${mangoGrotesque.className} bg-transparent border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-4 rounded-xl font-semibold text-lg uppercase tracking-wide transition-all duration-200 hover:scale-105`}>
+          <button className={`${moderniz.className} bg-transparent border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-4 rounded-xl font-semibold text-lg uppercase tracking-wide transition-all duration-200 hover:scale-105`}>
             View All Games
           </button>
         </motion.div>

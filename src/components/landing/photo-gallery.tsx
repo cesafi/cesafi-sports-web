@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { moderniz, roboto } from '@/lib/fonts';
 
 // Mock gallery data - in production this would come from your database
 const galleryImages = [
@@ -159,7 +159,7 @@ export default function PhotoGallery() {
               </div>
 
               <div className="mt-4 text-center text-foreground">
-                <h3 className={`${mangoGrotesque.className} text-2xl font-bold mb-2`}>
+                <h3 className={`${moderniz.className} text-2xl font-bold mb-2`}>
                   {galleryImages[currentIndex].title}
                 </h3>
                 <p className={`${roboto.className} text-lg text-muted-foreground`}>

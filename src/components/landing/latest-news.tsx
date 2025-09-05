@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Calendar, User, ArrowRight, TrendingUp, Trophy, Users } from 'lucide-react';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { moderniz, roboto } from '@/lib/fonts';
 
 // Mock news data - in production this would come from your articles database
 const newsArticles = [
@@ -100,7 +100,7 @@ export default function LatestNews() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className={`${mangoGrotesque.className} text-4xl lg:text-5xl font-bold text-foreground mb-6`}>
+          <h2 className={`${moderniz.className} text-4xl lg:text-5xl font-bold text-foreground mb-6`}>
             LATEST NEWS & UPDATES
           </h2>
           <p className={`${roboto.className} text-xl text-muted-foreground max-w-3xl mx-auto`}>
@@ -140,7 +140,7 @@ export default function LatestNews() {
                 </div>
                 
                 <div className="p-8">
-                  <h3 className={`${mangoGrotesque.className} text-2xl lg:text-3xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors duration-300`}>
+                  <h3 className={`${moderniz.className} text-2xl lg:text-3xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors duration-300`}>
                     {featuredArticle.title}
                   </h3>
                   
@@ -203,7 +203,7 @@ export default function LatestNews() {
                         </span>
                       </div>
                       
-                      <h4 className={`${mangoGrotesque.className} text-sm font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300 line-clamp-2`}>
+                      <h4 className={`${moderniz.className} text-sm font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300 line-clamp-2`}>
                         {article.title}
                       </h4>
                       
@@ -227,7 +227,7 @@ export default function LatestNews() {
           viewport={{ once: true }}
           className="text-center mt-12"
         >
-          <button className={`${mangoGrotesque.className} bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-semibold text-lg uppercase tracking-wide transition-all duration-200 hover:scale-105 shadow-lg flex items-center gap-3 mx-auto`}>
+          <button className={`${moderniz.className} bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-semibold text-lg uppercase tracking-wide transition-all duration-200 hover:scale-105 shadow-lg flex items-center gap-3 mx-auto`}>
             View All News
             <ArrowRight size={20} />
           </button>

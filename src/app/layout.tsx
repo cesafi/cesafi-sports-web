@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/sonner';
 import NextTopLoader from 'nextjs-toploader';
 import { ThemeProvider } from 'next-themes';
 import { metadata as siteMetadata } from './metadata';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { moderniz, roboto } from '@/lib/fonts';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${mangoGrotesque.variable} ${roboto.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${moderniz.variable} ${roboto.variable} antialiased`}>
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <NextTopLoader color="#336C61" />
