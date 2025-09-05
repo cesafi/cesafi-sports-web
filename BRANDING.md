@@ -27,7 +27,7 @@ The **Cebu Schools Athletic Foundation Website** is the central digital hub for 
 | Name       | Hex     | RGB              | Usage                        |
 |------------|---------|------------------|------------------------------|
 | Teal       | #336c61 | (51, 108, 97)    | Headers, accents, callouts   |
-| Emerald    | #19b33e | (25, 179, 62)    | Buttons, highlights, success |
+| Emerald    | #19b33e | (25, 179, 62)    | Secondary elements, success  |
 | Gold       | #f4b248 | (244, 178, 72)   | Key highlights, CTAs         |
 | White      | #ffffff | (255, 255, 255)  | Backgrounds, text contrast   |
 | Off-White  | #f6f5f0 | (246, 245, 240)  | Section dividers, subtle bg  |

@@ -14,7 +14,7 @@ const navItems = [
   { name: 'News', href: '/news' },
   { name: 'Schools', href: '/schools' },
   { name: 'Volunteers', href: '/volunteers' },
-  { name: 'About', href: '/about' },
+  { name: 'About Us', href: '/about-us' },
 ];
 
 export default function Navbar() {
