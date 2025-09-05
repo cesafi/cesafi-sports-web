@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ChevronLeft, ChevronRight, Calendar, Filter, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter, Settings } from 'lucide-react';
 import { formatDateShort } from './utils';
 
 interface DateNavigationProps {
@@ -48,8 +48,13 @@ export default function DateNavigation({
     }
   };
 
+  const handleGoToToday = () => {
+    const today = new Date();
+    onDateChange(today);
+  };
+
   return (
-    <Card className="sticky top-20 z-10 border-border bg-card shadow-sm">
+    <Card className="sticky top-20 z-10 border-border bg-card shadow-sm mt-4">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           {/* Left side: Navigation controls */}
@@ -61,15 +66,15 @@ export default function DateNavigation({
               className="flex items-center gap-2"
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous
             </Button>
 
-            <div className="flex items-center gap-2">
-              <Calendar className="text-muted-foreground h-4 w-4" />
-              <span className="font-mango-grotesque text-foreground text-sm font-medium">
-                {formatDateShort(currentDate)}
-              </span>
-            </div>
+            <Button
+              variant="ghost"
+              onClick={handleGoToToday}
+              className="font-mango-grotesque text-foreground text-lg font-semibold hover:bg-primary/10"
+            >
+              {formatDateShort(currentDate)}
+            </Button>
 
             <Button
               variant="outline"
@@ -77,7 +82,6 @@ export default function DateNavigation({
               onClick={goToNextDay}
               className="flex items-center gap-2"
             >
-              Next
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

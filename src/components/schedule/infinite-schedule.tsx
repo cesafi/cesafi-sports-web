@@ -28,7 +28,15 @@ export default function InfiniteSchedule({
   isLoading = false,
   selectedSport = 'all',
   onSportChange,
-  availableSports = ['Basketball', 'Volleyball', 'Football', 'Tennis', 'Badminton', 'Track and Field', 'Swimming']
+  availableSports = [
+    'Basketball',
+    'Volleyball',
+    'Football',
+    'Tennis',
+    'Badminton',
+    'Track and Field',
+    'Swimming'
+  ]
 }: InfiniteScheduleProps) {
   const [dateGroups, setDateGroups] = useState<ScheduleDateGroup[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -51,7 +59,7 @@ export default function InfiniteSchedule({
       const today = new Date();
       const todayString = today.toISOString().split('T')[0];
       const todayGroup = dateGroups.find((group) => group.date === todayString);
-      
+
       if (!todayGroup) {
         setShowFloatingButton(false);
         return;
@@ -65,7 +73,7 @@ export default function InfiniteSchedule({
 
       const rect = todayElement.getBoundingClientRect();
       const isTodayVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-      
+
       if (!isTodayVisible) {
         setShowFloatingButton(true);
         // Determine direction based on scroll position
@@ -157,7 +165,6 @@ export default function InfiniteSchedule({
     [currentDate, dateGroups]
   );
 
-
   const handleFloatingButtonClick = useCallback(() => {
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
@@ -200,7 +207,7 @@ export default function InfiniteSchedule({
 
       {/* All Matches - Infinite Scroll */}
       {dateGroups.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-16">
           {dateGroups.map((dateGroup) => (
             <div key={dateGroup.date} id={`date-group-${dateGroup.date}`}>
               <DateGroup dateGroup={dateGroup} onMatchClick={onMatchClick} />

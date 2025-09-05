@@ -13,10 +13,13 @@ interface DateGroupProps {
 export default function DateGroup({ dateGroup, onMatchClick }: DateGroupProps) {
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       {/* Date Header */}
       <div className="relative">
-        <div className={`flex items-center gap-3 pb-4 ${dateGroup.isToday ? 'bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-4' : ''}`}>
+        {/* Date separator line at top */}
+        <div className="border-border absolute -top-6 left-0 right-0 border-t"></div>
+        
+        <div className={`flex items-center gap-3 pb-4 ${dateGroup.isToday ? 'bg-gradient-to-b from-primary/5 to-primary/10 rounded-lg p-4' : ''}`}>
           <div className="flex items-center gap-2">
             <Calendar className="text-muted-foreground h-5 w-5" />
             <h2 className="font-mango-grotesque text-foreground text-xl font-semibold">
@@ -27,8 +30,6 @@ export default function DateGroup({ dateGroup, onMatchClick }: DateGroupProps) {
             {dateGroup.matches.length} match{dateGroup.matches.length !== 1 ? 'es' : ''}
           </div>
         </div>
-        {/* Date separator line */}
-        <div className="border-border absolute bottom-0 left-0 right-0 border-t"></div>
       </div>
 
       {/* Matches */}

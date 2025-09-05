@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Clock,
   MapPin,
@@ -128,9 +127,10 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
 
   return (
     <Card
-      className="border-border bg-card cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:shadow-md"
+      className="border-border bg-card cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:shadow-md overflow-hidden"
       onClick={() => onMatchClick?.(match)}
     >
+      {/* Main Content */}
       <CardContent className="p-6">
         {/* Match Header */}
         <div className="mb-4 flex items-center justify-between">
@@ -153,9 +153,9 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
         </div>
 
         {/* Teams and Scores */}
-        <div className="mb-4 flex items-center justify-center gap-8">
+        <div className="mb-4 grid grid-cols-3 items-center gap-4">
           {/* Team 1 */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-3">
             <div className="min-w-0 text-right">
               <div className="font-mango-grotesque text-foreground truncate text-lg font-semibold">
                 {team1.schoolAbbreviation}
@@ -187,11 +187,13 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
             </div>
           </div>
 
-          {/* VS */}
-          <div className="text-muted-foreground font-roboto text-sm">vs</div>
+          {/* VS - Absolutely Centered */}
+          <div className="flex justify-center">
+            <div className="text-muted-foreground font-roboto text-sm">vs</div>
+          </div>
 
           {/* Team 2 */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-start gap-3">
             <div
               className={`font-mango-grotesque text-3xl font-bold ${
                 team2.isWinner && match.status === 'finished' ? 'text-primary' : 'text-foreground'
@@ -223,31 +225,25 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
             </div>
           </div>
         </div>
-
-        {/* Match Details Footer */}
-        <div className="bg-muted/50 flex items-center justify-between rounded-md p-3">
-          <div className="text-muted-foreground font-roboto flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>{match.displayTime}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              <span>{match.venue}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>Best of {match.best_of}</span>
-            </div>
-          </div>
-
-          {match.status === 'upcoming' && (
-            <Button variant="outline" size="sm" className="text-xs">
-              View Details
-            </Button>
-          )}
-        </div>
       </CardContent>
+
+      {/* Match Details Footer */}
+      <div className="bg-muted/50 px-6 py-4">
+        <div className="text-muted-foreground font-roboto flex items-center gap-6 text-base font-medium">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            <span>{match.displayTime}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            <span>{match.venue}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            <span>Best of {match.best_of}</span>
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }
