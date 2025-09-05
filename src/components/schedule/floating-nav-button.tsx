@@ -13,15 +13,15 @@ export default function FloatingNavButton({ isVisible, direction, onClick }: Flo
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-20 right-8 z-50">
+    <div className="fixed bottom-20 right-8 z-50 animate-bounce">
       {/* Outer circle effect */}
       <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping"></div>
       <div className="absolute inset-0 rounded-full bg-primary/10 animate-pulse"></div>
       
-      {/* Main button with bobbing animation */}
+      {/* Main button */}
       <Button
         onClick={onClick}
-        className="relative h-12 w-12 rounded-full shadow-lg transition-all duration-300 hover:scale-110 animate-bounce"
+        className="relative h-12 w-12 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
         size="icon"
       >
         {direction === 'up' ? (
