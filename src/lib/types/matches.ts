@@ -154,3 +154,49 @@ export interface ScheduleResponse {
   hasMore: boolean;
   totalCount: number;
 }
+
+// Date-grouped schedule response
+export interface ScheduleByDateResponse {
+  groupedMatches: Record<string, ScheduleMatch[]>; // Key is date string (YYYY-MM-DD)
+  sortedDateKeys: string[];
+  totalMatches: number;
+}
+
+// Match card display information
+export interface MatchCardInfo {
+  id: number;
+  name: string;
+  displayDate: string;
+  displayTime: string;
+  venue: string;
+  status: MatchStatus;
+  bestOf: number;
+  sportInfo: {
+    name: string;
+    division: Database['public']['Enums']['sport_divisions'];
+    level: Database['public']['Enums']['sport_levels'];
+    stage: Database['public']['Enums']['competition_stage'];
+  };
+  participants: {
+    id: number;
+    teamName: string;
+    schoolName: string;
+    schoolAbbreviation: string;
+    logoUrl: string | null;
+    score: number | null;
+  }[];
+  isToday: boolean;
+  isPast: boolean;
+  isUpcoming: boolean;
+}
+
+// Infinite scroll state
+export interface InfiniteScrollState {
+  matches: ScheduleMatch[];
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  isLoading: boolean;
+  isLoadingNext: boolean;
+  isLoadingPrevious: boolean;
+  error: Error | null;
+}

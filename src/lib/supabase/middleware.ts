@@ -12,7 +12,8 @@ const publicRoutes = [
   '/robots.txt',
   '/login',
   '/forgot-password',
-  '/test-cloudinary'
+  '/test-cloudinary',
+  '/schedule'
 ];
 
 const roleDashboards: Record<UserRole, string> = {

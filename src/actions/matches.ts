@@ -1,7 +1,12 @@
 'use server';
 
 import { PaginationOptions } from '@/lib/types/base';
-import { MatchInsert, MatchUpdate } from '@/lib/types/matches';
+import {
+  MatchInsert,
+  MatchUpdate,
+  SchedulePaginationOptions,
+  ScheduleFilters
+} from '@/lib/types/matches';
 import { MatchService } from '@/services/matches';
 import { revalidatePath } from 'next/cache';
 
@@ -16,8 +21,6 @@ export async function getAllMatches() {
 export async function getMatchById(id: number) {
   return await MatchService.getById(id);
 }
-
-
 
 export async function getMatchByIdBasic(id: number) {
   return await MatchService.getByIdBasic(id);
@@ -77,37 +80,10 @@ export async function deleteMatchById(id: number) {
 }
 
 // New server actions for schedule feature
-export async function getScheduleMatches(
-  options: {
-    cursor?: string;
-    limit: number;
-    direction: 'future' | 'past';
-    filters?: {
-      season_id?: number;
-      sport_id?: number;
-      sport_category_id?: number;
-      stage_id?: number;
-      status?: string;
-      date_from?: string;
-      date_to?: string;
-      search?: string;
-    };
-  }
-) {
+export async function getScheduleMatches(options: SchedulePaginationOptions) {
   return await MatchService.getScheduleMatches(options);
 }
 
-export async function getScheduleMatchesByDate(
-  options: {
-    season_id?: number;
-    sport_id?: number;
-    sport_category_id?: number;
-    stage_id?: number;
-    status?: string;
-    date_from?: string;
-    date_to?: string;
-    search?: string;
-  }
-) {
+export async function getScheduleMatchesByDate(options: ScheduleFilters) {
   return await MatchService.getScheduleMatchesByDate(options);
 }

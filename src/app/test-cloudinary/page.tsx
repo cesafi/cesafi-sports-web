@@ -28,6 +28,7 @@ export interface TestResult {
     duration?: number;
 }
 
+// Temporarily disabled for testing
 export default function TestCloudinaryPage() {
     // State
     const cloudinary = useCloudinary();

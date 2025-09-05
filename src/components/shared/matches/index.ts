@@ -12,3 +12,9 @@ export { getMatchesTableColumns, getMatchesTableActions } from './matches-table-
 export { getMatchGamesTableColumns, getMatchGamesTableActions } from './match-games-table-columns';
 
 export { MatchesTable } from './matches-table';
+
+// Schedule components
+export { ScheduleMatchCard } from './schedule-match-card';
+export { ScheduleDateGroup } from './schedule-date-group';
+export { InfiniteSchedule } from './infinite-schedule';
+export { ScheduleFiltersComponent } from './schedule-filters';
