@@ -47,8 +47,18 @@ export default function HeadWriterArticlesPage() {
     }
   };
 
+  const handlePreviewArticle = (article: Article) => {
+    // Open private preview in a new tab
+    window.open(`/preview/articles/${article.id}`, '_blank');
+  };
+
+  const handleViewArticle = (article: Article) => {
+    // Open published article in a new tab
+    window.open(`/articles/${article.slug}`, '_blank');
+  };
+
   const columns = getArticlesTableColumns();
-  const actions = getArticlesTableActions(handleDeleteArticle, 'head-writer');
+  const actions = getArticlesTableActions(handleDeleteArticle, 'head-writer', handlePreviewArticle, handleViewArticle);
 
   return (
     <div className="space-y-6 w-full">

@@ -1,8 +1,9 @@
 import { TableColumn } from '@/lib/types/table';
 import { Article } from '@/lib/types/articles';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatTableDate } from '@/lib/utils/date';
-import { Pencil, Trash2, Eye, User, FileText } from 'lucide-react';
+import { Pencil, Trash2, Eye, ExternalLink, User, FileText } from 'lucide-react';
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -129,38 +130,107 @@ export const getArticlesTableColumns = (): TableColumn<Article>[] => [
 export const getArticlesTableActions = (
   onDelete: (article: Article) => void,
   userRole: 'admin' | 'head-writer' | 'writer' = 'admin',
+  onPreview?: (article: Article) => void,
   onView?: (article: Article) => void
 ) => {
   const baseUrl = userRole === 'admin' ? '/admin' : userRole === 'head-writer' ? '/head-writer' : '/writer';
   
   return [
+    // Preview action for unpublished articles
+    ...(onPreview ? [{
+      key: 'preview',
+      label: 'Preview Article',
+      icon: (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Eye className="h-4 w-4" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Preview unpublished article privately</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
+      onClick: onPreview,
+      variant: 'ghost' as const,
+      size: 'sm' as const,
+      disabled: (article: Article) => article.status === 'published'
+    }] : []),
+    // View action for published articles
     ...(onView ? [{
       key: 'view',
       label: 'View Article',
-      icon: <Eye className="h-4 w-4" />,
+      icon: (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ExternalLink className="h-4 w-4" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>View published article publicly</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
       onClick: onView,
       variant: 'ghost' as const,
-      size: 'sm' as const
+      size: 'sm' as const,
+      disabled: (article: Article) => article.status !== 'published'
     }] : []),
+    // Edit action - conditional based on role and status
     {
       key: 'edit',
       label: 'Edit Article',
-      icon: <Pencil className="h-4 w-4" />,
+      icon: (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Pencil className="h-4 w-4" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {userRole === 'writer' 
+                  ? 'Edit draft or revision articles' 
+                  : 'Edit article content and settings'
+                }
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
       onClick: (article: Article) => {
-        // For writers, only allow editing articles with 'revise' status
-        if (userRole === 'writer' && article.status !== 'revise') {
+        // For writers, only allow editing articles with 'revise' or 'draft' status
+        if (userRole === 'writer' && !['revise', 'draft'].includes(article.status)) {
           return;
         }
         window.location.href = `${baseUrl}/articles/${article.id}`;
       },
       variant: 'ghost' as const,
       size: 'sm' as const,
-      disabled: (article: Article) => userRole === 'writer' && article.status !== 'revise'
+      disabled: (article: Article) => {
+        if (userRole === 'writer') {
+          return !['revise', 'draft'].includes(article.status);
+        }
+        return false;
+      }
     },
+    // Delete action - only for admin and head-writer
     ...(userRole !== 'writer' ? [{
       key: 'delete',
       label: 'Delete Article',
-      icon: <Trash2 className="h-4 w-4" />,
+      icon: (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Trash2 className="h-4 w-4" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Permanently delete this article</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ),
       onClick: onDelete,
       variant: 'ghost' as const,
       size: 'sm' as const

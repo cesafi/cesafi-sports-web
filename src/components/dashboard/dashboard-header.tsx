@@ -21,12 +21,14 @@ interface DashboardHeaderProps {
   userEmail?: string;
   userName?: string;
   userRole?: string;
+  userRoleDisplay?: string;
 }
 
 export default function DashboardHeader({
   userEmail = 'example@cesafi.org',
   userName = 'Admin',
-  userRole = 'Admin'
+  userRole = 'admin',
+  userRoleDisplay
 }: DashboardHeaderProps) {
   const router = useRouter();
   const logoutMutation = useLogout();
@@ -57,7 +59,7 @@ export default function DashboardHeader({
         <SmartBreadcrumbs 
           maxVisibleItems={5}
           showHomeIcon={true}
-          customHomeLabel="Admin Dashboard"
+          userRole={userRole}
         />
       </div>
 
@@ -76,7 +78,7 @@ export default function DashboardHeader({
               </div>
               <div className="hidden flex-col items-start gap-1 md:flex">
                 <span className="text-sm leading-none font-medium">{userName}</span>
-                <span className="text-muted-foreground text-xs leading-none">{userRole}</span>
+                <span className="text-muted-foreground text-xs leading-none">{userRoleDisplay || userRole}</span>
               </div>
               <ChevronDown className="text-muted-foreground h-4 w-4" />
             </Button>
@@ -90,7 +92,7 @@ export default function DashboardHeader({
               </div>
               <div className="flex flex-col space-y-2">
                 <p className="text-sm leading-none font-medium">{userName}</p>
-                <p className="text-muted-foreground text-xs leading-none">{userRole}</p>
+                <p className="text-muted-foreground text-xs leading-none">{userRoleDisplay || userRole}</p>
                 <p className="text-muted-foreground text-xs leading-none">{userEmail}</p>
               </div>
             </div>

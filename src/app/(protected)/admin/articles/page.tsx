@@ -53,8 +53,18 @@ export default function ArticlesManagementPage() {
     }
   };
 
+  const handlePreviewArticle = (article: Article) => {
+    // Open private preview in a new tab
+    window.open(`/preview/articles/${article.id}`, '_blank');
+  };
+
+  const handleViewArticle = (article: Article) => {
+    // Open published article in a new tab
+    window.open(`/articles/${article.slug}`, '_blank');
+  };
+
   const columns = getArticlesTableColumns();
-  const actions = getArticlesTableActions(handleDeleteArticle, 'admin');
+  const actions = getArticlesTableActions(handleDeleteArticle, 'admin', handlePreviewArticle, handleViewArticle);
 
   return (
     <div className="space-y-6 w-full">

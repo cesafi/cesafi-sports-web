@@ -25,10 +25,8 @@ export default function WriterArticlesPage() {
     onFiltersChange
   } = useArticlesTable();
 
-  // Filter articles for writers - they can only edit articles with 'revise' status
-  const filteredArticles = useMemo(() => {
-    return articles.filter(article => article.status === 'revise');
-  }, [articles]);
+  // Show all articles for writers, but with different actions based on status
+  const filteredArticles = articles;
 
   const handleDeleteArticle = () => {
     // Writers cannot delete articles
@@ -40,17 +38,27 @@ export default function WriterArticlesPage() {
     return;
   };
 
+  const handlePreviewArticle = (article: Article) => {
+    // Open private preview in a new tab
+    window.open(`/preview/articles/${article.id}`, '_blank');
+  };
+
+  const handleViewArticle = (article: Article) => {
+    // Open published article in a new tab
+    window.open(`/articles/${article.slug}`, '_blank');
+  };
+
   const columns = getArticlesTableColumns();
-  const actions = getArticlesTableActions(handleDeleteArticle, 'writer');
+  const actions = getArticlesTableActions(handleDeleteArticle, 'writer', handlePreviewArticle, handleViewArticle);
 
   return (
     <div className="space-y-6 w-full">
       {/* Writer-specific info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
         <div className="flex items-center space-x-2">
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200">Writer Access</Badge>
-          <p className="text-sm text-blue-800">
-            You can create new articles and edit articles that need revision. Only articles with &quot;Revise&quot; status are shown below.
+          <Badge className="bg-teal-100 text-teal-800 border-teal-200">Writer Access</Badge>
+          <p className="text-sm text-teal-800">
+            You can create new articles, preview all your articles, and edit articles that need revision.
           </p>
         </div>
       </div>
@@ -73,7 +81,7 @@ export default function WriterArticlesPage() {
         onSearchChange={onSearchChange}
         onFiltersChange={onFiltersChange}
         title="My Articles"
-        subtitle="Create new articles and edit articles that need revision."
+        subtitle="View all your articles, preview published ones, and edit articles that need revision."
         searchPlaceholder="Search your articles..."
         showSearch={true}
         showFilters={false}
@@ -84,7 +92,7 @@ export default function WriterArticlesPage() {
           }
         }}
         className=""
-        emptyMessage="No articles need revision. Create a new article to get started!"
+        emptyMessage="No articles found. Create a new article to get started!"
       />
 
       {/* Confirmation Modal - Writers can't delete, so this won't be used */}
