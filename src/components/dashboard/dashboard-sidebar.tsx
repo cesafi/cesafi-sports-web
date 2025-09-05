@@ -33,7 +33,11 @@ interface DashboardSidebarProps {
 
 export default function DashboardSidebar({ userRole = 'admin' }: DashboardSidebarProps) {
   const pathname = usePathname();
-  const { currentSeason } = useSeason();
+  
+  // Only use season context for roles that need it (admin, league_operator)
+  const needsSeasonContext = userRole === 'admin' || userRole === 'league_operator';
+  const seasonContext = needsSeasonContext ? useSeason() : null;
+  const currentSeason = seasonContext?.currentSeason;
 
   const getGeneralNavigationItems = (role: string): NavigationItem[] => {
     const baseItems: NavigationItem[] = [{ href: '/admin', label: 'Overview', icon: Grid3X3 }];
@@ -95,7 +99,7 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
             className="rounded-lg"
           />
         </div>
-        <SeasonSwitcher />
+        {needsSeasonContext && <SeasonSwitcher />}
       </div>
 
       {/* Navigation */}
@@ -132,37 +136,39 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
           </div>
         </div>
 
-        {/* Seasonal Category */}
-        <div className="space-y-2">
-          <h3 className="text-sidebar-foreground/70 text-xs font-semibold tracking-wider uppercase">
-            {currentSeason ? `Season ${currentSeason.id}` : 'Season'}
-          </h3>
-          <div className="space-y-1">
-            {seasonalItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground border-sidebar-primary border-l-4'
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                  )}
-                >
-                  <item.icon
+        {/* Seasonal Category - Only show for roles that need season context */}
+        {needsSeasonContext && (
+          <div className="space-y-2">
+            <h3 className="text-sidebar-foreground/70 text-xs font-semibold tracking-wider uppercase">
+              {currentSeason ? `Season ${currentSeason.id}` : 'Season'}
+            </h3>
+            <div className="space-y-1">
+              {seasonalItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
                     className={cn(
-                      'h-5 w-5',
-                      isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground'
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground border-sidebar-primary border-l-4'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                     )}
-                  />
-                  {item.label}
-                </Link>
-              );
-            })}
+                  >
+                    <item.icon
+                      className={cn(
+                        'h-5 w-5',
+                        isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground'
+                      )}
+                    />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </nav>
 
       {/* Footer */}
