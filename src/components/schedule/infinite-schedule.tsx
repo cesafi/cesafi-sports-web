@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { ScheduleDateGroup, groupMatchesByDate } from './utils';
 import DateGroup from './date-group';
@@ -38,7 +38,6 @@ export default function InfiniteSchedule({
     'Swimming'
   ]
 }: InfiniteScheduleProps) {
-  const [dateGroups, setDateGroups] = useState<ScheduleDateGroup[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [displayedDate, setDisplayedDate] = useState(new Date()); // Date shown on left side
   const [showFloatingButton, setShowFloatingButton] = useState(false);
@@ -49,80 +48,88 @@ export default function InfiniteSchedule({
   const bottomLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Filter matches by sport
-  const filteredMatches = matches.filter(match => {
-    if (selectedSport === 'all') return true;
-    return match.sports_seasons_stages.sports_categories.sports.name === selectedSport;
-  });
+  const filteredMatches = useMemo(() => {
+    return matches.filter((match) => {
+      if (selectedSport === 'all') return true;
+      return match.sports_seasons_stages.sports_categories.sports.name === selectedSport;
+    });
+  }, [matches, selectedSport]);
 
   // Group filtered matches by date
-  useEffect(() => {
-    const grouped = groupMatchesByDate(filteredMatches);
-    setDateGroups(grouped);
+  const dateGroups = useMemo(() => {
+    return groupMatchesByDate(filteredMatches);
   }, [filteredMatches]);
 
   // Handle scroll detection for floating button and displayed date
-  useEffect(() => {
-    const handleScroll = () => {
-      const today = new Date();
-      const todayString = today.toISOString().split('T')[0];
-      const todayGroup = dateGroups.find((group) => group.date === todayString);
+  const handleScroll = useCallback(() => {
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    const todayGroup = dateGroups.find((group) => group.date === todayString);
 
-      // Find the currently visible date group
-      let visibleDateGroup: ScheduleDateGroup | null = null;
-      let minDistance = Infinity;
+    // Find the currently visible date group
+    let visibleDateGroup: ScheduleDateGroup | null = null;
+    let minDistance = Infinity;
 
-      for (const group of dateGroups) {
-        const element = document.getElementById(`date-group-${group.date}`);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const distanceFromTop = Math.abs(rect.top);
-          
-          // If the element is visible in the viewport
-          if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
-            if (distanceFromTop < minDistance) {
-              minDistance = distanceFromTop;
-              visibleDateGroup = group;
-            }
+    for (const group of dateGroups) {
+      const element = document.getElementById(`date-group-${group.date}`);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        const distanceFromTop = Math.abs(rect.top);
+
+        // If the element is visible in the viewport
+        if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+          if (distanceFromTop < minDistance) {
+            minDistance = distanceFromTop;
+            visibleDateGroup = group;
           }
         }
       }
+    }
 
-      // Update displayed date if we found a visible group
-      if (visibleDateGroup) {
-        setDisplayedDate(new Date(visibleDateGroup.date));
-      }
-
-      // Floating button logic
-      if (!todayGroup) {
-        setShowFloatingButton(false);
-        return;
-      }
-
-      const todayElement = document.getElementById(`date-group-${todayString}`);
-      if (!todayElement) {
-        setShowFloatingButton(false);
-        return;
-      }
-
-      const rect = todayElement.getBoundingClientRect();
-      const isTodayVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-
-      if (!isTodayVisible) {
-        setShowFloatingButton(true);
-        // Determine direction based on scroll position
-        if (rect.top < 0) {
-          setFloatingButtonDirection('up'); // We're below today, need to go up
-        } else {
-          setFloatingButtonDirection('down'); // We're above today, need to go down
+    // Update displayed date if we found a visible group
+    if (visibleDateGroup) {
+      const newDisplayedDate = new Date(visibleDateGroup.date);
+      setDisplayedDate(prevDate => {
+        // Only update if the date is actually different
+        if (prevDate.toISOString().split('T')[0] !== newDisplayedDate.toISOString().split('T')[0]) {
+          return newDisplayedDate;
         }
-      } else {
-        setShowFloatingButton(false);
-      }
-    };
+        return prevDate;
+      });
+    }
 
+    // Floating button logic
+    if (!todayGroup) {
+      setShowFloatingButton(false);
+      return;
+    }
+
+    const todayElement = document.getElementById(`date-group-${todayString}`);
+    if (!todayElement) {
+      setShowFloatingButton(false);
+      return;
+    }
+
+    const rect = todayElement.getBoundingClientRect();
+    const isTodayVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+
+    if (!isTodayVisible) {
+      setShowFloatingButton(true);
+      // Determine direction based on scroll position
+      if (rect.top < 0) {
+        setFloatingButtonDirection('up'); // We're below today, need to go up
+      } else {
+        setFloatingButtonDirection('down'); // We're above today, need to go down
+      }
+    } else {
+      setShowFloatingButton(false);
+    }
+  }, [dateGroups]);
+
+  useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [dateGroups]);
+  }, [handleScroll]);
 
   // Set up intersection observers for infinite scroll
   useEffect(() => {
