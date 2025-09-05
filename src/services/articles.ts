@@ -96,7 +96,7 @@ export class ArticleService extends BaseService {
     }
   }
 
-  static async insert(data: ArticleInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(data: ArticleInsert): Promise<ServiceResponse<Article>> {
     try {
       const supabase = await this.getClient();
 
@@ -107,16 +107,20 @@ export class ArticleService extends BaseService {
       }
 
       if (insertData.status !== 'published') {
-        insertData.published_at = '';
+        insertData.published_at = null;
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(insertData);
+      const { data: insertedData, error } = await supabase
+        .from(TABLE_NAME)
+        .insert(insertData as any)
+        .select()
+        .single();
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      return { success: true, data: insertedData };
     } catch (err) {
       return this.formatError(err, `Failed to insert new ${TABLE_NAME} entity.`);
     }
@@ -140,10 +144,10 @@ export class ArticleService extends BaseService {
 
       // If article is being unpublished, clear published_at
       if (updateData.status !== 'published') {
-        updateData.published_at = '';
+        updateData.published_at = null;
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(updateData).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update(updateData as any).eq('id', data.id);
 
       if (error) {
         throw error;
@@ -171,6 +175,28 @@ export class ArticleService extends BaseService {
       return { success: true, data: undefined };
     } catch (err) {
       return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async getScheduledForPublishing(): Promise<ServiceResponse<Article[]>> {
+    try {
+      const supabase = await this.getClient();
+      const now = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select()
+        .eq('status', 'approved')
+        .not('published_at', 'is', null)
+        .lte('published_at', now);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch articles scheduled for publishing.`);
     }
   }
 }

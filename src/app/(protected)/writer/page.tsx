@@ -151,19 +151,19 @@ export default function WriterOverviewPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-sm">
                   <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
-                  <span>Article "CESAFI Opening Day" needs revision</span>
+                  <span>Article &quot;CESAFI Opening Day&quot; needs revision</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                  <span>Article "Underdogs Shine" published</span>
+                  <span>Article &quot;Underdogs Shine&quot; published</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                  <span>New article "Team Rivalries" submitted</span>
+                  <span>New article &quot;Team Rivalries&quot; submitted</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <div className="h-2 w-2 rounded-full bg-orange-500"></div>
-                  <span>Article "Championship Preview" under review</span>
+                  <span>Article &quot;Championship Preview&quot; under review</span>
                 </div>
               </div>
             </CardContent>

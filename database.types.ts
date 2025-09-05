@@ -21,7 +21,8 @@ export type Database = {
           cover_image_url: string
           created_at: string
           id: string
-          published_at: string
+          published_at: string | null
+          slug: string
           status: Database["public"]["Enums"]["article_status"]
           title: string
           updated_at: string
@@ -32,7 +33,8 @@ export type Database = {
           cover_image_url: string
           created_at?: string
           id?: string
-          published_at: string
+          published_at?: string | null
+          slug: string
           status?: Database["public"]["Enums"]["article_status"]
           title: string
           updated_at?: string
@@ -43,7 +45,8 @@ export type Database = {
           cover_image_url?: string
           created_at?: string
           id?: string
-          published_at?: string
+          published_at?: string | null
+          slug?: string
           status?: Database["public"]["Enums"]["article_status"]
           title?: string
           updated_at?: string
@@ -521,6 +524,7 @@ export type Database = {
         | "revise"
         | "cancelled"
         | "approved"
+        | "draft"
       competition_stage: "group_stage" | "playins" | "playoffs" | "finals"
       match_status: "upcoming" | "ongoing" | "finished" | "cancelled"
       sport_divisions: "men" | "women" | "mixed"
@@ -659,6 +663,7 @@ export const Constants = {
         "revise",
         "cancelled",
         "approved",
+        "draft",
       ],
       competition_stage: ["group_stage", "playins", "playoffs", "finals"],
       match_status: ["upcoming", "ongoing", "finished", "cancelled"],
