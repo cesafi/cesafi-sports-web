@@ -173,7 +173,16 @@ export default function InfiniteSchedule({
     if (todayGroup) {
       const element = document.getElementById(`date-group-${todayString}`);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Calculate offset to center the element in the viewport
+        const elementRect = element.getBoundingClientRect();
+        const absoluteElementTop = elementRect.top + window.scrollY;
+        const offset = window.innerHeight / 2 - elementRect.height / 2;
+        const targetPosition = absoluteElementTop - offset;
+
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
       }
     }
 
@@ -207,7 +216,7 @@ export default function InfiniteSchedule({
 
       {/* All Matches - Infinite Scroll */}
       {dateGroups.length > 0 ? (
-        <div className="space-y-16">
+        <div className="space-y-12">
           {dateGroups.map((dateGroup) => (
             <div key={dateGroup.date} id={`date-group-${dateGroup.date}`}>
               <DateGroup dateGroup={dateGroup} onMatchClick={onMatchClick} />

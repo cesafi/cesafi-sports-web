@@ -127,7 +127,7 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
 
   return (
     <Card
-      className="border-border bg-card cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:shadow-md overflow-hidden"
+      className="border-border bg-card cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:shadow-lg hover:border-primary/20 overflow-hidden"
       onClick={() => onMatchClick?.(match)}
     >
       {/* Main Content */}
@@ -153,9 +153,9 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
         </div>
 
         {/* Teams and Scores */}
-        <div className="mb-4 grid grid-cols-3 items-center gap-4">
+        <div className="mb-4 grid grid-cols-3 items-center gap-2">
           {/* Team 1 */}
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-2">
             <div className="min-w-0 text-right">
               <div className="font-mango-grotesque text-foreground truncate text-lg font-semibold">
                 {team1.schoolAbbreviation}
@@ -189,11 +189,11 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
 
           {/* VS - Absolutely Centered */}
           <div className="flex justify-center">
-            <div className="text-muted-foreground font-roboto text-sm">vs</div>
+            <div className="text-muted-foreground font-mango-grotesque text-sm font-medium">vs</div>
           </div>
 
           {/* Team 2 */}
-          <div className="flex items-center justify-start gap-3">
+          <div className="flex items-center justify-start gap-2">
             <div
               className={`font-mango-grotesque text-3xl font-bold ${
                 team2.isWinner && match.status === 'finished' ? 'text-primary' : 'text-foreground'
@@ -229,7 +229,7 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
 
       {/* Match Details Footer */}
       <div className="bg-muted/50 px-6 py-4">
-        <div className="text-muted-foreground font-roboto flex items-center gap-6 text-base font-medium">
+        <div className="text-muted-foreground font-roboto flex items-center justify-between text-base font-medium">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
             <span>{match.displayTime}</span>

@@ -13,11 +13,11 @@ interface DateGroupProps {
 export default function DateGroup({ dateGroup, onMatchClick }: DateGroupProps) {
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8">
       {/* Date Group Container */}
-      <div className={`rounded-lg p-6 ${dateGroup.isToday ? 'bg-gradient-to-b from-primary/5 to-primary/10' : 'bg-muted/20'}`}>
+      <div className={`rounded-lg p-4 ${dateGroup.isToday ? 'bg-gradient-to-b from-primary/3 to-primary/8' : 'bg-muted/10'}`}>
         {/* Date Header */}
-        <div className="mb-6 flex items-center gap-3">
+        <div className="mb-4 flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Calendar className="text-muted-foreground h-5 w-5" />
             <h2 className="font-mango-grotesque text-foreground text-xl font-semibold">
@@ -30,7 +30,7 @@ export default function DateGroup({ dateGroup, onMatchClick }: DateGroupProps) {
         </div>
 
         {/* Matches */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {dateGroup.matches.map((match) => (
             <MatchCard key={match.id} match={match} onMatchClick={onMatchClick} />
           ))}
