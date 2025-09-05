@@ -153,9 +153,9 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
         </div>
 
         {/* Teams and Scores */}
-        <div className="mb-4 flex items-center justify-center">
+        <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
           {/* Team 1 */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2">
             <div className="min-w-0 text-right">
               <div className="font-mango-grotesque text-foreground truncate text-lg font-semibold">
                 {team1.schoolAbbreviation}
@@ -187,13 +187,13 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
             </div>
           </div>
 
-          {/* VS - Centered with tight spacing */}
-          <div className="mx-6">
+          {/* VS - Perfectly Centered */}
+          <div className="flex justify-center">
             <div className="text-muted-foreground font-mango-grotesque text-sm font-medium">vs</div>
           </div>
 
           {/* Team 2 */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-start gap-2">
             <div
               className={`font-mango-grotesque text-4xl font-bold ${
                 team2.isWinner && match.status === 'finished' ? 'text-primary' : 'text-foreground'
