@@ -1,3 +1,4 @@
+export { MatchesTable } from './matches-table';
 export { MatchInfoCard } from './match-info-card';
 export { MatchParticipantsCard } from './match-participants-card';
 export { MatchParticipantsTable } from './match-participants-table';

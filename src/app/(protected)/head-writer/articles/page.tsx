@@ -1,40 +1,102 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { ArticlesTable } from '@/components/shared/articles/articles-table';
+import { useState } from 'react';
+import { DataTable } from '@/components/table';
+import { useArticlesTable } from '@/hooks/use-articles';
+import { getArticlesTableColumns, getArticlesTableActions } from '@/components/admin/articles';
 import { Article } from '@/lib/types/articles';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 
 export default function HeadWriterArticlesPage() {
-  const router = useRouter();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [articleToDelete, setArticleToDelete] = useState<Article | undefined>();
 
-  const handleEditArticle = (article: Article) => {
-    router.push(`/head-writer/articles/${article.id}`);
+  const {
+    articles,
+    totalCount,
+    pageCount,
+    currentPage,
+    pageSize,
+    loading,
+    tableBodyLoading,
+    error,
+    deleteArticle,
+    isDeleting,
+    onPageChange,
+    onPageSizeChange,
+    onSortChange,
+    onSearchChange,
+    onFiltersChange
+  } = useArticlesTable();
+
+  const handleDeleteArticle = (article: Article) => {
+    setArticleToDelete(article);
+    setIsDeleteModalOpen(true);
   };
 
-  const handleViewArticle = (article: Article) => {
-    router.push(`/head-writer/articles/${article.id}`);
+  const confirmDeleteArticle = async () => {
+    if (!articleToDelete) return;
+
+    try {
+      deleteArticle(articleToDelete.id);
+      setIsDeleteModalOpen(false);
+      setArticleToDelete(undefined);
+    } catch {
+      setIsDeleteModalOpen(false);
+      setArticleToDelete(undefined);
+    }
   };
 
-  const handleCreateArticle = () => {
-    router.push('/head-writer/articles/new');
-  };
+  const columns = getArticlesTableColumns();
+  const actions = getArticlesTableActions(handleDeleteArticle, 'head-writer');
 
   return (
-    <ArticlesTable
-      title="My Articles"
-      subtitle="View and manage your article entries."
-      config={{
-        showAuthorId: false, // Head writers don't need to see author ID since they're viewing their own articles
-        showActions: true,
-        showViewAction: true, // Head writers can view articles
-        showEditAction: true, // Head writers can edit articles
-        showDeleteAction: false // Head writers cannot delete articles
-      }}
-      onEdit={handleEditArticle}
-      onView={handleViewArticle}
-      onCreate={handleCreateArticle}
-      showAddButton={true}
-      addButtonLabel="Create Article"
-    />
+    <div className="space-y-6">
+      {/* Data Table */}
+      <DataTable
+        data={articles}
+        totalCount={totalCount}
+        loading={loading}
+        tableBodyLoading={tableBodyLoading}
+        error={error}
+        columns={columns}
+        actions={actions}
+        currentPage={currentPage}
+        pageCount={pageCount}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        onSortChange={onSortChange}
+        onSearchChange={onSearchChange}
+        onFiltersChange={onFiltersChange}
+        title="Articles Management"
+        subtitle="Review and manage articles for publication."
+        searchPlaceholder="Search articles by title, content, or status..."
+        showSearch={true}
+        showFilters={false}
+        addButton={{
+          label: 'Create Article',
+          onClick: () => {
+            window.location.href = '/head-writer/articles/new';
+          }
+        }}
+        className=""
+        emptyMessage="No articles found"
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteArticle}
+        type="delete"
+        title="Delete Article"
+        message={`Are you sure you want to delete "${articleToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        destructive={true}
+        isLoading={isDeleting}
+      />
+    </div>
   );
 }

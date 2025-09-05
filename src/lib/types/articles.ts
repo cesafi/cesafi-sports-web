@@ -1,4 +1,4 @@
-import { Database } from '../../../database.types';
+import { Database, Json } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
 
 export type Article = Database['public']['Tables']['articles']['Row'];
@@ -6,6 +6,9 @@ export type ArticleInsert = Database['public']['Tables']['articles']['Insert'];
 export type ArticleUpdate = Database['public']['Tables']['articles']['Update'];
 
 export type ArticleStatus = Database['public']['Enums']['article_status'];
+
+// Re-export Json type for convenience
+export type { Json };
 
 export interface ArticleSearchFilters {
   title?: string;

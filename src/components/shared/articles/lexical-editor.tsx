@@ -1,0 +1,823 @@
+'use client';
+
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
+import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
+import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
+import { ListPlugin } from '@lexical/react/LexicalListPlugin';
+import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
+import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
+import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { HeadingNode, QuoteNode } from '@lexical/rich-text';
+import { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
+import { ListItemNode, ListNode } from '@lexical/list';
+import { CodeHighlightNode, CodeNode } from '@lexical/code';
+import { AutoLinkNode, LinkNode } from '@lexical/link';
+import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
+import { $getRoot, $getSelection, $createTextNode, DecoratorNode, NodeKey, SerializedEditorState, SerializedLexicalNode, FORMAT_ELEMENT_COMMAND } from 'lexical';
+import { $setBlocksType } from '@lexical/selection';
+import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
+import { $createParagraphNode } from 'lexical';
+import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND, REMOVE_LIST_COMMAND } from '@lexical/list';
+// import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontalRulePlugin';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Code,
+  Link,
+  List,
+  ListOrdered,
+  Heading1,
+  Heading2,
+  Heading3,
+  Quote,
+  Minus,
+  Image as ImageIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify
+} from 'lucide-react';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { $isRangeSelection, FORMAT_TEXT_COMMAND, TextFormatType } from 'lexical';
+import { $isListNode } from '@lexical/list';
+import { $isHeadingNode } from '@lexical/rich-text';
+import { $isQuoteNode } from '@lexical/rich-text';
+import { toast } from 'sonner';
+import Image from 'next/image';
+import { Json } from '@/lib/types/articles';
+import { useAutoSave } from '@/hooks/use-articles';
+
+// Interface for ImageNode JSON structure
+interface ImageNodeJSON {
+  src: string;
+  alt: string;
+  type: 'image';
+  version: 1;
+}
+
+// Type for Lexical editor state
+type LexicalEditorState = SerializedEditorState<SerializedLexicalNode>;
+
+// Custom Image Node for Lexical
+class ImageNode extends DecoratorNode<React.JSX.Element> {
+  __src: string;
+  __alt: string;
+
+  static getType(): string {
+    return 'image';
+  }
+
+  static clone(node: ImageNode): ImageNode {
+    return new ImageNode(node.__src, node.__alt, node.__key);
+  }
+
+  constructor(src: string, alt: string = '', key?: NodeKey) {
+    super(key);
+    this.__src = src;
+    this.__alt = alt;
+  }
+
+  createDOM(): HTMLElement {
+    const div = document.createElement('div');
+    div.style.display = 'inline-block';
+    div.style.maxWidth = '100%';
+    return div;
+  }
+
+  updateDOM(): false {
+    return false;
+  }
+
+  decorate(): React.JSX.Element {
+    return (
+      <div className="my-4">
+        <Image
+          src={this.__src}
+          alt={this.__alt}
+          width={800}
+          height={600}
+          style={{
+            maxWidth: '100%',
+            height: 'auto',
+            borderRadius: '8px',
+          }}
+          className="rounded-lg shadow-sm"
+        />
+      </div>
+    );
+  }
+
+  getSrc(): string {
+    return this.__src;
+  }
+
+  getAlt(): string {
+    return this.__alt;
+  }
+
+  setSrc(src: string): void {
+    const writable = this.getWritable();
+    writable.__src = src;
+  }
+
+  setAlt(alt: string): void {
+    const writable = this.getWritable();
+    writable.__alt = alt;
+  }
+
+  exportJSON(): ImageNodeJSON {
+    return {
+      src: this.__src,
+      alt: this.__alt,
+      type: 'image',
+      version: 1,
+    };
+  }
+
+  static importJSON(json: ImageNodeJSON): ImageNode {
+    return new ImageNode(json.src, json.alt);
+  }
+}
+
+function $createImageNode(src: string, alt: string = ''): ImageNode {
+  return new ImageNode(src, alt);
+}
+
+// Toolbar component
+function ToolbarPlugin({
+  enableAutoSave,
+  articleId,
+  autoSave
+}: {
+  enableAutoSave?: boolean;
+  articleId?: string;
+  autoSave?: {
+    isSaving: boolean;
+    lastSaved: Date | null;
+    hasUnsavedChanges: boolean;
+    saveNow: () => void;
+    clearDraft: () => void;
+  };
+}) {
+  const [editor] = useLexicalComposerContext();
+  const [isBold, setIsBold] = useState(false);
+  const [isItalic, setIsItalic] = useState(false);
+  const [isUnderline, setIsUnderline] = useState(false);
+  const [isStrikethrough, setIsStrikethrough] = useState(false);
+  const [isCode, setIsCode] = useState(false);
+  const [blockType, setBlockType] = useState('paragraph');
+  const [isAlignLeft, setIsAlignLeft] = useState(false);
+  const [isAlignCenter, setIsAlignCenter] = useState(false);
+  const [isAlignRight, setIsAlignRight] = useState(false);
+  const [isAlignJustify, setIsAlignJustify] = useState(false);
+  const [wordCount, setWordCount] = useState(0);
+
+  const updateToolbar = useCallback(() => {
+    const selection = $getSelection();
+    if ($isRangeSelection(selection)) {
+      // Update text format
+      setIsBold(selection.hasFormat('bold'));
+      setIsItalic(selection.hasFormat('italic'));
+      setIsUnderline(selection.hasFormat('underline'));
+      setIsStrikethrough(selection.hasFormat('strikethrough'));
+      setIsCode(selection.hasFormat('code'));
+
+      // Update block type
+      const anchorNode = selection.anchor.getNode();
+      const element = anchorNode.getKey() === 'root' ? anchorNode : anchorNode.getTopLevelElementOrThrow();
+      const elementKey = element.getKey();
+      const elementDOM = editor.getElementByKey(elementKey);
+
+      if (elementDOM !== null) {
+        if ($isListNode(element)) {
+          const parentList = element.getParent();
+          const type = parentList && $isListNode(parentList) ? parentList.getListType() : element.getListType();
+          setBlockType(type);
+        } else {
+          const type = $isHeadingNode(element) ? element.getTag() : $isQuoteNode(element) ? 'quote' : element.getType();
+          setBlockType(type);
+        }
+
+        // Update alignment state
+        const computedStyle = window.getComputedStyle(elementDOM);
+        const textAlign = computedStyle.textAlign;
+        setIsAlignLeft(textAlign === 'left');
+        setIsAlignCenter(textAlign === 'center');
+        setIsAlignRight(textAlign === 'right');
+        setIsAlignJustify(textAlign === 'justify');
+      }
+
+      // Update word count
+      const root = $getRoot();
+      const textContent = root.getTextContent();
+      const words = textContent.trim().split(/\s+/).filter(word => word.length > 0);
+      setWordCount(words.length);
+    }
+  }, [editor]);
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        updateToolbar();
+      });
+    });
+  }, [editor, updateToolbar]);
+
+  const formatText = (format: TextFormatType) => {
+    editor.dispatchCommand(FORMAT_TEXT_COMMAND, format);
+  };
+
+  const formatParagraph = () => {
+    if (blockType !== 'paragraph') {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          $setBlocksType(selection, () => $createParagraphNode());
+        }
+      });
+    }
+  };
+
+  const formatHeading = (headingSize: 'h1' | 'h2' | 'h3') => {
+    if (blockType !== headingSize) {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          $setBlocksType(selection, () => $createHeadingNode(headingSize));
+        }
+      });
+    }
+  };
+
+  const formatQuote = () => {
+    if (blockType !== 'quote') {
+      editor.update(() => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          $setBlocksType(selection, () => $createQuoteNode());
+        }
+      });
+    }
+  };
+
+  const insertList = (listType: 'bullet' | 'number') => {
+    if (blockType !== listType) {
+      editor.dispatchCommand(
+        listType === 'bullet' ? INSERT_UNORDERED_LIST_COMMAND : INSERT_ORDERED_LIST_COMMAND,
+        undefined
+      );
+    } else {
+      editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
+    }
+  };
+
+  const insertHorizontalRule = () => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        // Insert horizontal rule at current cursor position
+        const textNode = $createTextNode('---');
+        selection.insertNodes([textNode]);
+      }
+    });
+  };
+
+  const formatAlignment = (alignment: 'left' | 'center' | 'right' | 'justify') => {
+    editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, alignment);
+  };
+
+  const clearFormatting = () => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        selection.formatText('bold', 0);
+        selection.formatText('italic', 0);
+        selection.formatText('underline', 0);
+        selection.formatText('strikethrough', 0);
+        selection.formatText('code', 0);
+      }
+    });
+  };
+
+  const insertImage = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        try {
+          // Create local file URL
+          const imageUrl = URL.createObjectURL(file);
+
+          editor.update(() => {
+            const selection = $getSelection();
+            if ($isRangeSelection(selection)) {
+              // Insert image at current cursor position using custom ImageNode
+              const imageNode = $createImageNode(imageUrl, 'Uploaded image');
+              selection.insertNodes([imageNode]);
+            }
+          });
+
+          toast.success('Image inserted successfully');
+        } catch (error) {
+          console.error('Error inserting image:', error);
+          toast.error('Failed to insert image');
+        }
+      }
+    };
+    input.click();
+  };
+
+  return (
+    <div className="border-b border-gray-200 p-2 flex flex-wrap gap-1">
+      {/* Text Formatting */}
+      <div className="flex gap-1">
+        <Button
+          type="button"
+          variant={isBold ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatText('bold')}
+          className="h-8 w-8 p-0"
+        >
+          <Bold className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={isItalic ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatText('italic')}
+          className="h-8 w-8 p-0"
+        >
+          <Italic className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={isUnderline ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatText('underline')}
+          className="h-8 w-8 p-0"
+        >
+          <Underline className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={isStrikethrough ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatText('strikethrough')}
+          className="h-8 w-8 p-0"
+        >
+          <Strikethrough className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={isCode ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatText('code')}
+          className="h-8 w-8 p-0"
+        >
+          <Code className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={clearFormatting}
+          className="h-8 w-8 p-0"
+          title="Clear formatting"
+        >
+          <span className="text-xs font-bold">Aa</span>
+        </Button>
+      </div>
+
+      <Separator orientation="vertical" className="h-8" />
+
+      {/* Block Types */}
+      <div className="flex gap-1">
+        <Button
+          type="button"
+          variant={blockType === 'paragraph' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={formatParagraph}
+          className="h-8 px-2"
+        >
+          P
+        </Button>
+        <Button
+          type="button"
+          variant={blockType === 'h1' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatHeading('h1')}
+          className="h-8 px-2"
+        >
+          <Heading1 className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={blockType === 'h2' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatHeading('h2')}
+          className="h-8 px-2"
+        >
+          <Heading2 className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={blockType === 'h3' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatHeading('h3')}
+          className="h-8 px-2"
+        >
+          <Heading3 className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={blockType === 'quote' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={formatQuote}
+          className="h-8 w-8 p-0"
+        >
+          <Quote className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Separator orientation="vertical" className="h-8" />
+
+      {/* Lists */}
+      <div className="flex gap-1">
+        <Button
+          type="button"
+          variant={blockType === 'bullet' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => insertList('bullet')}
+          className="h-8 w-8 p-0"
+        >
+          <List className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={blockType === 'number' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => insertList('number')}
+          className="h-8 w-8 p-0"
+        >
+          <ListOrdered className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Separator orientation="vertical" className="h-8" />
+
+      {/* Text Alignment */}
+      <div className="flex gap-1">
+        <Button
+          type="button"
+          variant={isAlignLeft ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatAlignment('left')}
+          className="h-8 w-8 p-0"
+        >
+          <AlignLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={isAlignCenter ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatAlignment('center')}
+          className="h-8 w-8 p-0"
+        >
+          <AlignCenter className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={isAlignRight ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatAlignment('right')}
+          className="h-8 w-8 p-0"
+        >
+          <AlignRight className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={isAlignJustify ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => formatAlignment('justify')}
+          className="h-8 w-8 p-0"
+        >
+          <AlignJustify className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Separator orientation="vertical" className="h-8" />
+
+      {/* Insert */}
+      <div className="flex gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={insertImage}
+          className="h-8 w-8 p-0"
+        >
+          <ImageIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={insertHorizontalRule}
+          className="h-8 w-8 p-0"
+        >
+          <Minus className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Separator orientation="vertical" className="h-8" />
+
+      {/* Word Count */}
+      <div className="flex items-center px-2 text-sm text-gray-600">
+        <span>{wordCount} words</span>
+      </div>
+
+      {/* Auto-save Status */}
+      {enableAutoSave && articleId && (
+        <>
+          <Separator orientation="vertical" className="h-8" />
+          <div className="flex items-center px-2 text-sm">
+            {autoSave?.isSaving ? (
+              <span className="text-blue-600 flex items-center gap-1">
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                Saving...
+              </span>
+            ) : autoSave?.lastSaved ? (
+              <span className="text-green-600">
+                Saved {autoSave.lastSaved.toLocaleTimeString()}
+              </span>
+            ) : autoSave?.hasUnsavedChanges ? (
+              <span className="text-orange-600">
+                Unsaved changes
+              </span>
+            ) : (
+              <span className="text-gray-500">
+                All changes saved
+              </span>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Placeholder component
+function Placeholder() {
+  return (
+    <div className="absolute top-4 left-4 text-gray-400 pointer-events-none">
+      Start writing your article...
+    </div>
+  );
+}
+
+// Main editor component
+interface LexicalEditorProps {
+  initialContent?: string | Json;
+  onChange?: (content: string | Json) => void;
+  placeholder?: string;
+  className?: string;
+  outputFormat?: 'html' | 'json';
+  articleId?: string; // For auto-save functionality
+  enableAutoSave?: boolean; // Enable/disable auto-save
+}
+
+export function LexicalEditor({
+  initialContent,
+  onChange,
+  placeholder,
+  className = "",
+  outputFormat = 'html',
+  articleId,
+  enableAutoSave = false,
+}: LexicalEditorProps) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [content, setContent] = useState<string | Json>('');
+
+  // Auto-save functionality (only for existing articles)
+  const autoSave = useAutoSave(
+    articleId || '',
+    typeof content === 'string' ? content : JSON.stringify(content),
+    30000 // 30 seconds delay
+  );
+
+  const initialConfig = {
+    namespace: 'ArticleEditor',
+    theme: {
+      root: 'p-4 min-h-[400px] focus:outline-none',
+      paragraph: 'mb-2',
+      heading: {
+        h1: 'text-3xl font-bold mb-4',
+        h2: 'text-2xl font-bold mb-3',
+        h3: 'text-xl font-bold mb-2',
+      },
+      quote: 'border-l-4 border-gray-300 pl-4 italic my-4',
+      list: {
+        nested: {
+          listitem: 'list-none',
+        },
+        ol: 'list-decimal list-inside mb-2',
+        ul: 'list-disc list-inside mb-2',
+        listitem: 'mb-1',
+      },
+      link: 'text-blue-600 underline',
+      text: {
+        bold: 'font-bold',
+        italic: 'italic',
+        underline: 'underline',
+        strikethrough: 'line-through',
+        code: 'bg-secondary px-1 py-0.5 rounded text-sm font-mono',
+      },
+    },
+    nodes: [
+      HeadingNode,
+      ListNode,
+      ListItemNode,
+      QuoteNode,
+      CodeNode,
+      CodeHighlightNode,
+      TableNode,
+      TableCellNode,
+      TableRowNode,
+      AutoLinkNode,
+      LinkNode,
+      HorizontalRuleNode,
+      ImageNode,
+    ],
+    onError: (error: Error) => {
+      // Suppress selection errors that are common in Lexical
+      if (error.message.includes('setBaseAndExtent') ||
+        error.message.includes('IndexSizeError') ||
+        error.message.includes('There is no child at offset')) {
+        console.warn('Lexical selection error (suppressed):', error.message);
+        return;
+      }
+      console.error('Lexical error:', error);
+    },
+  };
+
+
+  return (
+    <div className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
+      <LexicalComposer initialConfig={initialConfig}>
+        <div className="relative">
+          <ToolbarPlugin
+            enableAutoSave={enableAutoSave}
+            articleId={articleId}
+            autoSave={autoSave}
+          />
+          <div className="relative">
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable
+                  ref={editorRef}
+                  className="min-h-[400px] p-4 focus:outline-none"
+                />
+              }
+              placeholder={<Placeholder />}
+              ErrorBoundary={LexicalErrorBoundary}
+            />
+            <HistoryPlugin />
+            <AutoFocusPlugin />
+            <LinkPlugin />
+            <ListPlugin />
+            <HorizontalRulePlugin />
+            <MarkdownShortcutPlugin />
+            <TabIndentationPlugin />
+            <OnChangePlugin
+              onChange={(newContent) => {
+                setContent(newContent);
+                onChange?.(newContent);
+              }}
+              outputFormat={outputFormat}
+            />
+            <InitialContentPlugin initialContent={initialContent} />
+            <ImagePlugin />
+          </div>
+        </div>
+      </LexicalComposer>
+    </div>
+  );
+}
+
+// Plugin to handle content changes
+function OnChangePlugin({
+  onChange,
+  outputFormat = 'html'
+}: {
+  onChange: (content: string | Json) => void;
+  outputFormat?: 'html' | 'json';
+}) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        if (outputFormat === 'json') {
+          // Output Lexical's native JSON format
+          const editorStateJSON = editorState.toJSON();
+          const jsonString = JSON.stringify(editorStateJSON);
+          onChange(jsonString);
+        } else {
+          // Output HTML format (default)
+          const htmlString = $generateHtmlFromNodes(editor, null);
+          onChange(htmlString);
+        }
+      });
+    });
+  }, [editor, onChange, outputFormat]);
+
+  return null;
+}
+
+// Plugin to handle custom image nodes
+function ImagePlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerNodeTransform(ImageNode, () => {
+      // Handle any image node transformations if needed
+    });
+  }, [editor]);
+
+  return null;
+}
+
+// Plugin to set initial content
+function InitialContentPlugin({ initialContent }: { initialContent?: string | Json }) {
+  const [editor] = useLexicalComposerContext();
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  useEffect(() => {
+    if (initialContent && !hasInitialized) {
+      editor.update(() => {
+        try {
+          // Try to parse as JSON first (Lexical's native format)
+          if (typeof initialContent === 'string') {
+            const parsed: unknown = JSON.parse(initialContent);
+            // This is Lexical JSON format - validate it has the required structure
+            if (isValidLexicalState(parsed)) {
+              const editorState = editor.parseEditorState(parsed);
+              editor.setEditorState(editorState);
+              setHasInitialized(true);
+              return;
+            }
+          } else if (initialContent && typeof initialContent === 'object') {
+            // This is already parsed Lexical JSON - validate it
+            if (isValidLexicalState(initialContent)) {
+              const editorState = editor.parseEditorState(initialContent);
+              editor.setEditorState(editorState);
+              setHasInitialized(true);
+              return;
+            }
+          }
+        } catch (error) {
+          // If JSON parsing fails, fall back to HTML parsing
+          console.log('Falling back to HTML parsing for initial content');
+        }
+
+        // Fallback to HTML parsing
+        if (typeof initialContent === 'string') {
+          const parser = new DOMParser();
+          const dom = parser.parseFromString(initialContent, 'text/html');
+          const nodes = $generateNodesFromDOM(editor, dom);
+          const root = $getRoot();
+          root.clear();
+          root.append(...nodes);
+        }
+        setHasInitialized(true);
+      });
+    }
+  }, [editor, initialContent, hasInitialized]);
+
+  return null;
+}
+
+// Helper function to validate Lexical editor state
+function isValidLexicalState(obj: unknown): obj is LexicalEditorState {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    'root' in obj &&
+    obj.root !== null &&
+    typeof obj.root === 'object' &&
+    'children' in obj.root &&
+    Array.isArray(obj.root.children)
+  );
+}

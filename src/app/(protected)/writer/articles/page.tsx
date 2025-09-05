@@ -1,60 +1,104 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { ArticlesTable } from '@/components/shared';
+import { useState, useMemo } from 'react';
+import { DataTable } from '@/components/table';
+import { useArticlesTable } from '@/hooks/use-articles';
+import { getArticlesTableColumns, getArticlesTableActions } from '@/components/admin/articles';
 import { Article } from '@/lib/types/articles';
+import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { Badge } from '@/components/ui/badge';
 
 export default function WriterArticlesPage() {
-  const router = useRouter();
-  
-  const config = {
-    showAuthorId: false,
-    showActions: true,
-    showViewAction: true,
-    showEditAction: true,
-    showDeleteAction: false
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const {
+    articles,
+    currentPage,
+    pageSize,
+    loading,
+    tableBodyLoading,
+    error,
+    onPageChange,
+    onPageSizeChange,
+    onSortChange,
+    onSearchChange,
+    onFiltersChange
+  } = useArticlesTable();
+
+  // Filter articles for writers - they can only edit articles with 'revise' status
+  const filteredArticles = useMemo(() => {
+    return articles.filter(article => article.status === 'revise');
+  }, [articles]);
+
+  const handleDeleteArticle = () => {
+    // Writers cannot delete articles
+    return;
   };
 
-  const handleEdit = (article: Article) => {
-    // Writers can only edit articles with 'revise' status
-    if (article.status !== 'revise') {
-      alert('You can only edit articles that need revision');
-      return;
-    }
-    // Navigate to article details page
-    router.push(`/writer/articles/${article.id}`);
+  const confirmDeleteArticle = async () => {
+    // Writers cannot delete articles
+    return;
   };
 
-  const handleView = (article: Article) => {
-    // Navigate to article details page
-    router.push(`/writer/articles/${article.id}`);
-  };
-
-  const handleCreate = () => {
-    // Navigate to new article page
-    router.push('/writer/articles/new');
-  };
+  const columns = getArticlesTableColumns();
+  const actions = getArticlesTableActions(handleDeleteArticle, 'writer');
 
   return (
-    <div className="w-full space-y-6">
-      {/* Page Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">My Articles</h1>
-        <p className="text-muted-foreground">
-          Manage your articles. You can only edit articles that need revision and cannot change article status.
-        </p>
+    <div className="space-y-6">
+      {/* Writer-specific info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center space-x-2">
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200">Writer Access</Badge>
+          <p className="text-sm text-blue-800">
+            You can create new articles and edit articles that need revision. Only articles with &quot;Revise&quot; status are shown below.
+          </p>
+        </div>
       </div>
 
-      {/* Articles Table */}
-      <ArticlesTable 
-        config={config}
-        onEdit={handleEdit}
-        onView={handleView}
-        onCreate={handleCreate}
-        showAddButton={true}
-        addButtonLabel="Create Article"
+      {/* Data Table */}
+      <DataTable
+        data={filteredArticles}
+        totalCount={filteredArticles.length}
+        pageCount={Math.ceil(filteredArticles.length / pageSize)}
+        loading={loading}
+        tableBodyLoading={tableBodyLoading}
+        error={error}
+        columns={columns}
+        actions={actions}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        onSortChange={onSortChange}
+        onSearchChange={onSearchChange}
+        onFiltersChange={onFiltersChange}
         title="My Articles"
-        subtitle="View and manage your articles. Only articles with 'revise' status can be edited."
+        subtitle="Create new articles and edit articles that need revision."
+        searchPlaceholder="Search your articles..."
+        showSearch={true}
+        showFilters={false}
+        addButton={{
+          label: 'Create Article',
+          onClick: () => {
+            window.location.href = '/writer/articles/new';
+          }
+        }}
+        className=""
+        emptyMessage="No articles need revision. Create a new article to get started!"
+      />
+
+      {/* Confirmation Modal - Writers can't delete, so this won't be used */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteArticle}
+        type="delete"
+        title="Delete Article"
+        message="Writers cannot delete articles."
+        confirmText="OK"
+        cancelText="Cancel"
+        destructive={false}
+        isLoading={false}
       />
     </div>
   );
