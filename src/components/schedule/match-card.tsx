@@ -127,7 +127,7 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
 
   return (
     <Card
-      className="border-border bg-card cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:shadow-lg hover:border-primary/20 overflow-hidden"
+      className="border-border bg-card hover:border-primary/20 cursor-pointer overflow-hidden transition-all duration-200 hover:scale-[1.01] hover:shadow-lg"
       onClick={() => onMatchClick?.(match)}
     >
       {/* Main Content */}

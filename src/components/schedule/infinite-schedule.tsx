@@ -181,8 +181,8 @@ export default function InfiniteSchedule({
   const handleDateNavigation = useCallback(
     (direction: 'previous' | 'next') => {
       const availableDates = dateGroups.map((group) => new Date(group.date));
-      const currentIndex = availableDates.findIndex(date => 
-        date.toISOString().split('T')[0] === displayedDate.toISOString().split('T')[0]
+      const currentIndex = availableDates.findIndex(
+        (date) => date.toISOString().split('T')[0] === displayedDate.toISOString().split('T')[0]
       );
 
       let targetDate: Date;
