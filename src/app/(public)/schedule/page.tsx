@@ -107,7 +107,7 @@ export default function SchedulePage() {
             isLoading={false}
             selectedSport={selectedSport}
             onSportChange={setSelectedSport}
-            availableSports={['Basketball', 'Volleyball', 'Football', 'Tennis', 'Badminton', 'Track and Field', 'Swimming']}
+            availableSports={['Basketball', 'Volleyball']}
           />
         </div>
 

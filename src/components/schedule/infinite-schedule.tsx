@@ -40,6 +40,7 @@ export default function InfiniteSchedule({
 }: InfiniteScheduleProps) {
   const [dateGroups, setDateGroups] = useState<ScheduleDateGroup[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [displayedDate, setDisplayedDate] = useState(new Date()); // Date shown on left side
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [floatingButtonDirection, setFloatingButtonDirection] = useState<'up' | 'down'>('up');
   const topObserverRef = useRef<IntersectionObserver | null>(null);
@@ -47,19 +48,51 @@ export default function InfiniteSchedule({
   const topLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const bottomLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Group matches by date
-  useEffect(() => {
-    const grouped = groupMatchesByDate(matches);
-    setDateGroups(grouped);
-  }, [matches]);
+  // Filter matches by sport
+  const filteredMatches = matches.filter(match => {
+    if (selectedSport === 'all') return true;
+    return match.sports_seasons_stages.sports_categories.sports.name === selectedSport;
+  });
 
-  // Handle scroll detection for floating button
+  // Group filtered matches by date
+  useEffect(() => {
+    const grouped = groupMatchesByDate(filteredMatches);
+    setDateGroups(grouped);
+  }, [filteredMatches]);
+
+  // Handle scroll detection for floating button and displayed date
   useEffect(() => {
     const handleScroll = () => {
       const today = new Date();
       const todayString = today.toISOString().split('T')[0];
       const todayGroup = dateGroups.find((group) => group.date === todayString);
 
+      // Find the currently visible date group
+      let visibleDateGroup: ScheduleDateGroup | null = null;
+      let minDistance = Infinity;
+
+      for (const group of dateGroups) {
+        const element = document.getElementById(`date-group-${group.date}`);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const distanceFromTop = Math.abs(rect.top);
+          
+          // If the element is visible in the viewport
+          if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+            if (distanceFromTop < minDistance) {
+              minDistance = distanceFromTop;
+              visibleDateGroup = group;
+            }
+          }
+        }
+      }
+
+      // Update displayed date if we found a visible group
+      if (visibleDateGroup) {
+        setDisplayedDate(new Date(visibleDateGroup.date));
+      }
+
+      // Floating button logic
       if (!todayGroup) {
         setShowFloatingButton(false);
         return;
@@ -193,17 +226,17 @@ export default function InfiniteSchedule({
     <div className="space-y-6">
       {/* Date Navigation */}
       <DateNavigation
-        currentDate={currentDate}
+        currentDate={displayedDate}
         onDateChange={setCurrentDate}
         hasMatches={dateGroups.some(
-          (group) => group.date === currentDate.toISOString().split('T')[0]
+          (group) => group.date === displayedDate.toISOString().split('T')[0]
         )}
         onPreviousDay={() => handleDateNavigation('previous')}
         onNextDay={() => handleDateNavigation('next')}
         selectedSport={selectedSport}
         onSportChange={onSportChange}
         availableSports={availableSports}
-        availableDates={dateGroups.map(group => new Date(group.date))}
+        availableDates={dateGroups.map((group) => new Date(group.date))}
         hasMorePast={hasMorePast}
         hasMoreFuture={hasMoreFuture}
       />
