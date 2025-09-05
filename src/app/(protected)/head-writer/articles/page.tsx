@@ -51,7 +51,7 @@ export default function HeadWriterArticlesPage() {
   const actions = getArticlesTableActions(handleDeleteArticle, 'head-writer');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Data Table */}
       <DataTable
         data={articles}

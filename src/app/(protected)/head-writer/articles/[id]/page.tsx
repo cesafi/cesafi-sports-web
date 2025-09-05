@@ -29,7 +29,7 @@ export default function EditArticlePage() {
 
   if (isLoading) {
     return (
-      <div className="py-6 w-full">
+      <div className="w-full space-y-6">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center space-x-4">
             <Skeleton className="h-8 w-20" />
@@ -55,7 +55,7 @@ export default function EditArticlePage() {
 
   if (error || !article) {
     return (
-      <div className="py-6 w-full">
+      <div className="w-full space-y-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h1>
@@ -75,7 +75,7 @@ export default function EditArticlePage() {
   }
 
   return (
-    <div className="py-6 w-full">
+    <div className="w-full space-y-6">
       <ArticleForm
         mode="edit"
         article={article}

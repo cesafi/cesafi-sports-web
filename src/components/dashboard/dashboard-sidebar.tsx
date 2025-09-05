@@ -40,12 +40,10 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
   const currentSeason = seasonContext?.currentSeason;
 
   const getGeneralNavigationItems = (role: string): NavigationItem[] => {
-    const baseItems: NavigationItem[] = [{ href: '/admin', label: 'Overview', icon: Grid3X3 }];
-
     switch (role) {
       case 'admin':
         return [
-          ...baseItems,
+          { href: '/admin', label: 'Overview', icon: Grid3X3 },
           { href: '/admin/accounts', label: 'Accounts', icon: Key },
           { href: '/admin/schools', label: 'Schools', icon: Building2 },
           { href: '/admin/seasons', label: 'Seasons', icon: Trophy },
@@ -55,22 +53,22 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
         ];
       case 'head_writer':
         return [
-          ...baseItems,
+          { href: '/head-writer', label: 'Overview', icon: Grid3X3 },
           { href: '/head-writer/articles', label: 'Articles', icon: FileText },
           { href: '/head-writer/writers', label: 'Writers', icon: Users }
         ];
       case 'writer':
         return [
-          ...baseItems,
+          { href: '/writer', label: 'Overview', icon: Grid3X3 },
           { href: '/writer/articles', label: 'My Articles', icon: FileText }
         ];
       case 'league_operator':
         return [
-          ...baseItems,
+          { href: '/league-operator', label: 'Overview', icon: Grid3X3 },
           { href: '/league-operator/matches', label: 'Matches', icon: Target }
         ];
       default:
-        return baseItems;
+        return [{ href: '/admin', label: 'Overview', icon: Grid3X3 }];
     }
   };
 

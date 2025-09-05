@@ -4,11 +4,11 @@ import { getCurrentUserAction } from '@/actions/auth';
 import { UserRole } from '@/lib/types/auth';
 import { getRoleDisplayName } from '@/lib/utils/roles';
 
-interface WriterLayoutProps {
+interface HeadWriterLayoutProps {
   children: React.ReactNode;
 }
 
-export default async function WriterLayout({ children }: WriterLayoutProps) {
+export default async function HeadWriterLayout({ children }: HeadWriterLayoutProps) {
   // Fetch user data server-side
   const userResult = await getCurrentUserAction();
 
@@ -18,8 +18,8 @@ export default async function WriterLayout({ children }: WriterLayoutProps) {
 
   const user = userResult.data;
 
-  // Check if user has writer role
-  if (user.userRole !== 'writer') {
+  // Check if user has head_writer role
+  if (user.userRole !== 'head_writer') {
     redirect('/login');
   }
 

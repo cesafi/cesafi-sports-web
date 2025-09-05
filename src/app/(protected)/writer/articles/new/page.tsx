@@ -20,7 +20,7 @@ export default function CreateArticlePage() {
   };
 
   return (
-    <div className="w-full py-6">
+    <div className="w-full space-y-6">
       <ArticleForm
         mode="create"
         onSubmit={handleSubmit}
