@@ -7,12 +7,10 @@ export default async function AboutUsNews() {
   
   if (!result.success) {
     console.error('Failed to fetch news:', result.error);
-    // Fallback to empty array if service fails
-    return <AboutUsNewsClient news={[]} isUsingFallback={true} />;
+    // Show error state instead of fallback
+    return <AboutUsNewsClient news={[]} isUsingFallback={false} error={result.error} />;
   }
 
   const news = result.data;
-  const isUsingFallback = news.length > 0 && news[0].id.startsWith('fallback-');
-
-  return <AboutUsNewsClient news={news} isUsingFallback={isUsingFallback} />;
+  return <AboutUsNewsClient news={news} isUsingFallback={false} />;
 }

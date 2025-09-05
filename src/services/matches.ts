@@ -182,7 +182,6 @@ export class MatchService extends BaseService {
         .eq('id', id)
         .single();
 
-      console.log(data)
 
       if (error) {
         throw error;

@@ -14,7 +14,6 @@ export async function middleware(request: NextRequest) {
       });
     }
 
-    console.error('Middleware error:', error);
 
     return NextResponse.next();
   }

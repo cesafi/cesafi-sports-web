@@ -26,9 +26,10 @@ interface NewsArticle {
 interface AboutUsNewsClientProps {
   news: NewsArticle[];
   isUsingFallback: boolean;
+  error?: string;
 }
 
-export default function AboutUsNewsClient({ news, isUsingFallback }: AboutUsNewsClientProps) {
+export default function AboutUsNewsClient({ news, isUsingFallback, error }: AboutUsNewsClientProps) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -39,7 +40,7 @@ export default function AboutUsNewsClient({ news, isUsingFallback }: AboutUsNews
   const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
 
   return (
-    <section ref={ref} className="py-32 bg-background relative overflow-hidden">
+    <section ref={ref} className="py-32 bg-background relative overflow-hidden" style={{ position: 'relative' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
@@ -52,6 +53,20 @@ export default function AboutUsNewsClient({ news, isUsingFallback }: AboutUsNews
             <br />
             <span className="text-primary">NEWS</span>
           </h2>
+          
+          {error && (
+            <div className={`${roboto.className} text-sm text-muted-foreground mt-4 max-w-2xl mx-auto`}>
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                <p className="font-semibold text-destructive mb-2">Unable to load news</p>
+                <p className="text-muted-foreground">{error}</p>
+                {error.includes('Rate limit') && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    The free GNews API allows 100 requests per day. Please try again tomorrow.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
           
           {isUsingFallback && (
             <div className={`${roboto.className} text-sm text-muted-foreground mt-4 max-w-2xl mx-auto`}>
@@ -87,6 +102,7 @@ export default function AboutUsNewsClient({ news, isUsingFallback }: AboutUsNews
                     src={article.image || '/img/cesafi-banner.jpg'}
                     alt={article.title}
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
                       // Fallback to default image if external image fails

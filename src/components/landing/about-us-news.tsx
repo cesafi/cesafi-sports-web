@@ -6,7 +6,6 @@ export default async function AboutUsNews() {
   const result = await getCESAFINews();
   
   if (!result.success) {
-    console.error('Failed to fetch news:', result.error);
     // Fallback to empty array if service fails
     return <AboutUsNewsClient news={[]} isUsingFallback={true} />;
   }

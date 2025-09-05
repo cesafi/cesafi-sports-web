@@ -20,16 +20,10 @@ export interface GNewsArticle {
 
 export class NewsService {
   private static readonly CESAFI_KEYWORDS = [
-    'CESAFI',
-    'Cebu Schools Athletic Foundation',
-    'Cebu basketball',
-    'Cebu volleyball',
-    'Cebu sports',
-    'University of San Carlos',
-    'University of Cebu',
-    'Cebu Institute of Technology',
-    'Southwestern University',
-    'Cebu collegiate sports'
+    'cesafi',
+    'cebu schools athletic foundation',
+    'cebu schools athletic foundation, inc.',
+    'cebu schools athletic foundation, inc'
   ];
 
   private static getSampleNews(): GNewsArticle[] {
@@ -136,45 +130,56 @@ export class NewsService {
   static async getCESAFINews(): Promise<ServiceResponse<GNewsArticle[]>> {
     try {
       // Get API key from server environment (never exposed to client)
+      // Make sure to set GNEWS_API_KEY in your .env.local file
       const GNEWS_API_KEY = process.env.GNEWS_API_KEY;
       
       // Check if API key is configured
       if (!GNEWS_API_KEY || GNEWS_API_KEY === 'your-api-key-here' || GNEWS_API_KEY.trim() === '') {
-        console.warn('GNews API key not configured. Using sample data.');
         return { success: true, data: this.getSampleNews() };
       }
 
-      // Initialize GNews client (server-side only)
-      const GNews = (await import('@gnews-io/gnews-io-js')).default;
-      const gnews = new GNews(GNEWS_API_KEY);
-
-      // Search for CESAFI-related news using GNews client
-      const query = this.CESAFI_KEYWORDS.join(' OR ');
+      // Use direct fetch to ensure correct API usage according to GNews documentation
+      const query = 'CESAFI OR "Cebu Schools Athletic Foundation"';
+      const apiUrl = new URL('https://gnews.io/api/v4/search');
       
-      const response = await gnews.search(query, {
-        lang: 'en',
-        country: 'ph',
-        max: 10,
-        sortby: 'publish-time'
+      // Add required parameters according to GNews API specification
+      apiUrl.searchParams.set('q', query);
+      apiUrl.searchParams.set('lang', 'en');
+      apiUrl.searchParams.set('country', 'ph');
+      apiUrl.searchParams.set('max', '10');
+      apiUrl.searchParams.set('sortby', 'publish-time');
+      apiUrl.searchParams.set('token', GNEWS_API_KEY);
+      
+      const response = await fetch(apiUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        next: { revalidate: 86400 } // Cache for 1 day (86400 seconds)
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status} - ${response.statusText}`);
+      }
+      
+      const data = await response.json();
 
-      if (!response.articles || response.articles.length === 0) {
-        console.warn('No CESAFI news found from GNews API. Using sample data.');
+      if (!data.articles || data.articles.length === 0) {
         return { success: true, data: this.getSampleNews() };
       }
 
       // Filter and map articles to our interface
-      const filteredArticles = response.articles
+      const filteredArticles = data.articles
         .filter((article: any) => {
           const title = article.title?.toLowerCase() || '';
           const description = article.description?.toLowerCase() || '';
           const content = article.content?.toLowerCase() || '';
           
-          // Check if article contains CESAFI-related keywords
+          // Check if article contains CESAFI-related keywords (case-insensitive)
           return this.CESAFI_KEYWORDS.some(keyword => 
-            title.includes(keyword.toLowerCase()) ||
-            description.includes(keyword.toLowerCase()) ||
-            content.includes(keyword.toLowerCase())
+            title.includes(keyword) ||
+            description.includes(keyword) ||
+            content.includes(keyword)
           );
         })
         .slice(0, 6) // Limit to 6 articles
@@ -197,13 +202,11 @@ export class NewsService {
 
       // If no relevant articles found, use sample data
       if (filteredArticles.length === 0) {
-        console.warn('No relevant CESAFI articles found after filtering. Using sample data.');
         return { success: true, data: this.getSampleNews() };
       }
 
       return { success: true, data: filteredArticles };
     } catch (error) {
-      console.error('Error fetching CESAFI news from GNews:', error);
       return { success: true, data: this.getSampleNews() };
     }
   }

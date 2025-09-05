@@ -120,6 +120,7 @@ export default function AboutUsHero() {
                     src="/img/cesafi-banner.jpg"
                     alt="CESAFI Sports Excellence"
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 60vw"
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />

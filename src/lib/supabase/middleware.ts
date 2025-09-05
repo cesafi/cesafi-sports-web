@@ -64,14 +64,6 @@ export const updateSession = async (request: NextRequest) => {
       error: userError
     } = await supabase.auth.getUser();
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[middleware.ts]: User check result:', {
-        hasUser: !!user,
-        userEmail: user?.email,
-        userRole: user?.app_metadata?.role,
-        error: userError?.message
-      });
-    }
 
     const url = request.nextUrl.pathname;
 
