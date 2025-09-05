@@ -203,6 +203,9 @@ export default function InfiniteSchedule({
         selectedSport={selectedSport}
         onSportChange={onSportChange}
         availableSports={availableSports}
+        availableDates={dateGroups.map(group => new Date(group.date))}
+        hasMorePast={hasMorePast}
+        hasMoreFuture={hasMoreFuture}
       />
 
       {/* Load More Past Trigger */}

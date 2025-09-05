@@ -16,6 +16,9 @@ interface DateNavigationProps {
   readonly selectedSport?: string;
   readonly onSportChange?: (sport: string) => void;
   readonly availableSports?: string[];
+  readonly availableDates?: Date[];
+  readonly hasMorePast?: boolean;
+  readonly hasMoreFuture?: boolean;
 }
 
 export default function DateNavigation({
@@ -26,25 +29,34 @@ export default function DateNavigation({
   onNextDay,
   selectedSport = 'all',
   onSportChange,
-  availableSports = ['Basketball', 'Volleyball', 'Football', 'Tennis', 'Badminton', 'Track and Field', 'Swimming']
+  availableSports = ['Basketball', 'Volleyball', 'Football', 'Tennis', 'Badminton', 'Track and Field', 'Swimming'],
+  availableDates = [],
+  hasMorePast = false,
+  hasMoreFuture = false
 }: DateNavigationProps) {
   const goToPreviousDay = () => {
     if (onPreviousDay) {
       onPreviousDay();
-    } else {
-      const previousDay = new Date(currentDate);
-      previousDay.setDate(previousDay.getDate() - 1);
-      onDateChange(previousDay);
+    } else if (availableDates.length > 0) {
+      const currentIndex = availableDates.findIndex(date => 
+        date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
+      );
+      if (currentIndex > 0) {
+        onDateChange(availableDates[currentIndex - 1]);
+      }
     }
   };
 
   const goToNextDay = () => {
     if (onNextDay) {
       onNextDay();
-    } else {
-      const nextDay = new Date(currentDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      onDateChange(nextDay);
+    } else if (availableDates.length > 0) {
+      const currentIndex = availableDates.findIndex(date => 
+        date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
+      );
+      if (currentIndex < availableDates.length - 1) {
+        onDateChange(availableDates[currentIndex + 1]);
+      }
     }
   };
 
@@ -70,27 +82,33 @@ export default function DateNavigation({
             <div className="flex items-center">
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={goToPreviousDay}
-                className="rounded-r-none border-r-0"
+                disabled={!hasMorePast && availableDates.length > 0 && availableDates.findIndex(date => 
+                  date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
+                ) <= 0}
+                className="rounded-r-none border-r-0 h-9"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
 
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={handleGoToToday}
-                className="rounded-none border-r-0 border-l-0"
+                className="rounded-none border-r-0 border-l-0 h-9"
               >
-                {isToday(currentDate) ? 'Today' : formatDateShort(currentDate)}
+                Today
               </Button>
 
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={goToNextDay}
-                className="rounded-l-none"
+                disabled={!hasMoreFuture && availableDates.length > 0 && availableDates.findIndex(date => 
+                  date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
+                ) >= availableDates.length - 1}
+                className="rounded-l-none h-9"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -98,7 +116,7 @@ export default function DateNavigation({
 
             {/* Sport Filter */}
             <Select value={selectedSport} onValueChange={onSportChange}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] h-9 bg-background border-border">
                 <SelectValue placeholder="All Sports" />
               </SelectTrigger>
               <SelectContent>
