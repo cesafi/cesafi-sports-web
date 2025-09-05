@@ -3,7 +3,23 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, MapPin, Trophy, Users, Volleyball, Activity, Zap, MapPin as MapPinIcon, Waves, Sword, Sparkles, Music, Circle, Target, Dumbbell } from 'lucide-react';
+import {
+  Clock,
+  MapPin,
+  Trophy,
+  Users,
+  Volleyball,
+  Activity,
+  Zap,
+  MapPin as MapPinIcon,
+  Waves,
+  Sword,
+  Sparkles,
+  Music,
+  Circle,
+  Target,
+  Dumbbell
+} from 'lucide-react';
 import Image from 'next/image';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { determineWinner } from './utils';
@@ -32,30 +48,51 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
   // Get sport icon component
   const getSportIconComponent = (sportName: string) => {
     const iconName = getSportIcon(sportName);
-    const iconProps = { className: "h-4 w-4" };
-    
+    const iconProps = { className: 'h-4 w-4' };
+
     switch (iconName) {
-      case 'Basketball': return <Circle {...iconProps} />; // Using Circle for basketball
-      case 'Volleyball': return <Volleyball {...iconProps} />;
-      case 'Football': return <Circle {...iconProps} />; // Using Circle for football
-      case 'Tennis': return <Circle {...iconProps} />; // Using Circle for tennis
-      case 'Badminton': return <Circle {...iconProps} />; // Using Circle for badminton
-      case 'TableTennis': return <Circle {...iconProps} />; // Using Circle for table tennis
-      case 'Baseball': return <Circle {...iconProps} />; // Using Circle for baseball
-      case 'Softball': return <Circle {...iconProps} />; // Using Circle for softball
-      case 'Activity': return <Activity {...iconProps} />;
-      case 'Zap': return <Zap {...iconProps} />;
-      case 'MapPin': return <MapPinIcon {...iconProps} />;
-      case 'Waves': return <Waves {...iconProps} />;
-      case 'Fist': return <Target {...iconProps} />; // Using Target for combat sports
-      case 'Sword': return <Sword {...iconProps} />;
-      case 'Chess': return <Target {...iconProps} />; // Using Target for chess
-      case 'Sparkles': return <Sparkles {...iconProps} />;
-      case 'Music': return <Music {...iconProps} />;
-      case 'Circle': return <Circle {...iconProps} />;
-      case 'Target': return <Target {...iconProps} />;
-      case 'Dumbbell': return <Dumbbell {...iconProps} />;
-      default: return <Trophy {...iconProps} />;
+      case 'Basketball':
+        return <Circle {...iconProps} />; // Using Circle for basketball
+      case 'Volleyball':
+        return <Volleyball {...iconProps} />;
+      case 'Football':
+        return <Circle {...iconProps} />; // Using Circle for football
+      case 'Tennis':
+        return <Circle {...iconProps} />; // Using Circle for tennis
+      case 'Badminton':
+        return <Circle {...iconProps} />; // Using Circle for badminton
+      case 'TableTennis':
+        return <Circle {...iconProps} />; // Using Circle for table tennis
+      case 'Baseball':
+        return <Circle {...iconProps} />; // Using Circle for baseball
+      case 'Softball':
+        return <Circle {...iconProps} />; // Using Circle for softball
+      case 'Activity':
+        return <Activity {...iconProps} />;
+      case 'Zap':
+        return <Zap {...iconProps} />;
+      case 'MapPin':
+        return <MapPinIcon {...iconProps} />;
+      case 'Waves':
+        return <Waves {...iconProps} />;
+      case 'Fist':
+        return <Target {...iconProps} />; // Using Target for combat sports
+      case 'Sword':
+        return <Sword {...iconProps} />;
+      case 'Chess':
+        return <Target {...iconProps} />; // Using Target for chess
+      case 'Sparkles':
+        return <Sparkles {...iconProps} />;
+      case 'Music':
+        return <Music {...iconProps} />;
+      case 'Circle':
+        return <Circle {...iconProps} />;
+      case 'Target':
+        return <Target {...iconProps} />;
+      case 'Dumbbell':
+        return <Dumbbell {...iconProps} />;
+      default:
+        return <Trophy {...iconProps} />;
     }
   };
 

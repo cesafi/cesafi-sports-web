@@ -5,6 +5,7 @@ import { ScheduleMatch } from '@/lib/types/matches';
 import { ScheduleDateGroup, groupMatchesByDate } from './utils';
 import DateGroup from './date-group';
 import DateNavigation from './date-navigation';
+import FloatingNavButton from './floating-nav-button';
 
 interface InfiniteScheduleProps {
   readonly matches: ScheduleMatch[];
@@ -13,6 +14,9 @@ interface InfiniteScheduleProps {
   readonly hasMoreFuture?: boolean;
   readonly hasMorePast?: boolean;
   readonly isLoading?: boolean;
+  readonly selectedSport?: string;
+  readonly onSportChange?: (sport: string) => void;
+  readonly availableSports?: string[];
 }
 
 export default function InfiniteSchedule({
@@ -21,10 +25,15 @@ export default function InfiniteSchedule({
   onLoadMore,
   hasMoreFuture = false,
   hasMorePast = false,
-  isLoading = false
+  isLoading = false,
+  selectedSport = 'all',
+  onSportChange,
+  availableSports = ['Basketball', 'Volleyball', 'Football', 'Tennis', 'Badminton', 'Track and Field', 'Swimming']
 }: InfiniteScheduleProps) {
   const [dateGroups, setDateGroups] = useState<ScheduleDateGroup[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [showFloatingButton, setShowFloatingButton] = useState(false);
+  const [floatingButtonDirection, setFloatingButtonDirection] = useState<'up' | 'down'>('up');
   const topObserverRef = useRef<IntersectionObserver | null>(null);
   const bottomObserverRef = useRef<IntersectionObserver | null>(null);
   const topLoadMoreRef = useRef<HTMLDivElement | null>(null);
@@ -35,6 +44,44 @@ export default function InfiniteSchedule({
     const grouped = groupMatchesByDate(matches);
     setDateGroups(grouped);
   }, [matches]);
+
+  // Handle scroll detection for floating button
+  useEffect(() => {
+    const handleScroll = () => {
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+      const todayGroup = dateGroups.find((group) => group.date === todayString);
+      
+      if (!todayGroup) {
+        setShowFloatingButton(false);
+        return;
+      }
+
+      const todayElement = document.getElementById(`date-group-${todayString}`);
+      if (!todayElement) {
+        setShowFloatingButton(false);
+        return;
+      }
+
+      const rect = todayElement.getBoundingClientRect();
+      const isTodayVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+      
+      if (!isTodayVisible) {
+        setShowFloatingButton(true);
+        // Determine direction based on scroll position
+        if (rect.top < 0) {
+          setFloatingButtonDirection('up'); // We're below today, need to go up
+        } else {
+          setFloatingButtonDirection('down'); // We're above today, need to go down
+        }
+      } else {
+        setShowFloatingButton(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [dateGroups]);
 
   // Set up intersection observers for infinite scroll
   useEffect(() => {
@@ -110,7 +157,8 @@ export default function InfiniteSchedule({
     [currentDate, dateGroups]
   );
 
-  const handleGoToToday = useCallback(() => {
+
+  const handleFloatingButtonClick = useCallback(() => {
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
     const todayGroup = dateGroups.find((group) => group.date === todayString);
@@ -136,7 +184,9 @@ export default function InfiniteSchedule({
         )}
         onPreviousDay={() => handleDateNavigation('previous')}
         onNextDay={() => handleDateNavigation('next')}
-        onGoToToday={handleGoToToday}
+        selectedSport={selectedSport}
+        onSportChange={onSportChange}
+        availableSports={availableSports}
       />
 
       {/* Load More Past Trigger */}
@@ -173,6 +223,13 @@ export default function InfiniteSchedule({
           )}
         </div>
       )}
+
+      {/* Floating Navigation Button */}
+      <FloatingNavButton
+        isVisible={showFloatingButton}
+        direction={floatingButtonDirection}
+        onClick={handleFloatingButtonClick}
+      />
     </div>
   );
 }

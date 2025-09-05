@@ -2,8 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import { formatDateShort, isToday } from './utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChevronLeft, ChevronRight, Calendar, Filter, Settings } from 'lucide-react';
+import { formatDateShort } from './utils';
 
 interface DateNavigationProps {
   readonly currentDate: Date;
@@ -11,7 +13,9 @@ interface DateNavigationProps {
   readonly hasMatches: boolean;
   readonly onPreviousDay?: () => void;
   readonly onNextDay?: () => void;
-  readonly onGoToToday?: () => void;
+  readonly selectedSport?: string;
+  readonly onSportChange?: (sport: string) => void;
+  readonly availableSports?: string[];
 }
 
 export default function DateNavigation({
@@ -20,7 +24,9 @@ export default function DateNavigation({
   hasMatches,
   onPreviousDay,
   onNextDay,
-  onGoToToday
+  selectedSport = 'all',
+  onSportChange,
+  availableSports = ['Basketball', 'Volleyball', 'Football', 'Tennis', 'Badminton', 'Track and Field', 'Swimming']
 }: DateNavigationProps) {
   const goToPreviousDay = () => {
     if (onPreviousDay) {
@@ -42,80 +48,75 @@ export default function DateNavigation({
     }
   };
 
-  const goToToday = () => {
-    if (onGoToToday) {
-      onGoToToday();
-    } else {
-      onDateChange(new Date());
-    }
-  };
-
   return (
-    <Card className="border-border bg-card">
+    <Card className="sticky top-20 z-10 border-border bg-card shadow-sm">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          {/* Previous Day Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToPreviousDay}
-            className="flex items-center gap-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous Day
-          </Button>
-
-          {/* Current Date Display */}
+          {/* Left side: Navigation controls */}
           <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousDay}
+              className="flex items-center gap-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+
             <div className="flex items-center gap-2">
               <Calendar className="text-muted-foreground h-4 w-4" />
-              <div className="text-center">
-                <div className="font-mango-grotesque text-foreground text-lg font-semibold">
-                  {formatDateShort(currentDate)}
-                </div>
-                <div className="text-muted-foreground font-roboto text-sm">
-                  {isToday(currentDate)
-                    ? 'Today'
-                    : currentDate.toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                </div>
-              </div>
-            </div>
-
-            {!isToday(currentDate) && (
-              <Button variant="outline" size="sm" onClick={goToToday} className="text-xs">
-                Go to Today
-              </Button>
-            )}
-          </div>
-
-          {/* Next Day Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToNextDay}
-            className="flex items-center gap-2"
-          >
-            Next Day
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Match Count Indicator */}
-        {hasMatches && (
-          <div className="mt-3 text-center">
-            <div className="bg-primary/10 inline-flex items-center gap-2 rounded-full px-3 py-1">
-              <div className="bg-primary h-2 w-2 rounded-full" />
-              <span className="text-primary font-roboto text-sm font-medium">
-                {hasMatches ? 'Matches available' : 'No matches'}
+              <span className="font-mango-grotesque text-foreground text-sm font-medium">
+                {formatDateShort(currentDate)}
               </span>
             </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextDay}
+              className="flex items-center gap-2"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-        )}
+
+          {/* Right side: Filters and settings */}
+          <div className="flex items-center gap-3">
+            {/* Sport Filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="text-muted-foreground h-4 w-4" />
+              <Select value={selectedSport} onValueChange={onSportChange}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Sport" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sports</SelectItem>
+                  {availableSports.map((sport) => (
+                    <SelectItem key={sport} value={sport}>
+                      {sport}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Settings Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="p-2 text-sm text-muted-foreground">
+                  Settings coming soon...
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

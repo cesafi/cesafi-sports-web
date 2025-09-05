@@ -11,6 +11,7 @@ import { ScheduleMatch } from '@/lib/types/matches';
 export default function SchedulePage() {
   const [selectedMatch, setSelectedMatch] = useState<ScheduleMatch | null>(null);
   const [matches] = useState<ScheduleMatch[]>(mockScheduleMatches);
+  const [selectedSport, setSelectedSport] = useState<string>('all');
 
   const handleMatchClick = (match: ScheduleMatch) => {
     setSelectedMatch(match);
@@ -96,7 +97,7 @@ export default function SchedulePage() {
         </div>
 
         {/* Main Content */}
-        <div className="container mx-auto max-w-[1200px] px-4 py-8">
+        <div className="container mx-auto max-w-[1000px] px-4 py-8">
           <InfiniteSchedule
             matches={matches}
             onMatchClick={handleMatchClick}
@@ -104,6 +105,9 @@ export default function SchedulePage() {
             hasMoreFuture={false} // TODO: Implement when API is ready - will be true when we have more future data to load
             hasMorePast={false} // TODO: Implement when API is ready - will be true when we have more past data to load
             isLoading={false}
+            selectedSport={selectedSport}
+            onSportChange={setSelectedSport}
+            availableSports={['Basketball', 'Volleyball', 'Football', 'Tennis', 'Badminton', 'Track and Field', 'Swimming']}
           />
         </div>
 

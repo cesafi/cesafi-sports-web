@@ -1,7 +1,6 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock } from 'lucide-react';
 import { ScheduleDateGroup } from './utils';
 import MatchCard from './match-card';
@@ -12,30 +11,18 @@ interface DateGroupProps {
 }
 
 export default function DateGroup({ dateGroup, onMatchClick }: DateGroupProps) {
-  const getDateBadgeColor = () => {
-    if (dateGroup.isToday) return 'bg-primary/10 text-primary border-primary/20';
-    if (dateGroup.isPast) return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
-    return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Date Header */}
       <div className="relative">
-        <div className="flex items-center gap-3 pb-4">
+        <div className={`flex items-center gap-3 pb-4 ${dateGroup.isToday ? 'bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-4' : ''}`}>
           <div className="flex items-center gap-2">
             <Calendar className="text-muted-foreground h-5 w-5" />
             <h2 className="font-mango-grotesque text-foreground text-xl font-semibold">
               {dateGroup.displayDate}
             </h2>
           </div>
-          <Badge variant="outline" className={getDateBadgeColor()}>
-            {(() => {
-              if (dateGroup.isToday) return 'Today';
-              if (dateGroup.isPast) return 'Past';
-              return 'Upcoming';
-            })()}
-          </Badge>
           <div className="text-muted-foreground font-roboto text-sm">
             {dateGroup.matches.length} match{dateGroup.matches.length !== 1 ? 'es' : ''}
           </div>
