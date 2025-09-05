@@ -38,7 +38,6 @@ export default function InfiniteSchedule({
     'Swimming'
   ]
 }: InfiniteScheduleProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [displayedDate, setDisplayedDate] = useState(new Date()); // Date shown on left side
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [floatingButtonDirection, setFloatingButtonDirection] = useState<'up' | 'down'>('up');
@@ -89,7 +88,7 @@ export default function InfiniteSchedule({
     // Update displayed date if we found a visible group
     if (visibleDateGroup) {
       const newDisplayedDate = new Date(visibleDateGroup.date);
-      setDisplayedDate(prevDate => {
+      setDisplayedDate((prevDate) => {
         // Only update if the date is actually different
         if (prevDate.toISOString().split('T')[0] !== newDisplayedDate.toISOString().split('T')[0]) {
           return newDisplayedDate;
@@ -181,31 +180,33 @@ export default function InfiniteSchedule({
 
   const handleDateNavigation = useCallback(
     (direction: 'previous' | 'next') => {
-      const targetDate = new Date(currentDate);
-      if (direction === 'previous') {
-        targetDate.setDate(targetDate.getDate() - 1);
+      const availableDates = dateGroups.map((group) => new Date(group.date));
+      const currentIndex = availableDates.findIndex(date => 
+        date.toISOString().split('T')[0] === displayedDate.toISOString().split('T')[0]
+      );
+
+      let targetDate: Date;
+      if (direction === 'previous' && currentIndex > 0) {
+        targetDate = availableDates[currentIndex - 1];
+      } else if (direction === 'next' && currentIndex < availableDates.length - 1) {
+        targetDate = availableDates[currentIndex + 1];
       } else {
-        targetDate.setDate(targetDate.getDate() + 1);
+        return; // No more dates in that direction
       }
 
-      // Find the date group for the target date
+      // Scroll to the target date group
       const targetDateString = targetDate.toISOString().split('T')[0];
-      const targetGroup = dateGroups.find((group) => group.date === targetDateString);
-
-      if (targetGroup) {
-        // Scroll to the target date group
-        const element = document.getElementById(`date-group-${targetDateString}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+      const element = document.getElementById(`date-group-${targetDateString}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
-      setCurrentDate(targetDate);
+      setDisplayedDate(targetDate);
     },
-    [currentDate, dateGroups]
+    [displayedDate, dateGroups]
   );
 
-  const handleFloatingButtonClick = useCallback(() => {
+  const handleGoToToday = useCallback(() => {
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
     const todayGroup = dateGroups.find((group) => group.date === todayString);
@@ -226,20 +227,24 @@ export default function InfiniteSchedule({
       }
     }
 
-    setCurrentDate(today);
+    setDisplayedDate(today);
   }, [dateGroups]);
+
+  // Alias for floating button
+  const handleFloatingButtonClick = handleGoToToday;
 
   return (
     <div className="space-y-6">
       {/* Date Navigation */}
       <DateNavigation
         currentDate={displayedDate}
-        onDateChange={setCurrentDate}
+        onDateChange={setDisplayedDate}
         hasMatches={dateGroups.some(
           (group) => group.date === displayedDate.toISOString().split('T')[0]
         )}
         onPreviousDay={() => handleDateNavigation('previous')}
         onNextDay={() => handleDateNavigation('next')}
+        onGoToToday={handleGoToToday}
         selectedSport={selectedSport}
         onSportChange={onSportChange}
         availableSports={availableSports}

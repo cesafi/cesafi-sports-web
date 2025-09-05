@@ -13,6 +13,7 @@ interface DateNavigationProps {
   readonly hasMatches: boolean;
   readonly onPreviousDay?: () => void;
   readonly onNextDay?: () => void;
+  readonly onGoToToday?: () => void;
   readonly selectedSport?: string;
   readonly onSportChange?: (sport: string) => void;
   readonly availableSports?: string[];
@@ -27,6 +28,7 @@ export default function DateNavigation({
   hasMatches,
   onPreviousDay,
   onNextDay,
+  onGoToToday,
   selectedSport = 'all',
   onSportChange,
   availableSports = ['Basketball', 'Volleyball', 'Football', 'Tennis', 'Badminton', 'Track and Field', 'Swimming'],
@@ -61,8 +63,12 @@ export default function DateNavigation({
   };
 
   const handleGoToToday = () => {
-    const today = new Date();
-    onDateChange(today);
+    if (onGoToToday) {
+      onGoToToday();
+    } else {
+      const today = new Date();
+      onDateChange(today);
+    }
   };
 
   return (
