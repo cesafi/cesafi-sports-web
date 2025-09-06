@@ -12,7 +12,7 @@ export default function ThemeSwitcher() {
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            className="p-0"
+            className="p-0 text-muted-foreground hover:text-foreground transition-colors duration-200"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             suppressHydrationWarning
           >
@@ -27,6 +27,6 @@ export default function ThemeSwitcher() {
           <p>{resolvedTheme === 'dark' ? 'Toggle Light Mode' : 'Toggle Dark Mode'}</p>
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider>
+    </TooltipProvider >
   );
 }

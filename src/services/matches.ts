@@ -957,4 +957,80 @@ export class MatchService extends BaseService {
       return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);
     }
   }
+
+  /**
+   * Get matches by school ID through match participants
+   */
+  static async getMatchesBySchoolId(
+    schoolId: string,
+    options: {
+      limit?: number;
+      season_id?: number;
+      direction?: 'future' | 'past';
+    } = {}
+  ): Promise<ServiceResponse<MatchWithFullDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { limit = 10, season_id, direction = 'past' } = options;
+
+      let query = supabase
+        .from(TABLE_NAME)
+        .select(`
+          *,
+          sports_seasons_stages!inner(
+            id,
+            competition_stage,
+            sports!inner(
+              id,
+              name,
+              sport_categories!inner(
+                id,
+                name,
+                division,
+                level
+              )
+            ),
+            seasons!inner(
+              id,
+              name,
+              start_at,
+              end_at
+            )
+          ),
+          match_participants!inner(
+            id,
+            match_id,
+            team_id,
+            match_score,
+            schools_teams!inner(
+              id,
+              name,
+              schools!inner(
+                id,
+                name,
+                abbreviation
+              )
+            )
+          )
+        `)
+        .eq('match_participants.schools_teams.school_id', schoolId)
+        .order('scheduled_at', { ascending: direction === 'future' })
+        .limit(limit);
+
+      // Add season filter if provided
+      if (season_id) {
+        query = query.eq('sports_seasons_stages.season_id', season_id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch matches by school ID.`);
+    }
+  }
 }

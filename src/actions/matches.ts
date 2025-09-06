@@ -111,3 +111,14 @@ export async function getScheduleMatchesByDate(
 ) {
   return await MatchService.getScheduleMatchesByDate(options);
 }
+
+export async function getMatchesBySchoolId(
+  schoolId: string,
+  options: {
+    limit?: number;
+    season_id?: number;
+    direction?: 'future' | 'past';
+  } = {}
+) {
+  return await MatchService.getMatchesBySchoolId(schoolId, options);
+}

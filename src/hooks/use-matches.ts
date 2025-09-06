@@ -20,7 +20,8 @@ import {
   deleteMatchById,
   getMatchByIdBasic,
   getScheduleMatches,
-  getScheduleMatchesByDate
+  getScheduleMatchesByDate,
+  getMatchesBySchoolId
 } from '@/actions/matches';
 
 import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match, MatchWithStageDetails, MatchWithFullDetails } from '@/lib/types/matches';
@@ -97,6 +98,29 @@ export function useMatchById(
     select: (data) => {
       if (!data.success) {
         throw new Error(data.error || `Match with ID ${id} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useMatchesBySchoolId(
+  schoolId: string,
+  options: {
+    limit?: number;
+    season_id?: number;
+    direction?: 'future' | 'past';
+  } = {},
+  queryOptions?: UseQueryOptions<ServiceResponse<MatchWithFullDetails[]>, Error, MatchWithFullDetails[]>
+) {
+  return useQuery({
+    queryKey: [...matchKeys.all, 'bySchool', schoolId, options],
+    queryFn: () => getMatchesBySchoolId(schoolId, options),
+    enabled: !!schoolId,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || `Failed to fetch matches for school ${schoolId}.`);
       }
       return data.data;
     },
@@ -514,10 +538,10 @@ export function useInfiniteScheduleMatches(
     select: (data) => ({
       pages: data.pages,
       pageParams: data.pageParams,
-      matches: data.pages.flatMap(page => page.success ? page.data.matches : []),
-      hasNextPage: data.pages[data.pages.length - 1]?.success ? data.pages[data.pages.length - 1].data.hasMore : false,
-      hasPreviousPage: data.pages[0]?.success ? data.pages[0].data.hasMore : false,
-      totalCount: data.pages[0]?.success ? data.pages[0].data.totalCount : 0
+      matches: data.pages.flatMap(page => page.success && page.data ? page.data.matches : []),
+      hasNextPage: data.pages[data.pages.length - 1]?.success ? (data.pages[data.pages.length - 1] as any).data?.hasMore : false,
+      hasPreviousPage: data.pages[0]?.success ? (data.pages[0] as any).data?.hasMore : false,
+      totalCount: data.pages[0]?.success ? (data.pages[0] as any).data?.totalCount : 0
     }),
     ...queryOptions
   });

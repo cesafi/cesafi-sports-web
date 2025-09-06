@@ -14,6 +14,7 @@ const publicRoutes = [
   '/forgot-password',
   '/test-cloudinary',
   '/about-us',
+  '/schools',
 ];
 
 const roleDashboards: Record<UserRole, string> = {

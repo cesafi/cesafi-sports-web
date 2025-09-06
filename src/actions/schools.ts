@@ -40,8 +40,16 @@ export async function getAllSchools() {
   return await SchoolService.getAll();
 }
 
+export async function getActiveSchools() {
+  return await SchoolService.getActiveSchools();
+}
+
 export async function getSchoolById(id: string) {
   return await SchoolService.getById(id);
+}
+
+export async function getSchoolByAbbreviation(abbreviation: string) {
+  return await SchoolService.getByAbbreviation(abbreviation);
 }
 
 export async function createSchool(data: SchoolInsert) {

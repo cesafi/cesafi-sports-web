@@ -36,7 +36,7 @@ export class SchoolService extends BaseService {
   static async getAll(): Promise<ServiceResponse<School[]>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase.from(TABLE_NAME).select();
+      const { data, error } = await supabase.from(TABLE_NAME).select().order('name', { ascending: true });;
 
       if (error) {
         throw error;
@@ -45,6 +45,25 @@ export class SchoolService extends BaseService {
       return { success: true, data };
     } catch (err) {
       return this.formatError(err, `Failed to fetch all ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async getActiveSchools(): Promise<ServiceResponse<School[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select()
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch active ${TABLE_NAME} entities.`);
     }
   }
 
@@ -77,6 +96,25 @@ export class SchoolService extends BaseService {
       return { success: true, data };
     } catch (err) {
       return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async getByAbbreviation(abbreviation: string): Promise<ServiceResponse<School>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select()
+        .ilike('abbreviation', abbreviation)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch school by abbreviation.`);
     }
   }
 
