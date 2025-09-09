@@ -2,6 +2,83 @@
 
 This directory contains reusable components that can be used across different parts of the application.
 
+## Article Components
+
+### `article-card.tsx`
+A versatile, reusable article display component with multiple variants:
+
+#### Features
+- **Multiple Variants**: Featured, default, and compact layouts for different use cases
+- **Responsive Design**: Adapts to different screen sizes and containers
+- **Rich Metadata**: Displays author, publish date, category, and read time
+- **Interactive Elements**: Hover effects and smooth animations
+- **Optimized Images**: Uses Next.js Image component for performance
+
+#### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `article` | `Article` | - | Article data object with title, excerpt, author, etc. |
+| `variant` | `'default' \| 'featured' \| 'compact'` | `'default'` | Display variant |
+| `index` | `number` | `0` | Index for staggered animations |
+
+#### Usage
+```tsx
+// Featured article (large, side-by-side layout)
+<ArticleCard article={article} variant="featured" />
+
+// Default article (standard card)
+<ArticleCard article={article} variant="default" />
+
+// Compact article (small, horizontal layout)
+<ArticleCard article={article} variant="compact" />
+```
+
+### `share-buttons.tsx`
+Social sharing component for articles and content:
+
+#### Features
+- **Multiple Platforms**: Twitter, Facebook, and link copying
+- **Toast Notifications**: User feedback for successful actions
+- **Loading States**: Prevents double-clicks during sharing
+- **Error Handling**: Graceful fallbacks for sharing failures
+
+#### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `title` | `string` | - | Content title for sharing |
+| `url` | `string` | `window.location.href` | URL to share |
+
+#### Usage
+```tsx
+<ShareButtons 
+  title="Article Title"
+  url="https://example.com/article"
+/>
+```
+
+### `more-articles.tsx`
+Sidebar component for suggesting related articles:
+
+#### Features
+- **Compact Layout**: Space-efficient article suggestions
+- **Configurable Limit**: Control number of articles displayed
+- **Consistent Styling**: Matches overall design system
+- **Navigation Links**: Direct links to full article views
+
+#### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `articles` | `Article[]` | - | Array of article objects |
+| `maxItems` | `number` | `3` | Maximum articles to display |
+
+#### Usage
+```tsx
+<MoreArticles 
+  articles={relatedArticles} 
+  maxItems={5} 
+/>
+```
+
 ## SmartBreadcrumbs
 
 A smart, reusable breadcrumb component that automatically handles long routes by showing ellipsis when there are too many breadcrumb items.
@@ -92,3 +169,27 @@ The component is already integrated into the admin dashboard header and can be e
 - Each breadcrumb item has appropriate ARIA attributes
 - Ellipsis includes screen reader text ("More")
 - Separators are properly marked as presentational
+
+## Design System Integration
+
+All shared components follow the established design system:
+
+### Typography
+- **Headings**: Use Moderniz font for consistency
+- **Body Text**: Use Roboto font for readability
+- **Responsive Scaling**: Typography scales appropriately across devices
+
+### Colors
+- **Theme Integration**: Components respect light/dark mode preferences
+- **Semantic Colors**: Use primary, secondary, and accent colors appropriately
+- **Accessibility**: Maintain proper contrast ratios
+
+### Spacing
+- **Consistent Margins**: Use design tokens for spacing
+- **Responsive Padding**: Adapts to different screen sizes
+- **Grid Alignment**: Components align with the overall layout grid
+
+### Animations
+- **Framer Motion**: Consistent animation library usage
+- **Performance**: Optimized animations that don't impact performance
+- **Accessibility**: Respects user preferences for reduced motion
