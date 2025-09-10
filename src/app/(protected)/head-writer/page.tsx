@@ -115,7 +115,7 @@ export default function HeadWriterOverviewPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      draft: { label: "Draft", className: "bg-gray-100 text-gray-800 border-gray-200" },
+      draft: { label: "Draft", className: "bg-muted text-muted-foreground border-border" },
       review: { label: "Under Review", className: "bg-blue-100 text-blue-800 border-blue-200" },
       revise: { label: "Needs Revision", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
       published: { label: "Published", className: "bg-green-100 text-green-800 border-green-200" },

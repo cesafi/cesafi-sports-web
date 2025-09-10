@@ -136,8 +136,8 @@ export function getMatchStatusColor(match: ScheduleMatch): string {
   if (match.status === 'finished') return 'text-green-600';
   if (match.status === 'ongoing') return 'text-blue-600';
   if (match.status === 'cancelled') return 'text-red-600';
-  if (match.isPast) return 'text-gray-500';
-  return 'text-gray-900';
+  if (match.isPast) return 'text-muted-foreground';
+  return 'text-foreground';
 }
 
 /**

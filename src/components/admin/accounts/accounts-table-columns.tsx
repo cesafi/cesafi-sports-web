@@ -13,7 +13,7 @@ export const getAccountsTableColumns = (): TableColumn<AccountData>[] => [
     render: (account: AccountData) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
             <User className="text-muted-foreground h-5 w-5" />
           </div>
         </div>

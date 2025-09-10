@@ -88,8 +88,8 @@ export default function ArticlePreviewPage() {
         </div>
         <Card>
           <CardContent className="text-center py-12">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h1>
-            <p className="text-gray-600 mb-6">
+            <h1 className="text-2xl font-bold text-foreground mb-4">Article Not Found</h1>
+            <p className="text-muted-foreground mb-6">
               The article you're looking for doesn't exist or you don't have permission to preview it.
             </p>
             <Button onClick={() => router.back()}>Go Back</Button>

@@ -262,7 +262,7 @@ export function SchoolModal({
             {formData.logo_url ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border">
                     {formData.logo_url && (
                       <Image
                         src={formData.logo_url}
@@ -303,7 +303,7 @@ export function SchoolModal({
                   className={`h-32 w-full rounded-lg border-2 border-dashed transition-colors duration-200 ${
                     isDragOver
                       ? 'border-primary bg-primary/10'
-                      : 'border-gray-300 hover:border-gray-400'
+                      : 'border-border hover:border-muted-foreground'
                   } flex flex-col items-center justify-center`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -311,17 +311,17 @@ export function SchoolModal({
                 >
                   <ImageIcon
                     className={`mb-2 h-8 w-8 transition-colors duration-200 ${
-                      isDragOver ? 'text-primary' : 'text-gray-400'
+                      isDragOver ? 'text-primary' : 'text-muted-foreground'
                     }`}
                   />
                   <p
                     className={`mb-2 text-sm transition-colors duration-200 ${
-                      isDragOver ? 'text-primary' : 'text-gray-600'
+                      isDragOver ? 'text-primary' : 'text-muted-foreground'
                     }`}
                   >
                     {isDragOver ? 'Drop your logo here' : 'Upload school logo'}
                   </p>
-                  <p className="text-center text-xs text-gray-500">PNG, JPG, or WebP up to 5MB</p>
+                  <p className="text-center text-xs text-muted-foreground">PNG, JPG, or WebP up to 5MB</p>
                 </div>
                 <Button
                   type="button"

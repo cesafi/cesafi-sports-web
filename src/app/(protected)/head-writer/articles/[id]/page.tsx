@@ -58,8 +58,8 @@ export default function EditArticlePage() {
       <div className="w-full space-y-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h1>
-            <p className="text-gray-600 mb-6">
+            <h1 className="text-2xl font-bold text-foreground mb-4">Article Not Found</h1>
+            <p className="text-muted-foreground mb-6">
               The article you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to edit it.
             </p>
             <Link

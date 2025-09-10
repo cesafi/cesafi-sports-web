@@ -30,7 +30,7 @@ export function FunctionTestingCard({
   runAllTests 
 }: FunctionTestingCardProps) {
   const getTestIcon = (result?: TestResult) => {
-    if (!result) return <Clock className="h-4 w-4 text-gray-400" />;
+    if (!result) return <Clock className="h-4 w-4 text-muted-foreground" />;
     return result.success 
       ? <CheckCircle className="h-4 w-4 text-green-500" />
       : <XCircle className="h-4 w-4 text-red-500" />;

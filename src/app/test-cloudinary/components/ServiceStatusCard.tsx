@@ -23,7 +23,7 @@ export function ServiceStatusCard({ cloudinary }: ServiceStatusCardProps) {
     if (cloudinary.isLoading) return <Activity className="h-4 w-4 animate-spin text-blue-500" />;
     if (cloudinary.hasError) return <XCircle className="h-4 w-4 text-red-500" />;
     if (cloudinary.hasSuccess) return <CheckCircle className="h-4 w-4 text-green-500" />;
-    return <Activity className="h-4 w-4 text-gray-500" />;
+    return <Activity className="h-4 w-4 text-muted-foreground" />;
   };
 
   const getStatusText = () => {

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSchoolByAbbreviation } from '@/hooks/use-schools';
 import { useSchoolsTeamsBySchoolId, useSchoolsTeamsBySchoolAndSeason, useActiveTeamsBySchool } from '@/hooks/use-schools-teams';
+import { SchoolsTeamWithSportDetails } from '@/lib/types/schools-teams';
 import { useRecentMatches } from '@/hooks/use-schedule';
 import { useMatchesBySchoolId } from '@/hooks/use-matches';
 import { useAllSeasons } from '@/hooks/use-seasons';
@@ -49,6 +50,9 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
   const { data: teams, isLoading: teamsLoading } = selectedSeason?.id 
     ? useSchoolsTeamsBySchoolAndSeason(school?.id || '', selectedSeason.id)
     : useActiveTeamsBySchool(school?.id || '');
+  
+  // Type assertion to ensure TypeScript knows the correct type
+  const typedTeams = teams as SchoolsTeamWithSportDetails[] | undefined;
   
   // Use the new school-specific matches hook
   const { data: recentMatches, isLoading: matchesLoading } = useMatchesBySchoolId(school?.id || '', {
@@ -142,7 +146,7 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
       case 'ongoing':
         return <Badge variant="outline" className="text-green-600 border-green-600"><Target className="h-3 w-3 mr-1" />Ongoing</Badge>;
       case 'completed':
-        return <Badge variant="outline" className="text-gray-600 border-gray-600"><Trophy className="h-3 w-3 mr-1" />Completed</Badge>;
+        return <Badge variant="outline" className="text-muted-foreground border-muted"><Trophy className="h-3 w-3 mr-1" />Completed</Badge>;
       case 'cancelled':
         return <Badge variant="outline" className="text-red-600 border-red-600">Cancelled</Badge>;
       default:
@@ -379,9 +383,9 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
                   </div>
                 ))}
               </div>
-            ) : teams && teams.length > 0 ? (
+            ) : typedTeams && typedTeams.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {teams.map((team, index) => (
+                {typedTeams.map((team, index) => (
                   <motion.div
                     key={team.id}
                     initial={{ opacity: 0, y: 20 }}

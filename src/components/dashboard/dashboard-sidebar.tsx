@@ -117,8 +117,8 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
                   className={cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground border-sidebar-primary border-l-4'
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                      ? 'bg-sidebar-primary/10 text-sidebar-primary border-sidebar-primary border-l-4'
+                      : 'text-sidebar-foreground hover:bg-sidebar-primary/5 hover:text-sidebar-foreground'
                   )}
                 >
                   <item.icon
@@ -150,8 +150,8 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
                     className={cn(
                       'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground border-sidebar-primary border-l-4'
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                        ? 'bg-sidebar-primary/10 text-sidebar-primary border-sidebar-primary border-l-4'
+                        : 'text-sidebar-foreground hover:bg-sidebar-primary/5 hover:text-sidebar-foreground'
                     )}
                   >
                     <item.icon

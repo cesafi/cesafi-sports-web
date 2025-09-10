@@ -190,7 +190,7 @@ export function ArticleForm({
             <h1 className="text-2xl font-bold">
               {mode === 'create' ? 'Create New Article' : 'Edit Article'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               {mode === 'create'
                 ? 'Write and publish a new article'
                 : `Editing: ${article?.title || 'Article'}`
@@ -380,15 +380,15 @@ export function ArticleForm({
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Created:</span>
+                    <span className="text-muted-foreground">Created:</span>
                     <span>{new Date(article.created_at).toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Last Updated:</span>
+                    <span className="text-muted-foreground">Last Updated:</span>
                     <span>{new Date(article.updated_at).toLocaleDateString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Slug:</span>
+                    <span className="text-muted-foreground">Slug:</span>
                     <span className="font-mono text-xs">{article.slug}</span>
                   </div>
                 </CardContent>

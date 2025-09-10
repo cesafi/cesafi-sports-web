@@ -138,7 +138,7 @@ export default function LeagueOperatorMatchDetailsPage() {
       case 'postponed':
         return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
+        return 'bg-muted text-muted-foreground';
     }
   };
 

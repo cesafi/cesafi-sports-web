@@ -340,7 +340,7 @@ function ToolbarPlugin({
   };
 
   return (
-    <div className="border-b border-gray-200 p-2 flex flex-wrap gap-1">
+    <div className="border-b border-border p-2 flex flex-wrap gap-1">
       {/* Text Formatting */}
       <div className="flex gap-1">
         <Button
@@ -544,7 +544,7 @@ function ToolbarPlugin({
       <Separator orientation="vertical" className="h-8" />
 
       {/* Word Count */}
-      <div className="flex items-center px-2 text-sm text-gray-600">
+      <div className="flex items-center px-2 text-sm text-muted-foreground">
         <span>{wordCount} words</span>
       </div>
 
@@ -567,7 +567,7 @@ function ToolbarPlugin({
                 Unsaved changes
               </span>
             ) : (
-              <span className="text-gray-500">
+              <span className="text-muted-foreground">
                 All changes saved
               </span>
             )}
@@ -581,7 +581,7 @@ function ToolbarPlugin({
 // Placeholder component
 function Placeholder() {
   return (
-    <div className="absolute top-4 left-4 text-gray-400 pointer-events-none">
+    <div className="absolute top-4 left-4 text-muted-foreground pointer-events-none">
       Start writing your article...
     </div>
   );
@@ -627,7 +627,7 @@ export function LexicalEditor({
         h2: 'text-2xl font-bold mb-3',
         h3: 'text-xl font-bold mb-2',
       },
-      quote: 'border-l-4 border-gray-300 pl-4 italic my-4',
+      quote: 'border-l-4 border-border pl-4 italic my-4',
       list: {
         nested: {
           listitem: 'list-none',
@@ -674,7 +674,7 @@ export function LexicalEditor({
 
 
   return (
-    <div className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
+    <div className={`border border-border rounded-lg overflow-hidden ${className}`}>
       <LexicalComposer initialConfig={initialConfig}>
         <div className="relative">
           <ToolbarPlugin

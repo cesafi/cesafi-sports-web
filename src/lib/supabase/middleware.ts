@@ -11,10 +11,11 @@ const publicRoutes = [
   '/sitemap.xml',
   '/robots.txt',
   '/login',
-  '/forgot-password',
-  '/test-cloudinary',
   '/about-us',
-  '/schools',
+  '/volunteers',
+  '/news',
+  '/schedule',
+  '/schools'
 ];
 
 const roleDashboards: Record<UserRole, string> = {

@@ -71,7 +71,7 @@ export default function DashboardHeader({
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="hover:bg-accent hover:text-accent-foreground flex items-center gap-3 px-4 py-2 transition-colors"
+              className="hover:bg-muted hover:text-muted-foreground flex items-center gap-3 px-4 py-2 transition-colors"
             >
               <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                 {userName.charAt(0).toUpperCase()}
@@ -98,17 +98,17 @@ export default function DashboardHeader({
             </div>
 
             {/* Menu Items */}
-            <DropdownMenuItem className="hover:bg-accent flex cursor-pointer items-center gap-3 px-4 py-3">
+            <DropdownMenuItem className="hover:bg-muted flex cursor-pointer items-center gap-3 px-4 py-3">
               <User className="h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
 
-            <DropdownMenuItem className="hover:bg-accent flex cursor-pointer items-center gap-3 px-4 py-3">
+            <DropdownMenuItem className="hover:bg-muted flex cursor-pointer items-center gap-3 px-4 py-3">
               <Settings className="h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
 
-            <DropdownMenuItem className="hover:bg-accent flex cursor-pointer items-center gap-3 px-4 py-3">
+            <DropdownMenuItem className="hover:bg-muted flex cursor-pointer items-center gap-3 px-4 py-3">
               <Building2 className="h-4 w-4" />
               <span>Organization</span>
             </DropdownMenuItem>
