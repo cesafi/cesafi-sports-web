@@ -29,7 +29,7 @@ export default function HeroSection() {
       <div className="absolute inset-0">
         {/* Placeholder for video - you can replace this with your video element */}
         <div className="w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20" />
-        
+
         {/* Video overlay for better text readability */}
         <div className="absolute inset-0 bg-black/30" />
       </div>

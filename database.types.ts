@@ -361,6 +361,36 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsors: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          tagline: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active: boolean
+          logo_url?: string | null
+          tagline: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          tagline?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sports: {
         Row: {
           created_at: string
