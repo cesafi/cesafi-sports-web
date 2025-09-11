@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, User, Settings, LogOut, Building2 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -32,6 +32,12 @@ export default function DashboardHeader({
 }: DashboardHeaderProps) {
   const router = useRouter();
   const logoutMutation = useLogout();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering dropdown after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
 
 
@@ -67,7 +73,8 @@ export default function DashboardHeader({
       <div className="flex items-center gap-4">
         <ThemeSwitcher />
 
-        <DropdownMenu>
+        {isMounted ? (
+          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -125,6 +132,23 @@ export default function DashboardHeader({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        ) : (
+          // Fallback button while hydrating
+          <Button
+            variant="ghost"
+            className="hover:bg-muted hover:text-muted-foreground flex items-center gap-3 px-4 py-2 transition-colors"
+            disabled
+          >
+            <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+            <div className="hidden flex-col items-start gap-1 md:flex">
+              <span className="text-sm leading-none font-medium">{userName}</span>
+              <span className="text-muted-foreground text-xs leading-none">{userRoleDisplay || userRole}</span>
+            </div>
+            <ChevronDown className="text-muted-foreground h-4 w-4" />
+          </Button>
+        )}
       </div>
     </header>
   );

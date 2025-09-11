@@ -99,6 +99,11 @@ export default function VolunteersManagementPage() {
     }
   };
 
+  const handleSuccess = () => {
+    // Force refetch to ensure new image URLs are loaded
+    refetch();
+  };
+
   const clearFilters = () => {
     setDepartmentFilter('all');
     resetFilters();
@@ -224,6 +229,7 @@ export default function VolunteersManagementPage() {
         volunteer={editingVolunteer}
         onSubmit={handleSubmit}
         isSubmitting={isCreating || isUpdating}
+        onSuccess={handleSuccess}
       />
 
       {/* Confirmation Modal */}

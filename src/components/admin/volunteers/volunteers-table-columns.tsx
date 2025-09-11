@@ -19,6 +19,8 @@ export const getVolunteersTableColumns = (departments?: Department[]): TableColu
             <Image
               src={volunteer.image_url}
               alt={volunteer.full_name}
+              width={40}
+              height={40}
               className="h-10 w-10 rounded-full object-cover"
             />
           ) : (

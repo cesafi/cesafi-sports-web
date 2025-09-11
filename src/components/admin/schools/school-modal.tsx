@@ -11,8 +11,8 @@ import { toast } from 'sonner';
 import { School, SchoolInsert, SchoolUpdate } from '@/lib/types/schools';
 import { createSchoolSchema, updateSchoolSchema } from '@/lib/validations/schools';
 import { z } from 'zod';
-import { Building2, Image as ImageIcon, Power, Upload, X } from 'lucide-react';
-import Image from 'next/image';
+import { Building2, Image as ImageIcon, Power, Upload, X, Loader2 } from 'lucide-react';
+import { useCloudinary } from '@/hooks/use-cloudinary';
 
 interface SchoolModalProps {
   open: boolean;
@@ -36,16 +36,20 @@ export function SchoolModal({
   const [formData, setFormData] = useState<SchoolInsert | SchoolUpdate>({
     name: '',
     abbreviation: '',
-    logo_url: null,
+    logo_url: '',
     is_active: true
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isDragOver, setIsDragOver] = useState(false);
+  const [oldLogoUrl, setOldLogoUrl] = useState<string | null>(null); // Track old logo for cleanup
 
   // Track when mutations start to detect completion
   const hasStartedCreating = useRef(false);
   const hasStartedUpdating = useRef(false);
+
+  // Cloudinary hook
+  const { uploadImage, deleteImage, isUploading } = useCloudinary();
 
   const handleClose = useCallback(() => {
     setErrors({});
@@ -60,18 +64,20 @@ export function SchoolModal({
           id: school.id, // Include the ID for updates
           name: school.name || '',
           abbreviation: school.abbreviation || '',
-          logo_url: school.logo_url || null,
+          logo_url: school.logo_url || '',
           is_active: school.is_active ?? true
         };
         setFormData(editData);
+        setOldLogoUrl(school.logo_url); // Track the original logo for cleanup
       } else {
         const addData: SchoolInsert = {
           name: '',
           abbreviation: '',
-          logo_url: null,
+          logo_url: '',
           is_active: true
         };
         setFormData(addData);
+        setOldLogoUrl(null);
       }
       setErrors({});
       hasStartedCreating.current = false;
@@ -101,10 +107,16 @@ export function SchoolModal({
     // Check if update mutation just completed (was started and now finished)
     if (hasStartedUpdating.current && !isSubmitting && mode === 'edit') {
       hasStartedUpdating.current = false;
+
+      // Clean up old logo if a new one was uploaded
+      if (oldLogoUrl && formData.logo_url && oldLogoUrl !== formData.logo_url) {
+        cleanupOldImage(oldLogoUrl);
+      }
+
       onSuccess?.();
       handleClose();
     }
-  }, [isSubmitting, mode, onSuccess, handleClose]);
+  }, [isSubmitting, mode, onSuccess, handleClose, oldLogoUrl, formData.logo_url, deleteImage]);
 
   const validateForm = () => {
     try {
@@ -144,6 +156,25 @@ export function SchoolModal({
     }
   };
 
+  const cleanupOldImage = async (imageUrl: string) => {
+    try {
+      // Extract public_id from the URL for deletion
+      const url = imageUrl;
+      // Match the full path after /upload/ or /upload/vX_Y_Z/ and remove extension
+      const publicIdMatch = url.match(/\/upload\/(?:v\d+_\d+_\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
+
+      if (publicIdMatch) {
+        const publicId = publicIdMatch[1]; // This includes the full folder path without extension
+
+        await deleteImage(publicId);
+        console.log('Old logo cleaned up successfully:', publicId);
+      }
+    } catch (error) {
+      // Don't block the process if cleanup fails
+      console.warn('Failed to cleanup old logo from Cloudinary:', error);
+    }
+  };
+
   const handleInputChange = (field: string, value: string | boolean | null) => {
     setFormData((prev: SchoolInsert | SchoolUpdate) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -151,18 +182,70 @@ export function SchoolModal({
     }
   };
 
-  const handleLogoUpload = () => {
-    // TODO: Implement Cloudinary upload
-    // For now, just show a placeholder message
-    toast.info('Logo upload functionality will be implemented with Cloudinary integration');
+  const handleLogoUpload = async (file: File) => {
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
 
-    // Simulate getting a URL (remove this when implementing actual upload)
-    const mockUrl = `https://example.com/logo-${Date.now()}.jpg`;
-    handleInputChange('logo_url', mockUrl);
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    try {
+      // Generate a unique filename for the school logo
+      const schoolName = formData.name || 'school';
+      const sanitizedName = schoolName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const publicId = `schools/logos/${sanitizedName}-${Date.now()}`;
+
+      // Upload to Cloudinary
+      const result = await uploadImage(file, {
+        folder: 'schools/logos',
+        public_id: publicId
+      });
+
+      if (result.success && result.data) {
+        // If updating and there was an old logo, mark it for cleanup after successful save
+        if (mode === 'edit' && oldLogoUrl && oldLogoUrl !== result.data.secure_url) {
+          // We'll cleanup the old image after the school update is successful
+          // This will be handled in the submission success logic
+        }
+
+        handleInputChange('logo_url', result.data.secure_url);
+        toast.success('Logo uploaded successfully!');
+      } else {
+        toast.error(result.error || 'Failed to upload logo');
+      }
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      toast.error('Failed to upload logo');
+    }
   };
 
-  const removeLogo = () => {
-    handleInputChange('logo_url', null);
+  const removeLogo = async () => {
+    // If there's a current logo, we should delete it from Cloudinary
+    if (formData.logo_url) {
+      try {
+        // Extract public_id from the URL for deletion
+        const url = formData.logo_url;
+        // Match the full path after /upload/ or /upload/vX_Y_Z/ and remove extension
+        const publicIdMatch = url.match(/\/upload\/(?:v\d+_\d+_\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
+
+        if (publicIdMatch) {
+          const publicId = publicIdMatch[1]; // This includes the full folder path without extension
+
+          await deleteImage(publicId);
+        }
+      } catch (error) {
+        // Don't block the UI removal if deletion fails
+        console.warn('Failed to delete image from Cloudinary:', error);
+      }
+    }
+    
+    handleInputChange('logo_url', '');
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -183,7 +266,7 @@ export function SchoolModal({
     if (files.length > 0) {
       const file = files[0];
       if (file.type.startsWith('image/')) {
-        handleLogoUpload();
+        handleLogoUpload(file);
       } else {
         toast.error('Please upload an image file');
       }
@@ -255,21 +338,18 @@ export function SchoolModal({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <ImageIcon className="h-5 w-5" />
-              School Logo
+              School Logo *
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {formData.logo_url ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border">
+                  <div className="relative h-20 w-20 overflow-hidden rounded-lg border-2 border-dashed border-border">
                     {formData.logo_url && (
-                      <Image
+                      <img
                         src={formData.logo_url}
                         alt="School logo"
-                        width={80}
-                        height={80}
-                        unoptimized
                         className="h-full w-full object-cover"
                       />
                     )}
@@ -292,9 +372,19 @@ export function SchoolModal({
                   type="button"
                   variant="outline"
                   onClick={() => document.getElementById('logo-upload')?.click()}
+                  disabled={isUploading}
                 >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Change Logo
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Change Logo
+                    </>
+                  )}
                 </Button>
               </div>
             ) : (
@@ -303,6 +393,8 @@ export function SchoolModal({
                   className={`h-32 w-full rounded-lg border-2 border-dashed transition-colors duration-200 ${
                     isDragOver
                       ? 'border-primary bg-primary/10'
+                      : errors.logo_url
+                      ? 'border-red-500 hover:border-red-400'
                       : 'border-border hover:border-muted-foreground'
                   } flex flex-col items-center justify-center`}
                   onDragOver={handleDragOver}
@@ -327,9 +419,19 @@ export function SchoolModal({
                   type="button"
                   variant="outline"
                   onClick={() => document.getElementById('logo-upload')?.click()}
+                  disabled={isUploading}
                 >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Choose File
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Choose File
+                    </>
+                  )}
                 </Button>
               </div>
             )}
@@ -343,11 +445,12 @@ export function SchoolModal({
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  handleLogoUpload();
+                  handleLogoUpload(file);
                 }
               }}
             />
 
+            {errors.logo_url && <p className="text-sm text-red-500">{errors.logo_url}</p>}
             <p className="text-muted-foreground text-xs">
               Logo will be automatically optimized and stored in the cloud. Recommended size:
               200x200px or larger.

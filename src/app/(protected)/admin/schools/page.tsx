@@ -107,8 +107,8 @@ export default function SchoolsManagementPage() {
   };
 
   const handleSuccess = () => {
-    // This will be called when the modal closes after successful submission
-    // The useSchoolsTable hook will automatically refetch the data
+    // Force refetch to ensure new image URLs are loaded
+    refetch();
   };
 
   const columns = getSchoolsTableColumns();

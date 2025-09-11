@@ -6,7 +6,7 @@ export const createSchoolSchema = z.object({
     .string()
     .min(2, { message: 'Abbreviation must be at least 2 characters.' })
     .max(10, { message: 'Abbreviation cannot exceed 10 characters.' }),
-  logo_url: z.string().nullable().optional(),
+  logo_url: z.string().min(1, { message: 'School logo is required.' }).url({ message: 'Please upload a valid logo image.' }),
   is_active: z.boolean().default(true)
 });
 
