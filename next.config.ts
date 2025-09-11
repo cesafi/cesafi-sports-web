@@ -23,9 +23,9 @@ const securityHeaders = [
       default-src 'self';
       script-src 'self' 'unsafe-inline' 'unsafe-eval' *.google.com *.googleapis.com *.cloudflareinsights.com static.cloudflareinsights.com;
       style-src 'self' 'unsafe-inline';
-      img-src 'self' data: blob: *.supabase.co *.googleapis.com *.gstatic.com *.cloudflareinsights.com cdn.manilastandard.net images.unsplash.com via.placeholder.com picsum.photos source.unsplash.com *.googleusercontent.com sports.inquirer.net newsinfo.inquirer.net cebudailynews.inquirer.net www.sunstar.com.ph www.thefreeman.net cebunews.net www.philstar.com www.gmanetwork.com www.abs-cbn.com www.rappler.com;
+      img-src 'self' data: blob: *.supabase.co *.googleapis.com *.gstatic.com *.cloudflareinsights.com *.cloudinary.com cdn.manilastandard.net images.unsplash.com via.placeholder.com picsum.photos source.unsplash.com *.googleusercontent.com sports.inquirer.net newsinfo.inquirer.net cebudailynews.inquirer.net www.sunstar.com.ph www.thefreeman.net cebunews.net www.philstar.com www.gmanetwork.com www.abs-cbn.com www.rappler.com;
       font-src 'self' data:;
-      connect-src 'self' *.supabase.co wss://*.supabase.co *.cloudflareinsights.com;
+      connect-src 'self' *.supabase.co wss://*.supabase.co *.cloudflareinsights.com https://api.cloudinary.com;
       frame-src 'self' *.google.com *.googleapis.com;
       worker-src 'self' blob:;
     `
@@ -132,6 +132,13 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.rappler.com',
+        port: '',
+        pathname: '/**'
+      },
+      // Cloudinary CDN
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
         port: '',
         pathname: '/**'
       },

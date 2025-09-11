@@ -8,34 +8,72 @@ import {
 } from '@/lib/types/cloudinary';
 
 class CloudinaryService {
+  private static cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  private static apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
+  private static apiSecret = process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET;
   static async uploadImage(
     file: File,
     options: CloudinaryUploadOptions = {}
   ): Promise<CloudinaryServiceResponse<CloudinaryUploadResult>> {
     try {
-      // Create FormData for upload
+      // Get API credentials
+
+      if (!this.apiKey || !this.apiSecret) {
+        return {
+          success: false,
+          error: 'Cloudinary API credentials not found. Please set CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET environment variables.'
+        };
+      }
+
+      // Create FormData for signed upload
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('api_key', this.apiKey);
 
-      // Use unsigned upload preset for client-side uploads
-      const uploadPreset = 'cesafi-uploads';
-      formData.append('upload_preset', uploadPreset);
+      // Add timestamp for signature
+      const timestamp = Math.round(Date.now() / 1000);
+      formData.append('timestamp', timestamp.toString());
+
+      // Build parameters for signature - NOTE: api_key should NOT be in signature
+      const params: Record<string, string> = {
+        timestamp: timestamp.toString()
+      };
 
       // Add folder if specified
       if (options.folder) {
         formData.append('folder', options.folder);
+        params.folder = options.folder;
       }
+
       // Add optional parameters
       if (options.public_id) {
         formData.append('public_id', options.public_id);
+        params.public_id = options.public_id;
       }
+      
       if (options.overwrite) {
         formData.append('overwrite', 'true');
+        params.overwrite = 'true';
       }
 
-      // Upload to Cloudinary using next-cloudinary approach
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      // Sort keys alphabetically and create signature string
+      const sortedKeys = Object.keys(params).sort();
+      const signatureString = sortedKeys
+        .map(key => `${key}=${params[key]}`)
+        .join('&');
+
+      // Create signature using Web Crypto API
+      const encoder = new TextEncoder();
+      const data = encoder.encode(signatureString + this.apiSecret);
+      const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      formData.append('signature', signature);
+
+
+      // Upload to Cloudinary using signed request
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${this.cloudName}/image/upload`, {
         method: 'POST',
         body: formData
       });
@@ -111,46 +149,90 @@ class CloudinaryService {
   static async deleteImage(
     publicId: string,
     options: {
-      resourceType?: 'image' | 'video' | 'raw' | 'auto';
+      resourceType?: 'image' | 'video' | 'raw';
       invalidate?: boolean;
     } = {}
   ): Promise<CloudinaryServiceResponse<CloudinaryDeleteResult>> {
     try {
-      const { resourceType = 'image', invalidate = false } = options;
+      const resourceType = options.resourceType || 'image';
+      
+      
+      // Create FormData for the destroy API call
+      const formData = new FormData();
+      formData.append('public_id', publicId);
+      
+      // Add timestamp for signature
+      const timestamp = Math.round(Date.now() / 1000);
+      formData.append('timestamp', timestamp.toString());
+      
 
-      // For client-side delete operations, we need to use a different approach
-      // Since we can't access API secrets on the client side, we'll use the upload API
-      // with a "destroy" transformation or return a mock success for testing purposes
-
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-
-      if (!cloudName) {
+      
+      if (!this.apiKey || !this.apiSecret) {
+        const error = 'Cloudinary API credentials not found. Please set CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET environment variables.';
         return {
           success: false,
-          error: 'Cloudinary cloud name not configured'
+          error
+        };
+      }
+      
+      formData.append('api_key', this.apiKey);
+      
+      // Add optional parameters
+      if (options.invalidate) {
+        formData.append('invalidate', 'true');
+      }
+      
+      // Generate signature for authentication
+      // Build params object for signature (not URLSearchParams to avoid encoding issues)
+      const params: Record<string, string> = {
+        public_id: publicId,
+        timestamp: timestamp.toString()
+      };
+      
+      if (options.invalidate) {
+        params.invalidate = 'true';
+      }
+      
+      // Sort keys alphabetically and create string
+      const sortedKeys = Object.keys(params).sort();
+      const signatureString = sortedKeys
+        .map(key => `${key}=${params[key]}`)
+        .join('&');
+      
+      
+      // Create signature using Web Crypto API
+      const encoder = new TextEncoder();
+      const data = encoder.encode(signatureString + this.apiSecret);
+      const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      formData.append('signature', signature);
+      
+      const apiUrl = `https://api.cloudinary.com/v1_1/${this.cloudName}/${resourceType}/destroy`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: result.error?.message || result.message || 'Delete failed'
         };
       }
 
-      // For testing purposes, we'll simulate a successful delete
-      // In a production environment, you would typically:
-      // 1. Create a server-side API endpoint that handles the delete operation
-      // 2. Use that endpoint from the client
-      // 3. The server endpoint would have access to the API secret
-
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // For now, we'll return a mock successful response
-      // This allows testing the UI flow while indicating the limitation
       return {
         success: true,
         data: {
-          result: 'ok',
+          result: result.result,
           public_id: publicId,
-          // Note: This is a mock response for client-side testing
-          // Actual deletion requires server-side implementation
-          partial: true,
-          info: `Client-side delete simulation for ${resourceType} with invalidate: ${invalidate} - implement server-side API for production`
+          resource_type: resourceType,
+          invalidated: options.invalidate || false
         }
       };
     } catch (error) {
@@ -187,5 +269,6 @@ class CloudinaryService {
     }
   }
 }
+
 
 export default CloudinaryService;

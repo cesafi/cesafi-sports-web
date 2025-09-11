@@ -45,7 +45,9 @@ export interface CloudinaryUploadResult {
 
 export interface CloudinaryDeleteResult {
   result: 'ok' | 'not found';
-  public_id?: string;
+  public_id: string;
+  resource_type?: string;
+  invalidated?: boolean;
   partial?: boolean;
   info?: string;
 }
