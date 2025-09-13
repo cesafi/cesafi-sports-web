@@ -1,11 +1,11 @@
 'use server';
 
-import { PaginationOptions } from '@/lib/types/base';
-import { ArticleInsert, ArticleUpdate } from '@/lib/types/articles';
+import { ArticlePaginationOptions } from '@/lib/types/articles';
 import { ArticleService } from '@/services/articles';
+import { createArticleSchema, updateArticleSchema } from '@/lib/validations/articles';
 import { revalidatePath } from 'next/cache';
 
-export async function getPaginatedArticles(options: PaginationOptions) {
+export async function getPaginatedArticles(options: ArticlePaginationOptions) {
   return await ArticleService.getPaginated(options);
 }
 
@@ -17,8 +17,19 @@ export async function getArticleById(id: string) {
   return await ArticleService.getById(id);
 }
 
-export async function createArticle(data: ArticleInsert) {
-  const result = await ArticleService.insert(data);
+export async function createArticle(data: unknown) {
+  // Validate the input data
+  const validationResult = createArticleSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await ArticleService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/articles');
@@ -28,14 +39,25 @@ export async function createArticle(data: ArticleInsert) {
   return result;
 }
 
-export async function updateArticleById(data: ArticleUpdate) {
-  const result = await ArticleService.updateById(data);
+export async function updateArticleById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateArticleSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await ArticleService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/articles');
     revalidatePath('/articles');
-    if (data.id) {
-      revalidatePath(`/articles/${data.id}`);
+    if (validationResult.data.id) {
+      revalidatePath(`/articles/${validationResult.data.id}`);
     }
   }
 

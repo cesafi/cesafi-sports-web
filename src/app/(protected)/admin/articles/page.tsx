@@ -67,7 +67,13 @@ export default function ArticlesManagementPage() {
   const actions = getArticlesTableActions(handleDeleteArticle, 'admin', handlePreviewArticle, handleViewArticle);
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="w-full space-y-6">
+      {/* Page Header */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Articles Management</h1>
+        <p className="text-muted-foreground">Create, edit, and manage articles for the league.</p>
+      </div>
+
       {/* Data Table */}
       <DataTable
         data={articles}

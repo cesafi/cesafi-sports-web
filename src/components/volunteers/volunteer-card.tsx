@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { User, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { roboto } from '@/lib/fonts';
 import type { Volunteer } from '@/lib/types/volunteers';

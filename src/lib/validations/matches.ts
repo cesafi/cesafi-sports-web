@@ -9,12 +9,18 @@ export const createMatchSchema = z
     description: z
       .string({ message: 'Match description is required.' })
       .min(1, { message: 'Match description cannot be empty.' }),
+    venue: z
+      .string({ message: 'Venue is required.' })
+      .min(1, { message: 'Venue cannot be empty.' }),
     best_of: z
       .number({ message: 'Best of must be a number.' })
       .int({ message: 'Best of must be an integer.' })
       .positive({ message: 'Best of must be positive.' })
       .default(1),
-    sports_seasons_stage_id: z.number({ message: 'Sports seasons stage ID is required.' }),
+    stage_id: z.number({ message: 'Stage ID is required.' }),
+    status: z.enum(['upcoming', 'ongoing', 'finished', 'cancelled'], {
+      message: 'Status must be one of: upcoming, ongoing, finished, cancelled.'
+    }).default('upcoming'),
     scheduled_at: z.string().optional().nullable(),
     start_at: z.string().optional().nullable(),
     end_at: z.string().optional().nullable()
@@ -53,14 +59,21 @@ export const updateMatchSchema = z
       .max(255, { message: 'Match name cannot exceed 255 characters.' })
       .optional(),
     description: z.string().min(1, { message: 'Match description cannot be empty.' }).optional(),
+    venue: z
+      .string()
+      .min(1, { message: 'Venue cannot be empty.' })
+      .optional(),
     best_of: z
       .number({ message: 'Best of must be a number.' })
       .int({ message: 'Best of must be an integer.' })
       .positive({ message: 'Best of must be positive.' })
       .optional(),
-    sports_seasons_stage_id: z
-      .number({ message: 'Sports seasons stage ID is required.' })
+    stage_id: z
+      .number({ message: 'Stage ID is required.' })
       .optional(),
+    status: z.enum(['upcoming', 'ongoing', 'finished', 'cancelled'], {
+      message: 'Status must be one of: upcoming, ongoing, finished, cancelled.'
+    }).optional(),
     scheduled_at: z.string().optional().nullable(),
     start_at: z.string().optional().nullable(),
     end_at: z.string().optional().nullable()
@@ -89,7 +102,3 @@ export const updateMatchSchema = z
       path: ['start_at']
     }
   );
-
-// Legacy exports for backward compatibility
-export const MatchInsertSchema = createMatchSchema;
-export const MatchUpdateSchema = updateMatchSchema;

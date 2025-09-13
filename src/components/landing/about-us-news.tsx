@@ -6,12 +6,9 @@ export default async function AboutUsNews() {
   const result = await getCESAFINews();
   
   if (!result.success) {
-    // Fallback to empty array if service fails
-    return <AboutUsNewsClient news={[]} isUsingFallback={true} />;
+    return <AboutUsNewsClient news={[]} error={result.error} />;
   }
 
   const news = result.data;
-  const isUsingFallback = news.length > 0 && news[0].id.startsWith('fallback-');
-
-  return <AboutUsNewsClient news={news} isUsingFallback={isUsingFallback} />;
+  return <AboutUsNewsClient news={news} />;
 }

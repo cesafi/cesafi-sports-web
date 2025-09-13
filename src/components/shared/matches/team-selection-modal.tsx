@@ -9,7 +9,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Search, Trophy, Users } from 'lucide-react';
 import { MatchParticipantWithFullDetails } from '@/lib/types/match-participants';
-import { SchoolsTeamWithSchoolDetails } from '@/lib/types/schools-teams';
 import { useStageTeams } from '@/hooks/use-stage-teams';
 import { useCreateMatchParticipant } from '@/hooks/use-match-participants';
 import { toast } from 'sonner';
@@ -81,7 +80,7 @@ export function TeamSelectionModal({
       toast.success(`Successfully added ${selectedTeams.length} team(s) to match`);
       onTeamAdded();
       handleClose();
-    } catch (error) {
+    } catch (_error) {
       toast.error('An unexpected error occurred');
     }
   };

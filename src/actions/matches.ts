@@ -1,11 +1,15 @@
 'use server';
 
-import { PaginationOptions } from '@/lib/types/base';
-import { MatchInsert, MatchUpdate } from '@/lib/types/matches';
+import {
+  MatchPaginationOptions,
+  SchedulePaginationOptions,
+  ScheduleFilters
+} from '@/lib/types/matches';
 import { MatchService } from '@/services/matches';
+import { createMatchSchema, updateMatchSchema } from '@/lib/validations/matches';
 import { revalidatePath } from 'next/cache';
 
-export async function getPaginatedMatches(options: PaginationOptions) {
+export async function getPaginatedMatches(options: MatchPaginationOptions) {
   return await MatchService.getPaginated(options);
 }
 
@@ -17,10 +21,16 @@ export async function getMatchById(id: number) {
   return await MatchService.getById(id);
 }
 
+export async function getMatchByIdWithDetails(id: number) {
+  return await MatchService.getByIdWithDetails(id);
+}
 
+export async function getMatchByIdWithFullDetails(id: number) {
+  return await MatchService.getByIdWithDetails(id);
+}
 
 export async function getMatchByIdBasic(id: number) {
-  return await MatchService.getByIdBasic(id);
+  return await MatchService.getById(id);
 }
 
 export async function getMatchesByStageId(stageId: number) {
@@ -28,15 +38,26 @@ export async function getMatchesByStageId(stageId: number) {
 }
 
 export async function getMatchesBySportAndCategory(sportId: number, sportCategoryId: number) {
-  return await MatchService.getBySportAndCategory(sportId, sportCategoryId);
+  return await MatchService.getBySportCategory(sportCategoryId);
 }
 
 export async function getMatchesBySeason(seasonId: number) {
   return await MatchService.getBySeason(seasonId);
 }
 
-export async function createMatch(data: MatchInsert) {
-  const result = await MatchService.insert(data);
+export async function createMatch(data: unknown) {
+  // Validate the input data
+  const validationResult = createMatchSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await MatchService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');
@@ -45,9 +66,19 @@ export async function createMatch(data: MatchInsert) {
   return result;
 }
 
-export async function createMatchWithParticipants(data: MatchInsert, participantTeamIds: string[]) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = await (MatchService as any).insertWithParticipants(data, participantTeamIds);
+export async function createMatchWithParticipants(data: unknown, participantTeamIds: string[]) {
+  // Validate the input data
+  const validationResult = createMatchSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await MatchService.insertWithParticipants(validationResult.data, participantTeamIds);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');
@@ -56,8 +87,19 @@ export async function createMatchWithParticipants(data: MatchInsert, participant
   return result;
 }
 
-export async function updateMatchById(data: MatchUpdate) {
-  const result = await MatchService.updateById(data);
+export async function updateMatchById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateMatchSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await MatchService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');
@@ -77,38 +119,11 @@ export async function deleteMatchById(id: number) {
 }
 
 // New server actions for schedule feature
-export async function getScheduleMatches(
-  options: {
-    cursor?: string;
-    limit: number;
-    direction: 'future' | 'past';
-    filters?: {
-      season_id?: number;
-      sport_id?: number;
-      sport_category_id?: number;
-      stage_id?: number;
-      status?: string;
-      date_from?: string;
-      date_to?: string;
-      search?: string;
-    };
-  }
-) {
+export async function getScheduleMatches(options: SchedulePaginationOptions) {
   return await MatchService.getScheduleMatches(options);
 }
 
-export async function getScheduleMatchesByDate(
-  options: {
-    season_id?: number;
-    sport_id?: number;
-    sport_category_id?: number;
-    stage_id?: number;
-    status?: string;
-    date_from?: string;
-    date_to?: string;
-    search?: string;
-  }
-) {
+export async function getScheduleMatchesByDate(options: ScheduleFilters) {
   return await MatchService.getScheduleMatchesByDate(options);
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { ModalLayout } from '@/components/ui/modal-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,12 +117,12 @@ export function SchoolModal({
       onSuccess?.();
       handleClose();
     }
-  }, [isSubmitting, mode, onSuccess, handleClose, oldLogoUrl, formData.logo_url, deleteImage]);
+  }, [isSubmitting, mode, onSuccess, handleClose, oldLogoUrl, formData.logo_url, deleteImage, cleanupOldImage]);
 
   const validateForm = () => {
     try {
       const schema = mode === 'add' ? createSchoolSchema : updateSchoolSchema;
-      const result = schema.parse(formData);
+      schema.parse(formData);
       setErrors({});
       return true;
     } catch (error) {
@@ -156,7 +157,7 @@ export function SchoolModal({
     }
   };
 
-  const cleanupOldImage = async (imageUrl: string) => {
+  const cleanupOldImage = useCallback(async (imageUrl: string) => {
     try {
       // Extract public_id from the URL for deletion
       const url = imageUrl;
@@ -173,7 +174,7 @@ export function SchoolModal({
       // Don't block the process if cleanup fails
       console.warn('Failed to cleanup old logo from Cloudinary:', error);
     }
-  };
+  }, [deleteImage]);
 
   const handleInputChange = (field: string, value: string | boolean | null) => {
     setFormData((prev: SchoolInsert | SchoolUpdate) => ({ ...prev, [field]: value }));
@@ -347,9 +348,11 @@ export function SchoolModal({
                 <div className="flex items-center gap-3">
                   <div className="relative h-20 w-20 overflow-hidden rounded-lg border-2 border-dashed border-border">
                     {formData.logo_url && (
-                      <img
+                      <Image
                         src={formData.logo_url}
                         alt="School logo"
+                        width={80}
+                        height={80}
                         className="h-full w-full object-cover"
                       />
                     )}

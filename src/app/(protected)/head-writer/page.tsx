@@ -5,10 +5,8 @@ import {
   Users,
   Clock,
   CheckCircle,
-  AlertCircle,
   TrendingUp,
   Plus,
-  Eye,
   UserCheck,
   Calendar
 } from 'lucide-react';
@@ -53,7 +51,7 @@ export default function HeadWriterOverviewPage() {
     ).length;
 
     // Get unique authors (writers)
-    const uniqueAuthors = new Set(articles.map(a => a.author_id)).size;
+    const uniqueAuthors = new Set(articles.map(a => a.authored_by)).size;
     
     // Calculate team performance (published vs total)
     const teamPerformance = totalArticles > 0 ? Math.round((published / totalArticles) * 100) : 0;
@@ -76,7 +74,7 @@ export default function HeadWriterOverviewPage() {
       id: article.id,
       title: article.title,
       status: article.status,
-      author: article.author_name || 'Unknown Author',
+      author: article.authored_by || 'Unknown Author',
       date: new Date(article.created_at).toLocaleDateString()
     }));
   }, [articlesData]);
@@ -88,8 +86,8 @@ export default function HeadWriterOverviewPage() {
     const authorStats = new Map();
     
     articlesData.data.forEach(article => {
-      const authorId = article.author_id;
-      const authorName = article.author_name || 'Unknown Author';
+      const authorId = article.authored_by;
+      const authorName = article.authored_by || 'Unknown Author';
       
       if (!authorStats.has(authorId)) {
         authorStats.set(authorId, {

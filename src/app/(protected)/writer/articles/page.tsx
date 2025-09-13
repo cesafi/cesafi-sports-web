@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { DataTable } from '@/components/table';
 import { useArticlesTable } from '@/hooks/use-articles';
 import { getArticlesTableColumns, getArticlesTableActions } from '@/components/admin/articles';

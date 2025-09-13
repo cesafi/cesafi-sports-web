@@ -2,7 +2,7 @@
 
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
-import { Calendar, MapPin, Users, Trophy, Clock } from 'lucide-react';
+import { Calendar, MapPin, Trophy, Clock } from 'lucide-react';
 import { moderniz, roboto } from '@/lib/fonts';
 
 // Mock upcoming games data - in production this would come from your matches database

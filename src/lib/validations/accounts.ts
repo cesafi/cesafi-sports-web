@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const createAccountSchema = z.object({
   displayName: z.string().min(1, 'Display name is required').trim(),
-  email: z.string().min(1, 'Email is required').email('Please enter a valid email address'),
+  email: z.email('Please enter a valid email address').min(1, 'Email is required'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters long')
@@ -35,7 +35,7 @@ export const resetPasswordSchema = z
 
 export const updateAccountSchema = z.object({
   displayName: z.string().min(1, 'Display name is required').trim(),
-  email: z.string().min(1, 'Email is required').email('Please enter a valid email address'),
+  email: z.email('Please enter a valid email address').min(1, 'Email is required'),
   password: z
     .string()
     .optional()
@@ -54,7 +54,8 @@ export const updateAccountSchema = z.object({
   role: z.enum(['admin', 'head_writer', 'league_operator', 'writer'] as const)
 });
 
+// Export inferred types
 export type CreateAccountFormData = z.infer<typeof createAccountSchema>;
+export type UpdateAccountFormData = z.infer<typeof updateAccountSchema>;
 export type UpdateAccountRoleFormData = z.infer<typeof updateAccountRoleSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
-export type UpdateAccountFormData = z.infer<typeof updateAccountSchema>;

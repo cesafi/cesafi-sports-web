@@ -11,3 +11,9 @@ export { LeagueStageSelector } from './league-stage-selector';
 export { TeamSelectionModal } from './team-selection-modal';
 export { getMatchesTableColumns, getMatchesTableActions } from './matches-table-columns';
 export { getMatchGamesTableColumns, getMatchGamesTableActions } from './match-games-table-columns';
+
+// Schedule components
+export { ScheduleMatchCard } from './schedule-match-card';
+export { ScheduleDateGroup } from './schedule-date-group';
+export { InfiniteSchedule } from './infinite-schedule';
+export { ScheduleFiltersComponent } from './schedule-filters';

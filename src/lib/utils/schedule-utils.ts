@@ -56,15 +56,15 @@ export function groupMatchesByDate(matches: ScheduleMatch[]): Record<string, Sch
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  matches.forEach(match => {
+  matches.forEach((match) => {
     if (match.scheduled_at) {
       const matchDate = new Date(match.scheduled_at);
       const dateKey = matchDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-      
+
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
       }
-      
+
       // Add display properties
       const displayMatch: ScheduleMatch = {
         ...match,
@@ -74,13 +74,13 @@ export function groupMatchesByDate(matches: ScheduleMatch[]): Record<string, Sch
         isPast: matchDate < now,
         isUpcoming: matchDate > now
       };
-      
+
       grouped[dateKey].push(displayMatch);
     }
   });
 
   // Sort matches within each date group by time
-  Object.keys(grouped).forEach(dateKey => {
+  Object.keys(grouped).forEach((dateKey) => {
     grouped[dateKey].sort((a, b) => {
       if (!a.scheduled_at || !b.scheduled_at) return 0;
       return new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime();
@@ -125,7 +125,7 @@ export function isMatchThisWeek(match: ScheduleMatch): boolean {
   const today = new Date();
   const weekFromNow = new Date(today);
   weekFromNow.setDate(today.getDate() + 7);
-  
+
   return matchDate >= today && matchDate <= weekFromNow;
 }
 
@@ -147,11 +147,11 @@ export function formatSportInfo(match: ScheduleMatch): string {
   const sport = match.sports_seasons_stages?.sports_categories?.sports?.name || 'Unknown Sport';
   const category = match.sports_seasons_stages?.sports_categories?.levels || '';
   const stage = match.sports_seasons_stages?.competition_stage || '';
-  
+
   let result = sport;
   if (category) result += ` - ${category}`;
   if (stage) result += ` (${stage})`;
-  
+
   return result;
 }
 
@@ -161,4 +161,105 @@ export function formatSportInfo(match: ScheduleMatch): string {
 export function formatBestOf(match: ScheduleMatch): string {
   if (!match.best_of || match.best_of <= 1) return 'Single Game';
   return `Best of ${match.best_of}`;
+}
+
+/**
+ * Get the relative time for a match (e.g., "in 2 hours", "2 hours ago")
+ */
+export function getRelativeTime(match: ScheduleMatch): string {
+  if (!match.scheduled_at) return 'TBD';
+
+  const matchDate = new Date(match.scheduled_at);
+  const now = new Date();
+  const diffMs = matchDate.getTime() - now.getTime();
+  const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  if (Math.abs(diffDays) >= 1) {
+    return diffDays > 0
+      ? `in ${diffDays} day${diffDays > 1 ? 's' : ''}`
+      : `${Math.abs(diffDays)} day${Math.abs(diffDays) > 1 ? 's' : ''} ago`;
+  } else if (Math.abs(diffHours) >= 1) {
+    return diffHours > 0
+      ? `in ${diffHours} hour${diffHours > 1 ? 's' : ''}`
+      : `${Math.abs(diffHours)} hour${Math.abs(diffHours) > 1 ? 's' : ''} ago`;
+  } else {
+    const diffMinutes = Math.round(diffMs / (1000 * 60));
+    if (Math.abs(diffMinutes) < 1) return 'now';
+    return diffMinutes > 0 ? `in ${diffMinutes} min` : `${Math.abs(diffMinutes)} min ago`;
+  }
+}
+
+/**
+ * Get the status badge variant for UI components
+ */
+export function getMatchStatusVariant(
+  match: ScheduleMatch
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (match.status === 'finished') return 'default';
+  if (match.status === 'ongoing') return 'secondary';
+  if (match.status === 'cancelled') return 'destructive';
+  if (match.isPast) return 'outline';
+  return 'default';
+}
+
+/**
+ * Check if a match has multiple participants (for track & field, swimming, etc.)
+ */
+export function hasMultipleParticipants(match: ScheduleMatch): boolean {
+  return match.match_participants && match.match_participants.length > 2;
+}
+
+/**
+ * Get the winner of a match (if finished)
+ */
+export function getMatchWinner(
+  match: ScheduleMatch
+): ScheduleMatch['match_participants'][0] | null {
+  if (match.status !== 'finished' || !match.match_participants) return null;
+
+  // Find participant with highest score
+  return match.match_participants.reduce(
+    (winner, participant) => {
+      if (!winner) return participant;
+      const winnerScore = winner.match_score ?? 0;
+      const participantScore = participant.match_score ?? 0;
+      return participantScore > winnerScore ? participant : winner;
+    },
+    null as ScheduleMatch['match_participants'][0] | null
+  );
+}
+
+/**
+ * Format participant count for display
+ */
+export function formatParticipantCount(match: ScheduleMatch): string {
+  const count = match.match_participants?.length ?? 0;
+  if (count === 0) return 'No participants';
+  if (count === 1) return '1 participant';
+  if (count === 2) return '2 participants';
+  return `${count} participants`;
+}
+
+/**
+ * Get the venue display text
+ */
+export function getVenueDisplay(match: ScheduleMatch): string {
+  return match.venue || 'TBD';
+}
+
+/**
+ * Check if a match is live (ongoing and within reasonable time window)
+ */
+export function isMatchLive(match: ScheduleMatch): boolean {
+  if (match.status !== 'ongoing') return false;
+
+  if (!match.start_at) return true; // If no start time, assume it's live if status is ongoing
+
+  const startTime = new Date(match.start_at);
+  const now = new Date();
+  const hoursSinceStart = (now.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+
+  // Consider live if started within last 6 hours
+  return hoursSinceStart >= 0 && hoursSinceStart <= 6;
 }

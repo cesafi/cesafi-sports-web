@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useSponsorsTable } from '@/hooks/use-sponsors';
 import { getSponsorsTableColumns, getSponsorsTableActions, SponsorModal } from '@/components/admin/sponsors';
-import { Sponsor, SponsorInsert, SponsorUpdate } from '@/lib/types/sponsors';
+import { Sponsor } from '@/lib/types/sponsors';
+import { SponsorInsert, SponsorUpdate } from '@/lib/validations/sponsors';
 
 export default function SponsorsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,14 +28,12 @@ export default function SponsorsPage() {
     deleteSponsor,
     isCreating,
     isUpdating,
-    isDeleting,
     refetch,
     onPageChange,
     onPageSizeChange,
     onSortChange,
     onSearchChange,
-    onFiltersChange,
-    resetFilters
+    onFiltersChange
   } = useSponsorsTable();
 
   const handleAddSponsor = () => {

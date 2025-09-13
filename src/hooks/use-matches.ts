@@ -11,9 +11,9 @@ import {
   getPaginatedMatches,
   getAllMatches,
   getMatchById,
+  getMatchByIdWithDetails,
+  getMatchByIdWithFullDetails,
   getMatchesByStageId,
-  getMatchesBySportAndCategory,
-  getMatchesBySeason,
   createMatch,
   createMatchWithParticipants,
   updateMatchById,
@@ -38,8 +38,8 @@ export const matchKeys = {
   details: (id: number) => [...matchKeys.all, id] as const,
   byStage: (stageId: number) => [...matchKeys.all, 'stage', stageId] as const,
   // Schedule keys
-  schedule: (options: any) => [...matchKeys.all, 'schedule', options] as const,
-  scheduleByDate: (options: any) => [...matchKeys.all, 'scheduleByDate', options] as const,
+  schedule: (options: { sport?: string; date?: string }) => [...matchKeys.all, 'schedule', options] as const,
+  scheduleByDate: (options: { date: string; sport?: string }) => [...matchKeys.all, 'scheduleByDate', options] as const,
   // Detail keys (for backward compatibility)
   detailKeys: {
     match: (id: number) => ['match-details', id] as const,
@@ -94,6 +94,42 @@ export function useMatchById(
   return useQuery({
     queryKey: matchKeys.details(id),
     queryFn: () => getMatchById(id),
+    enabled: !!id,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || `Match with ID ${id} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useMatchByIdWithDetails(
+  id: number,
+  queryOptions?: UseQueryOptions<ServiceResponse<MatchWithStageDetails>, Error, MatchWithStageDetails>
+) {
+  return useQuery({
+    queryKey: [...matchKeys.details(id), 'with-details'],
+    queryFn: () => getMatchByIdWithDetails(id),
+    enabled: !!id,
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || `Match with ID ${id} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useMatchByIdWithFullDetails(
+  id: number,
+  queryOptions?: UseQueryOptions<ServiceResponse<MatchWithFullDetails>, Error, MatchWithFullDetails>
+) {
+  return useQuery({
+    queryKey: [...matchKeys.details(id), 'with-full-details'],
+    queryFn: () => getMatchByIdWithFullDetails(id),
     enabled: !!id,
     select: (data) => {
       if (!data.success) {
@@ -436,7 +472,7 @@ export function useScheduleMatches(
   },
   queryOptions?: UseQueryOptions<
     ServiceResponse<{
-      matches: any[];
+      matches: MatchWithFullDetails[];
       nextCursor?: string;
       prevCursor?: string;
       hasMore: boolean;
@@ -444,7 +480,7 @@ export function useScheduleMatches(
     }>,
     Error,
     {
-      matches: any[];
+      matches: MatchWithFullDetails[];
       nextCursor?: string;
       prevCursor?: string;
       hasMore: boolean;
@@ -477,9 +513,9 @@ export function useScheduleMatchesByDate(
     search?: string;
   },
   queryOptions?: UseQueryOptions<
-    ServiceResponse<Record<string, any[]>>,
+    ServiceResponse<Record<string, MatchWithFullDetails[]>>,
     Error,
-    Record<string, any[]>
+    Record<string, MatchWithFullDetails[]>
   >
 ) {
   return useQuery({
@@ -514,7 +550,7 @@ export function useInfiniteScheduleMatches(
       search?: string;
     };
   },
-  queryOptions?: any
+  queryOptions?: UseQueryOptions<ServiceResponse<{ matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>, Error, { matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>
 ) {
   return useInfiniteQuery({
     queryKey: matchKeys.schedule(options),
@@ -539,9 +575,9 @@ export function useInfiniteScheduleMatches(
       pages: data.pages,
       pageParams: data.pageParams,
       matches: data.pages.flatMap(page => page.success && page.data ? page.data.matches : []),
-      hasNextPage: data.pages[data.pages.length - 1]?.success ? (data.pages[data.pages.length - 1] as any).data?.hasMore : false,
-      hasPreviousPage: data.pages[0]?.success ? (data.pages[0] as any).data?.hasMore : false,
-      totalCount: data.pages[0]?.success ? (data.pages[0] as any).data?.totalCount : 0
+      hasNextPage: data.pages[data.pages.length - 1]?.success ? (data.pages[data.pages.length - 1] as ServiceResponse<{ matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>).data?.hasMore : false,
+      hasPreviousPage: data.pages[0]?.success ? (data.pages[0] as ServiceResponse<{ matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>).data?.hasMore : false,
+      totalCount: data.pages[0]?.success ? (data.pages[0] as ServiceResponse<{ matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>).data?.totalCount : 0
     }),
     ...queryOptions
   });

@@ -1,7 +1,7 @@
 import { TableColumn } from '@/lib/types/table';
 import { GameWithDetails } from '@/lib/types/games';
 import { formatTableDate } from '@/lib/utils/date';
-import { Pencil, Trash2, Play, Clock, Trophy, Target } from 'lucide-react';
+import { Trash2, Play, Clock, Trophy, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export const getMatchGamesTableColumns = (): TableColumn<GameWithDetails>[] => [
@@ -78,10 +78,10 @@ export const getMatchGamesTableColumns = (): TableColumn<GameWithDetails>[] => [
     header: 'Scores',
     sortable: false,
     width: '20%',
-    render: (game: GameWithDetails) => (
+    render: (_game: GameWithDetails) => (
       <div className="text-sm">
         {/* This will be populated with actual scores */}
-        <span className="text-muted-foreground">Click "Manage Scores"</span>
+        <span className="text-muted-foreground">Click &quot;Manage Scores&quot;</span>
       </div>
     )
   },

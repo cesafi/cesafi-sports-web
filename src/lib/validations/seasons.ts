@@ -38,6 +38,6 @@ export const updateSeasonSchema = z
     }
   );
 
-// Legacy exports for backward compatibility
-export const SeasonInsertSchema = createSeasonSchema;
-export const SeasonUpdateSchema = updateSeasonSchema;
+// Export inferred types
+export type SeasonInsert = z.infer<typeof createSeasonSchema>;
+export type SeasonUpdate = z.infer<typeof updateSeasonSchema>;

@@ -7,7 +7,7 @@ import { getSeasonsTableColumns, getSeasonsTableActions } from '@/components/adm
 import { Season } from '@/lib/types/seasons';
 import { SeasonModal } from '@/components/admin/seasons';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { SeasonInsert, SeasonUpdate } from '@/lib/types/seasons';
+import { SeasonInsert, SeasonUpdate } from '@/lib/validations/seasons';
 
 export default function SeasonsManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);

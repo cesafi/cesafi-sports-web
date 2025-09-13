@@ -1,8 +1,28 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
+import {
+  PaginatedResponse,
+  PaginationOptions,
+  ServiceResponse,
+  FilterValue
+} from '@/lib/types/base';
 import { BaseService } from './base';
-import { Match, MatchInsert, MatchUpdate, MatchWithStageDetails, MatchWithFullDetails } from '@/lib/types/matches';
+import {
+  Match,
+  MatchWithStageDetails,
+  MatchWithFullDetails,
+  ScheduleMatch,
+  ScheduleFilters,
+  SchedulePaginationOptions,
+  ScheduleResponse,
+  ScheduleByDateResponse,
+  MatchInsert,
+  MatchUpdate
+} from '@/lib/types/matches';
 
 const TABLE_NAME = 'matches';
+const SPORTS_SEASONS_STAGES_TABLE = 'sports_seasons_stages';
+const SCHOOLS_TEAMS_TABLE = 'schools_teams';
+const MATCH_PARTICIPANTS_TABLE = 'match_participants';
+const GAMES_TABLE = 'games';
 
 export class MatchService extends BaseService {
   static async getPaginated(
@@ -47,12 +67,32 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async getRecent(limit: number = 5): Promise<ServiceResponse<Pick<Match, 'id' | 'name' | 'scheduled_at' | 'created_at'>[]>> {
+
+  static async getCount(): Promise<ServiceResponse<number>> {
+    try {
+      const supabase = await this.getClient();
+      const { count, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: count ?? 0 };
+    } catch (err) {
+      return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
+    }
+  }
+
+  static async getRecent(
+    limit: number = 5
+  ): Promise<ServiceResponse<Pick<Match, 'id' | 'name' | 'created_at' | 'status' | 'scheduled_at'>[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select('id, name, scheduled_at, created_at')
+        .select('id, name, created_at, status, scheduled_at')
         .order('created_at', { ascending: false })
         .limit(limit);
 
@@ -60,24 +100,9 @@ export class MatchService extends BaseService {
         throw error;
       }
 
-      return { success: true, data };
+      return { success: true, data: data || [] };
     } catch (err) {
-      return this.formatError(err, `Failed to fetch recent ${TABLE_NAME}.`);
-    }
-  }
-
-  static async getCount(): Promise<ServiceResponse<number>> {
-    try {
-      const supabase = await this.getClient();
-      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
-
-      if (error) {
-        throw error;
-      }
-
-      return { success: true, data: count || 0 };
-    } catch (err) {
-      return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
+      return this.formatError(err, `Failed to fetch recent ${TABLE_NAME} entities.`);
     }
   }
 
@@ -96,53 +121,14 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async getByIdBasic(id: number): Promise<ServiceResponse<MatchWithFullDetails>> {
-    try {
-      const supabase = await this.getClient();
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select(`
-          *,
-          sports_seasons_stages!inner(
-            id,
-            competition_stage,
-            season_id,
-            sport_category_id,
-            sports_categories!inner(
-              id,
-              division,
-              levels,
-              sports!inner(
-                id,
-                name
-              )
-            ),
-            seasons!inner(
-              id,
-              start_at,
-              end_at
-            )
-          )
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      return { success: true, data };
-    } catch (err) {
-      return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity with basic details.`);
-    }
-  }
 
   static async getByIdWithDetails(id: number): Promise<ServiceResponse<MatchWithFullDetails>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select(`
+        .select(
+          `
           *,
           sports_seasons_stages!inner(
             id,
@@ -168,6 +154,7 @@ export class MatchService extends BaseService {
             id,
             match_id,
             team_id,
+            match_score,
             schools_teams!inner(
               id,
               name,
@@ -178,10 +165,10 @@ export class MatchService extends BaseService {
               )
             )
           )
-        `)
+        `
+        )
         .eq('id', id)
         .single();
-
 
       if (error) {
         throw error;
@@ -198,7 +185,8 @@ export class MatchService extends BaseService {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select(`
+        .select(
+          `
           *,
           sports_seasons_stages!inner(
             id,
@@ -220,7 +208,8 @@ export class MatchService extends BaseService {
               end_at
             )
           )
-        `)
+        `
+        )
         .eq('stage_id', stageId)
         .order('scheduled_at', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
@@ -235,12 +224,13 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async getBySportAndCategory(sportId: number, sportCategoryId: number): Promise<ServiceResponse<Match[]>> {
+  static async getBySportCategory(sportCategoryId: number): Promise<ServiceResponse<Match[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select(`
+        .select(
+          `
           *,
           sports_seasons_stages!inner(
             id,
@@ -262,7 +252,8 @@ export class MatchService extends BaseService {
               end_at
             )
           )
-        `)
+        `
+        )
         .eq('sports_seasons_stages.sport_category_id', sportCategoryId)
         .order('scheduled_at', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
@@ -273,7 +264,10 @@ export class MatchService extends BaseService {
 
       return { success: true, data: data || [] };
     } catch (err) {
-      return this.formatError(err, `Failed to fetch matches for sport category ${sportCategoryId}.`);
+      return this.formatError(
+        err,
+        `Failed to fetch matches for sport category ${sportCategoryId}.`
+      );
     }
   }
 
@@ -282,7 +276,8 @@ export class MatchService extends BaseService {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select(`
+        .select(
+          `
           *,
           sports_seasons_stages!inner(
             id,
@@ -304,7 +299,8 @@ export class MatchService extends BaseService {
               end_at
             )
           )
-        `)
+        `
+        )
         .eq('sports_seasons_stages.season_id', seasonId)
         .order('scheduled_at', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
@@ -321,33 +317,11 @@ export class MatchService extends BaseService {
 
   // New method for schedule feature with infinite scrolling
   static async getScheduleMatches(
-    options: {
-      cursor?: string;
-      limit: number;
-      direction: 'future' | 'past';
-      filters?: {
-        season_id?: number;
-        sport_id?: number;
-        sport_category_id?: number;
-        stage_id?: number;
-        status?: string;
-        date_from?: string;
-        date_to?: string;
-        search?: string;
-      };
-    }
-  ): Promise<ServiceResponse<{
-    matches: any[];
-    nextCursor?: string;
-    prevCursor?: string;
-    hasMore: boolean;
-    totalCount: number;
-  }>> {
+    options: SchedulePaginationOptions
+  ): Promise<ServiceResponse<ScheduleResponse>> {
     try {
       const supabase = await this.getClient();
-      let query = supabase
-        .from(TABLE_NAME)
-        .select(`
+      let query = supabase.from(TABLE_NAME).select(`
           *,
           sports_seasons_stages!inner(
             id,
@@ -391,10 +365,16 @@ export class MatchService extends BaseService {
         query = query.eq('sports_seasons_stages.season_id', options.filters.season_id);
       }
       if (options.filters?.sport_id) {
-        query = query.eq('sports_seasons_stages.sports_categories.sport_id', options.filters.sport_id);
+        query = query.eq(
+          'sports_seasons_stages.sports_categories.sport_id',
+          options.filters.sport_id
+        );
       }
       if (options.filters?.sport_category_id) {
-        query = query.eq('sports_seasons_stages.sport_category_id', options.filters.sport_category_id);
+        query = query.eq(
+          'sports_seasons_stages.sport_category_id',
+          options.filters.sport_category_id
+        );
       }
       if (options.filters?.stage_id) {
         query = query.eq('stage_id', options.filters.stage_id);
@@ -409,7 +389,9 @@ export class MatchService extends BaseService {
         query = query.lte('scheduled_at', options.filters.date_to);
       }
       if (options.filters?.search) {
-        query = query.or(`name.ilike.%${options.filters.search}%,description.ilike.%${options.filters.search}%`);
+        query = query.or(
+          `name.ilike.%${options.filters.search}%,description.ilike.%${options.filters.search}%`
+        );
       }
 
       // Apply cursor-based pagination
@@ -439,25 +421,47 @@ export class MatchService extends BaseService {
       }
 
       const hasMore = data && data.length > options.limit;
-      const matches = data ? data.slice(0, options.limit) : [];
-      
+      const rawMatches = data ? data.slice(0, options.limit) : [];
+
+      // Transform to ScheduleMatch format
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const matches: ScheduleMatch[] = rawMatches.map((match) => {
+        const matchDate = match.scheduled_at ? new Date(match.scheduled_at) : null;
+        const dateKey = matchDate ? matchDate.toISOString().split('T')[0] : '';
+
+        return {
+          ...match,
+          displayDate: dateKey,
+          displayTime: matchDate
+            ? matchDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+              })
+            : '',
+          isToday: dateKey === today.toISOString().split('T')[0],
+          isPast: matchDate ? matchDate < now : false,
+          isUpcoming: matchDate ? matchDate > now : false
+        };
+      });
+
       let nextCursor: string | undefined;
       let prevCursor: string | undefined;
 
       if (matches.length > 0) {
         if (options.direction === 'future') {
-          nextCursor = (matches[matches.length - 1] as any)?.scheduled_at;
-          prevCursor = (matches[0] as any)?.scheduled_at;
+          nextCursor = matches[matches.length - 1]?.scheduled_at ?? undefined;
+          prevCursor = matches[0]?.scheduled_at ?? undefined;
         } else {
-          nextCursor = (matches[0] as any)?.scheduled_at;
-          prevCursor = (matches[matches.length - 1] as any)?.scheduled_at;
+          nextCursor = matches[0]?.scheduled_at ?? undefined;
+          prevCursor = matches[matches.length - 1]?.scheduled_at ?? undefined;
         }
       }
 
       // Get total count for the filtered results
-      const countQuery = supabase
-        .from(TABLE_NAME)
-        .select('*', { count: 'exact', head: true });
+      const countQuery = supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
 
       // Apply same filters to count query
       if (options.filters?.season_id) {
@@ -482,7 +486,9 @@ export class MatchService extends BaseService {
         countQuery.lte('scheduled_at', options.filters.date_to);
       }
       if (options.filters?.search) {
-        countQuery.or(`name.ilike.%${options.filters.search}%,description.ilike.%${options.filters.search}%`);
+        countQuery.or(
+          `name.ilike.%${options.filters.search}%,description.ilike.%${options.filters.search}%`
+        );
       }
 
       const { count } = await countQuery;
@@ -494,7 +500,7 @@ export class MatchService extends BaseService {
           nextCursor,
           prevCursor,
           hasMore,
-          totalCount: count || 0
+          totalCount: count ?? 0
         }
       };
     } catch (err) {
@@ -504,22 +510,11 @@ export class MatchService extends BaseService {
 
   // Method to get matches grouped by date for the schedule view
   static async getScheduleMatchesByDate(
-    options: {
-      season_id?: number;
-      sport_id?: number;
-      sport_category_id?: number;
-      stage_id?: number;
-      status?: string;
-      date_from?: string;
-      date_to?: string;
-      search?: string;
-    }
-  ): Promise<ServiceResponse<Record<string, any[]>>> {
+    options: ScheduleFilters
+  ): Promise<ServiceResponse<ScheduleByDateResponse>> {
     try {
       const supabase = await this.getClient();
-      let query = supabase
-        .from(TABLE_NAME)
-        .select(`
+      let query = supabase.from(TABLE_NAME).select(`
           *,
           sports_seasons_stages!inner(
             id,
@@ -594,55 +589,65 @@ export class MatchService extends BaseService {
       }
 
       // Group matches by date
-      const groupedMatches: Record<string, any[]> = {};
+      const groupedMatches: Record<string, ScheduleMatch[]> = {};
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
       if (data) {
-        data.forEach(match => {
+        data.forEach((match) => {
           if (match.scheduled_at) {
             const matchDate = new Date(match.scheduled_at);
             const dateKey = matchDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-            
+
             if (!groupedMatches[dateKey]) {
               groupedMatches[dateKey] = [];
             }
-            
+
             // Add display properties
-            const displayMatch = {
+            const displayMatch: ScheduleMatch = {
               ...match,
               displayDate: dateKey,
-              displayTime: matchDate.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
+              displayTime: matchDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
               }),
               isToday: dateKey === today.toISOString().split('T')[0],
               isPast: matchDate < now,
               isUpcoming: matchDate > now
             };
-            
+
             groupedMatches[dateKey].push(displayMatch);
           }
         });
       }
 
+      // Sort date keys chronologically
+      const sortedDateKeys = Object.keys(groupedMatches).sort((a, b) => a.localeCompare(b));
+      const totalMatches = Object.values(groupedMatches).flat().length;
+
       return {
         success: true,
-        data: groupedMatches
+        data: {
+          groupedMatches,
+          sortedDateKeys,
+          totalMatches
+        }
       };
     } catch (err) {
       return this.formatError(err, 'Failed to fetch schedule matches by date.');
     }
   }
 
-  static async insert(data: MatchInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: MatchInsert
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
 
-      // Validate that the sports_seasons_stage_id exists
+      // Validate that the stage_id exists
       const { data: stageExists, error: stageError } = await supabase
-        .from('sports_seasons_stages')
+        .from(SPORTS_SEASONS_STAGES_TABLE)
         .select('id')
         .eq('id', data.stage_id)
         .single();
@@ -679,7 +684,7 @@ export class MatchService extends BaseService {
         if (conflictingMatches && conflictingMatches.length > 0) {
           return {
             success: false,
-            error: `Match scheduling conflict detected with: ${conflictingMatches.map(m => m.name).join(', ')}`
+            error: `Match scheduling conflict detected with: ${conflictingMatches.map((m) => m.name).join(', ')}`
           };
         }
       }
@@ -696,7 +701,9 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async updateById(data: MatchUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: MatchUpdate
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -707,7 +714,7 @@ export class MatchService extends BaseService {
       // Validate stage_id if provided
       if (data.stage_id) {
         const { data: stageExists, error: stageError } = await supabase
-          .from('sports_seasons_stages')
+          .from(SPORTS_SEASONS_STAGES_TABLE)
           .select('id')
           .eq('id', data.stage_id)
           .single();
@@ -746,7 +753,7 @@ export class MatchService extends BaseService {
         if (conflictingMatches && conflictingMatches.length > 0) {
           return {
             success: false,
-            error: `Match scheduling conflict detected with: ${conflictingMatches.map(m => m.name).join(', ')}`
+            error: `Match scheduling conflict detected with: ${conflictingMatches.map((m) => m.name).join(', ')}`
           };
         }
       }
@@ -764,7 +771,8 @@ export class MatchService extends BaseService {
           throw currentError;
         }
 
-        const scheduledAt = data.scheduled_at !== undefined ? data.scheduled_at : currentMatch.scheduled_at;
+        const scheduledAt =
+          data.scheduled_at !== undefined ? data.scheduled_at : currentMatch.scheduled_at;
         const startAt = data.start_at !== undefined ? data.start_at : currentMatch.start_at;
         const endAt = data.end_at !== undefined ? data.end_at : currentMatch.end_at;
 
@@ -772,7 +780,7 @@ export class MatchService extends BaseService {
         if (scheduledAt && startAt && new Date(scheduledAt) > new Date(startAt)) {
           return {
             success: false,
-            error: 'Scheduled t ime must be before or equal to start time.'
+            error: 'Scheduled time must be before or equal to start time.'
           };
         }
 
@@ -803,9 +811,9 @@ export class MatchService extends BaseService {
     try {
       const supabase = await this.getClient();
 
-      // Validate that the sports_seasons_stage_id exists
+      // Validate that the stage_id exists
       const { data: stageExists, error: stageError } = await supabase
-        .from('sports_seasons_stages')
+        .from(SPORTS_SEASONS_STAGES_TABLE)
         .select('id')
         .eq('id', matchData.stage_id)
         .single();
@@ -850,7 +858,7 @@ export class MatchService extends BaseService {
       // Validate that all team IDs exist
       if (participantTeamIds.length > 0) {
         const { data: teams, error: teamsError } = await supabase
-          .from('schools_teams')
+          .from(SCHOOLS_TEAMS_TABLE)
           .select('id')
           .in('id', participantTeamIds);
 
@@ -881,13 +889,13 @@ export class MatchService extends BaseService {
 
       // Insert match participants if any
       if (participantTeamIds.length > 0) {
-        const participantData = participantTeamIds.map(teamId => ({
+        const participantData = participantTeamIds.map((teamId) => ({
           match_id: matchId,
           team_id: teamId
         }));
 
         const { error: participantsError } = await supabase
-          .from('match_participants')
+          .from(MATCH_PARTICIPANTS_TABLE)
           .insert(participantData);
 
         if (participantsError) {
@@ -913,7 +921,7 @@ export class MatchService extends BaseService {
 
       // Check if match has associated games or participants before deletion
       const { data: games, error: gamesError } = await supabase
-        .from('games')
+        .from(GAMES_TABLE)
         .select('id')
         .eq('match_id', id)
         .limit(1);
@@ -930,7 +938,7 @@ export class MatchService extends BaseService {
       }
 
       const { data: participants, error: participantsError } = await supabase
-        .from('match_participants')
+        .from(MATCH_PARTICIPANTS_TABLE)
         .select('id')
         .eq('match_id', id)
         .limit(1);
@@ -975,24 +983,25 @@ export class MatchService extends BaseService {
 
       let query = supabase
         .from(TABLE_NAME)
-        .select(`
+        .select(
+          `
           *,
           sports_seasons_stages!inner(
             id,
             competition_stage,
-            sports!inner(
+            season_id,
+            sport_category_id,
+            sports_categories!inner(
               id,
-              name,
-              sport_categories!inner(
+              division,
+              levels,
+              sports!inner(
                 id,
-                name,
-                division,
-                level
+                name
               )
             ),
-            seasons!inner(
+            seasons(
               id,
-              name,
               start_at,
               end_at
             )
@@ -1008,11 +1017,13 @@ export class MatchService extends BaseService {
               schools!inner(
                 id,
                 name,
-                abbreviation
+                abbreviation,
+                logo_url
               )
             )
           )
-        `)
+        `
+        )
         .eq('match_participants.schools_teams.school_id', schoolId)
         .order('scheduled_at', { ascending: direction === 'future' })
         .limit(limit);

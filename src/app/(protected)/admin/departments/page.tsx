@@ -10,7 +10,7 @@ import {
 } from '@/components/admin/departments';
 import { Department } from '@/lib/types/departments';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { DepartmentInsert, DepartmentUpdate } from '@/lib/types/departments';
+import { DepartmentInsert, DepartmentUpdate } from '@/lib/validations/departments';
 
 export default function DepartmentsManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);

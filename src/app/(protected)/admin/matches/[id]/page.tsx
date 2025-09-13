@@ -3,16 +3,13 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Square, Clock, Plus, Users, Trophy, Settings } from 'lucide-react';
+import { ArrowLeft, Play, Square, Clock, Settings } from 'lucide-react';
 import { useMatchDetails } from '@/hooks/use-matches';
 import { useUpdateMatch } from '@/hooks/use-matches';
 import { MatchInfoCard, MatchParticipantsTable, MatchGamesTable, MatchStatusModal } from '@/components/shared/matches';
 import { MatchUpdate } from '@/lib/types/matches';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { formatSmartDate } from '@/lib/utils/date';
 
 export default function MatchDetailPage() {
   const params = useParams();

@@ -1,7 +1,7 @@
 'use server';
 
-import { SportCategoryInsert, SportCategoryUpdate } from '@/lib/types/sports';
 import { SportCategoryService } from '@/services/sport-categories';
+import { createSportCategorySchema, updateSportCategorySchema } from '@/lib/validations/sport-categories';
 import { revalidatePath } from 'next/cache';
 
 // Context-based fetching methods
@@ -46,16 +46,38 @@ export async function getUniqueLevels() {
   return await SportCategoryService.getUniqueLevels();
 }
 
-export async function createSportCategory(data: SportCategoryInsert) {
-  const result = await SportCategoryService.insert(data);
+export async function createSportCategory(data: unknown) {
+  // Validate the input data
+  const validationResult = createSportCategorySchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SportCategoryService.insert(validationResult.data);
   if (result.success) {
     revalidatePath('/admin/sport-categories');
   }
   return result;
 }
 
-export async function updateSportCategoryById(data: SportCategoryUpdate) {
-  const result = await SportCategoryService.updateById(data);
+export async function updateSportCategoryById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateSportCategorySchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SportCategoryService.updateById(validationResult.data);
   if (result.success) {
     revalidatePath('/admin/sport-categories');
   }

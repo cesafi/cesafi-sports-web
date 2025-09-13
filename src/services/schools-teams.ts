@@ -1,14 +1,19 @@
 import { ServiceResponse } from '@/lib/types/base';
 import {
-  SchoolsTeamInsert,
-  SchoolsTeamUpdate,
   SchoolsTeamWithSportDetails,
   SchoolsTeamWithSchoolDetails,
-  SchoolsTeamWithFullDetails
+  SchoolsTeamWithFullDetails,
+  SchoolsTeamInsert,
+  SchoolsTeamUpdate
 } from '@/lib/types/schools-teams';
 import { BaseService } from './base';
 
 const TABLE_NAME = 'schools_teams';
+const SCHOOLS_TABLE = 'schools';
+const SEASONS_TABLE = 'seasons';
+const SPORTS_CATEGORIES_TABLE = 'sports_categories';
+const MATCH_PARTICIPANTS_TABLE = 'match_participants';
+const SPORTS_SEASONS_STAGES_TABLE = 'sports_seasons_stages';
 
 export class SchoolsTeamService extends BaseService {
   static async getBySchoolId(
@@ -204,9 +209,13 @@ export class SchoolsTeamService extends BaseService {
 
       // Verify that the referenced entities exist
       const [schoolCheck, seasonCheck, sportCheck] = await Promise.all([
-        supabase.from('schools').select('id').eq('id', data.school_id).single(),
-        supabase.from('seasons').select('id').eq('id', data.season_id).single(),
-        supabase.from('sports_categories').select('id').eq('id', data.sport_category_id).single()
+        supabase.from(SCHOOLS_TABLE).select('id').eq('id', data.school_id).single(),
+        supabase.from(SEASONS_TABLE).select('id').eq('id', data.season_id).single(),
+        supabase
+          .from(SPORTS_CATEGORIES_TABLE)
+          .select('id')
+          .eq('id', data.sport_category_id)
+          .single()
       ]);
 
       if (schoolCheck.error) {
@@ -281,15 +290,15 @@ export class SchoolsTeamService extends BaseService {
         // Verify that the referenced entities exist if they're being updated
         const checks = [];
         if (data.school_id) {
-          checks.push(supabase.from('schools').select('id').eq('id', data.school_id).single());
+          checks.push(supabase.from(SCHOOLS_TABLE).select('id').eq('id', data.school_id).single());
         }
         if (data.season_id) {
-          checks.push(supabase.from('seasons').select('id').eq('id', data.season_id).single());
+          checks.push(supabase.from(SEASONS_TABLE).select('id').eq('id', data.season_id).single());
         }
         if (data.sport_category_id) {
           checks.push(
             supabase
-              .from('sports_categories')
+              .from(SPORTS_CATEGORIES_TABLE)
               .select('id')
               .eq('id', data.sport_category_id)
               .single()
@@ -338,7 +347,7 @@ export class SchoolsTeamService extends BaseService {
 
       // Check if this team is referenced by match participants
       const { data: matchParticipants, error: checkError } = await supabase
-        .from('match_participants')
+        .from(MATCH_PARTICIPANTS_TABLE)
         .select('id')
         .eq('team_id', id)
         .limit(1);
@@ -444,10 +453,10 @@ export class SchoolsTeamService extends BaseService {
   ): Promise<ServiceResponse<SchoolsTeamWithSchoolDetails[]>> {
     try {
       const supabase = await this.getClient();
-      
+
       // First get the stage details to know which sport category and season
       const { data: stage, error: stageError } = await supabase
-        .from('sports_seasons_stages')
+        .from(SPORTS_SEASONS_STAGES_TABLE)
         .select('sport_category_id, season_id')
         .eq('id', stageId)
         .single();

@@ -22,7 +22,6 @@ import { SeasonInsert, SeasonUpdate, SeasonPaginationOptions, Season } from '@/l
 
 import { PaginatedResponse, ServiceResponse, FilterValue, PaginationOptions } from '@/lib/types/base';
 import { useTable } from './use-table';
-import { TableFilters } from '@/lib/types/table';
 import { toast } from 'sonner';
 
 export const seasonKeys = {

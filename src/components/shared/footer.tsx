@@ -25,7 +25,7 @@ export default function Footer() {
           </div>
           <p className={`${roboto.className} text-muted-foreground text-sm leading-relaxed`}>
             Cebu Schools Athletic Foundation is the central hub for showcasing athletic excellence, 
-            academic-driven sports, and esports-inspired energy within Cebu's schools.
+            academic-driven sports, and esports-inspired energy within Cebu&apos;s schools.
           </p>
           </div>
 

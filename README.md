@@ -22,11 +22,113 @@ The CESAFI Sports Website is being meticulously built to deliver a dynamic and c
 
 We're leveraging cutting-edge technologies to ensure the CESAFI Sports Hub is fast, reliable, and a joy to build and use.
 
-- **Next.js 15:** Our choice for a high-performance, server-side rendered React application, delivering lightning-fast page loads and an exceptional user experience.
-- **Shadcn/UI:** Crafting a beautiful, accessible, and highly customizable user interface with a robust collection of pre-built components.
-- **TanStack React Query:** Powering our data fetching, caching, and state management, ensuring real-time data synchronization and a smooth, responsive feel.
-- **Zod:** Providing powerful, schema-first data validation, giving us confidence in the integrity and safety of our application's data.
-- **Supabase:** Our comprehensive open-source backend, offering a real-time PostgreSQL database, robust authentication, and seamless file storage, accelerating our development process.
+### **Core Framework & Runtime**
+
+- **Next.js 15.5.2** with **React 19.1.0** - High-performance, server-side rendered application with App Router
+- **TypeScript 5+** (Strict mode) - End-to-end type safety from database to UI
+- **Turbopack** - Lightning-fast development builds and hot reloading
+
+### **Backend & Database**
+
+- **Supabase 2.55.0** - PostgreSQL database with real-time capabilities, authentication, and file storage
+- **Row-Level Security (RLS)** - Database-level permission enforcement
+- **Auto-generated TypeScript types** - Type safety directly from database schema
+
+### **State Management & Data Fetching**
+
+- **TanStack React Query 5.83.0** - Sophisticated client-side state management, caching, and data synchronization
+- **Server Actions** - Next.js 15 server actions with `'use server'` directive
+- **Optimistic updates** - Responsive UI with intelligent cache invalidation
+
+### **UI & Styling**
+
+- **Shadcn/UI** - Beautiful, accessible components built on Radix UI primitives
+- **Tailwind CSS 4.0** - Utility-first CSS framework for rapid UI development
+- **Framer Motion 12.23.6** - Smooth animations and transitions
+- **Lucide React** - Consistent icon system
+
+### **Validation & Type Safety**
+
+- **Zod 4.0.5** - Runtime schema validation with TypeScript integration
+- **End-to-end type safety** - From database types to component props
+
+### **Media & Assets**
+
+- **Cloudinary 6.16.0** - Advanced image management and optimization
+- **next-cloudinary** - Seamless Next.js integration for image handling
+
+### **Development & Quality**
+
+- **Jest + React Testing Library** - Comprehensive testing framework (setup ready)
+- **ESLint + Prettier** - Code quality and formatting
+- **Vercel** - Production deployment and hosting
+
+---
+
+## 🏗️ Architecture Overview
+
+The CESAFI Sports Website follows a **5-Layer Service Architecture** designed for scalability, maintainability, and clear separation of concerns:
+
+### **Architecture Pattern**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    1. COMPONENT LAYER (UI)                 │
+│  React Components (src/app/, src/components/)              │
+│  Thin, focused on presentation logic only                  │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    2. HOOKS LAYER (src/hooks/)             │
+│  React Query hooks, query key factories, cache management  │
+│  Data access layer for components                          │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   3. ACTIONS LAYER (src/actions/)          │
+│  Next.js Server Actions with 'use server' directive        │
+│  Bridge between client hooks and server services           │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   4. SERVICES LAYER (src/services/)        │
+│  BaseService pattern, business logic, CRUD operations      │
+│  Universal client management (server/browser)              │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    5. DATABASE LAYER                       │
+│  Supabase PostgreSQL with auto-generated TypeScript types  │
+│  Real-time capabilities, authentication, RLS               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **Data Flow**
+
+- **Read Operations**: Component → Hook → Service → Supabase → Service → Hook → Component
+- **Write Operations**: Component → Hook → Action → Service → Supabase → Service → Action → Hook → Component (with cache invalidation)
+
+### **Key Features**
+
+- **Feature-based organization** - Each entity has corresponding files across all layers
+- **Type safety** - End-to-end TypeScript types from database to UI
+- **Cache management** - Intelligent React Query cache invalidation
+- **Error handling** - Standardized ServiceResponse<T> pattern
+- **Validation** - Zod schemas for runtime type validation
+
+### **Database Schema**
+
+The application manages comprehensive sports data including:
+
+- **17 Schools** with teams, matches, and game results
+- **Sports categories** (basketball, volleyball, etc.) with divisions and levels
+- **Competition stages** (group stage, playoffs, finals)
+- **Content management** (articles, volunteers, departments)
+- **Real-time updates** for live scores and match status
 
 ---
 
@@ -35,6 +137,38 @@ We're leveraging cutting-edge technologies to ensure the CESAFI Sports Hub is fa
 The CESAFI Sports Website is currently in **early development**. We're actively building out core features and laying the groundwork for a truly impactful platform.
 
 **Note on Contributions:** At this stage, contributions are strictly managed and limited to **authorized volunteers within the CESAFI Website Team organization**. If you are a CESAFI volunteer and wish to contribute, please follow the guidelines below.
+
+---
+
+## 📋 Development Guidelines
+
+### **For AI Assistants & New Developers**
+
+**🚨 CRITICAL**: Before starting any work, **ALWAYS READ** the `.cursor-directives.md` file first. This file contains:
+
+- Complete project architecture understanding
+- Development patterns and standards
+- Git workflow and branching strategy
+- Database structure and relationships
+- Security considerations and current issues
+- Quality standards and checklists
+- All established conventions and best practices
+
+### **Core Development Philosophy**
+
+- **QUALITY OVER SPEED**: Every change requires deep thinking, thorough analysis, and careful consideration
+- **ULTRA-THINKING**: Prevent redundant code, missed logic, and architectural inconsistencies
+- **CLEANLINESS**: Focus on readability, maintainability, and simplicity
+- **ARCHITECTURE CONSISTENCY**: Follow established 5-layer service architecture patterns
+
+### **Key Development Rules**
+
+1. **Never skip layers** - All changes must flow through all 5 layers
+2. **Maintain type safety** - Update types and validation schemas
+3. **Handle relationships** - Consider impact on related entities
+4. **Cache invalidation** - Update invalidation strategies for related data
+5. **Error handling** - Use consistent ServiceResponse<T> pattern
+6. **Business rules** - Enforce in validation layer with Zod schemas
 
 ---
 
@@ -130,14 +264,13 @@ To maintain a clean and organized codebase, we follow a consistent branching str
 
 The CESAFI Sports Website is brought to life by a dedicated team of passionate volunteers. We're always looking for talented individuals to join us in shaping the future of CESAFI's digital presence.
 
-| Role                  | Name                | GitHub Profile                                     |
-| :-------------------- | :------------------ | :------------------------------------------------- |
-| **Project Lead**      | Porter, Nicolo Ryne | [@nicoryne](https://github.com/nicoryne)           |
-| Frontend Developer    | [Team Member Name]  | [@Member1GitHub](https://github.com/Member1GitHub) |
-| Backend Developer     | [Team Member Name]  | [@Member2GitHub](https://github.com/Member2GitHub) |
-| UI/UX Designer        | [Team Member Name]  | [@Member3GitHub](https://github.com/Member3GitHub) |
-| Quality Assurance     | [Team Member Name]  | [@Member4GitHub](https://github.com/Member4GitHub) |
-| Website Administrator | [Team Member Name]  | [@Member5GitHub](https://github.com/Member5GitHub) |
+| Role                 | Name               | GitHub Profile                           |
+| :------------------- | :----------------- | :--------------------------------------- |
+| Project Lead         | Nicolo Porter      | [@nicoryne](https://github.com/nicoryne) |
+| Frontend             | Adrian Sajulga     | [@wetooa](https://github.com/Wetooa)     |
+| Backend & Cloudinary | Derrick Binangbang | [@drkcutie](https://github.com/drkcutie) |
+| Backend & Supabase   | Gelo Cadavos       | [@Eloe321](https://github.com/Eloe321)   |
+| Frontend & Branding  | Zak Floreta        | [@Kaazzz](https://github.com/Kaazzz)     |
 
 ---
 

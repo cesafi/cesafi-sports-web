@@ -6,16 +6,16 @@ export const moderniz = localFont({
     {
       path: '../../public/fonts/moderniz/Moderniz.otf',
       weight: '400',
-      style: 'normal',
-    },
+      style: 'normal'
+    }
   ],
   variable: '--font-moderniz',
-  display: 'swap',
+  display: 'swap'
 });
 
 export const roboto = Roboto({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-roboto',
-  display: 'swap',
+  display: 'swap'
 });

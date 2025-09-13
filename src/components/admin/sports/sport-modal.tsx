@@ -16,16 +16,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import {
   Sport,
-  SportInsert,
-  SportUpdate,
   SportCategory,
   SportCategoryUpdate,
   SportDivision,
   SportLevel,
   SportCategoryFormData
 } from '@/lib/types/sports';
-import { SportInsertSchema, SportUpdateSchema } from '@/lib/validations/sports';
-import { ZodError } from 'zod';
+import { createSportSchema, updateSportSchema } from '@/lib/validations/sports';
+import { z, ZodError } from 'zod';
 import { Plus, Trash2, Edit2, X, Save } from 'lucide-react';
 import {
   getSportCategoriesBySportId,
@@ -39,7 +37,7 @@ interface SportModalProps {
   onOpenChange: (open: boolean) => void;
   mode: 'add' | 'edit';
   sport?: Sport;
-  onSubmit: (data: SportInsert | SportUpdate) => Promise<void>;
+  onSubmit: (data: z.infer<typeof createSportSchema> | z.infer<typeof updateSportSchema>) => Promise<void>;
   isSubmitting: boolean;
   onSuccess?: () => void;
   onCategoriesChange?: (categories: SportCategoryFormData[]) => void;
@@ -67,7 +65,7 @@ export function SportModal({
   onCategoriesChange
 }: SportModalProps) {
   // State management
-  const [formData, setFormData] = useState<SportInsert | SportUpdate>({
+  const [formData, setFormData] = useState<z.infer<typeof createSportSchema> | z.infer<typeof updateSportSchema>>({
     name: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -259,7 +257,6 @@ export function SportModal({
       } else {
         toast.error(result.error || 'Failed to update category');
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       toast.error('Failed to update category');
     }
@@ -274,7 +271,6 @@ export function SportModal({
       } else {
         toast.error(result.error || 'Failed to delete category');
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       toast.error('Failed to delete category');
     }
@@ -305,7 +301,7 @@ export function SportModal({
 
     try {
       // Validate sport data
-      const schema = mode === 'add' ? SportInsertSchema : SportUpdateSchema;
+      const schema = mode === 'add' ? createSportSchema : updateSportSchema;
       const validatedData = schema.parse(formData);
 
       // Validate categories if any are added

@@ -1,12 +1,15 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
+import {
+  PaginatedResponse,
+  ServiceResponse
+} from '@/lib/types/base';
 import { BaseService } from './base';
-import { Article, ArticleInsert, ArticleUpdate } from '@/lib/types/articles';
+import { Article, ArticlePaginationOptions, ArticleInsert, ArticleUpdate } from '@/lib/types/articles';
 
 const TABLE_NAME = 'articles';
 
 export class ArticleService extends BaseService {
   static async getPaginated(
-    options: PaginationOptions<Record<string, FilterValue>>,
+    options: ArticlePaginationOptions,
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<Article>>> {
     try {
@@ -16,8 +19,8 @@ export class ArticleService extends BaseService {
         searchableFields
       };
 
-      const result = await this.getPaginatedData<Article, typeof TABLE_NAME>(
-        TABLE_NAME,
+      const result = await this.getPaginatedData<Article, 'articles'>(
+        'articles',
         optionsWithSearchableFields,
         selectQuery
       );
@@ -96,12 +99,15 @@ export class ArticleService extends BaseService {
     }
   }
 
-  static async insert(data: ArticleInsert): Promise<ServiceResponse<Article>> {
+  static async insert(
+    data: ArticleInsert
+  ): Promise<ServiceResponse<Article>> {
     try {
       const supabase = await this.getClient();
 
       const insertData = { ...data };
 
+      // Handle publishing workflow logic
       if (insertData.status === 'published' && !insertData.published_at) {
         insertData.published_at = new Date().toISOString();
       }
@@ -112,7 +118,7 @@ export class ArticleService extends BaseService {
 
       const { data: insertedData, error } = await supabase
         .from(TABLE_NAME)
-        .insert(insertData as any)
+        .insert(insertData)
         .select()
         .single();
 
@@ -126,7 +132,9 @@ export class ArticleService extends BaseService {
     }
   }
 
-  static async updateById(data: ArticleUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: ArticleUpdate
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -147,7 +155,7 @@ export class ArticleService extends BaseService {
         updateData.published_at = null;
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(updateData as any).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update(updateData).eq('id', data.id);
 
       if (error) {
         throw error;
@@ -182,7 +190,7 @@ export class ArticleService extends BaseService {
     try {
       const supabase = await this.getClient();
       const now = new Date().toISOString();
-      
+
       const { data, error } = await supabase
         .from(TABLE_NAME)
         .select()

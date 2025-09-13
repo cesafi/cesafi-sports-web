@@ -1,8 +1,8 @@
 'use server';
 
 import { PaginationOptions } from '@/lib/types/base';
-import { GameInsert, GameUpdate } from '@/lib/types/games';
 import { GameService } from '@/services/games';
+import { createGameSchema, updateGameSchema } from '@/lib/validations/games';
 import { revalidatePath } from 'next/cache';
 
 export async function getPaginatedGames(options: PaginationOptions) {
@@ -25,8 +25,19 @@ export async function getPaginatedGamesByMatch(matchId: number, options: Paginat
   return await GameService.getPaginatedByMatch(matchId, options);
 }
 
-export async function createGame(data: GameInsert) {
-  const result = await GameService.insert(data);
+export async function createGame(data: unknown) {
+  // Validate the input data
+  const validationResult = createGameSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await GameService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');
@@ -35,8 +46,19 @@ export async function createGame(data: GameInsert) {
   return result;
 }
 
-export async function updateGameById(data: GameUpdate) {
-  const result = await GameService.updateById(data);
+export async function updateGameById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateGameSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await GameService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');

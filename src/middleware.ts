@@ -6,14 +6,13 @@ export async function middleware(request: NextRequest) {
     const response = await updateSession(request);
 
     return response;
-  } catch (error) {
+  } catch (_) {
     if (process.env.NODE_ENV === 'production') {
       return new NextResponse(JSON.stringify({ error: 'Internal server error' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-
 
     return NextResponse.next();
   }

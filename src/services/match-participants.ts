@@ -1,15 +1,21 @@
+import { z } from 'zod';
 import { ServiceResponse } from '@/lib/types/base';
 import {
-  MatchParticipantInsert,
-  MatchParticipantUpdate,
   MatchParticipantWithTeamDetails,
   MatchParticipantWithMatchDetails,
   MatchParticipantWithFullDetails,
   MatchParticipantWithMatchHistory
 } from '@/lib/types/match-participants';
 import { BaseService } from './base';
+import {
+  createMatchParticipantSchema,
+  updateMatchParticipantSchema
+} from '@/lib/validations/match-participants';
 
 const TABLE_NAME = 'match_participants';
+const MATCHES_TABLE = 'matches';
+const SCHOOLS_TEAMS_TABLE = 'schools_teams';
+const GAME_SCORES_TABLE = 'game_scores';
 
 export class MatchParticipantService extends BaseService {
   static async getByMatchId(
@@ -25,7 +31,7 @@ export class MatchParticipantService extends BaseService {
           schools_teams!inner(
             id,
             name,
-            schools!inner(name, abbreviation)
+            schools!inner(name, abbreviation, logo_url)
           )
         `
         )
@@ -86,7 +92,7 @@ export class MatchParticipantService extends BaseService {
           schools_teams!inner(
             id,
             name,
-            schools!inner(name, abbreviation)
+            schools!inner(name, abbreviation, logo_url)
           )
         `
         )
@@ -107,7 +113,9 @@ export class MatchParticipantService extends BaseService {
     }
   }
 
-  static async insert(data: MatchParticipantInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: z.infer<typeof createMatchParticipantSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
 
@@ -133,8 +141,8 @@ export class MatchParticipantService extends BaseService {
 
       // Verify that the referenced entities exist
       const [matchCheck, teamCheck] = await Promise.all([
-        supabase.from('matches').select('id').eq('id', data.match_id).single(),
-        supabase.from('schools_teams').select('id').eq('id', data.team_id).single()
+        supabase.from(MATCHES_TABLE).select('id').eq('id', data.match_id).single(),
+        supabase.from(SCHOOLS_TEAMS_TABLE).select('id').eq('id', data.team_id).single()
       ]);
 
       if (matchCheck.error) {
@@ -156,7 +164,9 @@ export class MatchParticipantService extends BaseService {
     }
   }
 
-  static async updateById(data: MatchParticipantUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: z.infer<typeof updateMatchParticipantSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Match participant ID is required to update.' };
@@ -204,10 +214,12 @@ export class MatchParticipantService extends BaseService {
         // Verify that the referenced entities exist if they're being updated
         const checks = [];
         if (data.match_id) {
-          checks.push(supabase.from('matches').select('id').eq('id', data.match_id).single());
+          checks.push(supabase.from(MATCHES_TABLE).select('id').eq('id', data.match_id).single());
         }
         if (data.team_id) {
-          checks.push(supabase.from('schools_teams').select('id').eq('id', data.team_id).single());
+          checks.push(
+            supabase.from(SCHOOLS_TEAMS_TABLE).select('id').eq('id', data.team_id).single()
+          );
         }
 
         if (checks.length > 0) {
@@ -247,7 +259,7 @@ export class MatchParticipantService extends BaseService {
 
       // Check if this participant has any game scores
       const { data: gameScores, error: checkError } = await supabase
-        .from('game_scores')
+        .from(GAME_SCORES_TABLE)
         .select('id')
         .eq('match_participant_id', id)
         .limit(1);
@@ -290,6 +302,11 @@ export class MatchParticipantService extends BaseService {
             id,
             name,
             schools!inner(name, abbreviation, logo_url)
+          ),
+          matches!inner(
+            id,
+            name,
+            scheduled_at
           )
         `
         )

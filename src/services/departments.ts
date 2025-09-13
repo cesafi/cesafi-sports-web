@@ -1,8 +1,16 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
+import { z } from 'zod';
+import {
+  PaginatedResponse,
+  PaginationOptions,
+  ServiceResponse,
+  FilterValue
+} from '@/lib/types/base';
 import { BaseService } from './base';
-import { Department, DepartmentInsert, DepartmentUpdate } from '@/lib/types/departments';
+import { Department } from '@/lib/types/departments';
+import { createDepartmentSchema, updateDepartmentSchema } from '@/lib/validations/departments';
 
 const TABLE_NAME = 'departments';
+const VOLUNTEERS_TABLE = 'volunteers';
 
 export class DepartmentService extends BaseService {
   static async getPaginated(
@@ -78,7 +86,9 @@ export class DepartmentService extends BaseService {
     }
   }
 
-  static async insert(data: DepartmentInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: z.infer<typeof createDepartmentSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
 
@@ -114,7 +124,9 @@ export class DepartmentService extends BaseService {
     }
   }
 
-  static async updateById(data: DepartmentUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: z.infer<typeof updateDepartmentSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -168,7 +180,7 @@ export class DepartmentService extends BaseService {
       const supabase = await this.getClient();
 
       const { data: volunteers, error: checkError } = await supabase
-        .from('volunteers')
+        .from(VOLUNTEERS_TABLE)
         .select('id, full_name')
         .eq('department_id', id)
         .limit(1);

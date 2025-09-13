@@ -1,9 +1,11 @@
-import { Database } from '../../../database.types';
+import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 
 export type SportsSeasonsStage = Database['public']['Tables']['sports_seasons_stages']['Row'];
-export type SportsSeasonsStageInsert = Database['public']['Tables']['sports_seasons_stages']['Insert'];
-export type SportsSeasonsStageUpdate = Database['public']['Tables']['sports_seasons_stages']['Update'];
+export type SportsSeasonsStageInsert =
+  Database['public']['Tables']['sports_seasons_stages']['Insert'];
+export type SportsSeasonsStageUpdate =
+  Database['public']['Tables']['sports_seasons_stages']['Update'];
 
 export type CompetitionStage = Database['public']['Enums']['competition_stage'];
 

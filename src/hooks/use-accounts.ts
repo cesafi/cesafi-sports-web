@@ -3,9 +3,7 @@
 import {
   useQuery,
   useMutation,
-  useQueryClient,
-  UseQueryOptions,
-  UseMutationOptions
+  useQueryClient
 } from '@tanstack/react-query';
 
 import {
@@ -16,9 +14,8 @@ import {
   deleteAccount
 } from '@/actions/accounts';
 
-import { AccountData, CreateAccountData, AccountEntity } from '@/services/accounts';
+import { AccountEntity } from '@/services/accounts';
 import { UpdateAccountFormData } from '@/lib/validations/accounts';
-import { PaginatedResponse, ServiceResponse, FilterValue, PaginationOptions } from '@/lib/types/base';
 import { useTable } from './use-table';
 import { TableFilters } from '@/lib/types/table';
 import { toast } from 'sonner';

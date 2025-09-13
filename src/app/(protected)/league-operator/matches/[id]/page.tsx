@@ -16,15 +16,16 @@ import {
   Target,
   Clock
 } from 'lucide-react';
-import { MatchWithStageDetails } from '@/lib/types/matches';
-import { useMatches } from '@/hooks/use-matches';
-import { formatDate, formatTime } from '@/lib/utils/date';
+import { MatchWithFullDetails, MatchInsert, MatchUpdate } from '@/lib/types/matches';
+import { GameWithDetails } from '@/lib/types/games';
+import { useMatchByIdWithFullDetails, useUpdateMatch } from '@/hooks/use-matches';
+import { formatTime, formatSmartDate } from '@/lib/utils/date';
 import { formatCategoryName } from '@/lib/utils/sports';
 import { MatchModal } from '@/components/shared/matches';
 import { MatchStatusModal } from '@/components/shared/matches';
 import { MatchGameModal } from '@/components/shared/matches';
 import { MatchGameScoresModal } from '@/components/shared/matches';
-import { MatchParticipantsCard } from '@/components/shared/matches';
+import { MatchParticipantsTable } from '@/components/shared/matches';
 import { MatchGamesTable } from '@/components/shared/matches';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -34,7 +35,7 @@ export default function LeagueOperatorMatchDetailsPage() {
   const router = useRouter();
   const matchId = params.id as string;
   
-  const [match, setMatch] = useState<MatchWithStageDetails | null>(null);
+  const [match, setMatch] = useState<MatchWithFullDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -42,54 +43,33 @@ export default function LeagueOperatorMatchDetailsPage() {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
   const [isScoresModalOpen, setIsScoresModalOpen] = useState(false);
-  const [editingGame, setEditingGame] = useState<any>(null);
+  const [editingGame, setEditingGame] = useState<GameWithDetails | undefined>(undefined);
 
-  const { getMatchById, updateMatch, isUpdating } = useMatches();
+  const { data: matchData, isLoading: matchLoading, error: matchError } = useMatchByIdWithFullDetails(parseInt(matchId));
+  const updateMatchMutation = useUpdateMatch();
 
   useEffect(() => {
-    const fetchMatch = async () => {
-      try {
-        setLoading(true);
-        const matchData = await getMatchById(matchId);
-        setMatch(matchData);
-      } catch (err) {
-        setError('Failed to fetch match details');
-        console.error('Error fetching match:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (matchId) {
-      fetchMatch();
+    if (matchData) {
+      setMatch(matchData);
+      setLoading(false);
+    } else if (matchError) {
+      setError('Failed to fetch match details');
+      setLoading(false);
+    } else if (matchLoading) {
+      setLoading(true);
     }
-  }, [matchId, getMatchById]);
+  }, [matchData, matchError, matchLoading]);
 
-  const handleEditSubmit = async (data: any) => {
+  const handleEditSubmit = async (data: MatchInsert | MatchUpdate) => {
     try {
-      await updateMatch(data);
+      await updateMatchMutation.mutateAsync(data as MatchUpdate);
       setIsEditModalOpen(false);
       toast.success('Match updated successfully');
-      // Refresh match data
-      const updatedMatch = await getMatchById(matchId);
-      setMatch(updatedMatch);
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to update match');
     }
   };
 
-  const handleStatusUpdate = async (status: string) => {
-    try {
-      await updateMatch({ id: matchId, status });
-      setIsStatusModalOpen(false);
-      toast.success('Match status updated successfully');
-      // Refresh match data
-      const updatedMatch = await getMatchById(matchId);
-      setMatch(updatedMatch);
-    } catch (err) {
-      toast.error('Failed to update match status');
-    }
-  };
 
   if (loading) {
     return (
@@ -210,14 +190,14 @@ export default function LeagueOperatorMatchDetailsPage() {
               <div className="flex items-center space-x-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">
-                  {match.scheduled_at ? formatDate(match.scheduled_at) : 'Not scheduled'}
+                  {match.scheduled_at ? formatSmartDate(match.scheduled_at) : 'Not scheduled'}
                 </span>
               </div>
               
               {match.start_at && (
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Start: {formatTime(match.start_at)}</span>
+                  <span className="text-sm">Start: {formatTime(new Date(match.start_at))}</span>
                 </div>
               )}
               
@@ -250,14 +230,14 @@ export default function LeagueOperatorMatchDetailsPage() {
             
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Season</p>
-              <p className="text-sm">Season {match.sports_seasons_stages.seasons.id}</p>
+              <p className="text-sm">Season {match.sports_seasons_stages.seasons?.id || 'Unknown'}</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Match Participants */}
-      <MatchParticipantsCard matchId={match.id} />
+      <MatchParticipantsTable matchId={match.id} />
 
       {/* Match Games */}
       <Card>
@@ -288,15 +268,15 @@ export default function LeagueOperatorMatchDetailsPage() {
         match={match}
         selectedStageId={match.sports_seasons_stages.id}
         onSubmit={handleEditSubmit}
-        isSubmitting={isUpdating}
+        isSubmitting={updateMatchMutation.isPending}
       />
 
       <MatchStatusModal
         open={isStatusModalOpen}
         onOpenChange={setIsStatusModalOpen}
-        currentStatus={match.status}
-        onStatusUpdate={handleStatusUpdate}
-        matchName={match.name}
+        match={match}
+        onUpdateMatch={handleEditSubmit}
+        isSubmitting={updateMatchMutation.isPending}
       />
 
       <MatchGameModal
@@ -307,29 +287,30 @@ export default function LeagueOperatorMatchDetailsPage() {
         game={editingGame}
         onSubmit={async () => {
           setIsGameModalOpen(false);
-          setEditingGame(null);
+          setEditingGame(undefined);
           toast.success('Game added successfully');
-          // Refresh match data
-          const updatedMatch = await getMatchById(matchId);
-          setMatch(updatedMatch);
         }}
         isSubmitting={false}
       />
 
-      <MatchGameScoresModal
-        open={isScoresModalOpen}
-        onOpenChange={setIsScoresModalOpen}
-        gameId={editingGame?.id}
-        onSubmit={async () => {
-          setIsScoresModalOpen(false);
-          setEditingGame(null);
-          toast.success('Scores updated successfully');
-          // Refresh match data
-          const updatedMatch = await getMatchById(matchId);
-          setMatch(updatedMatch);
-        }}
-        isSubmitting={false}
-      />
+      {editingGame && (
+        <MatchGameScoresModal
+          open={isScoresModalOpen}
+          onOpenChange={setIsScoresModalOpen}
+          game={editingGame}
+          participants={match?.match_participants || []}
+          gameScores={[]}
+          onSaveScores={async () => {
+            setIsScoresModalOpen(false);
+            setEditingGame(undefined);
+            toast.success('Scores updated successfully');
+          }}
+          onUpdateGame={async () => {
+            // Handle game update if needed
+          }}
+          isSubmitting={false}
+        />
+      )}
     </div>
   );
 }

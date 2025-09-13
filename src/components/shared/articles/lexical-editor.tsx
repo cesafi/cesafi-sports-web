@@ -33,7 +33,6 @@ import {
   Underline,
   Strikethrough,
   Code,
-  Link,
   List,
   ListOrdered,
   Heading1,
@@ -601,7 +600,6 @@ interface LexicalEditorProps {
 export function LexicalEditor({
   initialContent,
   onChange,
-  placeholder,
   className = "",
   outputFormat = 'html',
   articleId,
@@ -787,7 +785,7 @@ function InitialContentPlugin({ initialContent }: { initialContent?: string | Js
               return;
             }
           }
-        } catch (error) {
+        } catch (_error) {
           // If JSON parsing fails, fall back to HTML parsing
           console.log('Falling back to HTML parsing for initial content');
         }

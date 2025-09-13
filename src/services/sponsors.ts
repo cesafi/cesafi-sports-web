@@ -1,23 +1,22 @@
+import { z } from 'zod';
 import { ServiceResponse } from '@/lib/types/base';
-import { SponsorInsert, SponsorUpdate, SponsorPaginationOptions } from '@/lib/types/sponsors';
+import { Sponsor, SponsorPaginationOptions } from '@/lib/types/sponsors';
 import { BaseService } from './base';
+import { createSponsorSchema, updateSponsorSchema } from '@/lib/validations/sponsors';
 
 const TABLE_NAME = 'sponsors';
 
 export class SponsorService extends BaseService {
   static async getPaginated(
     options: SponsorPaginationOptions
-  ): Promise<ServiceResponse<{ data: any[]; totalCount: number; pageCount: number; currentPage: number }>> {
+  ): Promise<
+    ServiceResponse<{ data: Sponsor[]; totalCount: number; pageCount: number; currentPage: number }>
+  > {
     try {
       const supabase = await this.getClient();
-      const { page, pageSize, sortBy, sortOrder, search, filters } = options;
+      const { page, pageSize, sortBy, sortOrder, filters } = options;
 
       let query = supabase.from(TABLE_NAME).select('*', { count: 'exact' });
-
-      // Apply search
-      if (search) {
-        query = query.or(`title.ilike.%${search}%,tagline.ilike.%${search}%`);
-      }
 
       // Apply filters
       if (filters?.title) {
@@ -71,7 +70,7 @@ export class SponsorService extends BaseService {
     }
   }
 
-  static async getAll(): Promise<ServiceResponse<any[]>> {
+  static async getAll(): Promise<ServiceResponse<Sponsor[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
@@ -89,7 +88,7 @@ export class SponsorService extends BaseService {
     }
   }
 
-  static async getActive(): Promise<ServiceResponse<any[]>> {
+  static async getActive(): Promise<ServiceResponse<Sponsor[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
@@ -108,14 +107,10 @@ export class SponsorService extends BaseService {
     }
   }
 
-  static async getById(id: string): Promise<ServiceResponse<any>> {
+  static async getById(id: string): Promise<ServiceResponse<Sponsor>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select('*')
-        .eq('id', id)
-        .single();
+      const { data, error } = await supabase.from(TABLE_NAME).select('*').eq('id', id).single();
 
       if (error) {
         throw error;
@@ -127,7 +122,9 @@ export class SponsorService extends BaseService {
     }
   }
 
-  static async insert(data: SponsorInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: z.infer<typeof createSponsorSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
       const { error } = await supabase.from(TABLE_NAME).insert(data);
@@ -142,15 +139,14 @@ export class SponsorService extends BaseService {
     }
   }
 
-  static async updateById(data: SponsorUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: z.infer<typeof updateSponsorSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
       const { id, ...updateData } = data;
 
-      const { error } = await supabase
-        .from(TABLE_NAME)
-        .update(updateData)
-        .eq('id', id);
+      const { error } = await supabase.from(TABLE_NAME).update(updateData).eq('id', id);
 
       if (error) {
         throw error;

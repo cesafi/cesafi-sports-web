@@ -29,7 +29,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
         await navigator.clipboard.writeText(shareUrl);
         toast.success('Link copied to clipboard!');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to share article');
     } finally {
       setIsSharing(false);

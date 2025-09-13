@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArticleForm } from '@/components/shared/articles/article-form';
 import { useArticleById, useUpdateArticle } from '@/hooks/use-articles';
-import { ArticleUpdate } from '@/lib/types/articles';
+import { ArticleUpdate, ArticleInsert } from '@/lib/types/articles';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -23,8 +23,8 @@ export default function EditArticlePage() {
     }
   });
 
-  const handleSubmit = async (data: ArticleUpdate) => {
-    updateArticleMutation.mutate(data);
+  const handleSubmit = async (data: ArticleInsert | ArticleUpdate) => {
+    updateArticleMutation.mutate(data as ArticleUpdate);
   };
 
   if (isLoading) {
@@ -60,7 +60,7 @@ export default function EditArticlePage() {
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-foreground mb-4">Article Not Found</h1>
             <p className="text-muted-foreground mb-6">
-              The article you're looking for doesn't exist or you don't have permission to edit it.
+              The article you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to edit it.
             </p>
             <Link
               href="/admin/articles"

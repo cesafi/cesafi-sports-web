@@ -20,7 +20,7 @@ interface MatchInfoCardProps {
   onManageStatus?: () => void;
 }
 
-export function MatchInfoCard({ match, onManageStatus }: MatchInfoCardProps) {
+export function MatchInfoCard({ match, onManageStatus: _onManageStatus }: MatchInfoCardProps) {
   return (
     <Card>
       <CardHeader>

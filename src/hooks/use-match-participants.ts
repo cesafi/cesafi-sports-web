@@ -21,8 +21,6 @@ import {
   MatchParticipantInsert,
   MatchParticipantUpdate,
   MatchParticipant,
-  MatchParticipantWithTeamDetails,
-  MatchParticipantWithMatchDetails,
   MatchParticipantWithFullDetails,
   MatchParticipantWithMatchHistory
 } from '@/lib/types/match-participants';
@@ -31,8 +29,8 @@ import { ServiceResponse, PaginationOptions } from '@/lib/types/base';
 import { useTable } from './use-table';
 import { toast } from 'sonner';
 
-import { matchKeys } from './use-matches';
-import { schoolsTeamKeys } from './use-schools-teams';
+import { _matchKeys } from './use-matches';
+import { _schoolsTeamKeys } from './use-schools-teams';
 
 export const matchParticipantKeys = {
   all: ['match-participants'] as const,
@@ -342,7 +340,7 @@ export function useMatchParticipantsTable(matchId: number) {
 
   // Add participant mutation (placeholder for future implementation)
   const addParticipantMutation = useMutation({
-    mutationFn: async (teamId: string) => {
+    mutationFn: async (_teamId: string) => {
       // This would be implemented when we add the team selection functionality
       throw new Error('Add participant not implemented yet');
     },

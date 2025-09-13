@@ -1,9 +1,11 @@
-import { Database } from '../../../database.types';
+import { z } from 'zod';
+import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
+import { createMatchParticipantSchema, updateMatchParticipantSchema } from '@/lib/validations/match-participants';
 
 export type MatchParticipant = Database['public']['Tables']['match_participants']['Row'];
-export type MatchParticipantInsert = Database['public']['Tables']['match_participants']['Insert'];
-export type MatchParticipantUpdate = Database['public']['Tables']['match_participants']['Update'];
+export type MatchParticipantInsert = z.infer<typeof createMatchParticipantSchema>;
+export type MatchParticipantUpdate = z.infer<typeof updateMatchParticipantSchema>;
 
 export interface MatchParticipantSearchFilters {
   match_id?: number;
@@ -92,8 +94,9 @@ export interface MatchParticipantWithMatchHistory {
       sports_categories: {
         division: Database['public']['Enums']['sport_divisions'];
         levels: Database['public']['Enums']['sport_levels'];
-      sports: {
-        name: string;
+        sports: {
+          name: string;
+        };
       };
     };
   };

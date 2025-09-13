@@ -1,22 +1,17 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { useScroll } from 'framer-motion';
 import { useRef } from 'react';
-import Image from 'next/image';
-import { Users, Trophy, Calendar, Target, ArrowDown } from 'lucide-react';
-import { moderniz, roboto } from '@/lib/fonts';
+import { Users, Trophy, Calendar, Target } from 'lucide-react';
 
 export default function HeroSection() {
   const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
+  const _scrollYProgress = useScroll({
     target: ref,
     offset: ["start start", "end start"]
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-
-  const stats = [
+  const _stats = [
     { icon: Users, value: '8+', label: 'Member Schools' },
     { icon: Trophy, value: '50+', label: 'Championships' },
     { icon: Calendar, value: '100+', label: 'Annual Events' },

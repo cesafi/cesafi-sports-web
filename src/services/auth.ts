@@ -31,7 +31,6 @@ export class AuthService extends BaseService {
       const userRole = data.user.app_metadata?.role as UserRole | undefined;
 
       return { success: true, userRole };
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       return { success: false, error: 'Failed to login' };
     }

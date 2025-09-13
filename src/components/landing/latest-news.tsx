@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
 import Image from 'next/image';
-import { Calendar, User, ArrowRight, TrendingUp, Trophy, Users } from 'lucide-react';
+import { Calendar, User, ArrowRight } from 'lucide-react';
 import { moderniz, roboto } from '@/lib/fonts';
 
 // Mock news data - in production this would come from your articles database

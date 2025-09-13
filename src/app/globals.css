@@ -48,6 +48,15 @@
 
 :root {
   --radius: 0.625rem;
+
+  /* CESAFI Brand Colors */
+  --color-teal: #336c61;
+  --color-emerald: #19b33e;
+  --color-gold: #f4b248;
+  --color-off-white: #f6f5f0;
+  --color-gray-900: #111111;
+  --color-gray-600: #666666;
+  --color-gray-200: #e5e5e5;
 }
 
 .light {
@@ -144,3 +153,28 @@
   font-family: var(--font-roboto), system-ui, sans-serif;
 }
 
+/* CESAFI Brand Color Utilities */
+.bg-teal {
+  background-color: var(--color-teal);
+}
+.text-teal {
+  color: var(--color-teal);
+}
+.bg-emerald {
+  background-color: var(--color-emerald);
+}
+.text-emerald {
+  color: var(--color-emerald);
+}
+.bg-gold {
+  background-color: var(--color-gold);
+}
+.text-gold {
+  color: var(--color-gold);
+}
+.bg-off-white {
+  background-color: var(--color-off-white);
+}
+.text-off-white {
+  color: var(--color-off-white);
+}

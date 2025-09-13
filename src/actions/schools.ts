@@ -1,13 +1,13 @@
 'use server';
 
-import { PaginationOptions, FilterValue } from '@/lib/types/base';
-import { SchoolInsert, SchoolUpdate } from '@/lib/types/schools';
+import { SchoolPaginationOptions } from '@/lib/types/schools';
 import { SchoolService } from '@/services/schools';
+import { createSchoolSchema, updateSchoolSchema } from '@/lib/validations/schools';
 import { revalidatePath } from 'next/cache';
 
 
 
-export async function getPaginatedSchools(options: PaginationOptions<Record<string, FilterValue>>) {
+export async function getPaginatedSchools(options: SchoolPaginationOptions) {
   try {
     const result = await SchoolService.getPaginated(options);
     
@@ -52,8 +52,19 @@ export async function getSchoolByAbbreviation(abbreviation: string) {
   return await SchoolService.getByAbbreviation(abbreviation);
 }
 
-export async function createSchool(data: SchoolInsert) {
-  const result = await SchoolService.insert(data);
+export async function createSchool(data: unknown) {
+  // Validate the input data
+  const validationResult = createSchoolSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SchoolService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/schools');
@@ -62,8 +73,19 @@ export async function createSchool(data: SchoolInsert) {
   return result;
 }
 
-export async function updateSchoolById(data: SchoolUpdate) {
-  const result = await SchoolService.updateById(data);
+export async function updateSchoolById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateSchoolSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SchoolService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/schools');

@@ -209,7 +209,7 @@ export function MatchGameModal({
             <CardContent>
               <div className="p-3 bg-muted border rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  <strong>Note:</strong> You can set the start time now or edit it later. End time and duration can be added when editing the game after it's created.
+                  <strong>Note:</strong> You can set the start time now or edit it later. End time and duration can be added when editing the game after it&apos;s created.
                 </p>
               </div>
             </CardContent>

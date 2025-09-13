@@ -25,11 +25,10 @@ interface NewsArticle {
 
 interface AboutUsNewsClientProps {
   news: NewsArticle[];
-  isUsingFallback: boolean;
   error?: string;
 }
 
-export default function AboutUsNewsClient({ news, isUsingFallback, error }: AboutUsNewsClientProps) {
+export default function AboutUsNewsClient({ news, error }: AboutUsNewsClientProps) {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -68,17 +67,13 @@ export default function AboutUsNewsClient({ news, isUsingFallback, error }: Abou
             </div>
           )}
           
-          {isUsingFallback && (
+          {!error && news.length === 0 && (
             <div className={`${roboto.className} text-sm text-muted-foreground mt-4 max-w-2xl mx-auto`}>
-              <p className="mb-2">Using sample data. Add GNews API key for real news.</p>
               <div className="bg-muted/50 rounded-lg p-4 text-xs">
-                <p className="font-semibold mb-2">To enable real news:</p>
-                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                  <li>Get a free API key from <a href="https://gnews.io/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">GNews.io</a></li>
-                  <li>Create a <code className="bg-muted px-1 rounded">.env.local</code> file in your project root</li>
-                  <li>Add: <code className="bg-muted px-1 rounded">GNEWS_API_KEY=your-key-here</code></li>
-                  <li>Restart your development server</li>
-                </ol>
+                <p className="font-semibold mb-2">No CESAFI news found</p>
+                <p className="text-muted-foreground">
+                  No recent news articles about CESAFI were found. Check back later for updates.
+                </p>
               </div>
             </div>
           )}

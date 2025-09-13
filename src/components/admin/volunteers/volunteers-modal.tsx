@@ -20,7 +20,8 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Power, User, Image as ImageIcon, Upload, X, Loader2 } from 'lucide-react';
+import { Power, Image as ImageIcon, Upload, X, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { useCloudinary } from '@/hooks/use-cloudinary';
 
 interface VolunteersModalProps {
@@ -135,9 +136,9 @@ export function VolunteersModal({
       onSuccess?.();
       handleClose();
     }
-  }, [handleClose, isSubmitting, mode, oldImageUrl, formData.image_url, deleteImage, onSuccess]);
+  }, [handleClose, isSubmitting, mode, oldImageUrl, formData.image_url, deleteImage, onSuccess, cleanupOldImage]);
 
-  const cleanupOldImage = async (imageUrl: string) => {
+  const cleanupOldImage = useCallback(async (imageUrl: string) => {
     try {
       // Extract public_id from the URL for deletion (same pattern as the service)
       const url = imageUrl;
@@ -153,9 +154,9 @@ export function VolunteersModal({
       // Don't block the process if cleanup fails
       console.warn('Failed to cleanup old volunteer image from Cloudinary:', error);
     }
-  };
+  }, [deleteImage]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -357,9 +358,11 @@ export function VolunteersModal({
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div className="relative h-20 w-20 overflow-hidden rounded-lg border-2 border-dashed border-border">
-                    <img
+                    <Image
                       src={formData.image_url}
                       alt="Volunteer photo"
+                      width={80}
+                      height={80}
                       className="h-full w-full object-cover"
                     />
                   </div>

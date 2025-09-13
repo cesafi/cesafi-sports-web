@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ModalLayout } from '@/components/ui/modal-layout';
 import { useAccountsTable } from '@/hooks/use-accounts';
 import { CreateAccountFormData, UpdateAccountFormData, createAccountSchema, updateAccountSchema } from '@/lib/validations/accounts';
-import { AccountData } from '@/services/accounts';
+import { AccountEntity } from '@/lib/types/accounts';
 import { toast } from 'sonner';
 import { generateSecurePasswordAction } from '@/actions/accounts';
 import { z } from 'zod';
@@ -18,7 +18,7 @@ interface AccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: 'add' | 'edit';
-  account?: AccountData;
+  account?: AccountEntity;
   onSuccess?: () => void; // Callback to trigger refetch
 }
 
@@ -26,7 +26,7 @@ export function AccountModal({ isOpen, onClose, mode, account, onSuccess }: Acco
   const [formData, setFormData] = useState<CreateAccountFormData | UpdateAccountFormData>({
     displayName: '',
     email: '',
-    password: '',
+    password: mode === 'add' ? '' : undefined,
     role: 'writer'
   } as CreateAccountFormData | UpdateAccountFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -53,7 +53,7 @@ export function AccountModal({ isOpen, onClose, mode, account, onSuccess }: Acco
         email: account.email || '',
         password: undefined, // Don't pre-fill password for security
         role: account.role || 'writer'
-      });
+      } as UpdateAccountFormData);
     } else if (mode === 'add') {
       // Reset form for add mode
       setFormData({
@@ -61,7 +61,7 @@ export function AccountModal({ isOpen, onClose, mode, account, onSuccess }: Acco
         email: '',
         password: '',
         role: 'writer'
-      });
+      } as CreateAccountFormData);
     }
     // Clear errors when switching modes
     setErrors({});
@@ -76,7 +76,7 @@ export function AccountModal({ isOpen, onClose, mode, account, onSuccess }: Acco
           email: account.email || '',
           password: undefined, // Don't pre-fill password for security
           role: account.role || 'writer'
-        });
+        } as UpdateAccountFormData);
       } else {
         // Reset form for add mode
         setFormData({
@@ -84,7 +84,7 @@ export function AccountModal({ isOpen, onClose, mode, account, onSuccess }: Acco
           email: '',
           password: '',
           role: 'writer'
-        });
+        } as CreateAccountFormData);
       }
       // Clear errors and reset mutation tracking
       setErrors({});
@@ -175,7 +175,7 @@ export function AccountModal({ isOpen, onClose, mode, account, onSuccess }: Acco
       const result = await generateSecurePasswordAction();
       
       if (result.success && result.data) {
-        setFormData(prev => ({ ...prev, password: result.data }));
+        setFormData(prev => ({ ...prev, password: result.data as string }));
         toast.success('Secure password generated successfully');
       } else {
         toast.error(result.error || 'Failed to generate password');
@@ -274,8 +274,8 @@ export function AccountModal({ isOpen, onClose, mode, account, onSuccess }: Acco
               <div className="flex gap-2">
                 <Input
                   type="text"
-                  value={formData.password}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  value={formData.password || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, password: e.target.value || undefined }))}
                   placeholder="Enter password"
                   className={errors.password ? 'border-red-500' : ''}
                 />

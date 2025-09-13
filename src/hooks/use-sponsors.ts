@@ -18,7 +18,7 @@ import {
 
 import { SponsorInsert, SponsorUpdate, SponsorPaginationOptions, Sponsor } from '@/lib/types/sponsors';
 
-import { ServiceResponse, FilterValue, PaginationOptions } from '@/lib/types/base';
+import { ServiceResponse } from '@/lib/types/base';
 import { useTable } from './use-table';
 import { TableFilters } from '@/lib/types/table';
 import { toast } from 'sonner';

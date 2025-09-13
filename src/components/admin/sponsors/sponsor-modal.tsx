@@ -67,12 +67,12 @@ export function SponsorModal({
     }
   }, [open, mode, sponsor]);
 
-  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
+  const handleInputChange = useCallback((field: keyof typeof formData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-  };
+  }, [errors]);
 
   const handleLogoUpload = useCallback(async (file: File) => {
     if (!file) return;
@@ -110,7 +110,7 @@ export function SponsorModal({
       console.error('Logo upload error:', error);
       toast.error('Failed to upload logo');
     }
-  }, [uploadImage, formData.title]);
+  }, [uploadImage, formData.title, handleInputChange]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -269,9 +269,11 @@ export function SponsorModal({
                 <div className="flex items-center gap-3">
                   <div className="relative h-20 w-20 overflow-hidden rounded-lg border-2 border-dashed border-border">
                     {formData.logo_url && (
-                      <img
+                      <Image
                         src={formData.logo_url}
                         alt="Sponsor logo"
+                        width={80}
+                        height={80}
                         className="h-full w-full object-cover"
                       />
                     )}

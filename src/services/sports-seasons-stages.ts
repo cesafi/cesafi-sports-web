@@ -1,8 +1,24 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
+import { z } from 'zod';
+import {
+  PaginatedResponse,
+  PaginationOptions,
+  ServiceResponse,
+  FilterValue
+} from '@/lib/types/base';
 import { BaseService } from './base';
-import { SportsSeasonsStage, SportsSeasonsStageInsert, SportsSeasonsStageUpdate, SportsSeasonsStageWithDetails } from '@/lib/types/sports-seasons-stages';
+import {
+  SportsSeasonsStage,
+  SportsSeasonsStageWithDetails
+} from '@/lib/types/sports-seasons-stages';
+import {
+  createSportsSeasonsStageSchema,
+  updateSportsSeasonsStageSchema
+} from '@/lib/validations/sports-seasons-stages';
 
 const TABLE_NAME = 'sports_seasons_stages';
+const SPORTS_CATEGORIES_TABLE = 'sports_categories';
+const SEASONS_TABLE = 'seasons';
+const MATCHES_TABLE = 'matches';
 
 export class SportsSeasonsStageService extends BaseService {
   static async getPaginated(
@@ -10,7 +26,12 @@ export class SportsSeasonsStageService extends BaseService {
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<SportsSeasonsStage>>> {
     try {
-      const searchableFields = ['competition_stage', 'sport_category_id', 'season_id', 'created_at'];
+      const searchableFields = [
+        'competition_stage',
+        'sport_category_id',
+        'season_id',
+        'created_at'
+      ];
       const optionsWithSearchableFields = {
         ...options,
         searchableFields
@@ -33,7 +54,8 @@ export class SportsSeasonsStageService extends BaseService {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select(`
+        .select(
+          `
           *,
           sports_categories!inner(
             id,
@@ -49,7 +71,8 @@ export class SportsSeasonsStageService extends BaseService {
             start_at,
             end_at
           )
-        `)
+        `
+        )
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -65,7 +88,9 @@ export class SportsSeasonsStageService extends BaseService {
   static async getCount(): Promise<ServiceResponse<number>> {
     try {
       const supabase = await this.getClient();
-      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+      const { count, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
 
       if (error) {
         throw error;
@@ -80,11 +105,7 @@ export class SportsSeasonsStageService extends BaseService {
   static async getById(id: number): Promise<ServiceResponse<SportsSeasonsStage>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select()
-        .eq('id', id)
-        .single();
+      const { data, error } = await supabase.from(TABLE_NAME).select().eq('id', id).single();
 
       if (error) {
         throw error;
@@ -96,12 +117,15 @@ export class SportsSeasonsStageService extends BaseService {
     }
   }
 
-  static async getBySeason(seasonId: number): Promise<ServiceResponse<SportsSeasonsStageWithDetails[]>> {
+  static async getBySeason(
+    seasonId: number
+  ): Promise<ServiceResponse<SportsSeasonsStageWithDetails[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
-        .select(`
+        .select(
+          `
           *,
           sports_categories!inner(
             id,
@@ -117,7 +141,8 @@ export class SportsSeasonsStageService extends BaseService {
             start_at,
             end_at
           )
-        `)
+        `
+        )
         .eq('season_id', seasonId)
         .order('created_at', { ascending: false });
 
@@ -131,7 +156,9 @@ export class SportsSeasonsStageService extends BaseService {
     }
   }
 
-  static async insert(data: SportsSeasonsStageInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: z.infer<typeof createSportsSeasonsStageSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
 
@@ -151,7 +178,8 @@ export class SportsSeasonsStageService extends BaseService {
         .eq('competition_stage', data.competition_stage)
         .single();
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 is "not found" error
         throw checkError;
       }
 
@@ -164,8 +192,12 @@ export class SportsSeasonsStageService extends BaseService {
 
       // Verify that the referenced entities exist
       const [sportCategoryCheck, seasonCheck] = await Promise.all([
-        supabase.from('sports_categories').select('id').eq('id', data.sport_category_id).single(),
-        supabase.from('seasons').select('id').eq('id', data.season_id).single()
+        supabase
+          .from(SPORTS_CATEGORIES_TABLE)
+          .select('id')
+          .eq('id', data.sport_category_id)
+          .single(),
+        supabase.from(SEASONS_TABLE).select('id').eq('id', data.season_id).single()
       ]);
 
       if (sportCategoryCheck.error) {
@@ -187,7 +219,9 @@ export class SportsSeasonsStageService extends BaseService {
     }
   }
 
-  static async updateById(data: SportsSeasonsStageUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: z.infer<typeof updateSportsSeasonsStageSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -230,7 +264,8 @@ export class SportsSeasonsStageService extends BaseService {
           .neq('id', data.id)
           .single();
 
-        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
+        if (checkError && checkError.code !== 'PGRST116') {
+          // PGRST116 is "not found" error
           throw checkError;
         }
 
@@ -244,21 +279,27 @@ export class SportsSeasonsStageService extends BaseService {
         // Verify that the referenced entities exist if they're being updated
         const checks = [];
         if (data.sport_category_id) {
-          checks.push(supabase.from('sports_categories').select('id').eq('id', data.sport_category_id).single());
+          checks.push(
+            supabase
+              .from(SPORTS_CATEGORIES_TABLE)
+              .select('id')
+              .eq('id', data.sport_category_id)
+              .single()
+          );
         }
         if (data.season_id) {
-          checks.push(supabase.from('seasons').select('id').eq('id', data.season_id).single());
+          checks.push(supabase.from(SEASONS_TABLE).select('id').eq('id', data.season_id).single());
         }
 
         if (checks.length > 0) {
           const results = await Promise.all(checks);
           let index = 0;
-          
+
           if (data.sport_category_id && results[index]?.error) {
             return { success: false, error: 'Referenced sport category does not exist.' };
           }
           if (data.sport_category_id) index++;
-          
+
           if (data.season_id && results[index]?.error) {
             return { success: false, error: 'Referenced season does not exist.' };
           }
@@ -287,7 +328,7 @@ export class SportsSeasonsStageService extends BaseService {
 
       // Check if this stage is referenced by matches
       const { data: matches, error: checkError } = await supabase
-        .from('matches')
+        .from(MATCHES_TABLE)
         .select('id')
         .eq('stage_id', id)
         .limit(1);
@@ -299,7 +340,8 @@ export class SportsSeasonsStageService extends BaseService {
       if (matches && matches.length > 0) {
         return {
           success: false,
-          error: 'Cannot delete sports seasons stage that has associated matches. Please remove matches first.'
+          error:
+            'Cannot delete sports seasons stage that has associated matches. Please remove matches first.'
         };
       }
 

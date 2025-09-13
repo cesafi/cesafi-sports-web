@@ -1,12 +1,9 @@
+import { z } from 'zod';
 import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 import { BaseService } from './base';
-import {
-  Volunteer,
-  VolunteerInsert,
-  VolunteerUpdate,
-  VolunteersPaginationOptions
-} from '@/lib/types/volunteers';
+import { Volunteer, VolunteersPaginationOptions } from '@/lib/types/volunteers';
 import CloudinaryService from './cloudinary';
+import { createVolunteerSchema, updateVolunteerSchema } from '@/lib/validations/volunteers';
 
 const TABLE_NAME = 'volunteers';
 
@@ -104,7 +101,9 @@ export class VolunteerService extends BaseService {
     }
   }
 
-  static async insert(data: VolunteerInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: z.infer<typeof createVolunteerSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
 
@@ -149,7 +148,9 @@ export class VolunteerService extends BaseService {
     }
   }
 
-  static async updateById(data: VolunteerUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: z.infer<typeof updateVolunteerSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -212,11 +213,11 @@ export class VolunteerService extends BaseService {
       const supabase = await this.getClient();
 
       // First, get the volunteer to check if it has an image
-      const { data: volunteer, error: fetchError } = await supabase
+      const { data: volunteer, error: fetchError } = (await supabase
         .from(TABLE_NAME)
         .select('image_url')
         .eq('id', id)
-        .single() as { data: { image_url: string | null } | null, error: Error | null };
+        .single()) as { data: { image_url: string | null } | null; error: Error | null };
 
       if (fetchError) {
         throw fetchError;
@@ -229,10 +230,10 @@ export class VolunteerService extends BaseService {
           const url = volunteer.image_url;
           // Match the full path after /upload/ or /upload/vX_Y_Z/ and remove extension
           const publicIdMatch = url.match(/\/upload\/(?:v\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
-          
+
           if (publicIdMatch) {
             const publicId = publicIdMatch[1]; // This includes the full folder path without extension
-            
+
             await CloudinaryService.deleteImage(publicId, { resourceType: 'image' });
           }
         } catch (cloudinaryError) {

@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  BarChart3,
   Building2,
   FileText,
   Grid3X3,
@@ -9,7 +8,6 @@ import {
   Trophy,
   Users,
   Volleyball,
-  Calendar,
   Target,
   Shield,
   Group
@@ -34,10 +32,10 @@ interface DashboardSidebarProps {
 export default function DashboardSidebar({ userRole = 'admin' }: DashboardSidebarProps) {
   const pathname = usePathname();
   
-  // Only use season context for roles that need it (admin, league_operator)
+  // Always call the hook, but only use it for roles that need it
+  const seasonContext = useSeason();
   const needsSeasonContext = userRole === 'admin' || userRole === 'league_operator';
-  const seasonContext = needsSeasonContext ? useSeason() : null;
-  const currentSeason = seasonContext?.currentSeason;
+  const currentSeason = needsSeasonContext ? seasonContext?.currentSeason : null;
 
   const getGeneralNavigationItems = (role: string): NavigationItem[] => {
     switch (role) {

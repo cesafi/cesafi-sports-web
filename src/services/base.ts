@@ -3,12 +3,13 @@ import {
   PaginatedResponse,
   PaginationOptions,
   RangeOrEqualityFilter,
-  ServiceResponse
+  ServiceResponse,
+  FilterValue
 } from '../lib/types/base';
 import { Database } from '../../database.types';
 import { AdminSupabaseClient } from '../lib/supabase/admin';
-import { createClient as createBrowserClient } from '../lib/supabase/client';
-import { createClient as createServerClient } from '../lib/supabase/server';
+import { getSupabaseClient } from '../lib/supabase/client';
+import { getSupabaseServer } from '../lib/supabase/server';
 import { createAdminClient } from '../lib/supabase/admin';
 
 export abstract class BaseService {
@@ -16,9 +17,9 @@ export abstract class BaseService {
     const isServer = typeof window === 'undefined';
 
     if (isServer) {
-      return createServerClient();
+      return getSupabaseServer();
     } else {
-      return createBrowserClient();
+      return getSupabaseClient();
     }
   }
 
@@ -33,9 +34,44 @@ export abstract class BaseService {
     };
   }
 
-  protected static async getPaginatedData<T, TableName extends keyof Database['public']['Tables']>(
+  private static applyFiltersToQuery<TFilters extends Record<string, FilterValue>>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query: any,
+    filters: TFilters
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): any {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (key === 'search') return;
+
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          const nonNullValues = value.filter((item): item is NonNullPrimitive => item !== null);
+
+          if (nonNullValues.length > 0) {
+            query = query.in(key, nonNullValues);
+          }
+        } else if (typeof value === 'object' && value !== null) {
+          const { gte, lte, eq } = value as RangeOrEqualityFilter;
+
+          if (gte !== undefined) query = query.gte(key, gte);
+          if (lte !== undefined) query = query.lte(key, lte);
+          if (eq !== undefined && eq !== null) query = query.eq(key, eq);
+        } else {
+          query = query.eq(key, value);
+        }
+      }
+    });
+
+    return query;
+  }
+
+  protected static async getPaginatedData<
+    T,
+    TableName extends keyof Database['public']['Tables'],
+    TFilters extends Record<string, FilterValue> = Record<string, FilterValue>
+  >(
     tableName: TableName,
-    options: PaginationOptions,
+    options: PaginationOptions<TFilters>,
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<T>>> {
     try {
@@ -48,32 +84,8 @@ export abstract class BaseService {
       let query = supabase.from(tableName).select(selectQuery, { count: 'exact' });
 
       if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (key === 'search') return;
-
-          if (value !== undefined && value !== null) {
-            if (Array.isArray(value)) {
-              const nonNullValues = value.filter((item): item is NonNullPrimitive => item !== null);
-
-              if (nonNullValues.length > 0) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                query = query.in(key, nonNullValues as any[]);
-              }
-            } else if (typeof value === 'object' && value !== null) {
-              const { gte, lte, eq } = value as RangeOrEqualityFilter;
-
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if (gte !== undefined) query = query.gte(key, gte as any);
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if (lte !== undefined) query = query.lte(key, lte as any);
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if (eq !== undefined) query = query.eq(key, eq as any);
-            } else {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              query = query.eq(key, value as any);
-            }
-          }
-        });
+        // Apply filters using a more type-safe approach
+        query = this.applyFiltersToQuery(query, filters);
       }
 
       if (searchQuery && searchQuery.trim() && searchableFields && searchableFields.length > 0) {
@@ -114,7 +126,7 @@ export abstract class BaseService {
       return result;
     } catch (error) {
       console.error('BaseService.getPaginatedData error:', error);
-      return this.formatError(error, `Failed to fetch paginated ${tableName}`);
+      return this.formatError(error, `Failed to fetch paginated ${String(tableName)}`);
     }
   }
 }

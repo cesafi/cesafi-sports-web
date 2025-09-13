@@ -1,8 +1,12 @@
+import { z } from 'zod';
 import { ServiceResponse } from '../lib/types/base';
-import { GameScoreInsert, GameScoreUpdate, GameScoreDetailedView } from '../lib/types/game-scores';
+import { GameScoreDetailedView } from '../lib/types/game-scores';
 import { BaseService } from './base';
+import { createGameScoreSchema, updateGameScoreSchema } from '@/lib/validations/game-scores';
 
 const TABLE_NAME = 'game_scores';
+const GAMES_TABLE = 'games';
+const MATCH_PARTICIPANTS_TABLE = 'match_participants';
 
 export class GameScoreService extends BaseService {
   static async getByGameId(gameId: number): Promise<ServiceResponse<GameScoreDetailedView[]>> {
@@ -69,17 +73,15 @@ export class GameScoreService extends BaseService {
     }
   }
 
-  static async insert(data: GameScoreInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: z.infer<typeof createGameScoreSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
 
       const [gameCheck, participantCheck] = await Promise.all([
-        supabase.from('games').select('id').eq('id', data.game_id!).single(),
-        supabase
-          .from(TABLE_NAME)
-          .select('id')
-          .eq('id', data.match_participant_id!)
-          .single()
+        supabase.from(GAMES_TABLE).select('id').eq('id', data.game_id!).single(),
+        supabase.from(TABLE_NAME).select('id').eq('id', data.match_participant_id!).single()
       ]);
 
       if (gameCheck.error) {
@@ -89,9 +91,7 @@ export class GameScoreService extends BaseService {
         return { success: false, error: 'Referenced match participant does not exist.' };
       }
 
-      const { error } = await supabase
-        .from(TABLE_NAME)
-        .insert(data);
+      const { error } = await supabase.from(TABLE_NAME).insert(data);
 
       if (error) {
         throw error;
@@ -103,7 +103,9 @@ export class GameScoreService extends BaseService {
     }
   }
 
-  static async updateById(data: GameScoreUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: z.infer<typeof updateGameScoreSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Game score ID is required to update.' };
@@ -113,12 +115,12 @@ export class GameScoreService extends BaseService {
 
       const checks = [];
       if (data.game_id !== undefined && data.game_id !== null) {
-        checks.push(supabase.from('games').select('id').eq('id', data.game_id).single());
+        checks.push(supabase.from(GAMES_TABLE).select('id').eq('id', data.game_id).single());
       }
       if (data.match_participant_id !== undefined && data.match_participant_id !== null) {
         checks.push(
           supabase
-            .from('match_participants')
+            .from(MATCH_PARTICIPANTS_TABLE)
             .select('id')
             .eq('id', data.match_participant_id)
             .single()
@@ -143,10 +145,7 @@ export class GameScoreService extends BaseService {
         }
       }
 
-      const { error } = await supabase
-        .from(TABLE_NAME)
-        .update(data)
-        .eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
 
       if (error) {
         throw error;

@@ -5,9 +5,10 @@ import {
   FilterValue
 } from '@/lib/types/base';
 import { BaseService } from './base';
-import { Sport, SportInsert, SportUpdate, SportCategoryFormData } from '@/lib/types/sports';
+import { Sport, SportCategoryFormData, SportInsert, SportUpdate } from '@/lib/types/sports';
 
 const TABLE_NAME = 'sports';
+const SPORTS_CATEGORIES_TABLE = 'sports_categories';
 
 export class SportService extends BaseService {
   static async getPaginated(
@@ -22,10 +23,13 @@ export class SportService extends BaseService {
       };
 
       // Use a custom select query to include category count, or the provided selectQuery
-      const customSelectQuery = selectQuery === '*' ? `
+      const customSelectQuery =
+        selectQuery === '*'
+          ? `
         *,
         _count: sports_categories(count)
-      ` : selectQuery;
+      `
+          : selectQuery;
 
       const result = await this.getPaginatedData<Sport, typeof TABLE_NAME>(
         TABLE_NAME,
@@ -129,7 +133,6 @@ export class SportService extends BaseService {
     categories: SportCategoryFormData[]
   ): Promise<ServiceResponse<{ sportId: number }>> {
     try {
-
       const supabase = await this.getClient();
 
       // Check for duplicate sport name
@@ -184,7 +187,7 @@ export class SportService extends BaseService {
         }));
 
         const { error: categoriesError } = await supabase
-          .from('sports_categories')
+          .from(SPORTS_CATEGORIES_TABLE)
           .insert(categoryData);
 
         if (categoriesError) {
@@ -241,7 +244,7 @@ export class SportService extends BaseService {
       // Check for duplicate categories
       for (const category of categories) {
         const { data: existingCategory, error: checkError } = await supabase
-          .from('sports_categories')
+          .from(SPORTS_CATEGORIES_TABLE)
           .select('id')
           .eq('sport_id', sportId)
           .eq('division', category.division)
@@ -269,7 +272,7 @@ export class SportService extends BaseService {
       }));
 
       const { error: categoriesError } = await supabase
-        .from('sports_categories')
+        .from(SPORTS_CATEGORIES_TABLE)
         .insert(categoryData);
 
       if (categoriesError) {

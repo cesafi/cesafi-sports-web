@@ -6,10 +6,7 @@ import {
   Calendar,
   Users,
   Clock,
-  Plus,
-  Eye,
   AlertTriangle,
-  CheckCircle,
   MapPin,
   Volleyball
 } from 'lucide-react';
@@ -354,7 +351,7 @@ export default function LeagueOperatorOverviewPage() {
       {/* Today's Matches */}
       <Card>
         <CardHeader>
-          <CardTitle>Today's Matches</CardTitle>
+          <CardTitle>Today&apos;s Matches</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

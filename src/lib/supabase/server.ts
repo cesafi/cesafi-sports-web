@@ -1,15 +1,21 @@
 'use server';
+
 import { createServerClient } from '@supabase/ssr';
-import { Database } from '../../../database.types';
+import { Database } from '@/../database.types';
 import { cookies } from 'next/headers';
 
-export async function createClient() {
+import { TypedSupabaseClient } from '../types/base';
+
+export async function getSupabaseServer(): Promise<TypedSupabaseClient> {
   const cookieStore = await cookies();
 
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      auth: {
+        persistSession: true
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll();
@@ -25,8 +31,10 @@ export async function createClient() {
             // user sessions.
           }
         }
+      },
+      cookieOptions: {
+        maxAge: 60 * 60 * 24 * 7
       }
     }
   );
 }
-

@@ -1,7 +1,8 @@
 'use server';
 
-import { NewsService, GNewsArticle } from '@/services/news';
+import { NewsService } from '@/services/news';
 import { ServiceResponse } from '@/lib/types/base';
+import { GNewsArticle } from '@/lib/types/news';
 
 /**
  * Server action to fetch CESAFI news from GNews API

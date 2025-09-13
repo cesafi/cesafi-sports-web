@@ -1,9 +1,7 @@
-import { Database } from '../../../database.types';
+import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 
 export type GameScore = Database['public']['Tables']['game_scores']['Row'];
-export type GameScoreInsert = Database['public']['Tables']['game_scores']['Insert'];
-export type GameScoreUpdate = Database['public']['Tables']['game_scores']['Update'];
 
 export interface GameScoreDetailedView extends GameScore {
   [key: string]: unknown;

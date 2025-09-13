@@ -9,9 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import DepartmentGroups from './department-groups';
 import { Calendar, Users } from 'lucide-react';
 import { moderniz, roboto } from '@/lib/fonts';
-import type { Season } from '@/lib/types/seasons';
-import type { Volunteer } from '@/lib/types/volunteers';
-import type { Department } from '@/lib/types/departments';
 
 export default function SeasonalTabs() {
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);

@@ -11,7 +11,7 @@ import {
 import { Volunteer } from '@/lib/types/volunteers';
 import { VolunteersModal } from '@/components/admin/volunteers';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { VolunteerInsert, VolunteerUpdate } from '@/lib/types/volunteers';
+import { VolunteerInsert, VolunteerUpdate } from '@/lib/validations/volunteers';
 import { useSeason } from '@/components/contexts/season-provider';
 import { Button } from '@/components/ui/button';
 import {

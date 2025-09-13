@@ -1,8 +1,11 @@
 import { ServiceResponse } from '@/lib/types/base';
 import { SportCategory, SportCategoryInsert, SportCategoryUpdate } from '@/lib/types/sports';
+
 import { BaseService } from './base';
 
 const TABLE_NAME = 'sports_categories';
+const SCHOOLS_TEAMS_TABLE = 'schools_teams';
+const SPORTS_SEASONS_STAGES_TABLE = 'sports_seasons_stages';
 
 export class SportCategoryService extends BaseService {
   static async getAll(): Promise<ServiceResponse<SportCategory[]>> {
@@ -28,11 +31,7 @@ export class SportCategoryService extends BaseService {
   static async getById(id: number): Promise<ServiceResponse<SportCategory>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select('*')
-        .eq('id', id)
-        .single();
+      const { data, error } = await supabase.from(TABLE_NAME).select('*').eq('id', id).single();
 
       if (error) {
         throw error;
@@ -277,7 +276,7 @@ export class SportCategoryService extends BaseService {
 
       // Check if this category is referenced by schools_teams
       const { data: schoolsTeams, error: checkError } = await supabase
-        .from('schools_teams')
+        .from(SCHOOLS_TEAMS_TABLE)
         .select('id')
         .eq('sport_category_id', id)
         .limit(1);
@@ -296,7 +295,7 @@ export class SportCategoryService extends BaseService {
 
       // Check if this category is referenced by sports_seasons_stages
       const { data: sportsSeasonsStages, error: stageCheckError } = await supabase
-        .from('sports_seasons_stages')
+        .from(SPORTS_SEASONS_STAGES_TABLE)
         .select('id')
         .eq('sport_category_id', id)
         .limit(1);

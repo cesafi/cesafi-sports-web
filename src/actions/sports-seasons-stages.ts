@@ -1,11 +1,8 @@
 'use server';
 
 import { PaginationOptions } from '@/lib/types/base';
-import {
-  SportsSeasonsStageInsert,
-  SportsSeasonsStageUpdate
-} from '@/lib/types/sports-seasons-stages';
 import { SportsSeasonsStageService } from '@/services/sports-seasons-stages';
+import { createSportsSeasonsStageSchema, updateSportsSeasonsStageSchema } from '@/lib/validations/sports-seasons-stages';
 import { revalidatePath } from 'next/cache';
 
 export async function getPaginatedSportsSeasonsStages(options: PaginationOptions) {
@@ -24,8 +21,19 @@ export async function getSportsSeasonsStageById(id: number) {
   return await SportsSeasonsStageService.getById(id);
 }
 
-export async function createSportsSeasonsStage(data: SportsSeasonsStageInsert) {
-  const result = await SportsSeasonsStageService.insert(data);
+export async function createSportsSeasonsStage(data: unknown) {
+  // Validate the input data
+  const validationResult = createSportsSeasonsStageSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SportsSeasonsStageService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/league-stage');
@@ -34,8 +42,19 @@ export async function createSportsSeasonsStage(data: SportsSeasonsStageInsert) {
   return result;
 }
 
-export async function updateSportsSeasonsStageById(data: SportsSeasonsStageUpdate) {
-  const result = await SportsSeasonsStageService.updateById(data);
+export async function updateSportsSeasonsStageById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateSportsSeasonsStageSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SportsSeasonsStageService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/league-stage');

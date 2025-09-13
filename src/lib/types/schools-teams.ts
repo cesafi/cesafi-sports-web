@@ -1,10 +1,12 @@
-import { Database } from '../../../database.types';
+import { z } from 'zod';
+import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { BaseEntity } from './table';
+import { createSchoolTeamSchema, updateSchoolTeamSchema } from '@/lib/validations/schools-teams';
 
 export type SchoolsTeam = Database['public']['Tables']['schools_teams']['Row'];
-export type SchoolsTeamInsert = Database['public']['Tables']['schools_teams']['Insert'];
-export type SchoolsTeamUpdate = Database['public']['Tables']['schools_teams']['Update'];
+export type SchoolsTeamInsert = z.infer<typeof createSchoolTeamSchema>;
+export type SchoolsTeamUpdate = z.infer<typeof updateSchoolTeamSchema>;
 
 export interface SchoolsTeamSearchFilters {
   school_id?: string;

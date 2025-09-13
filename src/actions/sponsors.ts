@@ -1,7 +1,8 @@
 'use server';
 
-import { SponsorInsert, SponsorUpdate, SponsorPaginationOptions } from '@/lib/types/sponsors';
+import { SponsorPaginationOptions } from '@/lib/types/sponsors';
 import { SponsorService } from '@/services/sponsors';
+import { createSponsorSchema, updateSponsorSchema } from '@/lib/validations/sponsors';
 import { revalidatePath } from 'next/cache';
 
 export async function getPaginatedSponsors(options: SponsorPaginationOptions) {
@@ -20,8 +21,19 @@ export async function getSponsorById(id: string) {
   return await SponsorService.getById(id);
 }
 
-export async function createSponsor(data: SponsorInsert) {
-  const result = await SponsorService.insert(data);
+export async function createSponsor(data: unknown) {
+  // Validate the input data
+  const validationResult = createSponsorSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SponsorService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/sponsors');
@@ -30,8 +42,19 @@ export async function createSponsor(data: SponsorInsert) {
   return result;
 }
 
-export async function updateSponsorById(data: SponsorUpdate) {
-  const result = await SponsorService.updateById(data);
+export async function updateSponsorById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateSponsorSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SponsorService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/sponsors');

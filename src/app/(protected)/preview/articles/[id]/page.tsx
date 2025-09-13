@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Eye, Calendar, User, FileText } from 'lucide-react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function ArticlePreviewPage() {
@@ -90,7 +89,7 @@ export default function ArticlePreviewPage() {
           <CardContent className="text-center py-12">
             <h1 className="text-2xl font-bold text-foreground mb-4">Article Not Found</h1>
             <p className="text-muted-foreground mb-6">
-              The article you're looking for doesn't exist or you don't have permission to preview it.
+              The article you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to preview it.
             </p>
             <Button onClick={() => router.back()}>Go Back</Button>
           </CardContent>

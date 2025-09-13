@@ -5,19 +5,15 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSchoolByAbbreviation } from '@/hooks/use-schools';
-import { useSchoolsTeamsBySchoolId, useSchoolsTeamsBySchoolAndSeason, useActiveTeamsBySchool } from '@/hooks/use-schools-teams';
+import { useSchoolsTeamsBySchoolAndSeason, useActiveTeamsBySchool } from '@/hooks/use-schools-teams';
 import { SchoolsTeamWithSportDetails } from '@/lib/types/schools-teams';
-import { useRecentMatches } from '@/hooks/use-schedule';
 import { useMatchesBySchoolId } from '@/hooks/use-matches';
 import { useAllSeasons } from '@/hooks/use-seasons';
 import { useSeason } from '@/components/contexts/season-provider';
 import { formatCategoryName } from '@/lib/utils/sports';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Building2, 
   Trophy, 
@@ -25,13 +21,9 @@ import {
   Calendar, 
   MapPin, 
   ArrowLeft,
-  ExternalLink,
   Clock,
   Target,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
-  Filter,
   ChevronLeft
 } from 'lucide-react';
 import { roboto } from '@/lib/fonts';
@@ -46,10 +38,12 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
   const { data: seasons, isLoading: seasonsLoading, error: seasonsError } = useAllSeasons();
   const { currentSeason: selectedSeason, setCurrentSeason: setSelectedSeason } = useSeason();
   
-  // Use different hooks based on whether a season is selected
-  const { data: teams, isLoading: teamsLoading } = selectedSeason?.id 
-    ? useSchoolsTeamsBySchoolAndSeason(school?.id || '', selectedSeason.id)
-    : useActiveTeamsBySchool(school?.id || '');
+  // Always call both hooks, but use the appropriate one based on season selection
+  const { data: seasonTeams, isLoading: seasonTeamsLoading } = useSchoolsTeamsBySchoolAndSeason(school?.id || '', selectedSeason?.id || '');
+  const { data: activeTeams, isLoading: activeTeamsLoading } = useActiveTeamsBySchool(school?.id || '');
+  
+  const teams = selectedSeason?.id ? seasonTeams : activeTeams;
+  const teamsLoading = selectedSeason?.id ? seasonTeamsLoading : activeTeamsLoading;
   
   // Type assertion to ensure TypeScript knows the correct type
   const typedTeams = teams as SchoolsTeamWithSportDetails[] | undefined;
@@ -62,7 +56,7 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
   });
   
   // Fallback setSelectedSeason if context is not working
-  const handleSeasonSelect = (season: any) => {
+  const handleSeasonSelect = (season: { id: number; name: string; start_at: string; end_at: string }) => {
     if (setSelectedSeason && typeof setSelectedSeason === 'function') {
       setSelectedSeason(season);
     } else {
@@ -126,7 +120,7 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
           <Building2 className="h-16 w-16 text-muted-foreground mx-auto" />
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-foreground">School Not Found</h1>
-            <p className="text-muted-foreground">The school you're looking for doesn't exist or has been removed.</p>
+            <p className="text-muted-foreground">The school you&apos;re looking for doesn&apos;t exist or has been removed.</p>
           </div>
           <Button asChild>
             <Link href="/schools">
