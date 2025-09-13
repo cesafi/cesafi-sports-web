@@ -320,7 +320,7 @@ export function useSchoolsTeamsTable(selectedSchoolId: string | null) {
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch teams for school and season');
       }
-      return data.data;
+      return (data as { success: true; data: SchoolsTeamWithSportDetails[] }).data;
     }
   });
 

@@ -10,6 +10,7 @@ import { SchoolsTeamWithSportDetails } from '@/lib/types/schools-teams';
 import { useMatchesBySchoolId } from '@/hooks/use-matches';
 import { useAllSeasons } from '@/hooks/use-seasons';
 import { useSeason } from '@/components/contexts/season-provider';
+import { Season } from '@/lib/types/seasons';
 import { formatCategoryName } from '@/lib/utils/sports';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,7 +40,10 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
   const { currentSeason: selectedSeason, setCurrentSeason: setSelectedSeason } = useSeason();
   
   // Always call both hooks, but use the appropriate one based on season selection
-  const { data: seasonTeams, isLoading: seasonTeamsLoading } = useSchoolsTeamsBySchoolAndSeason(school?.id || '', selectedSeason?.id || '');
+  const { data: seasonTeams, isLoading: seasonTeamsLoading } = useSchoolsTeamsBySchoolAndSeason(
+    school?.id || '', 
+    selectedSeason?.id || 0
+  );
   const { data: activeTeams, isLoading: activeTeamsLoading } = useActiveTeamsBySchool(school?.id || '');
   
   const teams = selectedSeason?.id ? seasonTeams : activeTeams;
@@ -56,7 +60,7 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
   });
   
   // Fallback setSelectedSeason if context is not working
-  const handleSeasonSelect = (season: { id: number; name: string; start_at: string; end_at: string }) => {
+  const handleSeasonSelect = (season: Season | null) => {
     if (setSelectedSeason && typeof setSelectedSeason === 'function') {
       setSelectedSeason(season);
     } else {
@@ -70,10 +74,10 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
   console.log('Seasons error:', seasonsError);
   
   // Fallback seasons for testing if none exist
-  const fallbackSeasons = [
-    { id: '1', name: '2024', start_at: '2024-01-01', end_at: '2024-12-31', created_at: '2024-01-01' },
-    { id: '2', name: '2023', start_at: '2023-01-01', end_at: '2023-12-31', created_at: '2023-01-01' },
-    { id: '3', name: '2022', start_at: '2022-01-01', end_at: '2022-12-31', created_at: '2022-01-01' }
+  const fallbackSeasons: Season[] = [
+    { id: 1, start_at: '2024-01-01', end_at: '2024-12-31', created_at: '2024-01-01', updated_at: '2024-01-01' },
+    { id: 2, start_at: '2023-01-01', end_at: '2023-12-31', created_at: '2023-01-01', updated_at: '2023-01-01' },
+    { id: 3, start_at: '2022-01-01', end_at: '2022-12-31', created_at: '2022-01-01', updated_at: '2022-01-01' }
   ];
 
   // Sort seasons in descending order (latest first)

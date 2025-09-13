@@ -4,6 +4,7 @@ import { VolunteersPaginationOptions } from '@/lib/types/volunteers';
 import { VolunteerService } from '@/services/volunteers';
 import { createVolunteerSchema, updateVolunteerSchema } from '@/lib/validations/volunteers';
 import { revalidatePath } from 'next/cache';
+import { ServiceResponse } from '@/lib/types/base';
 
 export async function getPaginatedVolunteers(options: VolunteersPaginationOptions) {
   return await VolunteerService.getPaginated(options);
@@ -17,7 +18,7 @@ export async function getVolunteerById(id: string) {
   return await VolunteerService.getById(id);
 }
 
-export async function createVolunteer(data: unknown) {
+export async function createVolunteer(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = createVolunteerSchema.safeParse(data);
   
@@ -25,7 +26,7 @@ export async function createVolunteer(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -36,7 +37,7 @@ export async function createVolunteer(data: unknown) {
   return result;
 }
 
-export async function updateVolunteerById(data: unknown) {
+export async function updateVolunteerById(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = updateVolunteerSchema.safeParse(data);
   
@@ -44,7 +45,7 @@ export async function updateVolunteerById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

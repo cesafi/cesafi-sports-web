@@ -16,6 +16,26 @@ export default function ArticlePreviewPage() {
 
   const { data: article, isLoading, error } = useArticleById(articleId);
 
+  // Generate excerpt from content
+  const generateExcerpt = (content: unknown, maxLength: number = 150): string => {
+    if (!content) return '';
+    
+    // If content is a string, use it directly
+    let textContent = typeof content === 'string' ? content : '';
+    
+    // If content is an object with HTML, extract text
+    if (typeof content === 'object' && content !== null) {
+      // Simple text extraction - remove HTML tags
+      textContent = JSON.stringify(content).replace(/<[^>]*>/g, '').replace(/\\n/g, ' ').replace(/\\"/g, '"');
+    }
+    
+    // Clean up and truncate
+    textContent = textContent.trim();
+    if (textContent.length <= maxLength) return textContent;
+    
+    return textContent.substring(0, maxLength).trim() + '...';
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
@@ -129,7 +149,7 @@ export default function ArticlePreviewPage() {
             <div className="space-y-4">
               <div>
                 <CardTitle className="text-3xl font-bold">{article.title}</CardTitle>
-                <p className="text-muted-foreground mt-2">{article.excerpt}</p>
+                <p className="text-muted-foreground mt-2">{generateExcerpt(article.content)}</p>
               </div>
               
               {/* Article Meta */}

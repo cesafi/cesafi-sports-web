@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { MatchStatusModal } from './match-status-modal';
 import { MatchWithFullDetails, MatchUpdate } from '@/lib/types/matches';
-import { updateMatch } from '@/actions/matches';
+import { updateMatchById } from '@/actions/matches';
 
 // Example usage of the MatchStatusModal with scores
 export function MatchStatusModalExample() {
@@ -27,12 +27,12 @@ export function MatchStatusModalExample() {
     updated_at: '2024-01-01T00:00:00Z',
     sports_seasons_stages: {
       id: 1,
-      competition_stage: 'elimination',
+      competition_stage: 'playoffs',
       season_id: 1,
       sport_category_id: 1,
       sports_categories: {
         id: 1,
-        division: 'college',
+        division: 'men',
         levels: 'college',
         sports: {
           id: 1,
@@ -82,7 +82,7 @@ export function MatchStatusModalExample() {
   const handleUpdateMatch = async (data: MatchUpdate) => {
     setIsSubmitting(true);
     try {
-      await updateMatch(data);
+      await updateMatchById(data);
       // Handle success
     } catch (error) {
       console.error('Failed to update match:', error);

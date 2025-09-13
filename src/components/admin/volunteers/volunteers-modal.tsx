@@ -124,20 +124,6 @@ export function VolunteersModal({
     }
   }, [handleClose, isSubmitting, mode, onSuccess]);
 
-  useEffect(() => {
-    if (hasStartedUpdating.current && !isSubmitting && mode === 'edit') {
-      hasStartedUpdating.current = false;
-      
-      // Clean up old image if a new one was uploaded
-      if (oldImageUrl && formData.image_url && oldImageUrl !== formData.image_url) {
-        cleanupOldImage(oldImageUrl);
-      }
-      
-      onSuccess?.();
-      handleClose();
-    }
-  }, [handleClose, isSubmitting, mode, oldImageUrl, formData.image_url, deleteImage, onSuccess, cleanupOldImage]);
-
   const cleanupOldImage = useCallback(async (imageUrl: string) => {
     try {
       // Extract public_id from the URL for deletion (same pattern as the service)
@@ -156,7 +142,22 @@ export function VolunteersModal({
     }
   }, [deleteImage]);
 
-  const handleInputChange = (field: string, value: string | number | boolean) => {
+  useEffect(() => {
+    if (hasStartedUpdating.current && !isSubmitting && mode === 'edit') {
+      hasStartedUpdating.current = false;
+      
+      // Clean up old image if a new one was uploaded
+      if (oldImageUrl && formData.image_url && oldImageUrl !== formData.image_url) {
+        cleanupOldImage(oldImageUrl);
+      }
+      
+      onSuccess?.();
+      handleClose();
+    }
+  }, [handleClose, isSubmitting, mode, oldImageUrl, formData.image_url, deleteImage, onSuccess, cleanupOldImage]);
+
+
+  const handleInputChange = (field: string, value: string | number | boolean | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

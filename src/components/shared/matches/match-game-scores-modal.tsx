@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { Play, Square, Timer, Trophy, Users, Clock, Calendar } from 'lucide-react';
 import { GameWithDetails, GameUpdate } from '@/lib/types/games';
 import { GameScore, GameScoreInsert, GameScoreUpdate } from '@/lib/types/game-scores';
-import { MatchParticipantWithFullDetails } from '@/lib/types/match-participants';
+import { MatchParticipantWithTeamDetailsOnly } from '@/lib/types/match-participants';
 import { 
   gameTimingUpdateSchema, 
   scoreSubmissionSchema,
@@ -27,7 +27,7 @@ interface MatchGameScoresModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   game: GameWithDetails;
-  participants: MatchParticipantWithFullDetails[];
+  participants: MatchParticipantWithTeamDetailsOnly[];
   gameScores: GameScore[];
   onSaveScores: (scores: (GameScoreInsert | GameScoreUpdate)[]) => Promise<void>;
   onUpdateGame?: (game: GameUpdate) => Promise<void>;

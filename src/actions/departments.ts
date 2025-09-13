@@ -1,8 +1,9 @@
 'use server';
 
-import { PaginationOptions } from '@/lib/types/base';
+import { PaginationOptions, ServiceResponse } from '@/lib/types/base';
 import { DepartmentService } from '@/services/departments';
 import { createDepartmentSchema, updateDepartmentSchema } from '@/lib/validations/departments';
+import { Department } from '@/lib/types/departments';
 import { revalidatePath } from 'next/cache';
 
 export async function getPaginatedDepartments(options: PaginationOptions) {
@@ -17,7 +18,7 @@ export async function getDepartmentById(id: number) {
   return await DepartmentService.getById(id);
 }
 
-export async function createDepartment(data: unknown) {
+export async function createDepartment(data: unknown): Promise<ServiceResponse<Department>> {
   // Validate the input data
   const validationResult = createDepartmentSchema.safeParse(data);
   
@@ -25,7 +26,7 @@ export async function createDepartment(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -38,7 +39,7 @@ export async function createDepartment(data: unknown) {
   return result;
 }
 
-export async function updateDepartmentById(data: unknown) {
+export async function updateDepartmentById(data: unknown): Promise<ServiceResponse<Department>> {
   // Validate the input data
   const validationResult = updateDepartmentSchema.safeParse(data);
   
@@ -46,7 +47,7 @@ export async function updateDepartmentById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

@@ -4,6 +4,7 @@ import { SchoolPaginationOptions } from '@/lib/types/schools';
 import { SchoolService } from '@/services/schools';
 import { createSchoolSchema, updateSchoolSchema } from '@/lib/validations/schools';
 import { revalidatePath } from 'next/cache';
+import { ServiceResponse } from '@/lib/types/base';
 
 
 
@@ -52,7 +53,7 @@ export async function getSchoolByAbbreviation(abbreviation: string) {
   return await SchoolService.getByAbbreviation(abbreviation);
 }
 
-export async function createSchool(data: unknown) {
+export async function createSchool(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = createSchoolSchema.safeParse(data);
   
@@ -60,7 +61,7 @@ export async function createSchool(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -73,7 +74,7 @@ export async function createSchool(data: unknown) {
   return result;
 }
 
-export async function updateSchoolById(data: unknown) {
+export async function updateSchoolById(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = updateSchoolSchema.safeParse(data);
   
@@ -81,7 +82,7 @@ export async function updateSchoolById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

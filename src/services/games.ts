@@ -175,7 +175,7 @@ export class GameService extends BaseService {
     }
   }
 
-  static async insert(data: z.infer<typeof createGameSchema>): Promise<ServiceResponse<undefined>> {
+  static async insert(data: z.infer<typeof createGameSchema>): Promise<ServiceResponse<Game>> {
     try {
       const supabase = await this.getClient();
 
@@ -278,13 +278,13 @@ export class GameService extends BaseService {
         }
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(data);
+      const { data: newGame, error } = await supabase.from(TABLE_NAME).insert(data).select().single();
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      return { success: true, data: newGame };
     } catch (err) {
       return this.formatError(err, `Failed to insert new ${TABLE_NAME} entity.`);
     }
@@ -292,7 +292,7 @@ export class GameService extends BaseService {
 
   static async updateById(
     data: z.infer<typeof updateGameSchema>
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<Game>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -441,7 +441,18 @@ export class GameService extends BaseService {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      // Fetch the updated game
+      const { data: updatedGame, error: fetchError } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('id', data.id)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      return { success: true, data: updatedGame };
     } catch (err) {
       return this.formatError(err, `Failed to update ${TABLE_NAME} entity.`);
     }

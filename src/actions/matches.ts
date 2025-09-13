@@ -3,10 +3,12 @@
 import {
   MatchPaginationOptions,
   SchedulePaginationOptions,
-  ScheduleFilters
+  ScheduleFilters,
+  Match
 } from '@/lib/types/matches';
 import { MatchService } from '@/services/matches';
 import { createMatchSchema, updateMatchSchema } from '@/lib/validations/matches';
+import { ServiceResponse } from '@/lib/types/base';
 import { revalidatePath } from 'next/cache';
 
 export async function getPaginatedMatches(options: MatchPaginationOptions) {
@@ -45,7 +47,7 @@ export async function getMatchesBySeason(seasonId: number) {
   return await MatchService.getBySeason(seasonId);
 }
 
-export async function createMatch(data: unknown) {
+export async function createMatch(data: unknown): Promise<ServiceResponse<Match>> {
   // Validate the input data
   const validationResult = createMatchSchema.safeParse(data);
   
@@ -53,7 +55,7 @@ export async function createMatch(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -66,7 +68,7 @@ export async function createMatch(data: unknown) {
   return result;
 }
 
-export async function createMatchWithParticipants(data: unknown, participantTeamIds: string[]) {
+export async function createMatchWithParticipants(data: unknown, participantTeamIds: string[]): Promise<ServiceResponse<Match>> {
   // Validate the input data
   const validationResult = createMatchSchema.safeParse(data);
   
@@ -74,7 +76,7 @@ export async function createMatchWithParticipants(data: unknown, participantTeam
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -87,7 +89,7 @@ export async function createMatchWithParticipants(data: unknown, participantTeam
   return result;
 }
 
-export async function updateMatchById(data: unknown) {
+export async function updateMatchById(data: unknown): Promise<ServiceResponse<Match>> {
   // Validate the input data
   const validationResult = updateMatchSchema.safeParse(data);
   
@@ -95,7 +97,7 @@ export async function updateMatchById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

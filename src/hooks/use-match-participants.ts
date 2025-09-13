@@ -29,8 +29,6 @@ import { ServiceResponse, PaginationOptions } from '@/lib/types/base';
 import { useTable } from './use-table';
 import { toast } from 'sonner';
 
-import { _matchKeys } from './use-matches';
-import { _schoolsTeamKeys } from './use-schools-teams';
 
 export const matchParticipantKeys = {
   all: ['match-participants'] as const,
@@ -169,13 +167,13 @@ export function useMatchParticipantsDetails(matchId: number) {
 // ============================================================================
 
 export function useCreateMatchParticipant(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, MatchParticipantInsert>
+  mutationOptions?: UseMutationOptions<ServiceResponse<MatchParticipant>, Error, MatchParticipantInsert>
 ) {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: createMatchParticipant,
-    onSuccess: (result, variables) => {
+    onSuccess: (result, variables, context) => {
       if (result.success) {
         // Invalidate match participants queries
         queryClient.invalidateQueries({
@@ -193,7 +191,7 @@ export function useCreateMatchParticipant(
           queryKey: matchParticipantKeys.byTeam(variables.team_id)
         });
       }
-      mutationOptions?.onSuccess?.(result, variables);
+      mutationOptions?.onSuccess?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to create match participant:', error);
@@ -204,19 +202,19 @@ export function useCreateMatchParticipant(
 }
 
 export function useUpdateMatchParticipant(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, MatchParticipantUpdate>
+  mutationOptions?: UseMutationOptions<ServiceResponse<MatchParticipant>, Error, MatchParticipantUpdate>
 ) {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: updateMatchParticipantById,
-    onSuccess: (result, variables) => {
+    onSuccess: (result, variables, context) => {
       if (result.success) {
         // Invalidate related queries
         queryClient.invalidateQueries({ queryKey: matchParticipantKeys.details(variables.id) });
         queryClient.invalidateQueries({ queryKey: matchParticipantKeys.all });
       }
-      mutationOptions?.onSuccess?.(result, variables);
+      mutationOptions?.onSuccess?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update match participant:', error);
@@ -265,7 +263,7 @@ export function useUpdateMatchScores(
       const { MatchParticipantService } = await import('@/services/match-participants');
       return MatchParticipantService.updateMatchScores(scoreUpdates);
     },
-    onSuccess: (result, variables) => {
+    onSuccess: (result, variables, context) => {
       if (result.success) {
         // Invalidate match participants queries for the affected match
         const matchId = variables[0]?.match_id;
@@ -282,7 +280,7 @@ export function useUpdateMatchScores(
           });
         }
       }
-      mutationOptions?.onSuccess?.(result, variables);
+      mutationOptions?.onSuccess?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update match scores:', error);

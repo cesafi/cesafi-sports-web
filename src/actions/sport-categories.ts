@@ -3,6 +3,7 @@
 import { SportCategoryService } from '@/services/sport-categories';
 import { createSportCategorySchema, updateSportCategorySchema } from '@/lib/validations/sport-categories';
 import { revalidatePath } from 'next/cache';
+import { ServiceResponse } from '@/lib/types/base';
 
 // Context-based fetching methods
 export async function getSportCategoriesBySportId(sportId: number) {
@@ -46,7 +47,7 @@ export async function getUniqueLevels() {
   return await SportCategoryService.getUniqueLevels();
 }
 
-export async function createSportCategory(data: unknown) {
+export async function createSportCategory(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = createSportCategorySchema.safeParse(data);
   
@@ -54,7 +55,7 @@ export async function createSportCategory(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -65,7 +66,7 @@ export async function createSportCategory(data: unknown) {
   return result;
 }
 
-export async function updateSportCategoryById(data: unknown) {
+export async function updateSportCategoryById(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = updateSportCategorySchema.safeParse(data);
   
@@ -73,7 +74,7 @@ export async function updateSportCategoryById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

@@ -6,7 +6,7 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useSeason } from '@/components/contexts/season-provider';
 import { getScheduleMatches, getScheduleMatchesByDate } from '@/actions/matches';
-import { ScheduleFilters, SchedulePaginationOptions } from '@/lib/types/matches';
+import { ScheduleFilters, SchedulePaginationOptions, ScheduleResponse } from '@/lib/types/matches';
 
 export const scheduleKeys = {
   all: ['schedule'] as const,
@@ -62,10 +62,10 @@ export function useInfiniteSchedule(
       pageParams: data.pageParams,
       matches: data.pages.flatMap((page) => (page.success && page.data ? page.data.matches : [])),
       hasNextPage: data.pages[data.pages.length - 1]?.success
-        ? (data.pages[data.pages.length - 1].data?.hasMore ?? false)
+        ? (data.pages[data.pages.length - 1] as { success: true; data: ScheduleResponse }).data?.hasMore ?? false
         : false,
-      hasPreviousPage: data.pages[0]?.success ? (data.pages[0].data?.hasMore ?? false) : false,
-      totalCount: data.pages[0]?.success ? (data.pages[0].data?.totalCount ?? 0) : 0
+      hasPreviousPage: data.pages[0]?.success ? (data.pages[0] as { success: true; data: ScheduleResponse }).data?.hasMore ?? false : false,
+      totalCount: data.pages[0]?.success ? (data.pages[0] as { success: true; data: ScheduleResponse }).data?.totalCount ?? 0 : 0
     }),
     enabled: !!currentSeason
   });

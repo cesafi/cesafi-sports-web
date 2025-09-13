@@ -267,7 +267,10 @@ export default function InfiniteSchedule({
         <div className="space-y-12">
           {dateGroups.map((dateGroup) => (
             <div key={dateGroup.date} id={`date-group-${dateGroup.date}`}>
-              <DateGroup dateGroup={dateGroup} onMatchClick={onMatchClick} />
+              <DateGroup 
+                dateGroup={dateGroup} 
+                onMatchClick={onMatchClick ? (match) => onMatchClick(match as ScheduleMatch) : undefined} 
+              />
             </div>
           ))}
         </div>

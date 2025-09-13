@@ -32,7 +32,7 @@ interface DashboardSidebarProps {
 export default function DashboardSidebar({ userRole = 'admin' }: DashboardSidebarProps) {
   const pathname = usePathname();
   
-  // Always call the hook, but only use it for roles that need it
+  // Always call the hook, but only use the result when needed
   const seasonContext = useSeason();
   const needsSeasonContext = userRole === 'admin' || userRole === 'league_operator';
   const currentSeason = needsSeasonContext ? seasonContext?.currentSeason : null;
@@ -47,8 +47,7 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
           { href: '/admin/seasons', label: 'Seasons', icon: Trophy },
           { href: '/admin/sports', label: 'Sports', icon: Volleyball },
           { href: '/admin/articles', label: 'Articles', icon: FileText },
-          { href: '/admin/departments', label: 'Departments', icon: Users },
-          { href: '/admin/sponsors', label: 'Sponsors', icon: Shield }
+          { href: '/admin/departments', label: 'Departments', icon: Users }
         ];
       case 'head_writer':
         return [

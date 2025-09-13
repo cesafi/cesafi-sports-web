@@ -93,7 +93,7 @@ export function useDepartmentById(
 
 // Mutation hooks
 export function useCreateDepartment(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, DepartmentInsert>
+  mutationOptions?: UseMutationOptions<ServiceResponse<Department>, Error, DepartmentInsert>
 ) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -113,7 +113,7 @@ export function useCreateDepartment(
 }
 
 export function useUpdateDepartment(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, DepartmentUpdate>
+  mutationOptions?: UseMutationOptions<ServiceResponse<Department>, Error, DepartmentUpdate>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

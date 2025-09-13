@@ -35,13 +35,29 @@ export function ArticleForm({
   backUrl
 }: ArticleFormProps) {
   const router = useRouter();
-  const [formData, setFormData] = useState<ArticleInsert | ArticleUpdate>({
-    title: '',
-    content: {},
-    cover_image_url: '',
-    authored_by: '',
-    status: 'review',
-    published_at: null
+  const [formData, setFormData] = useState<ArticleInsert | ArticleUpdate>(() => {
+    if (mode === 'edit' && article) {
+      return {
+        id: article.id,
+        title: article.title,
+        content: article.content,
+        cover_image_url: article.cover_image_url,
+        authored_by: article.authored_by,
+        slug: article.slug,
+        status: article.status,
+        published_at: article.published_at
+      } as ArticleUpdate;
+    } else {
+      return {
+        title: '',
+        content: {},
+        cover_image_url: '',
+        authored_by: '',
+        slug: '',
+        status: 'review',
+        published_at: null
+      } as ArticleInsert;
+    }
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [editorContent, setEditorContent] = useState<string>('');
@@ -69,9 +85,10 @@ export function ArticleForm({
         content: {},
         cover_image_url: '',
         authored_by: '',
+        slug: '',
         status: 'review',
         published_at: null
-      });
+      } as ArticleInsert);
       setEditorContent('');
       setCoverImagePreview('');
     }
@@ -264,7 +281,7 @@ export function ArticleForm({
                   <LexicalEditor
                     initialContent={editorContent}
                     onChange={(content) => {
-                      setEditorContent(content);
+                      setEditorContent(typeof content === 'string' ? content : JSON.stringify(content));
                       setFormData(prev => ({ ...prev, content }));
                     }}
                     className="min-h-[500px]"

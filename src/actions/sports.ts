@@ -1,6 +1,6 @@
 'use server';
 
-import { PaginationOptions } from '@/lib/types/base';
+import { PaginationOptions, ServiceResponse } from '@/lib/types/base';
 import { SportCategoryFormData } from '@/lib/types/sports';
 import { SportService } from '@/services/sports';
 import { createSportSchema, updateSportSchema } from '@/lib/validations/sports';
@@ -36,7 +36,7 @@ export async function getSportById(id: number) {
   return await SportService.getById(id);
 }
 
-export async function createSport(data: unknown) {
+export async function createSport(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = createSportSchema.safeParse(data);
   
@@ -44,7 +44,7 @@ export async function createSport(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -90,7 +90,7 @@ export async function addCategoriesToExistingSport(
   return result;
 }
 
-export async function updateSportById(data: unknown) {
+export async function updateSportById(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = updateSportSchema.safeParse(data);
   
@@ -98,7 +98,7 @@ export async function updateSportById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

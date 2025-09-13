@@ -134,7 +134,7 @@ export class ArticleService extends BaseService {
 
   static async updateById(
     data: ArticleUpdate
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<Article>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -161,7 +161,18 @@ export class ArticleService extends BaseService {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      // Fetch the updated article
+      const { data: updatedArticle, error: fetchError } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('id', data.id)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      return { success: true, data: updatedArticle };
     } catch (err) {
       return this.formatError(err, `Failed to update ${TABLE_NAME} entity.`);
     }

@@ -96,6 +96,25 @@ export function SchoolModal({
     }
   }, [isSubmitting, mode]);
 
+  const cleanupOldImage = useCallback(async (imageUrl: string) => {
+    try {
+      // Extract public_id from the URL for deletion
+      const url = imageUrl;
+      // Match the full path after /upload/ or /upload/vX_Y_Z/ and remove extension
+      const publicIdMatch = url.match(/\/upload\/(?:v\d+_\d+_\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
+
+      if (publicIdMatch) {
+        const publicId = publicIdMatch[1]; // This includes the full folder path without extension
+
+        await deleteImage(publicId);
+        console.log('Old logo cleaned up successfully:', publicId);
+      }
+    } catch (error) {
+      // Don't block the process if cleanup fails
+      console.warn('Failed to cleanup old logo from Cloudinary:', error);
+    }
+  }, [deleteImage]);
+
   // Handle successful mutations - only trigger when mutations complete
   useEffect(() => {
     // Check if create mutation just completed (was started and now finished)
@@ -157,24 +176,6 @@ export function SchoolModal({
     }
   };
 
-  const cleanupOldImage = useCallback(async (imageUrl: string) => {
-    try {
-      // Extract public_id from the URL for deletion
-      const url = imageUrl;
-      // Match the full path after /upload/ or /upload/vX_Y_Z/ and remove extension
-      const publicIdMatch = url.match(/\/upload\/(?:v\d+_\d+_\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
-
-      if (publicIdMatch) {
-        const publicId = publicIdMatch[1]; // This includes the full folder path without extension
-
-        await deleteImage(publicId);
-        console.log('Old logo cleaned up successfully:', publicId);
-      }
-    } catch (error) {
-      // Don't block the process if cleanup fails
-      console.warn('Failed to cleanup old logo from Cloudinary:', error);
-    }
-  }, [deleteImage]);
 
   const handleInputChange = (field: string, value: string | boolean | null) => {
     setFormData((prev: SchoolInsert | SchoolUpdate) => ({ ...prev, [field]: value }));

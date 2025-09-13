@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ServiceResponse } from '@/lib/types/base';
 import {
+  MatchParticipant,
   MatchParticipantWithTeamDetails,
   MatchParticipantWithMatchDetails,
   MatchParticipantWithFullDetails,
@@ -115,7 +116,7 @@ export class MatchParticipantService extends BaseService {
 
   static async insert(
     data: z.infer<typeof createMatchParticipantSchema>
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<MatchParticipant>> {
     try {
       const supabase = await this.getClient();
 
@@ -152,13 +153,13 @@ export class MatchParticipantService extends BaseService {
         return { success: false, error: 'Referenced team does not exist.' };
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(data);
+      const { data: newMatchParticipant, error } = await supabase.from(TABLE_NAME).insert(data).select().single();
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      return { success: true, data: newMatchParticipant };
     } catch (err) {
       return this.formatError(err, `Failed to insert new match participant.`);
     }
@@ -166,7 +167,7 @@ export class MatchParticipantService extends BaseService {
 
   static async updateById(
     data: z.infer<typeof updateMatchParticipantSchema>
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<MatchParticipant>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Match participant ID is required to update.' };
@@ -243,7 +244,18 @@ export class MatchParticipantService extends BaseService {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      // Fetch the updated match participant
+      const { data: updatedMatchParticipant, error: fetchError } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('id', data.id)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      return { success: true, data: updatedMatchParticipant };
     } catch (err) {
       return this.formatError(err, `Failed to update match participant.`);
     }

@@ -641,7 +641,7 @@ export class MatchService extends BaseService {
 
   static async insert(
     data: MatchInsert
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<Match>> {
     try {
       const supabase = await this.getClient();
 
@@ -689,13 +689,13 @@ export class MatchService extends BaseService {
         }
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(data);
+      const { data: newMatch, error } = await supabase.from(TABLE_NAME).insert(data).select().single();
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      return { success: true, data: newMatch };
     } catch (err) {
       return this.formatError(err, `Failed to insert new ${TABLE_NAME} entity.`);
     }
@@ -703,7 +703,7 @@ export class MatchService extends BaseService {
 
   static async updateById(
     data: MatchUpdate
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<Match>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -798,7 +798,18 @@ export class MatchService extends BaseService {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      // Fetch the updated match
+      const { data: updatedMatch, error: fetchError } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('id', data.id)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      return { success: true, data: updatedMatch };
     } catch (err) {
       return this.formatError(err, `Failed to update ${TABLE_NAME} entity.`);
     }
@@ -807,7 +818,7 @@ export class MatchService extends BaseService {
   static async insertWithParticipants(
     matchData: MatchInsert,
     participantTeamIds: string[]
-  ): Promise<ServiceResponse<{ matchId: number }>> {
+  ): Promise<ServiceResponse<Match>> {
     try {
       const supabase = await this.getClient();
 
@@ -905,7 +916,18 @@ export class MatchService extends BaseService {
         }
       }
 
-      return { success: true, data: { matchId } };
+      // Fetch the created match
+      const { data: newMatch, error: fetchError } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('id', matchId)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      return { success: true, data: newMatch };
     } catch (err) {
       return this.formatError(err, `Failed to create match with participants.`);
     }

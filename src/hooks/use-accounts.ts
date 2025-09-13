@@ -14,10 +14,11 @@ import {
   deleteAccount
 } from '@/actions/accounts';
 
-import { AccountEntity } from '@/services/accounts';
+import { AccountEntity } from '@/lib/types/accounts';
 import { UpdateAccountFormData } from '@/lib/validations/accounts';
 import { useTable } from './use-table';
 import { TableFilters } from '@/lib/types/table';
+import { PaginationOptions } from '@/lib/types/base';
 import { toast } from 'sonner';
 
 export const accountKeys = {

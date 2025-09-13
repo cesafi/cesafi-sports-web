@@ -88,7 +88,7 @@ export class DepartmentService extends BaseService {
 
   static async insert(
     data: z.infer<typeof createDepartmentSchema>
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<Department>> {
     try {
       const supabase = await this.getClient();
 
@@ -109,16 +109,16 @@ export class DepartmentService extends BaseService {
         };
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert({
+      const { data: newDepartment, error } = await supabase.from(TABLE_NAME).insert({
         ...data,
         name: data.name.trim()
-      });
+      }).select().single();
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      return { success: true, data: newDepartment };
     } catch (err) {
       return this.formatError(err, `Failed to insert new ${TABLE_NAME} entity.`);
     }
@@ -126,7 +126,7 @@ export class DepartmentService extends BaseService {
 
   static async updateById(
     data: z.infer<typeof updateDepartmentSchema>
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<Department>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -165,7 +165,18 @@ export class DepartmentService extends BaseService {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      // Fetch the updated department
+      const { data: updatedDepartment, error: fetchError } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('id', data.id)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      return { success: true, data: updatedDepartment };
     } catch (err) {
       return this.formatError(err, `Failed to update ${TABLE_NAME} entity.`);
     }

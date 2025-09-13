@@ -30,10 +30,25 @@ export function MatchGameModal({
   onSubmit,
   isSubmitting
 }: MatchGameModalProps) {
-  const [formData, setFormData] = useState<GameInsert | GameUpdate>({
-    match_id: matchId,
-    game_number: 1,
-    start_at: null
+  const [formData, setFormData] = useState<GameInsert | GameUpdate>(() => {
+    if (mode === 'edit' && game) {
+      return {
+        id: game.id,
+        match_id: game.match_id,
+        game_number: game.game_number,
+        duration: game.duration,
+        start_at: game.start_at,
+        end_at: game.end_at
+      } as GameUpdate;
+    } else {
+      return {
+        match_id: matchId,
+        game_number: 1,
+        duration: '00:00:00',
+        start_at: null,
+        end_at: null
+      } as GameInsert;
+    }
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -48,14 +63,18 @@ export function MatchGameModal({
           id: game.id,
           match_id: game.match_id,
           game_number: game.game_number,
-          start_at: game.start_at
-        });
+          duration: game.duration,
+          start_at: game.start_at,
+          end_at: game.end_at
+        } as GameUpdate);
       } else {
         setFormData({
           match_id: matchId,
           game_number: 1,
-          start_at: null
-        });
+          duration: '00:00:00',
+          start_at: null,
+          end_at: null
+        } as GameInsert);
       }
       setErrors({});
       hasStartedCreating.current = false;

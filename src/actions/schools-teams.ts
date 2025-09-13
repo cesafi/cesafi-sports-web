@@ -3,6 +3,7 @@
 import { SchoolsTeamService } from '@/services/schools-teams';
 import { createSchoolTeamSchema, updateSchoolTeamSchema } from '@/lib/validations/schools-teams';
 import { revalidatePath } from 'next/cache';
+import { ServiceResponse } from '@/lib/types/base';
 
 // Context-based fetching methods
 export async function getSchoolsTeamsBySchoolId(schoolId: string) {
@@ -37,7 +38,7 @@ export async function getTeamsByStage(stageId: number) {
   return await SchoolsTeamService.getTeamsForStage(stageId);
 }
 
-export async function createSchoolsTeam(data: unknown) {
+export async function createSchoolsTeam(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = createSchoolTeamSchema.safeParse(data);
   
@@ -45,7 +46,7 @@ export async function createSchoolsTeam(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -60,7 +61,7 @@ export async function createSchoolsTeam(data: unknown) {
   return result;
 }
 
-export async function updateSchoolsTeamById(data: unknown) {
+export async function updateSchoolsTeamById(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = updateSchoolTeamSchema.safeParse(data);
   
@@ -68,7 +69,7 @@ export async function updateSchoolsTeamById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

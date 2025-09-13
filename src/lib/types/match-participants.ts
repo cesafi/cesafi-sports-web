@@ -77,6 +77,23 @@ export interface MatchParticipantWithFullDetails {
   [key: string]: unknown;
 }
 
+// Type for match participants as returned by the service (without created_at, updated_at, matches)
+export interface MatchParticipantWithTeamDetailsOnly {
+  id: number;
+  match_id: number;
+  team_id: string;
+  match_score: number | null;
+  schools_teams: {
+    id: string;
+    name: string;
+    schools: {
+      name: string;
+      abbreviation: string;
+      logo_url: string | null;
+    };
+  };
+}
+
 export interface MatchParticipantWithMatchHistory {
   id: number;
   match_id: number;

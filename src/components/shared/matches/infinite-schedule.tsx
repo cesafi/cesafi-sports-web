@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { ScheduleMatch } from '@/lib/types/matches';
+import { ScheduleMatch, ScheduleFilters } from '@/lib/types/matches';
 import { useInfiniteSchedule } from '@/hooks/use-schedule';
 import { ScheduleDateGroup } from './schedule-date-group';
 import { groupMatchesByDate, sortDateKeys } from '@/lib/utils/schedule-utils';
@@ -12,16 +12,7 @@ import { cn } from '@/lib/utils';
 interface InfiniteScheduleProps {
   readonly limit?: number;
   readonly direction?: 'future' | 'past';
-  readonly filters?: {
-    season_id?: number;
-    sport_id?: number;
-    sport_category_id?: number;
-    stage_id?: number;
-    status?: string;
-    date_from?: string;
-    date_to?: string;
-    search?: string;
-  };
+  readonly filters?: ScheduleFilters;
   readonly onMatchClick?: (match: ScheduleMatch) => void;
   readonly className?: string;
 }

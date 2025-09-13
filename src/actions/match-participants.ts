@@ -2,6 +2,8 @@
 
 import { MatchParticipantService } from '@/services/match-participants';
 import { createMatchParticipantSchema, updateMatchParticipantSchema } from '@/lib/validations/match-participants';
+import { ServiceResponse } from '@/lib/types/base';
+import { MatchParticipant } from '@/lib/types/match-participants';
 import { revalidatePath } from 'next/cache';
 
 // Core context-based fetching actions
@@ -18,7 +20,7 @@ export async function getMatchParticipantByMatchAndTeam(matchId: number, teamId:
 }
 
 // CRUD operations
-export async function createMatchParticipant(data: unknown) {
+export async function createMatchParticipant(data: unknown): Promise<ServiceResponse<MatchParticipant>> {
   // Validate the input data
   const validationResult = createMatchParticipantSchema.safeParse(data);
   
@@ -26,7 +28,7 @@ export async function createMatchParticipant(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -40,7 +42,7 @@ export async function createMatchParticipant(data: unknown) {
   return result;
 }
 
-export async function updateMatchParticipantById(data: unknown) {
+export async function updateMatchParticipantById(data: unknown): Promise<ServiceResponse<MatchParticipant>> {
   // Validate the input data
   const validationResult = updateMatchParticipantSchema.safeParse(data);
   
@@ -48,7 +50,7 @@ export async function updateMatchParticipantById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

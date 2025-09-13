@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ServiceResponse } from '../lib/types/base';
-import { GameScoreDetailedView } from '../lib/types/game-scores';
+import { GameScoreDetailedView, GameScore } from '../lib/types/game-scores';
 import { BaseService } from './base';
 import { createGameScoreSchema, updateGameScoreSchema } from '@/lib/validations/game-scores';
 
@@ -75,7 +75,7 @@ export class GameScoreService extends BaseService {
 
   static async insert(
     data: z.infer<typeof createGameScoreSchema>
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<GameScore>> {
     try {
       const supabase = await this.getClient();
 
@@ -91,13 +91,13 @@ export class GameScoreService extends BaseService {
         return { success: false, error: 'Referenced match participant does not exist.' };
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(data);
+      const { data: newGameScore, error } = await supabase.from(TABLE_NAME).insert(data).select().single();
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      return { success: true, data: newGameScore };
     } catch (err) {
       return this.formatError(err, `Failed to insert new game score.`);
     }
@@ -105,7 +105,7 @@ export class GameScoreService extends BaseService {
 
   static async updateById(
     data: z.infer<typeof updateGameScoreSchema>
-  ): Promise<ServiceResponse<undefined>> {
+  ): Promise<ServiceResponse<GameScore>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Game score ID is required to update.' };
@@ -151,7 +151,18 @@ export class GameScoreService extends BaseService {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      // Fetch the updated game score
+      const { data: updatedGameScore, error: fetchError } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('id', data.id)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      return { success: true, data: updatedGameScore };
     } catch (err) {
       return this.formatError(err, `Failed to update game score.`);
     }

@@ -49,12 +49,25 @@ export function SchoolTeamModal({
   const { data: sports } = useAllSports();
   const { data: sportCategories } = useAllSportCategories();
 
-  const [formData, setFormData] = useState<SchoolsTeamInsert | SchoolsTeamUpdate>({
-    name: '',
-    school_id: selectedSchoolId || '',
-    season_id: undefined,
-    sport_category_id: undefined,
-    is_active: true
+  const [formData, setFormData] = useState<SchoolsTeamInsert | SchoolsTeamUpdate>(() => {
+    if (mode === 'edit' && team) {
+      return {
+        id: team.id,
+        name: team.name,
+        school_id: team.school_id,
+        season_id: team.season_id,
+        sport_category_id: team.sport_category_id,
+        is_active: team.is_active
+      } as SchoolsTeamUpdate;
+    } else {
+      return {
+        name: '',
+        school_id: selectedSchoolId || '',
+        season_id: currentSeason?.id || 0,
+        sport_category_id: 0,
+        is_active: true
+      } as SchoolsTeamInsert;
+    }
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedSportId, setSelectedSportId] = useState<number | undefined>();
@@ -94,10 +107,10 @@ export function SchoolTeamModal({
         setFormData({
           name: '',
           school_id: selectedSchoolId || '',
-          season_id: currentSeason?.id || undefined,
-          sport_category_id: undefined,
+          season_id: currentSeason?.id || 0,
+          sport_category_id: 0,
           is_active: true
-        });
+        } as SchoolsTeamInsert);
         setSelectedSportId(undefined);
       }
       setErrors({});
@@ -169,7 +182,7 @@ export function SchoolTeamModal({
   const handleSportChange = (sportId: string) => {
     const numSportId = parseInt(sportId);
     setSelectedSportId(numSportId);
-    setFormData((prev) => ({ ...prev, sport_category_id: undefined }));
+    setFormData((prev) => ({ ...prev, sport_category_id: 0 }));
   };
 
   const handleSportCategoryChange = (categoryId: string) => {

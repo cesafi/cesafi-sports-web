@@ -114,7 +114,7 @@ export function useCreateArticle(
 }
 
 export function useUpdateArticle(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, ArticleUpdate>
+  mutationOptions?: UseMutationOptions<ServiceResponse<Article>, Error, ArticleUpdate>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

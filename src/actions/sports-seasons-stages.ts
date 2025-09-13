@@ -1,6 +1,6 @@
 'use server';
 
-import { PaginationOptions } from '@/lib/types/base';
+import { PaginationOptions, ServiceResponse } from '@/lib/types/base';
 import { SportsSeasonsStageService } from '@/services/sports-seasons-stages';
 import { createSportsSeasonsStageSchema, updateSportsSeasonsStageSchema } from '@/lib/validations/sports-seasons-stages';
 import { revalidatePath } from 'next/cache';
@@ -21,7 +21,7 @@ export async function getSportsSeasonsStageById(id: number) {
   return await SportsSeasonsStageService.getById(id);
 }
 
-export async function createSportsSeasonsStage(data: unknown) {
+export async function createSportsSeasonsStage(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = createSportsSeasonsStageSchema.safeParse(data);
   
@@ -29,7 +29,7 @@ export async function createSportsSeasonsStage(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -42,7 +42,7 @@ export async function createSportsSeasonsStage(data: unknown) {
   return result;
 }
 
-export async function updateSportsSeasonsStageById(data: unknown) {
+export async function updateSportsSeasonsStageById(data: unknown): Promise<ServiceResponse<undefined>> {
   // Validate the input data
   const validationResult = updateSportsSeasonsStageSchema.safeParse(data);
   
@@ -50,7 +50,7 @@ export async function updateSportsSeasonsStageById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

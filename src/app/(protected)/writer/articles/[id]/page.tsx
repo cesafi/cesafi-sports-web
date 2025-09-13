@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArticleForm } from '@/components/shared/articles/article-form';
 import { useArticleById, useUpdateArticle } from '@/hooks/use-articles';
-import { ArticleUpdate } from '@/lib/types/articles';
+import { ArticleUpdate, ArticleInsert } from '@/lib/types/articles';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -23,8 +23,14 @@ export default function EditArticlePage() {
     }
   });
 
-  const handleSubmit = async (data: ArticleUpdate) => {
-    updateArticleMutation.mutate(data);
+  const handleSubmit = async (data: ArticleInsert | ArticleUpdate) => {
+    // Add the article ID to the data for update operations
+    const updateData = {
+      ...data,
+      id: articleId
+    } as ArticleUpdate;
+    
+    updateArticleMutation.mutate(updateData);
   };
 
   if (isLoading) {

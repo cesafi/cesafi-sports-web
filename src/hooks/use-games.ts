@@ -124,7 +124,7 @@ export function useMatchDuration(
 }
 
 export function useCreateGame(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, GameInsert>
+  mutationOptions?: UseMutationOptions<ServiceResponse<Game>, Error, GameInsert>
 ) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -158,7 +158,7 @@ export function useCreateGame(
 }
 
 export function useUpdateGame(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, GameUpdate>
+  mutationOptions?: UseMutationOptions<ServiceResponse<Game>, Error, GameUpdate>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

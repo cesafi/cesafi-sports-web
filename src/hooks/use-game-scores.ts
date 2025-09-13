@@ -154,7 +154,7 @@ export function useGameScoresWithDetails(
 }
 
 export function useCreateGameScore(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, GameScoreInsert>
+  mutationOptions?: UseMutationOptions<ServiceResponse<GameScore>, Error, GameScoreInsert>
 ) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -196,7 +196,7 @@ export function useCreateGameScore(
 }
 
 export function useUpdateGameScore(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, GameScoreUpdate>
+  mutationOptions?: UseMutationOptions<ServiceResponse<GameScore>, Error, GameScoreUpdate>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

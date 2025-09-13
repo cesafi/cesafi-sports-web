@@ -2,6 +2,8 @@
 
 import { GameScoreService } from '@/services/game-scores';
 import { createGameScoreSchema, updateGameScoreSchema } from '@/lib/validations/game-scores';
+import { ServiceResponse } from '@/lib/types/base';
+import { GameScore } from '@/lib/types/game-scores';
 import { revalidatePath } from 'next/cache';
 
 // Core context-based fetching actions
@@ -18,7 +20,7 @@ export async function getGameScoresByMatchId(matchId: number) {
 }
 
 // CRUD operations
-export async function createGameScore(data: unknown) {
+export async function createGameScore(data: unknown): Promise<ServiceResponse<GameScore>> {
   // Validate the input data
   const validationResult = createGameScoreSchema.safeParse(data);
   
@@ -26,7 +28,7 @@ export async function createGameScore(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -39,7 +41,7 @@ export async function createGameScore(data: unknown) {
   return result;
 }
 
-export async function updateGameScoreById(data: unknown) {
+export async function updateGameScoreById(data: unknown): Promise<ServiceResponse<GameScore>> {
   // Validate the input data
   const validationResult = updateGameScoreSchema.safeParse(data);
   
@@ -47,7 +49,7 @@ export async function updateGameScoreById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 

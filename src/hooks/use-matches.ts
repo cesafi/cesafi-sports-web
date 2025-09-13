@@ -18,13 +18,12 @@ import {
   createMatchWithParticipants,
   updateMatchById,
   deleteMatchById,
-  getMatchByIdBasic,
   getScheduleMatches,
   getScheduleMatchesByDate,
   getMatchesBySchoolId
 } from '@/actions/matches';
 
-import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match, MatchWithStageDetails, MatchWithFullDetails } from '@/lib/types/matches';
+import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match, MatchWithStageDetails, MatchWithFullDetails, MatchStatus, ScheduleByDateResponse } from '@/lib/types/matches';
 
 import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 import { useTable } from './use-table';
@@ -38,8 +37,8 @@ export const matchKeys = {
   details: (id: number) => [...matchKeys.all, id] as const,
   byStage: (stageId: number) => [...matchKeys.all, 'stage', stageId] as const,
   // Schedule keys
-  schedule: (options: { sport?: string; date?: string }) => [...matchKeys.all, 'schedule', options] as const,
-  scheduleByDate: (options: { date: string; sport?: string }) => [...matchKeys.all, 'scheduleByDate', options] as const,
+  schedule: (options: { cursor?: string; limit: number; direction: 'future' | 'past'; filters?: { season_id?: number; sport_id?: number; sport_category_id?: number; stage_id?: number; status?: MatchStatus; date_from?: string; date_to?: string; search?: string } }) => [...matchKeys.all, 'schedule', options] as const,
+  scheduleByDate: (options: { season_id?: number; sport_id?: number; sport_category_id?: number; stage_id?: number; status?: MatchStatus; date_from?: string; date_to?: string; search?: string }) => [...matchKeys.all, 'scheduleByDate', options] as const,
   // Detail keys (for backward compatibility)
   detailKeys: {
     match: (id: number) => ['match-details', id] as const,
@@ -172,7 +171,7 @@ export function useMatchDetails(matchId: number) {
   return useQuery({
     queryKey: matchKeys.detailKeys.match(matchId),
     queryFn: async (): Promise<MatchWithFullDetails> => {
-      const result: ServiceResponse<MatchWithFullDetails> = await getMatchByIdBasic(matchId);
+      const result: ServiceResponse<MatchWithFullDetails> = await getMatchByIdWithFullDetails(matchId);
       if (!result.success) {
         throw new Error(result.error || `Match with ID ${matchId} not found.`);
       }
@@ -188,7 +187,7 @@ export function useMatchDetails(matchId: number) {
 // ============================================================================
 
 export function useCreateMatch(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, MatchInsert>
+  mutationOptions?: UseMutationOptions<ServiceResponse<Match>, Error, MatchInsert>
 ) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -214,7 +213,7 @@ export function useCreateMatch(
 }
 
 export function useUpdateMatch(
-  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, MatchUpdate>
+  mutationOptions?: UseMutationOptions<ServiceResponse<Match>, Error, MatchUpdate>
 ) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -309,7 +308,7 @@ export function useMatchesTable(selectedStageId: number | null) {
         const result = await getMatchesByStageId(selectedStageId);
         if (result.success && result.data) {
           // Filter matches by current season
-          const filteredMatches = result.data.filter(match => 
+          const filteredMatches = result.data.filter(match =>
             match.sports_seasons_stages?.season_id === currentSeason?.id
           );
           return { success: true, data: filteredMatches };
@@ -429,7 +428,7 @@ export function useMatchesTable(selectedStageId: number | null) {
     error: error?.message || null,
 
     // Mutations
-    createMatch: (matchData: MatchInsert, participantTeamIds?: string[]) => 
+    createMatch: (matchData: MatchInsert, participantTeamIds?: string[]) =>
       createMatchMutation.mutate({ matchData, participantTeamIds }),
     updateMatch: updateMatchMutation.mutate,
     deleteMatch: deleteMatchMutation.mutate,
@@ -464,7 +463,7 @@ export function useScheduleMatches(
       sport_id?: number;
       sport_category_id?: number;
       stage_id?: number;
-      status?: string;
+      status?: MatchStatus;
       date_from?: string;
       date_to?: string;
       search?: string;
@@ -507,15 +506,15 @@ export function useScheduleMatchesByDate(
     sport_id?: number;
     sport_category_id?: number;
     stage_id?: number;
-    status?: string;
+    status?: MatchStatus;
     date_from?: string;
     date_to?: string;
     search?: string;
   },
   queryOptions?: UseQueryOptions<
-    ServiceResponse<Record<string, MatchWithFullDetails[]>>,
+    ServiceResponse<ScheduleByDateResponse>,
     Error,
-    Record<string, MatchWithFullDetails[]>
+    ScheduleByDateResponse
   >
 ) {
   return useQuery({
@@ -544,13 +543,13 @@ export function useInfiniteScheduleMatches(
       sport_id?: number;
       sport_category_id?: number;
       stage_id?: number;
-      status?: string;
+      status?: MatchStatus;
       date_from?: string;
       date_to?: string;
       search?: string;
     };
   },
-  queryOptions?: UseQueryOptions<ServiceResponse<{ matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>, Error, { matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>
+  queryOptions?: Record<string, unknown>
 ) {
   return useInfiniteQuery({
     queryKey: matchKeys.schedule(options),
@@ -571,14 +570,19 @@ export function useInfiniteScheduleMatches(
       }
       return undefined;
     },
-    select: (data) => ({
-      pages: data.pages,
-      pageParams: data.pageParams,
-      matches: data.pages.flatMap(page => page.success && page.data ? page.data.matches : []),
-      hasNextPage: data.pages[data.pages.length - 1]?.success ? (data.pages[data.pages.length - 1] as ServiceResponse<{ matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>).data?.hasMore : false,
-      hasPreviousPage: data.pages[0]?.success ? (data.pages[0] as ServiceResponse<{ matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>).data?.hasMore : false,
-      totalCount: data.pages[0]?.success ? (data.pages[0] as ServiceResponse<{ matches: MatchWithFullDetails[]; hasMore: boolean; totalCount: number }>).data?.totalCount : 0
-    }),
+    select: (data) => {
+      const allMatches = data.pages.flatMap(page => page.success && page.data ? page.data.matches : []);
+      const lastPage = data.pages[data.pages.length - 1];
+      const firstPage = data.pages[0];
+      
+      return {
+        ...data,
+        matches: allMatches,
+        hasNextPage: lastPage?.success && lastPage.data ? lastPage.data.hasMore : false,
+        hasPreviousPage: firstPage?.success && firstPage.data ? firstPage.data.hasMore : false,
+        totalCount: firstPage?.success && firstPage.data ? firstPage.data.totalCount : 0
+      };
+    },
     ...queryOptions
   });
 }

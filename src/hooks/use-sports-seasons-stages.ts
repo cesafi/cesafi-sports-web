@@ -23,7 +23,6 @@ import {
   SportsSeasonsStage,
   SportsSeasonsStageWithDetails
 } from '@/lib/types/sports-seasons-stages';
-
 import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 import { useTable } from './use-table';
 import { TableFilters } from '@/lib/types/table';
@@ -197,7 +196,7 @@ export function useSportsSeasonsStagesTable() {
     refetch
   } = useQuery({
     queryKey: ['sports-seasons-stages', 'bySeason', currentSeason?.id, paginationOptions],
-    queryFn: () => currentSeason ? getSportsSeasonsStagesBySeason(currentSeason.id) : Promise.resolve({ success: false, error: 'No season selected' }),
+    queryFn: () => currentSeason ? getSportsSeasonsStagesBySeason(currentSeason.id) : Promise.resolve({ success: false, error: 'No season selected' } as ServiceResponse<SportsSeasonsStageWithDetails[]>),
     enabled: !!currentSeason,
     select: (data) => {
       if (!data.success) {
@@ -287,9 +286,9 @@ export function useSportsSeasonsStagesTable() {
 
   return {
     // Data
-    stages: stagesData?.data || [],
-    totalCount: stagesData?.totalCount || 0,
-    pageCount: stagesData?.pageCount || 0,
+    stages: stagesData || [],
+    totalCount: 0, // This hook doesn't provide pagination info
+    pageCount: 0, // This hook doesn't provide pagination info
     currentPage: tableState.page,
     pageSize: tableState.pageSize,
     loading: isLoading,

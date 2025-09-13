@@ -1,8 +1,9 @@
 'use server';
 
-import { ArticlePaginationOptions } from '@/lib/types/articles';
+import { ArticlePaginationOptions, Article } from '@/lib/types/articles';
 import { ArticleService } from '@/services/articles';
 import { createArticleSchema, updateArticleSchema } from '@/lib/validations/articles';
+import { ServiceResponse } from '@/lib/types/base';
 import { revalidatePath } from 'next/cache';
 
 export async function getPaginatedArticles(options: ArticlePaginationOptions) {
@@ -17,7 +18,7 @@ export async function getArticleById(id: string) {
   return await ArticleService.getById(id);
 }
 
-export async function createArticle(data: unknown) {
+export async function createArticle(data: unknown): Promise<ServiceResponse<Article>> {
   // Validate the input data
   const validationResult = createArticleSchema.safeParse(data);
   
@@ -25,7 +26,7 @@ export async function createArticle(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
@@ -39,7 +40,7 @@ export async function createArticle(data: unknown) {
   return result;
 }
 
-export async function updateArticleById(data: unknown) {
+export async function updateArticleById(data: unknown): Promise<ServiceResponse<Article>> {
   // Validate the input data
   const validationResult = updateArticleSchema.safeParse(data);
   
@@ -47,7 +48,7 @@ export async function updateArticleById(data: unknown) {
     return {
       success: false,
       error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors
+      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
     };
   }
 
