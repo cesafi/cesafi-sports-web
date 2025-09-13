@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { DataTable } from '@/components/table';
 import { useAccountsTable } from '@/hooks/use-accounts';
 import { getAccountsTableColumns, getAccountsTableActions } from '@/components/admin/accounts';
-import { AccountData } from '@/services/accounts';
+import { AccountEntity } from '@/lib/types/accounts';
 import { AccountModal } from '@/components/admin/accounts';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
 import { Button } from '@/components/ui/button';
@@ -23,11 +23,11 @@ import { Badge } from '@/components/ui/badge';
 export default function AccountsManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [editingAccount, setEditingAccount] = useState<AccountData | undefined>();
+  const [editingAccount, setEditingAccount] = useState<AccountEntity | undefined>();
 
   // Confirmation modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState<AccountData | undefined>();
+  const [accountToDelete, setAccountToDelete] = useState<AccountEntity | undefined>();
 
   // Simple filter states
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -53,13 +53,13 @@ export default function AccountsManagementPage() {
     resetFilters
   } = useAccountsTable();
 
-  const handleEditAccount = (account: AccountData) => {
+  const handleEditAccount = (account: AccountEntity) => {
     setEditingAccount(account);
     setModalMode('edit');
     setIsModalOpen(true);
   };
 
-  const handleDeleteAccount = (account: AccountData) => {
+  const handleDeleteAccount = (account: AccountEntity) => {
     setAccountToDelete(account);
     setIsDeleteModalOpen(true);
   };

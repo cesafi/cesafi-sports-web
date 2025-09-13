@@ -24,7 +24,7 @@ import {
   SportsSeasonsStageWithDetails
 } from '@/lib/types/sports-seasons-stages';
 
-import { PaginatedResponse, ServiceResponse, FilterValue, PaginationOptions } from '@/lib/types/base';
+import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 import { useTable } from './use-table';
 import { TableFilters } from '@/lib/types/table';
 import { toast } from 'sonner';

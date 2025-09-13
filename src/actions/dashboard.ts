@@ -11,14 +11,15 @@ import { MatchService } from '@/services/matches';
 export async function getDashboardStats() {
   try {
     // Get counts for all entities using efficient count methods
-    const [schoolsCount, sportsCount, articlesCount, volunteersCount, seasonsCount, gamesCount] = await Promise.all([
-      SchoolService.getCount(),
-      SportService.getCount(),
-      ArticleService.getCount(),
-      VolunteerService.getCount(),
-      SeasonService.getCount(),
-      GameService.getCount()
-    ]);
+    const [schoolsCount, sportsCount, articlesCount, volunteersCount, seasonsCount, gamesCount] =
+      await Promise.all([
+        SchoolService.getCount(),
+        SportService.getCount(),
+        ArticleService.getCount(),
+        VolunteerService.getCount(),
+        SeasonService.getCount(),
+        GameService.getCount()
+      ]);
 
     // Get recent activity data using efficient recent methods
     const [recentArticlesResult, recentGamesResult, recentMatchesResult] = await Promise.all([
@@ -27,14 +28,14 @@ export async function getDashboardStats() {
       MatchService.getRecent(5)
     ]);
 
-    const recentArticles = recentArticlesResult.success && recentArticlesResult.data ? 
-      recentArticlesResult.data : [];
-    
-    const recentGames = recentGamesResult.success && recentGamesResult.data ? 
-      recentGamesResult.data : [];
+    const recentArticles =
+      recentArticlesResult.success && recentArticlesResult.data ? recentArticlesResult.data : [];
 
-    const recentMatches = recentMatchesResult.success && recentMatchesResult.data ? 
-      recentMatchesResult.data : [];
+    const recentGames =
+      recentGamesResult.success && recentGamesResult.data ? recentGamesResult.data : [];
+
+    const recentMatches =
+      recentMatchesResult.success && recentMatchesResult.data ? recentMatchesResult.data : [];
 
     return {
       success: true,

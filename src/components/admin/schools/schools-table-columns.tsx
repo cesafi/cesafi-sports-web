@@ -14,7 +14,7 @@ export const getSchoolsTableColumns = (): TableColumn<School>[] => [
     render: (school: School) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-muted">
             {school.logo_url ? (
               <Image
                 src={school.logo_url}

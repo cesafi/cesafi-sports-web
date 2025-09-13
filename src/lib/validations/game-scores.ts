@@ -19,6 +19,3 @@ export const updateGameScoreSchema = z.object({
     .max(1000000, { message: 'Score cannot exceed 1,000,000.' })
     .optional()
 });
-
-export const GameScoreInsertSchema = createGameScoreSchema;
-export const GameScoreUpdateSchema = updateGameScoreSchema;

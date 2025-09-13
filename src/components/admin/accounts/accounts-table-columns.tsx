@@ -1,19 +1,19 @@
 import { User, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { TableColumn } from '@/lib/types/table';
-import { AccountData } from '@/services/accounts';
+import { AccountEntity } from '@/lib/types/accounts';
 import { Badge } from '@/components/ui/badge';
 import { formatTableDate } from '@/lib/utils/date';
 
-export const getAccountsTableColumns = (): TableColumn<AccountData>[] => [
+export const getAccountsTableColumns = (): TableColumn<AccountEntity>[] => [
   {
     key: 'accountInfo',
     header: 'Account Information',
     sortable: false,
     width: '40%',
-    render: (account: AccountData) => (
+    render: (account: AccountEntity) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
             <User className="text-muted-foreground h-5 w-5" />
           </div>
         </div>
@@ -35,7 +35,7 @@ export const getAccountsTableColumns = (): TableColumn<AccountData>[] => [
     header: 'Role',
     sortable: true,
     width: '30%',
-    render: (account: AccountData) => (
+    render: (account: AccountEntity) => (
       <Badge
         variant={
           account.role === 'admin'
@@ -57,7 +57,7 @@ export const getAccountsTableColumns = (): TableColumn<AccountData>[] => [
     header: 'Last Sign In',
     sortable: true,
     width: '30%',
-    render: (account: AccountData) => (
+    render: (account: AccountEntity) => (
       <div className="text-muted-foreground text-sm">
         {account.lastSignInAt ? (
           <span>{formatTableDate(account.lastSignInAt)}</span>
@@ -70,8 +70,8 @@ export const getAccountsTableColumns = (): TableColumn<AccountData>[] => [
 ];
 
 export const getAccountsTableActions = (
-  onEdit: (account: AccountData) => void,
-  onDelete: (account: AccountData) => void
+  onEdit: (account: AccountEntity) => void,
+  onDelete: (account: AccountEntity) => void
 ) => [
   {
     key: 'edit',
@@ -88,6 +88,6 @@ export const getAccountsTableActions = (
     onClick: onDelete,
     variant: 'ghost' as const,
     size: 'sm' as const,
-    disabled: (account: AccountData) => account.role === 'admin'
+    disabled: (account: AccountEntity) => account.role === 'admin'
   }
 ];

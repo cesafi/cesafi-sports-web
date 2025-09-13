@@ -2,35 +2,33 @@ import HeroSection from '@/components/landing/hero-section';
 import AboutCesafi from '@/components/landing/about-cesafi';
 import UpcomingGames from '@/components/landing/upcoming-games';
 import PhotoGallery from '@/components/landing/photo-gallery';
-import MemberSchools from '@/components/landing/member-schools';
 import LatestNews from '@/components/landing/latest-news';
 import SponsorsCarousel from '@/components/landing/sponsors-carousel';
+import SchoolsCarousel from '@/components/landing/schools-carousel';
 
 export default function LandingPage() {
   return (
-    <div>
-      <main>
-        {/* Hero Section - Full screen impact */}
-        <HeroSection />
+    <>
+      {/* Hero Section - Full screen impact */}
+      <HeroSection />
 
-        {/* About CESAFI - Mission and vision */}
-        <AboutCesafi />
+      {/* Schools Carousel - Member institutions */}
+      <SchoolsCarousel />
 
-        {/* Upcoming Games - Sports showcase */}
-        <UpcomingGames />
+      {/* About CESAFI - Mission and vision */}
+      <AboutCesafi />
 
-        {/* Photo Gallery - Visual storytelling */}
-        <PhotoGallery />
+      {/* Latest News - Content engagement */}
+      <LatestNews />
 
-        {/* Member Schools - Member institutions */}
-        <MemberSchools />
+      {/* Upcoming Games - Sports showcase */}
+      <UpcomingGames />
 
-        {/* Latest News - Content engagement */}
-        <LatestNews />
+      {/* Photo Gallery - Visual storytelling */}
+      <PhotoGallery />
 
-        {/* Sponsors Carousel - Partner organizations */}
-        <SponsorsCarousel />
-      </main>
-    </div>
+      {/* Sponsors Carousel - Partner organizations */}
+      <SponsorsCarousel />
+    </>
   );
 }

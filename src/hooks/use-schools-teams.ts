@@ -26,7 +26,7 @@ import {
   SchoolsTeamWithSportDetails
 } from '@/lib/types/schools-teams';
 
-import { ServiceResponse, FilterValue, PaginationOptions } from '@/lib/types/base';
+import { ServiceResponse } from '@/lib/types/base';
 import { useTable } from './use-table';
 import { TableFilters } from '@/lib/types/table';
 import { toast } from 'sonner';

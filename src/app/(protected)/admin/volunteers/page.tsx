@@ -11,7 +11,7 @@ import {
 import { Volunteer } from '@/lib/types/volunteers';
 import { VolunteersModal } from '@/components/admin/volunteers';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { VolunteerInsert, VolunteerUpdate } from '@/lib/types/volunteers';
+import { VolunteerInsert, VolunteerUpdate } from '@/lib/validations/volunteers';
 import { useSeason } from '@/components/contexts/season-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -97,6 +97,11 @@ export default function VolunteersManagementPage() {
     } else {
       updateVolunteer(data as VolunteerUpdate);
     }
+  };
+
+  const handleSuccess = () => {
+    // Force refetch to ensure new image URLs are loaded
+    refetch();
   };
 
   const clearFilters = () => {
@@ -224,6 +229,7 @@ export default function VolunteersManagementPage() {
         volunteer={editingVolunteer}
         onSubmit={handleSubmit}
         isSubmitting={isCreating || isUpdating}
+        onSuccess={handleSuccess}
       />
 
       {/* Confirmation Modal */}

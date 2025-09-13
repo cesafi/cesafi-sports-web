@@ -77,7 +77,7 @@ export function ScheduleMatchCard({ match, onClick, className }: ScheduleMatchCa
                 <span>{formatParticipantCount(match)}</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {match.match_participants?.slice(0, 4).map((participant, index) => (
+                {match.match_participants?.slice(0, 4).map((participant, _index) => (
                   <div
                     key={participant.id}
                     className={cn(
@@ -119,7 +119,7 @@ export function ScheduleMatchCard({ match, onClick, className }: ScheduleMatchCa
           ) : (
             // Two participants (traditional matches)
             <div className="space-y-2">
-              {match.match_participants?.slice(0, 2).map((participant, index) => (
+              {match.match_participants?.slice(0, 2).map((participant, _index) => (
                 <div
                   key={participant.id}
                   className={cn(

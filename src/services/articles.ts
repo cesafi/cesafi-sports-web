@@ -1,12 +1,15 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
+import {
+  PaginatedResponse,
+  ServiceResponse
+} from '@/lib/types/base';
 import { BaseService } from './base';
-import { Article, ArticleInsert, ArticleUpdate } from '@/lib/types/articles';
+import { Article, ArticlePaginationOptions, ArticleInsert, ArticleUpdate } from '@/lib/types/articles';
 
 const TABLE_NAME = 'articles';
 
 export class ArticleService extends BaseService {
   static async getPaginated(
-    options: PaginationOptions<Record<string, FilterValue>>,
+    options: ArticlePaginationOptions,
     selectQuery: string = '*'
   ): Promise<ServiceResponse<PaginatedResponse<Article>>> {
     try {
@@ -16,8 +19,8 @@ export class ArticleService extends BaseService {
         searchableFields
       };
 
-      const result = await this.getPaginatedData<Article, typeof TABLE_NAME>(
-        TABLE_NAME,
+      const result = await this.getPaginatedData<Article, 'articles'>(
+        'articles',
         optionsWithSearchableFields,
         selectQuery
       );
@@ -96,33 +99,42 @@ export class ArticleService extends BaseService {
     }
   }
 
-  static async insert(data: ArticleInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: ArticleInsert
+  ): Promise<ServiceResponse<Article>> {
     try {
       const supabase = await this.getClient();
 
       const insertData = { ...data };
 
+      // Handle publishing workflow logic
       if (insertData.status === 'published' && !insertData.published_at) {
         insertData.published_at = new Date().toISOString();
       }
 
       if (insertData.status !== 'published') {
-        insertData.published_at = '';
+        insertData.published_at = null;
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(insertData);
+      const { data: insertedData, error } = await supabase
+        .from(TABLE_NAME)
+        .insert(insertData)
+        .select()
+        .single();
 
       if (error) {
         throw error;
       }
 
-      return { success: true, data: undefined };
+      return { success: true, data: insertedData };
     } catch (err) {
       return this.formatError(err, `Failed to insert new ${TABLE_NAME} entity.`);
     }
   }
 
-  static async updateById(data: ArticleUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: ArticleUpdate
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -140,7 +152,7 @@ export class ArticleService extends BaseService {
 
       // If article is being unpublished, clear published_at
       if (updateData.status !== 'published') {
-        updateData.published_at = '';
+        updateData.published_at = null;
       }
 
       const { error } = await supabase.from(TABLE_NAME).update(updateData).eq('id', data.id);
@@ -171,6 +183,28 @@ export class ArticleService extends BaseService {
       return { success: true, data: undefined };
     } catch (err) {
       return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);
+    }
+  }
+
+  static async getScheduledForPublishing(): Promise<ServiceResponse<Article[]>> {
+    try {
+      const supabase = await this.getClient();
+      const now = new Date().toISOString();
+
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select()
+        .eq('status', 'approved')
+        .not('published_at', 'is', null)
+        .lte('published_at', now);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch articles scheduled for publishing.`);
     }
   }
 }

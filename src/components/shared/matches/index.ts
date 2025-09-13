@@ -1,3 +1,4 @@
+export { MatchesTable } from './matches-table';
 export { MatchInfoCard } from './match-info-card';
 export { MatchParticipantsCard } from './match-participants-card';
 export { MatchParticipantsTable } from './match-participants-table';
@@ -10,8 +11,6 @@ export { LeagueStageSelector } from './league-stage-selector';
 export { TeamSelectionModal } from './team-selection-modal';
 export { getMatchesTableColumns, getMatchesTableActions } from './matches-table-columns';
 export { getMatchGamesTableColumns, getMatchGamesTableActions } from './match-games-table-columns';
-
-export { MatchesTable } from './matches-table';
 
 // Schedule components
 export { ScheduleMatchCard } from './schedule-match-card';

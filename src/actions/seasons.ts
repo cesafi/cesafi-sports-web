@@ -1,8 +1,8 @@
 'use server';
 
 import { PaginationOptions } from '@/lib/types/base';
-import { SeasonInsert, SeasonUpdate } from '@/lib/types/seasons';
 import { SeasonService } from '@/services/seasons';
+import { createSeasonSchema, updateSeasonSchema } from '@/lib/validations/seasons';
 import { revalidatePath } from 'next/cache';
 
 export async function getPaginatedSeasons(options: PaginationOptions) {
@@ -17,8 +17,19 @@ export async function getSeasonById(id: number) {
   return await SeasonService.getById(id);
 }
 
-export async function createSeason(data: SeasonInsert) {
-  const result = await SeasonService.insert(data);
+export async function createSeason(data: unknown) {
+  // Validate the input data
+  const validationResult = createSeasonSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SeasonService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/seasons');
@@ -27,8 +38,19 @@ export async function createSeason(data: SeasonInsert) {
   return result;
 }
 
-export async function updateSeasonById(data: SeasonUpdate) {
-  const result = await SeasonService.updateById(data);
+export async function updateSeasonById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateSeasonSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SeasonService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/seasons');

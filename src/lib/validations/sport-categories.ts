@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Constants } from '../../../database.types';
+import { Constants } from '@/../database.types';
 
 const SPORT_DIVISIONS = Constants.public.Enums.sport_divisions;
 const SPORT_LEVELS = Constants.public.Enums.sport_levels;
@@ -28,7 +28,3 @@ export const updateSportCategorySchema = z.object({
     })
     .optional()
 });
-
-// Legacy exports for backward compatibility
-export const SportCategoryInsertSchema = createSportCategorySchema;
-export const SportCategoryUpdateSchema = updateSportCategorySchema;

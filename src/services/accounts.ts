@@ -1,32 +1,19 @@
 import { ServiceResponse } from '@/lib/types/base';
 import { BaseService } from './base';
 import { UserRole } from '@/lib/types/auth';
-
-export interface CreateAccountData {
-  email: string;
-  password: string;
-  role: UserRole;
-  displayName: string;
-}
-
-import { BaseEntity } from '@/lib/types/table';
 import { User } from '@supabase/supabase-js';
-
-export interface AccountEntity extends BaseEntity {
-  id: string;
-  email: string;
-  role: UserRole;
-  displayName?: string;
-  createdAt: string;
-  lastSignInAt?: string;
-}
-
-export type AccountData = AccountEntity;
+import {
+  createAccountSchema,
+  updateAccountRoleSchema,
+  updateAccountSchema
+} from '@/lib/validations/accounts';
+import z from 'zod';
+import { AccountEntity } from '@/lib/types/accounts';
 
 export class AccountsService extends BaseService {
   static async createAccount(
-    accountData: CreateAccountData
-  ): Promise<ServiceResponse<AccountData>> {
+    accountData: z.infer<typeof createAccountSchema>
+  ): Promise<ServiceResponse<AccountEntity>> {
     try {
       const supabase = await this.getAdminClient();
 
@@ -50,7 +37,7 @@ export class AccountsService extends BaseService {
         return { success: false, error: 'Failed to create user account' };
       }
 
-      const account: AccountData = {
+      const account: AccountEntity = {
         id: authData.user.id,
         email: authData.user.email!,
         role: accountData.role,
@@ -65,7 +52,7 @@ export class AccountsService extends BaseService {
     }
   }
 
-  static async getAll(): Promise<ServiceResponse<AccountData[]>> {
+  static async getAll(): Promise<ServiceResponse<AccountEntity[]>> {
     try {
       const supabase = await this.getAdminClient();
 
@@ -75,8 +62,7 @@ export class AccountsService extends BaseService {
         return { success: false, error: error.message };
       }
 
-
-      const accounts: AccountData[] = users.users.map((user: User) => ({
+      const accounts: AccountEntity[] = users.users.map((user: User) => ({
         id: user.id,
         email: user.email || '',
         role: (user.app_metadata?.role as UserRole) || 'writer',
@@ -97,8 +83,8 @@ export class AccountsService extends BaseService {
 
   static async updateAccountRole(
     userId: string,
-    newRole: UserRole
-  ): Promise<ServiceResponse<AccountData>> {
+    newRole: z.infer<typeof updateAccountRoleSchema>['role']
+  ): Promise<ServiceResponse<AccountEntity>> {
     try {
       const supabase = await this.getAdminClient();
 
@@ -114,7 +100,7 @@ export class AccountsService extends BaseService {
         return { success: false, error: 'Failed to update user role' };
       }
 
-      const account: AccountData = {
+      const account: AccountEntity = {
         id: user.user.id,
         email: user.user.email!,
         role: newRole,
@@ -131,8 +117,8 @@ export class AccountsService extends BaseService {
 
   static async updateAccount(
     userId: string,
-    updates: { displayName?: string; role?: UserRole; password?: string }
-  ): Promise<ServiceResponse<AccountData>> {
+    updates: z.infer<typeof updateAccountSchema>
+  ): Promise<ServiceResponse<AccountEntity>> {
     try {
       const supabase = await this.getAdminClient();
 
@@ -167,7 +153,7 @@ export class AccountsService extends BaseService {
         return { success: false, error: 'Failed to update user' };
       }
 
-      const account: AccountData = {
+      const account: AccountEntity = {
         id: user.user.id,
         email: user.user.email!,
         role: (user.user.app_metadata?.role as UserRole) || 'writer',

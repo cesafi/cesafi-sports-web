@@ -82,7 +82,7 @@ export default function LoginPage() {
             <div className="mt-8 text-center">
               <Link
                 href="/"
-                className="text-muted-foreground text-sm transition-colors hover:text-gray-900"
+                className="text-muted-foreground text-sm transition-colors hover:text-primary"
               >
                 Return to main website
               </Link>

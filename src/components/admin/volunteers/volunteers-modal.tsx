@@ -20,7 +20,9 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Power } from 'lucide-react';
+import { Power, Image as ImageIcon, Upload, X, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { useCloudinary } from '@/hooks/use-cloudinary';
 
 interface VolunteersModalProps {
   open: boolean;
@@ -29,6 +31,7 @@ interface VolunteersModalProps {
   volunteer?: Volunteer;
   onSubmit: (data: VolunteerInsert | VolunteerUpdate) => Promise<void>;
   isSubmitting: boolean;
+  onSuccess?: () => void; // Callback to trigger refetch
 }
 
 export function VolunteersModal({
@@ -37,7 +40,8 @@ export function VolunteersModal({
   mode,
   volunteer,
   onSubmit,
-  isSubmitting
+  isSubmitting,
+  onSuccess
 }: VolunteersModalProps) {
   const { currentSeason } = useSeason();
   const { data: departments } = useAllDepartments();
@@ -51,8 +55,13 @@ export function VolunteersModal({
     season_id: currentSeason?.id || null
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [oldImageUrl, setOldImageUrl] = useState<string | null>(null); // Track old image for cleanup
   const hasStartedCreating = useRef(false);
   const hasStartedUpdating = useRef(false);
+
+  // Cloudinary hook
+  const { uploadImage, deleteImage, isUploading } = useCloudinary();
 
   // Form reset on modal open/close
   useEffect(() => {
@@ -67,6 +76,7 @@ export function VolunteersModal({
           department_id: volunteer.department_id,
           season_id: volunteer.season_id || currentSeason?.id || null
         });
+        setOldImageUrl(volunteer.image_url); // Track the original image for cleanup
       } else {
         setFormData({
           full_name: '',
@@ -75,6 +85,7 @@ export function VolunteersModal({
           department_id: null,
           season_id: currentSeason?.id || null
         });
+        setOldImageUrl(null);
       }
       setErrors({});
       hasStartedCreating.current = false;
@@ -94,21 +105,150 @@ export function VolunteersModal({
     }
   }, [currentSeason, mode]);
 
+  // Track when mutations start
+  useEffect(() => {
+    if (isSubmitting && mode === 'add' && !hasStartedCreating.current) {
+      hasStartedCreating.current = true;
+    }
+    if (isSubmitting && mode === 'edit' && !hasStartedUpdating.current) {
+      hasStartedUpdating.current = true;
+    }
+  }, [isSubmitting, mode]);
+
   // Handle mutation completion
   useEffect(() => {
     if (hasStartedCreating.current && !isSubmitting && mode === 'add') {
+      hasStartedCreating.current = false;
+      onSuccess?.();
       handleClose();
     }
-  }, [handleClose, isSubmitting, mode]);
+  }, [handleClose, isSubmitting, mode, onSuccess]);
 
   useEffect(() => {
     if (hasStartedUpdating.current && !isSubmitting && mode === 'edit') {
+      hasStartedUpdating.current = false;
+      
+      // Clean up old image if a new one was uploaded
+      if (oldImageUrl && formData.image_url && oldImageUrl !== formData.image_url) {
+        cleanupOldImage(oldImageUrl);
+      }
+      
+      onSuccess?.();
       handleClose();
     }
-  }, [handleClose, isSubmitting, mode]);
+  }, [handleClose, isSubmitting, mode, oldImageUrl, formData.image_url, deleteImage, onSuccess, cleanupOldImage]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const cleanupOldImage = useCallback(async (imageUrl: string) => {
+    try {
+      // Extract public_id from the URL for deletion (same pattern as the service)
+      const url = imageUrl;
+      // Match the full path after /upload/ or /upload/vX_Y_Z/ and remove extension
+      const publicIdMatch = url.match(/\/upload\/(?:v\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
+      
+      if (publicIdMatch) {
+        const publicId = publicIdMatch[1]; // This includes the full folder path without extension
+        
+        await deleteImage(publicId);
+      }
+    } catch (error) {
+      // Don't block the process if cleanup fails
+      console.warn('Failed to cleanup old volunteer image from Cloudinary:', error);
+    }
+  }, [deleteImage]);
+
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = async (file: File) => {
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    try {
+      // Generate a unique filename for the volunteer image
+      const volunteerName = formData.full_name || 'volunteer';
+      const sanitizedName = volunteerName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const filename = `${sanitizedName}-${Date.now()}`;
+
+      // Upload to Cloudinary
+      const result = await uploadImage(file, {
+        folder: 'volunteers/images',
+        public_id: filename  // Just the filename, folder will be prepended automatically
+      });
+
+      if (result.success && result.data) {
+        // If updating and there was an old image, mark it for cleanup after successful save
+        if (mode === 'edit' && oldImageUrl && oldImageUrl !== result.data.secure_url) {
+          // We'll cleanup the old image after the volunteer update is successful
+          // This will be handled in the submission success logic
+        }
+
+        handleInputChange('image_url', result.data.secure_url);
+        toast.success('Image uploaded successfully!');
+      } else {
+        toast.error(result.error || 'Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast.error('Failed to upload image');
+    }
+  };
+
+  const removeImage = async () => {
+    // If there's a current image, we should delete it from Cloudinary
+    if (formData.image_url) {
+      try {
+        // Extract public_id from the URL for deletion (same pattern as the service)
+        const url = formData.image_url;
+        // Match the full path after /upload/ or /upload/vX_Y_Z/ and remove extension
+        const publicIdMatch = url.match(/\/upload\/(?:v\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
+        
+        if (publicIdMatch) {
+          const publicId = publicIdMatch[1]; // This includes the full folder path without extension
+          
+          await deleteImage(publicId);
+        }
+      } catch (error) {
+        // Don't block the UI removal if deletion fails
+        console.warn('Failed to delete image from Cloudinary:', error);
+      }
+    }
+    
+    handleInputChange('image_url', '');
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        handleImageUpload(file);
+      } else {
+        toast.error('Please upload an image file');
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,12 +258,6 @@ export function VolunteersModal({
     try {
       const schema = mode === 'add' ? createVolunteerSchema : updateVolunteerSchema;
       const validatedData = schema.parse(formData);
-
-      if (mode === 'add') {
-        hasStartedCreating.current = true;
-      } else {
-        hasStartedUpdating.current = true;
-      }
 
       await onSubmit(validatedData);
     } catch (error) {
@@ -182,20 +316,6 @@ export function VolunteersModal({
               {errors.full_name && <p className="text-sm text-red-500">{errors.full_name}</p>}
             </div>
 
-            {/* Image URL */}
-            <div className="space-y-2">
-              <Label htmlFor="image_url">Image URL</Label>
-              <Input
-                id="image_url"
-                type="url"
-                value={formData.image_url || ''}
-                onChange={(e) => handleInputChange('image_url', e.target.value || '')}
-                placeholder="https://example.com/image.jpg (optional)"
-                className={errors.image_url ? 'border-red-500' : ''}
-              />
-              {errors.image_url && <p className="text-sm text-red-500">{errors.image_url}</p>}
-            </div>
-
             {/* Department */}
             <div className="space-y-2">
               <Label htmlFor="department_id">Department</Label>
@@ -222,6 +342,130 @@ export function VolunteersModal({
               </Select>
               {errors.department_id && <p className="text-sm text-red-500">{errors.department_id}</p>}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Photo Upload */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <ImageIcon className="h-5 w-5" />
+              Volunteer Photo *
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {formData.image_url ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative h-20 w-20 overflow-hidden rounded-lg border-2 border-dashed border-border">
+                    <Image
+                      src={formData.image_url}
+                      alt="Volunteer photo"
+                      width={80}
+                      height={80}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Current Photo</p>
+                    <p className="text-muted-foreground truncate text-xs">{formData.image_url}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={removeImage}
+                    className="text-red-600 hover:border-red-300 hover:text-red-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Change Photo
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div
+                  className={`h-32 w-full rounded-lg border-2 border-dashed transition-colors duration-200 ${
+                    isDragOver
+                      ? 'border-primary bg-primary/10'
+                      : errors.image_url
+                      ? 'border-red-500 hover:border-red-400'
+                      : 'border-border hover:border-muted-foreground'
+                  } flex flex-col items-center justify-center`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <ImageIcon
+                    className={`mb-2 h-8 w-8 transition-colors duration-200 ${
+                      isDragOver ? 'text-primary' : 'text-muted-foreground'
+                    }`}
+                  />
+                  <p
+                    className={`mb-2 text-sm transition-colors duration-200 ${
+                      isDragOver ? 'text-primary' : 'text-muted-foreground'
+                    }`}
+                  >
+                    {isDragOver ? 'Drop your photo here' : 'Upload volunteer photo'}
+                  </p>
+                  <p className="text-center text-xs text-muted-foreground">PNG, JPG, or WebP up to 5MB</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('image-upload')?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Choose File
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Hidden file input */}
+            <input
+              id="image-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  handleImageUpload(file);
+                }
+              }}
+            />
+
+            {errors.image_url && <p className="text-sm text-red-500">{errors.image_url}</p>}
+            <p className="text-muted-foreground text-xs">
+              Photo will be automatically optimized and stored in the cloud. Required for all volunteers.
+            </p>
           </CardContent>
         </Card>
 

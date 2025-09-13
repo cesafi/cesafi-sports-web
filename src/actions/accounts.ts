@@ -1,14 +1,15 @@
 'use server';
 
-import { AccountsService, AccountData, CreateAccountData } from '@/services/accounts';
-import { UpdateAccountFormData } from '@/lib/validations/accounts';
+import { AccountsService } from '@/services/accounts';
+import { UpdateAccountFormData, CreateAccountFormData } from '@/lib/validations/accounts';
+import { AccountEntity } from '@/lib/types/accounts';
 import { PaginationOptions } from '@/lib/types/base';
 import { checkAuthAction } from './auth';
 import { UserRole } from '@/lib/types/auth';
 import { TableFilters } from '@/lib/types/table';
 import crypto from 'crypto';
 
-export async function getAllAccouns(): Promise<{ success: boolean; data?: AccountData[]; error?: string }> {
+export async function getAllAccouns(): Promise<{ success: boolean; data?: AccountEntity[]; error?: string }> {
   try {
     const result = await AccountsService.getAll();
     return result;
@@ -20,7 +21,7 @@ export async function getAllAccouns(): Promise<{ success: boolean; data?: Accoun
   }
 }
 
-export async function getPaginatedAccounts(options: PaginationOptions<TableFilters>): Promise<{ success: boolean; data?: { data: AccountData[]; totalCount: number; pageCount: number; currentPage: number }; error?: string }> {
+export async function getPaginatedAccounts(options: PaginationOptions<TableFilters>): Promise<{ success: boolean; data?: { data: AccountEntity[]; totalCount: number; pageCount: number; currentPage: number }; error?: string }> {
   try {
     const { page = 1, pageSize = 10, searchQuery, filters } = options;
 
@@ -69,20 +70,10 @@ export async function getPaginatedAccounts(options: PaginationOptions<TableFilte
   }
 }
 
-export async function updateAccount(userId: string, accountData: UpdateAccountFormData): Promise<{ success: boolean; data?: AccountData; error?: string }> {
+export async function updateAccount(userId: string, accountData: UpdateAccountFormData): Promise<{ success: boolean; data?: AccountEntity; error?: string }> {
   try {
 
-    const updates: { displayName?: string; role?: UserRole; password?: string } = {
-      displayName: accountData.displayName,
-      role: accountData.role
-    };
-
-    // Only include password if it's not empty
-    if (accountData.password && accountData.password.trim() !== '') {
-      updates.password = accountData.password;
-    }
-
-    const result = await AccountsService.updateAccount(userId, updates);
+    const result = await AccountsService.updateAccount(userId, accountData);
 
     return result;
   } catch {
@@ -93,7 +84,7 @@ export async function updateAccount(userId: string, accountData: UpdateAccountFo
   }
 }
 
-export async function createAccount(accountData: CreateAccountData): Promise<{ success: boolean; data?: AccountData; error?: string }> {
+export async function createAccount(accountData: CreateAccountFormData): Promise<{ success: boolean; data?: AccountEntity; error?: string }> {
   try {
     const result = await AccountsService.createAccount(accountData);
     return result;
@@ -105,7 +96,7 @@ export async function createAccount(accountData: CreateAccountData): Promise<{ s
   }
 }
 
-export async function updateAccountRole(userId: string, newRole: string): Promise<{ success: boolean; data?: AccountData; error?: string }> {
+export async function updateAccountRole(userId: string, newRole: string): Promise<{ success: boolean; data?: AccountEntity; error?: string }> {
   try {
     const result = await AccountsService.updateAccountRole(userId, newRole as UserRole);
     return result;

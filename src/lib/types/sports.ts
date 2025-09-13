@@ -1,13 +1,20 @@
-import { Database } from '../../../database.types';
+import { z } from 'zod';
+import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
+import { 
+  createSportSchema, 
+  updateSportSchema, 
+  createSportCategorySchema, 
+  updateSportCategorySchema 
+} from '@/lib/validations/sports';
 
 export type Sport = Database['public']['Tables']['sports']['Row'];
-export type SportInsert = Database['public']['Tables']['sports']['Insert'];
-export type SportUpdate = Database['public']['Tables']['sports']['Update'];
+export type SportInsert = z.infer<typeof createSportSchema>;
+export type SportUpdate = z.infer<typeof updateSportSchema>;
 
 export type SportCategory = Database['public']['Tables']['sports_categories']['Row'];
-export type SportCategoryInsert = Database['public']['Tables']['sports_categories']['Insert'];
-export type SportCategoryUpdate = Database['public']['Tables']['sports_categories']['Update'];
+export type SportCategoryInsert = z.infer<typeof createSportCategorySchema>;
+export type SportCategoryUpdate = z.infer<typeof updateSportCategorySchema>;
 
 export type SportDivision = Database['public']['Enums']['sport_divisions'];
 export type SportLevel = Database['public']['Enums']['sport_levels'];

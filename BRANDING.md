@@ -27,7 +27,7 @@ The **Cebu Schools Athletic Foundation Website** is the central digital hub for 
 | Name       | Hex     | RGB              | Usage                        |
 |------------|---------|------------------|------------------------------|
 | Teal       | #336c61 | (51, 108, 97)    | Headers, accents, callouts   |
-| Emerald    | #19b33e | (25, 179, 62)    | Buttons, highlights, success |
+| Emerald    | #19b33e | (25, 179, 62)    | Secondary elements, success  |
 | Gold       | #f4b248 | (244, 178, 72)   | Key highlights, CTAs         |
 | White      | #ffffff | (255, 255, 255)  | Backgrounds, text contrast   |
 | Off-White  | #f6f5f0 | (246, 245, 240)  | Section dividers, subtle bg  |
@@ -41,25 +41,25 @@ The **Cebu Schools Athletic Foundation Website** is the central digital hub for 
 ---
 
 ### Typography  
-- **Primary Font:** `Mango Grotesque` (bold, sharp, modern – esports arena aesthetic)  
+- **Primary Font:** `Moderniz` (modern, distinctive, clean – contemporary design aesthetic)  
   - Headings, navbars, hero sections, leaderboard titles, rankings  
-  - Weights: 700 (bold), 600 (semibold)  
+  - Weight: 400 (regular)  
 - **Secondary Font:** `Roboto` (clean, professional, highly readable)  
   - Body text, captions, form labels, long articles  
   - Weights: 400 (regular), 500 (medium)  
 
 Usage Example:  
-- `H1, H2, H3` → Mango Grotesque Bold  
+- `H1, H2, H3` → Moderniz Regular  
 - Body text → Roboto Regular  
-- Buttons → Mango Grotesque Semibold (ALL CAPS recommended)  
-- Leaderboards & rankings → Mango Grotesque Bold with gold/silver/bronze highlights  
+- Buttons → Moderniz Regular (ALL CAPS recommended)  
+- Leaderboards & rankings → Moderniz Regular with gold/silver/bronze highlights  
 
 ---
 
 ### Logo & Brand Usage  
 - Maintain **clear space** equal to the height of the “C” in the logo around all sides.  
 - Logo must **not** be distorted, recolored, or placed on low-contrast backgrounds.  
-- Always pair logo with foundation name in **Mango Grotesque Bold** when used in headers.  
+- Always pair logo with foundation name in **Moderniz Regular** when used in headers.  
 - Favicon version available for small-scale usage.  
 
 ---
@@ -100,7 +100,7 @@ Our website will embody a **modern esports-inspired aesthetic** that balances **
 
 - **Light & Dark Modes:** The foundation supports both themes to create a premium, immersive environment where **content pops through high-contrast accent colors** like green, gold, silver, and deep neutrals.  
 - **Card-Based System:** Information will be presented in cards and leaderboard tables, making stats, rankings, and achievements feel **structured and gamified**.  
-- **Typography:** Mango Grotesque for **headings and rankings**, contrasted with Roboto for details and long-form readability.  
+- **Typography:** Moderniz for **headings and rankings**, contrasted with Roboto for details and long-form readability.  
 - **Highlights & Gradients:** Metallic gold for **first**, silver for **second**, bronze for **third**, applied through gradients and iconography to reinforce **achievement and prestige**.  
 - **Layout Dynamics:**  
   - Impactful **hero sections** with animated elements.  

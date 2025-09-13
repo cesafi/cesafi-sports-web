@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, User, Settings, LogOut, Building2 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
@@ -21,15 +21,23 @@ interface DashboardHeaderProps {
   userEmail?: string;
   userName?: string;
   userRole?: string;
+  userRoleDisplay?: string;
 }
 
 export default function DashboardHeader({
   userEmail = 'example@cesafi.org',
   userName = 'Admin',
-  userRole = 'Admin'
+  userRole = 'admin',
+  userRoleDisplay
 }: DashboardHeaderProps) {
   const router = useRouter();
   const logoutMutation = useLogout();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering dropdown after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
 
 
@@ -57,7 +65,7 @@ export default function DashboardHeader({
         <SmartBreadcrumbs 
           maxVisibleItems={5}
           showHomeIcon={true}
-          customHomeLabel="Admin Dashboard"
+          userRole={userRole}
         />
       </div>
 
@@ -65,18 +73,19 @@ export default function DashboardHeader({
       <div className="flex items-center gap-4">
         <ThemeSwitcher />
 
-        <DropdownMenu>
+        {isMounted ? (
+          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="hover:bg-accent hover:text-accent-foreground flex items-center gap-3 px-4 py-2 transition-colors"
+              className="hover:bg-muted hover:text-muted-foreground flex items-center gap-3 px-4 py-2 transition-colors"
             >
               <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                 {userName.charAt(0).toUpperCase()}
               </div>
               <div className="hidden flex-col items-start gap-1 md:flex">
                 <span className="text-sm leading-none font-medium">{userName}</span>
-                <span className="text-muted-foreground text-xs leading-none">{userRole}</span>
+                <span className="text-muted-foreground text-xs leading-none">{userRoleDisplay || userRole}</span>
               </div>
               <ChevronDown className="text-muted-foreground h-4 w-4" />
             </Button>
@@ -90,23 +99,23 @@ export default function DashboardHeader({
               </div>
               <div className="flex flex-col space-y-2">
                 <p className="text-sm leading-none font-medium">{userName}</p>
-                <p className="text-muted-foreground text-xs leading-none">{userRole}</p>
+                <p className="text-muted-foreground text-xs leading-none">{userRoleDisplay || userRole}</p>
                 <p className="text-muted-foreground text-xs leading-none">{userEmail}</p>
               </div>
             </div>
 
             {/* Menu Items */}
-            <DropdownMenuItem className="hover:bg-accent flex cursor-pointer items-center gap-3 px-4 py-3">
+            <DropdownMenuItem className="hover:bg-muted flex cursor-pointer items-center gap-3 px-4 py-3">
               <User className="h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
 
-            <DropdownMenuItem className="hover:bg-accent flex cursor-pointer items-center gap-3 px-4 py-3">
+            <DropdownMenuItem className="hover:bg-muted flex cursor-pointer items-center gap-3 px-4 py-3">
               <Settings className="h-4 w-4" />
               <span>Settings</span>
             </DropdownMenuItem>
 
-            <DropdownMenuItem className="hover:bg-accent flex cursor-pointer items-center gap-3 px-4 py-3">
+            <DropdownMenuItem className="hover:bg-muted flex cursor-pointer items-center gap-3 px-4 py-3">
               <Building2 className="h-4 w-4" />
               <span>Organization</span>
             </DropdownMenuItem>
@@ -123,6 +132,23 @@ export default function DashboardHeader({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        ) : (
+          // Fallback button while hydrating
+          <Button
+            variant="ghost"
+            className="hover:bg-muted hover:text-muted-foreground flex items-center gap-3 px-4 py-2 transition-colors"
+            disabled
+          >
+            <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
+              {userName.charAt(0).toUpperCase()}
+            </div>
+            <div className="hidden flex-col items-start gap-1 md:flex">
+              <span className="text-sm leading-none font-medium">{userName}</span>
+              <span className="text-muted-foreground text-xs leading-none">{userRoleDisplay || userRole}</span>
+            </div>
+            <ChevronDown className="text-muted-foreground h-4 w-4" />
+          </Button>
+        )}
       </div>
     </header>
   );

@@ -4,18 +4,17 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { roboto } from '@/lib/fonts';
 import ThemeSwitcher from '@/components/theme-switcher';
 import Image from 'next/image';
 
 const navItems = [
   { name: 'Home', href: '/' },
   { name: 'Schedule', href: '/schedule' },
-  { name: 'Articles', href: '/articles' },
+  { name: 'News', href: '/news' },
   { name: 'Schools', href: '/schools' },
-  { name: 'Partners', href: '/partners' },
   { name: 'Volunteers', href: '/volunteers' },
-  { name: 'About', href: '/about' },
+  { name: 'About Us', href: '/about-us' },
 ];
 
 export default function Navbar() {

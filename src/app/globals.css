@@ -8,7 +8,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-mango-grotesque: var(--font-mango-grotesque);
+  --font-moderniz: var(--font-moderniz);
   --font-roboto: var(--font-roboto);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -60,25 +60,25 @@
 }
 
 .light {
-  --background: #ffffff;
-  --foreground: #111111;
-  --card: #ffffff;
-  --card-foreground: #111111;
-  --popover: #ffffff;
-  --popover-foreground: #111111;
-  --primary: #336c61; /* Teal */
-  --primary-foreground: #ffffff;
-  --secondary: #f6f5f0; /* Off-white */
-  --secondary-foreground: #111111;
-  --muted: #f6f5f0; /* Off-white */
-  --muted-foreground: #666666;
-  --accent: #19b33e; /* Emerald */
-  --accent-foreground: #ffffff;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #336c61; /* Teal */
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.27 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.27 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.27 0 0);
+  --primary: oklch(48.93% 0.063 179.28);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.65 0.15 142);
+  --secondary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.94 0 0);
+  --muted-foreground: oklch(0.55 0 0);
+  --accent: oklch(0.75 0.12 85);
+  --accent-foreground: oklch(0.27 0 0);
+  --destructive: oklch(70.4% 0.191 22.216);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.88 0 0);
+  --input: oklch(0.88 0 0);
+  --ring: oklch(0.45 0.12 165);
   --chart-1: oklch(0.45 0.12 165);
   --chart-2: oklch(0.55 0.11 165);
   --chart-3: oklch(0.65 0.1 165);
@@ -88,32 +88,32 @@
   --sidebar-foreground: oklch(0.27 0 0);
   --sidebar-primary: oklch(0.45 0.12 165);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0 0);
-  --sidebar-accent-foreground: oklch(0.27 0 0);
+  --sidebar-accent: oklch(0.65 0.15 142);
+  --sidebar-accent-foreground: oklch(0.99 0 0);
   --sidebar-border: oklch(0.88 0 0);
   --sidebar-ring: oklch(0.45 0.12 165);
 }
 
 .dark {
-  --background: #111111;
-  --foreground: #ffffff;
-  --card: #1a1a1a;
-  --card-foreground: #ffffff;
-  --popover: #1a1a1a;
-  --popover-foreground: #ffffff;
-  --primary: #336c61; /* Teal */
-  --primary-foreground: #ffffff;
-  --secondary: #2a2a2a;
-  --secondary-foreground: #ffffff;
-  --muted: #2a2a2a;
-  --muted-foreground: #666666;
-  --accent: #19b33e; /* Emerald */
-  --accent-foreground: #ffffff;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: #333333;
-  --input: #333333;
-  --ring: #336c61; /* Teal */
+  --background: oklch(0.27 0 0);
+  --foreground: oklch(0.99 0 0);
+  --card: oklch(0.32 0 0);
+  --card-foreground: oklch(0.99 0 0);
+  --popover: oklch(0.32 0 0);
+  --popover-foreground: oklch(0.99 0 0);
+  --primary: oklch(48.93% 0.063 179.28);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.65 0.15 142);
+  --secondary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.35 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.75 0.12 85);
+  --accent-foreground: oklch(0.27 0 0);
+  --destructive: oklch(70.4% 0.191 22.216);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.4 0 0);
+  --input: oklch(0.4 0 0);
+  --ring: oklch(0.45 0.12 165);
   --chart-1: oklch(0.6 0.11 165);
   --chart-2: oklch(0.55 0.11 165);
   --chart-3: oklch(0.45 0.12 165);
@@ -123,7 +123,7 @@
   --sidebar-foreground: oklch(0.99 0 0);
   --sidebar-primary: oklch(0.45 0.12 165);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.35 0 0);
+  --sidebar-accent: oklch(0.65 0.15 142);
   --sidebar-accent-foreground: oklch(0.99 0 0);
   --sidebar-border: oklch(0.4 0 0);
   --sidebar-ring: oklch(0.45 0.12 165);
@@ -140,13 +140,13 @@
 
 /* Custom font variables */
 :root {
-  --font-mango-grotesque: var(--font-mango-grotesque);
+  --font-moderniz: var(--font-moderniz);
   --font-roboto: var(--font-roboto);
 }
 
 /* Font family definitions */
-.font-mango-grotesque {
-  font-family: var(--font-mango-grotesque), system-ui, sans-serif;
+.font-moderniz {
+  font-family: var(--font-moderniz), system-ui, sans-serif;
 }
 
 .font-roboto {

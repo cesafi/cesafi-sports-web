@@ -28,7 +28,6 @@ export default function SportsManagementPage() {
     loading,
     tableBodyLoading,
     error,
-    createSport,
     updateSport,
     deleteSport,
     isCreating,

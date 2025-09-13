@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   PaginatedResponse,
   PaginationOptions,
@@ -5,9 +6,12 @@ import {
   FilterValue
 } from '@/lib/types/base';
 import { BaseService } from './base';
-import { Season, SeasonInsert, SeasonUpdate } from '@/lib/types/seasons';
+import { Season } from '@/lib/types/seasons';
+import { createSeasonSchema, updateSeasonSchema } from '@/lib/validations/seasons';
 
 const TABLE_NAME = 'seasons';
+const SPORTS_SEASONS_STAGES_TABLE = 'sports_seasons_stages';
+const SCHOOLS_TEAMS_TABLE = 'schools_teams';
 
 export class SeasonService extends BaseService {
   static async getPaginated(
@@ -54,7 +58,9 @@ export class SeasonService extends BaseService {
   static async getCount(): Promise<ServiceResponse<number>> {
     try {
       const supabase = await this.getClient();
-      const { count, error } = await supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+      const { count, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*', { count: 'exact', head: true });
 
       if (error) {
         throw error;
@@ -81,10 +87,12 @@ export class SeasonService extends BaseService {
     }
   }
 
-  static async insert(data: SeasonInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: z.infer<typeof createSeasonSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
-      
+
       // Check for date range overlap with existing seasons
       const { data: existingSeasons, error: checkError } = await supabase
         .from(TABLE_NAME)
@@ -98,10 +106,10 @@ export class SeasonService extends BaseService {
       }
 
       if (existingSeasons && existingSeasons.length > 0) {
-        const overlappingSeasons = existingSeasons.map(s => 
-          `${s.start_at} to ${s.end_at}`
-        ).join(', ');
-        
+        const overlappingSeasons = existingSeasons
+          .map((s) => `${s.start_at} to ${s.end_at}`)
+          .join(', ');
+
         return {
           success: false,
           error: `Season dates overlap with existing season(s): ${overlappingSeasons}`
@@ -120,7 +128,9 @@ export class SeasonService extends BaseService {
     }
   }
 
-  static async updateById(data: SeasonUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: z.infer<typeof updateSeasonSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Season ID is required to update.' };
@@ -157,10 +167,10 @@ export class SeasonService extends BaseService {
         }
 
         if (existingSeasons && existingSeasons.length > 0) {
-          const overlappingSeasons = existingSeasons.map(s => 
-            `${s.start_at} to ${s.end_at}`
-          ).join(', ');
-          
+          const overlappingSeasons = existingSeasons
+            .map((s) => `${s.start_at} to ${s.end_at}`)
+            .join(', ');
+
           return {
             success: false,
             error: `Updated season dates would overlap with existing season(s): ${overlappingSeasons}`
@@ -188,7 +198,7 @@ export class SeasonService extends BaseService {
 
       // Count sports_seasons_stages related to this season
       const { count: sportsSeasonsStagesCount, error: sportsError } = await supabase
-        .from('sports_seasons_stages')
+        .from(SPORTS_SEASONS_STAGES_TABLE)
         .select('*', { count: 'exact', head: true })
         .eq('season_id', id);
 
@@ -198,7 +208,7 @@ export class SeasonService extends BaseService {
 
       // Count schools_teams related to this season
       const { count: schoolsTeamsCount, error: schoolsError } = await supabase
-        .from('schools_teams')
+        .from(SCHOOLS_TEAMS_TABLE)
         .select('*', { count: 'exact', head: true })
         .eq('season_id', id);
 
@@ -242,7 +252,7 @@ export class SeasonService extends BaseService {
     try {
       const supabase = await this.getClient();
       const now = new Date().toISOString();
-      
+
       const { data, error } = await supabase
         .from(TABLE_NAME)
         .select()
@@ -250,7 +260,8 @@ export class SeasonService extends BaseService {
         .gte('end_at', now)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 is "not found" error
         throw error;
       }
 
@@ -264,7 +275,7 @@ export class SeasonService extends BaseService {
     try {
       const supabase = await this.getClient();
       const now = new Date().toISOString();
-      
+
       const { data, error } = await supabase
         .from(TABLE_NAME)
         .select()
@@ -287,11 +298,13 @@ export class SeasonService extends BaseService {
       const supabase = await this.getClient();
       const startOfYear = `${year}-01-01T00:00:00Z`;
       const endOfYear = `${year}-12-31T23:59:59Z`;
-      
+
       const { data, error } = await supabase
         .from(TABLE_NAME)
         .select()
-        .or(`and(start_at.gte.${startOfYear},start_at.lte.${endOfYear}),and(end_at.gte.${startOfYear},end_at.lte.${endOfYear})`)
+        .or(
+          `and(start_at.gte.${startOfYear},start_at.lte.${endOfYear}),and(end_at.gte.${startOfYear},end_at.lte.${endOfYear})`
+        )
         .order('start_at', { ascending: true });
 
       if (error) {

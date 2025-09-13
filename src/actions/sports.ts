@@ -1,8 +1,9 @@
 'use server';
 
 import { PaginationOptions } from '@/lib/types/base';
-import { SportInsert, SportUpdate, SportCategoryFormData } from '@/lib/types/sports';
+import { SportCategoryFormData } from '@/lib/types/sports';
 import { SportService } from '@/services/sports';
+import { createSportSchema, updateSportSchema } from '@/lib/validations/sports';
 import { revalidatePath } from 'next/cache';
 
 export async function getPaginatedSports(options: PaginationOptions) {
@@ -35,8 +36,19 @@ export async function getSportById(id: number) {
   return await SportService.getById(id);
 }
 
-export async function createSport(data: SportInsert) {
-  const result = await SportService.insert(data);
+export async function createSport(data: unknown) {
+  // Validate the input data
+  const validationResult = createSportSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SportService.insert(validationResult.data);
   if (result.success) {
     revalidatePath('/admin/sports');
   }
@@ -44,10 +56,21 @@ export async function createSport(data: SportInsert) {
 }
 
 export async function createSportWithCategories(
-  sportData: SportInsert,
+  sportData: unknown,
   categories: SportCategoryFormData[]
 ) {
-  const result = await SportService.insertWithCategories(sportData, categories);
+  // Validate the input data
+  const validationResult = createSportSchema.safeParse(sportData);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SportService.insertWithCategories(validationResult.data, categories);
   if (result.success) {
     revalidatePath('/admin/sports');
     revalidatePath('/admin/sport-categories');
@@ -67,8 +90,19 @@ export async function addCategoriesToExistingSport(
   return result;
 }
 
-export async function updateSportById(data: SportUpdate) {
-  const result = await SportService.updateById(data);
+export async function updateSportById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateSportSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SportService.updateById(validationResult.data);
   if (result.success) {
     revalidatePath('/admin/sports');
   }

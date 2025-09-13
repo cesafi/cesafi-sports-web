@@ -7,7 +7,7 @@ import MatchCard from './match-card';
 
 interface DateGroupProps {
   readonly dateGroup: ScheduleDateGroup;
-  readonly onMatchClick?: (match: any) => void;
+  readonly onMatchClick?: (match: { id: number; name: string; scheduled_at: string | null }) => void;
 }
 
 export default function DateGroup({ dateGroup, onMatchClick }: DateGroupProps) {

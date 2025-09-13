@@ -1,8 +1,8 @@
 'use server';
 
 import { PaginationOptions } from '@/lib/types/base';
-import { DepartmentInsert, DepartmentUpdate } from '@/lib/types/departments';
 import { DepartmentService } from '@/services/departments';
+import { createDepartmentSchema, updateDepartmentSchema } from '@/lib/validations/departments';
 import { revalidatePath } from 'next/cache';
 
 export async function getPaginatedDepartments(options: PaginationOptions) {
@@ -17,8 +17,19 @@ export async function getDepartmentById(id: number) {
   return await DepartmentService.getById(id);
 }
 
-export async function createDepartment(data: DepartmentInsert) {
-  const result = await DepartmentService.insert(data);
+export async function createDepartment(data: unknown) {
+  // Validate the input data
+  const validationResult = createDepartmentSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await DepartmentService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/departments');
@@ -27,8 +38,19 @@ export async function createDepartment(data: DepartmentInsert) {
   return result;
 }
 
-export async function updateDepartmentById(data: DepartmentUpdate) {
-  const result = await DepartmentService.updateById(data);
+export async function updateDepartmentById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateDepartmentSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await DepartmentService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/departments');

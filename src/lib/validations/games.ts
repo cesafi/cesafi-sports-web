@@ -61,6 +61,3 @@ export const updateGameSchema = z
       path: ['end_at']
     }
   );
-
-export const GameInsertSchema = createGameSchema;
-export const GameUpdateSchema = updateGameSchema;

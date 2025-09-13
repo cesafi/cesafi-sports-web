@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Construction, ArrowLeft, Home } from 'lucide-react';
 import Link from 'next/link';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
 
 interface ComingSoonProps {
   readonly title: string;
@@ -28,27 +27,19 @@ export default function ComingSoon({
             <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
               <Construction className="text-primary h-8 w-8" />
             </div>
-            <CardTitle className={`${mangoGrotesque.className} text-foreground text-3xl font-bold`}>
-              {title}
-            </CardTitle>
-            <p className={`${roboto.className} text-muted-foreground mt-2 text-lg`}>
-              {description}
-            </p>
+            <CardTitle className={`text-foreground text-3xl font-bold`}>{title}</CardTitle>
+            <p className={`text-muted-foreground mt-2 text-lg`}>{description}</p>
           </CardHeader>
 
           <CardContent className="space-y-6">
             {features.length > 0 && (
               <div>
-                <h3
-                  className={`${mangoGrotesque.className} text-foreground mb-3 text-lg font-semibold`}
-                >
-                  What to Expect
-                </h3>
+                <h3 className={`text-foreground mb-3 text-lg font-semibold`}>What to Expect</h3>
                 <div className="space-y-2">
                   {features.map((feature) => (
                     <div key={feature} className="flex items-center gap-2">
                       <div className="bg-primary h-2 w-2 rounded-full" />
-                      <span className={`${roboto.className} text-muted-foreground`}>{feature}</span>
+                      <span className={`text-muted-foreground`}>{feature}</span>
                     </div>
                   ))}
                 </div>

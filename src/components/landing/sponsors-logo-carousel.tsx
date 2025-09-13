@@ -34,11 +34,11 @@ export default function InfiniteLogoCarousel({
   };
 
   // Duplicate logos for seamless looping
-  const duplicatedLogos = [...logos, ...logos, ...logos];
+  const duplicatedLogos = [...logos, ...logos];
 
   return (
     <div
-      className={`relative overflow-hidden  ${className}`}
+      className={`relative overflow-hidden ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -71,24 +71,24 @@ export default function InfiniteLogoCarousel({
                 rel="noopener noreferrer"
                 className="block group"
               >
-                <div className="w-24 h-16 sm:w-32 sm:h-20 lg:w-40 lg:h-24 bg-white rounded-lg flex items-center justify-center p-3 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                <div className="w-24 h-16 sm:w-32 sm:h-20 lg:w-40 lg:h-24 flex items-center justify-center p-3 transition-all duration-300 group-hover:scale-105 opacity-60 hover:opacity-100">
                   <Image
                     src={logo.src}
                     alt={logo.alt}
                     width={120}
                     height={80}
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
                   />
                 </div>
               </Link>
             ) : (
-              <div className="w-24 h-16 sm:w-32 sm:h-20 lg:w-40 lg:h-24 bg-white rounded-lg flex items-center justify-center p-3 shadow-lg">
+              <div className="w-24 h-16 sm:w-32 sm:h-20 lg:w-40 lg:h-24 flex items-center justify-center p-3 opacity-60 hover:opacity-100 transition-all duration-300">
                 <Image
                   src={logo.src}
                   alt={logo.alt}
                   width={120}
                   height={80}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
                 />
               </div>
             )}

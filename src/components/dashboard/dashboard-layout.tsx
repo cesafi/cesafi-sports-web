@@ -27,7 +27,8 @@ export default function DashboardLayout({
         <DashboardHeader
           userEmail={userEmail}
           userName={userName}
-          userRole={userRoleDisplay || userRole}
+          userRole={userRole}
+          userRoleDisplay={userRoleDisplay}
         />
 
         <main className="flex flex-1 overflow-auto p-6">{children}</main>

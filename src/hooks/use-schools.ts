@@ -9,7 +9,9 @@ import {
 import {
   getPaginatedSchools,
   getAllSchools,
+  getActiveSchools,
   getSchoolById,
+  getSchoolByAbbreviation,
   createSchool,
   updateSchoolById,
   deleteSchoolById
@@ -70,6 +72,22 @@ export function useAllSchools(
   });
 }
 
+export function useActiveSchools(
+  queryOptions?: UseQueryOptions<ServiceResponse<School[]>, Error, School[]>
+) {
+  return useQuery({
+    queryKey: [...schoolKeys.all, 'active'],
+    queryFn: getActiveSchools,
+    select: (data) => {
+      if (!data.success || !data.data) {
+        throw new Error(data.success === false ? data.error : 'Failed to fetch active schools.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
 export function useSchoolById(
   id: string,
   queryOptions?: UseQueryOptions<ServiceResponse<School>, Error, School>
@@ -81,6 +99,24 @@ export function useSchoolById(
     select: (data) => {
       if (!data.success || !data.data) {
         throw new Error(data.success === false ? data.error : `School with ID ${id} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useSchoolByAbbreviation(
+  abbreviation: string,
+  queryOptions?: UseQueryOptions<ServiceResponse<School>, Error, School>
+) {
+  return useQuery({
+    queryKey: [...schoolKeys.all, 'abbreviation', abbreviation],
+    queryFn: () => getSchoolByAbbreviation(abbreviation),
+    enabled: !!abbreviation,
+    select: (data) => {
+      if (!data.success || !data.data) {
+        throw new Error(data.success === false ? data.error : `School with abbreviation ${abbreviation} not found.`);
       }
       return data.data;
     },

@@ -35,8 +35,8 @@ export async function checkAuthAction(requiredRoles: string[] = []) {
 
 export async function getCurrentUserAction() {
   try {
-    const { createClient } = await import('@/lib/supabase/server');
-    const supabase = await createClient();
+    const { getSupabaseServer } = await import('@/lib/supabase/server');
+    const supabase = await getSupabaseServer();
     
     const {
       data: { user },

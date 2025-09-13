@@ -24,15 +24,50 @@ interface SmartBreadcrumbsProps {
   className?: string;
   showHomeIcon?: boolean;
   customHomeLabel?: string;
+  userRole?: string;
 }
 
 export default function SmartBreadcrumbs({
   maxVisibleItems = 5,
   className = '',
   showHomeIcon = true,
-  customHomeLabel = 'Admin Dashboard'
+  customHomeLabel,
+  userRole = 'admin'
 }: SmartBreadcrumbsProps) {
   const pathname = usePathname();
+
+  // Get role-based dashboard info
+  const getDashboardInfo = () => {
+    switch (userRole) {
+      case 'admin':
+        return {
+          label: 'Admin Dashboard',
+          href: '/admin'
+        };
+      case 'head_writer':
+        return {
+          label: 'Head Writer Dashboard',
+          href: '/head-writer'
+        };
+      case 'writer':
+        return {
+          label: 'Writer Dashboard',
+          href: '/writer'
+        };
+      case 'league_operator':
+        return {
+          label: 'League Operator Dashboard',
+          href: '/league-operator'
+        };
+      default:
+        return {
+          label: 'Admin Dashboard',
+          href: '/admin'
+        };
+    }
+  };
+
+  const dashboardInfo = getDashboardInfo();
 
   // Generate dynamic breadcrumbs based on current path
   const generateBreadcrumbs = (): BreadcrumbItem[] => {
@@ -41,8 +76,8 @@ export default function SmartBreadcrumbs({
 
     // Always start with Home
     breadcrumbs.push({
-      label: customHomeLabel,
-      href: '/admin',
+      label: customHomeLabel || dashboardInfo.label,
+      href: dashboardInfo.href,
       isCurrent: false
     });
 
@@ -51,8 +86,9 @@ export default function SmartBreadcrumbs({
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`;
 
-      // Skip the first segment if it's 'admin' since we already have Home
-      if (index === 0 && segment === 'admin') {
+      // Skip the first segment if it matches the role's base path since we already have Home
+      const roleBasePath = dashboardInfo.href.replace('/', '');
+      if (index === 0 && segment === roleBasePath) {
         return;
       }
 

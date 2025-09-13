@@ -7,18 +7,22 @@ import {
 import { BaseService } from './base';
 import {
   Match,
-  MatchInsert,
-  MatchUpdate,
   MatchWithStageDetails,
   MatchWithFullDetails,
   ScheduleMatch,
   ScheduleFilters,
   SchedulePaginationOptions,
   ScheduleResponse,
-  ScheduleByDateResponse
+  ScheduleByDateResponse,
+  MatchInsert,
+  MatchUpdate
 } from '@/lib/types/matches';
 
 const TABLE_NAME = 'matches';
+const SPORTS_SEASONS_STAGES_TABLE = 'sports_seasons_stages';
+const SCHOOLS_TEAMS_TABLE = 'schools_teams';
+const MATCH_PARTICIPANTS_TABLE = 'match_participants';
+const GAMES_TABLE = 'games';
 
 export class MatchService extends BaseService {
   static async getPaginated(
@@ -63,26 +67,6 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async getRecent(
-    limit: number = 5
-  ): Promise<ServiceResponse<Pick<Match, 'id' | 'name' | 'scheduled_at' | 'created_at'>[]>> {
-    try {
-      const supabase = await this.getClient();
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select('id, name, scheduled_at, created_at')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        throw error;
-      }
-
-      return { success: true, data };
-    } catch (err) {
-      return this.formatError(err, `Failed to fetch recent ${TABLE_NAME}.`);
-    }
-  }
 
   static async getCount(): Promise<ServiceResponse<number>> {
     try {
@@ -101,6 +85,27 @@ export class MatchService extends BaseService {
     }
   }
 
+  static async getRecent(
+    limit: number = 5
+  ): Promise<ServiceResponse<Pick<Match, 'id' | 'name' | 'created_at' | 'status' | 'scheduled_at'>[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select('id, name, created_at, status, scheduled_at')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch recent ${TABLE_NAME} entities.`);
+    }
+  }
+
   static async getById(id: number): Promise<ServiceResponse<Match>> {
     try {
       const supabase = await this.getClient();
@@ -116,48 +121,6 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async getByIdBasic(id: number): Promise<ServiceResponse<MatchWithFullDetails>> {
-    try {
-      const supabase = await this.getClient();
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select(
-          `
-          *,
-          sports_seasons_stages!inner(
-            id,
-            competition_stage,
-            season_id,
-            sport_category_id,
-            sports_categories!inner(
-              id,
-              division,
-              levels,
-              sports!inner(
-                id,
-                name
-              )
-            ),
-            seasons!inner(
-              id,
-              start_at,
-              end_at
-            )
-          )
-        `
-        )
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      return { success: true, data };
-    } catch (err) {
-      return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity with basic details.`);
-    }
-  }
 
   static async getByIdWithDetails(id: number): Promise<ServiceResponse<MatchWithFullDetails>> {
     try {
@@ -191,6 +154,7 @@ export class MatchService extends BaseService {
             id,
             match_id,
             team_id,
+            match_score,
             schools_teams!inner(
               id,
               name,
@@ -205,8 +169,6 @@ export class MatchService extends BaseService {
         )
         .eq('id', id)
         .single();
-
-      console.log(data);
 
       if (error) {
         throw error;
@@ -262,10 +224,7 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async getBySportAndCategory(
-    sportId: number,
-    sportCategoryId: number
-  ): Promise<ServiceResponse<Match[]>> {
+  static async getBySportCategory(sportCategoryId: number): Promise<ServiceResponse<Match[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
@@ -680,13 +639,15 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async insert(data: MatchInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(
+    data: MatchInsert
+  ): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
 
-      // Validate that the sports_seasons_stage_id exists
+      // Validate that the stage_id exists
       const { data: stageExists, error: stageError } = await supabase
-        .from('sports_seasons_stages')
+        .from(SPORTS_SEASONS_STAGES_TABLE)
         .select('id')
         .eq('id', data.stage_id)
         .single();
@@ -740,7 +701,9 @@ export class MatchService extends BaseService {
     }
   }
 
-  static async updateById(data: MatchUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: MatchUpdate
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -751,7 +714,7 @@ export class MatchService extends BaseService {
       // Validate stage_id if provided
       if (data.stage_id) {
         const { data: stageExists, error: stageError } = await supabase
-          .from('sports_seasons_stages')
+          .from(SPORTS_SEASONS_STAGES_TABLE)
           .select('id')
           .eq('id', data.stage_id)
           .single();
@@ -817,7 +780,7 @@ export class MatchService extends BaseService {
         if (scheduledAt && startAt && new Date(scheduledAt) > new Date(startAt)) {
           return {
             success: false,
-            error: 'Scheduled t ime must be before or equal to start time.'
+            error: 'Scheduled time must be before or equal to start time.'
           };
         }
 
@@ -848,9 +811,9 @@ export class MatchService extends BaseService {
     try {
       const supabase = await this.getClient();
 
-      // Validate that the sports_seasons_stage_id exists
+      // Validate that the stage_id exists
       const { data: stageExists, error: stageError } = await supabase
-        .from('sports_seasons_stages')
+        .from(SPORTS_SEASONS_STAGES_TABLE)
         .select('id')
         .eq('id', matchData.stage_id)
         .single();
@@ -895,7 +858,7 @@ export class MatchService extends BaseService {
       // Validate that all team IDs exist
       if (participantTeamIds.length > 0) {
         const { data: teams, error: teamsError } = await supabase
-          .from('schools_teams')
+          .from(SCHOOLS_TEAMS_TABLE)
           .select('id')
           .in('id', participantTeamIds);
 
@@ -932,7 +895,7 @@ export class MatchService extends BaseService {
         }));
 
         const { error: participantsError } = await supabase
-          .from('match_participants')
+          .from(MATCH_PARTICIPANTS_TABLE)
           .insert(participantData);
 
         if (participantsError) {
@@ -958,7 +921,7 @@ export class MatchService extends BaseService {
 
       // Check if match has associated games or participants before deletion
       const { data: games, error: gamesError } = await supabase
-        .from('games')
+        .from(GAMES_TABLE)
         .select('id')
         .eq('match_id', id)
         .limit(1);
@@ -975,7 +938,7 @@ export class MatchService extends BaseService {
       }
 
       const { data: participants, error: participantsError } = await supabase
-        .from('match_participants')
+        .from(MATCH_PARTICIPANTS_TABLE)
         .select('id')
         .eq('match_id', id)
         .limit(1);
@@ -1000,6 +963,85 @@ export class MatchService extends BaseService {
       return { success: true, data: undefined };
     } catch (err) {
       return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);
+    }
+  }
+
+  /**
+   * Get matches by school ID through match participants
+   */
+  static async getMatchesBySchoolId(
+    schoolId: string,
+    options: {
+      limit?: number;
+      season_id?: number;
+      direction?: 'future' | 'past';
+    } = {}
+  ): Promise<ServiceResponse<MatchWithFullDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { limit = 10, season_id, direction = 'past' } = options;
+
+      let query = supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          sports_seasons_stages!inner(
+            id,
+            competition_stage,
+            season_id,
+            sport_category_id,
+            sports_categories!inner(
+              id,
+              division,
+              levels,
+              sports!inner(
+                id,
+                name
+              )
+            ),
+            seasons(
+              id,
+              start_at,
+              end_at
+            )
+          ),
+          match_participants!inner(
+            id,
+            match_id,
+            team_id,
+            match_score,
+            schools_teams!inner(
+              id,
+              name,
+              schools!inner(
+                id,
+                name,
+                abbreviation,
+                logo_url
+              )
+            )
+          )
+        `
+        )
+        .eq('match_participants.schools_teams.school_id', schoolId)
+        .order('scheduled_at', { ascending: direction === 'future' })
+        .limit(limit);
+
+      // Add season filter if provided
+      if (season_id) {
+        query = query.eq('sports_seasons_stages.season_id', season_id);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch matches by school ID.`);
     }
   }
 }

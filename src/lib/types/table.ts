@@ -89,7 +89,7 @@ export interface TableProps<T extends BaseEntity> {
   refetch?: () => void;
 }
 
-export interface UseTableOptions<T extends BaseEntity> {
+export interface UseTableOptions {
   initialPage?: number;
   initialPageSize?: number;
   initialSortBy?: string;

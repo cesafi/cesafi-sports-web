@@ -1,118 +1,89 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { useArticleDetails } from '@/hooks/use-articles';
-import { useUpdateArticle } from '@/hooks/use-articles';
-import { ArticleInfoCard, ArticleStatusModal, ArticleEditorCard, ArticleEditorLayout } from '@/components/shared/articles';
-import { ArticleUpdate } from '@/lib/types/articles';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { ArticleForm } from '@/components/shared/articles/article-form';
+import { useArticleById, useUpdateArticle } from '@/hooks/use-articles';
+import { ArticleInsert, ArticleUpdate } from '@/lib/types/articles';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default function HeadWriterArticleDetailPage() {
+export default function EditArticlePage() {
   const params = useParams();
-  const router = useRouter();
   const articleId = params.id as string;
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
 
-  // Load article details
-  const {
-    data: article,
-    isLoading: articleLoading,
-    error: articleError,
-    refetch: refetchArticle
-  } = useArticleDetails(articleId);
+  const { data: article, isLoading, error } = useArticleById(articleId);
 
-  // Update article mutation
-  const updateArticleMutation = useUpdateArticle();
-
-  const handleBack = () => {
-    router.back();
-  };
-
-  const handleUpdateArticle = async (data: ArticleUpdate) => {
-    try {
-      const result = await updateArticleMutation.mutateAsync(data);
-      if (result.success) {
-        toast.success('Article updated successfully');
-        setIsStatusModalOpen(false);
-        refetchArticle();
-      } else {
-        toast.error(result.error || 'Failed to update article');
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred');
-      throw error;
+  const updateArticleMutation = useUpdateArticle({
+    onSuccess: () => {
+      toast.success('Article updated successfully!');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to update article');
     }
+  });
+
+  const handleSubmit = async (data: ArticleInsert | ArticleUpdate) => {
+    updateArticleMutation.mutate(data as ArticleUpdate);
   };
 
-  const handleContentSave = async (content: any) => {
-    try {
-      await handleUpdateArticle({
-        id: articleId,
-        content: content
-      });
-    } catch (error) {
-      console.error('Failed to save content:', error);
-    }
-  };
-
-  if (articleLoading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 w-full">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading article details...</p>
+      <div className="w-full space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-8 w-20" />
+            <div>
+              <Skeleton className="h-8 w-64 mb-2" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-96 w-full" />
+            </div>
+            <div className="space-y-6">
+              <Skeleton className="h-64 w-full" />
+              <Skeleton className="h-48 w-full" />
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (articleError || !article) {
+  if (error || !article) {
     return (
-      <div className="w-full flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-destructive mb-4">Failed to load article details</p>
-          <Button onClick={handleBack} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
-          </Button>
+      <div className="w-full space-y-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold text-foreground mb-4">Article Not Found</h1>
+            <p className="text-muted-foreground mb-6">
+              The article you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to edit it.
+            </p>
+            <Link
+              href="/head-writer/articles"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Back to Articles
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <>
-      <ArticleEditorLayout
-        title={article.title}
-        subtitle="Article Details & Content Management"
-        onBack={handleBack}
-        editorContent={
-          <ArticleEditorCard
-            article={article}
-            onSave={handleContentSave}
-            isSubmitting={updateArticleMutation.isPending}
-          />
-        }
-        sidebarContent={
-          <ArticleInfoCard
-            article={article}
-            onManageStatus={() => setIsStatusModalOpen(true)}
-            compact={true}
-          />
-        }
-      />
-
-      {/* Article Status Modal */}
-      <ArticleStatusModal
-        open={isStatusModalOpen}
-        onOpenChange={setIsStatusModalOpen}
+    <div className="w-full space-y-6">
+      <ArticleForm
+        mode="edit"
         article={article}
-        onUpdateArticle={handleUpdateArticle}
+        onSubmit={handleSubmit}
         isSubmitting={updateArticleMutation.isPending}
+        userRole="head-writer"
+        backUrl="/head-writer/articles"
       />
-    </>
+    </div>
   );
 }

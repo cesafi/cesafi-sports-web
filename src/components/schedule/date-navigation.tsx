@@ -25,7 +25,6 @@ interface DateNavigationProps {
 export default function DateNavigation({
   currentDate,
   onDateChange,
-  hasMatches,
   onPreviousDay,
   onNextDay,
   onGoToToday,

@@ -18,6 +18,6 @@ export const updateDepartmentSchema = z.object({
     .optional()
 });
 
-// Legacy exports for backward compatibility
-export const DepartmentInsertSchema = createDepartmentSchema;
-export const DepartmentUpdateSchema = updateDepartmentSchema;
+// Export inferred types
+export type DepartmentInsert = z.infer<typeof createDepartmentSchema>;
+export type DepartmentUpdate = z.infer<typeof updateDepartmentSchema>;

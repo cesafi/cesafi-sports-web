@@ -1,7 +1,7 @@
 'use server';
 
-import { SchoolsTeamInsert, SchoolsTeamUpdate } from '@/lib/types/schools-teams';
 import { SchoolsTeamService } from '@/services/schools-teams';
+import { createSchoolTeamSchema, updateSchoolTeamSchema } from '@/lib/validations/schools-teams';
 import { revalidatePath } from 'next/cache';
 
 // Context-based fetching methods
@@ -37,8 +37,19 @@ export async function getTeamsByStage(stageId: number) {
   return await SchoolsTeamService.getTeamsForStage(stageId);
 }
 
-export async function createSchoolsTeam(data: SchoolsTeamInsert) {
-  const result = await SchoolsTeamService.insert(data);
+export async function createSchoolsTeam(data: unknown) {
+  // Validate the input data
+  const validationResult = createSchoolTeamSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SchoolsTeamService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/schools');
@@ -49,8 +60,19 @@ export async function createSchoolsTeam(data: SchoolsTeamInsert) {
   return result;
 }
 
-export async function updateSchoolsTeamById(data: SchoolsTeamUpdate) {
-  const result = await SchoolsTeamService.updateById(data);
+export async function updateSchoolsTeamById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateSchoolTeamSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await SchoolsTeamService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/schools');

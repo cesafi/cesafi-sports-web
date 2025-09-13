@@ -1,3 +1,8 @@
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '@/../../database.types';
+
+export type TypedSupabaseClient = SupabaseClient<Database, 'public'>;
+
 export type NonNullPrimitive = string | number | boolean;
 
 export type FilterPrimitive = NonNullPrimitive | null;
@@ -10,9 +15,7 @@ export interface RangeOrEqualityFilter {
 
 export type FilterValue = FilterPrimitive | FilterPrimitive[] | RangeOrEqualityFilter;
 
-export interface PaginationOptions<
-  TFilters = Record<string, FilterValue>
-> {
+export interface PaginationOptions<TFilters = Record<string, FilterValue>> {
   page: number;
   pageSize: number;
   searchQuery?: string;

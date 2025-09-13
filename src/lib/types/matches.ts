@@ -1,10 +1,12 @@
-import { Database } from '../../../database.types';
+import { z } from 'zod';
+import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { BaseEntity } from './table';
+import { createMatchSchema, updateMatchSchema } from '@/lib/validations/matches';
 
 export type Match = Database['public']['Tables']['matches']['Row'];
-export type MatchInsert = Database['public']['Tables']['matches']['Insert'];
-export type MatchUpdate = Database['public']['Tables']['matches']['Update'];
+export type MatchInsert = z.infer<typeof createMatchSchema>;
+export type MatchUpdate = z.infer<typeof updateMatchSchema>;
 
 export type MatchStatus = Database['public']['Enums']['match_status'];
 
@@ -65,7 +67,7 @@ export interface MatchWithStageDetails extends BaseEntity {
       id: number;
       start_at: string;
       end_at: string;
-    };
+    } | null;
   };
 }
 
@@ -100,7 +102,7 @@ export interface MatchWithFullDetails extends BaseEntity {
       id: number;
       start_at: string;
       end_at: string;
-    };
+    } | null;
   };
   match_participants: {
     id: number;

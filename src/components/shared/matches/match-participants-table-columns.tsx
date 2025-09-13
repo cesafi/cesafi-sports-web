@@ -42,7 +42,7 @@ export const getMatchParticipantsTableColumns = (): TableColumn<MatchParticipant
     key: 'status',
     header: 'Status',
     sortable: false,
-    render: (participant) => (
+    render: (_participant) => (
       <Badge variant="default">
         Active
       </Badge>

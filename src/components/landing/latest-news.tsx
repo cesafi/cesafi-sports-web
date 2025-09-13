@@ -1,222 +1,212 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
 import Image from 'next/image';
-import { Calendar, User, ArrowRight, TrendingUp, Trophy, Users } from 'lucide-react';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { Calendar, User, ArrowRight } from 'lucide-react';
+import { moderniz, roboto } from '@/lib/fonts';
 
 // Mock news data - in production this would come from your articles database
 const newsArticles = [
   {
     id: 1,
-    title: 'CESAFI Basketball Championship Finals Set for Next Week',
-    excerpt: 'The highly anticipated finals between University of San Carlos and University of Cebu will take place at the Cebu Coliseum.',
-    content: 'Full article content here...',
-    author: 'CESAFI Sports Desk',
+    title: 'CESAFI Season 2024 Kicks Off with Record-Breaking Opening Ceremony',
+    excerpt: 'The Cebu Schools Athletic Foundation officially launched its 2024 season with an unprecedented opening ceremony featuring over 5,000 student-athletes from 8 member schools.',
+    author: 'CESAFI Media Team',
     publishedAt: '2024-01-15',
-    category: 'Basketball',
+    category: 'Season Updates',
+    readTime: '5 min read',
     image: '/img/cesafi-banner.jpg',
-    featured: true,
-    readTime: '3 min read'
+    featured: true
   },
   {
     id: 2,
-    title: 'New Swimming Records Set at CESAFI Aquatic Center',
-    excerpt: 'Three new records were established during the swimming competition, showcasing the incredible talent of student-athletes.',
-    content: 'Full article content here...',
-    author: 'Aquatic Sports Reporter',
-    publishedAt: '2024-01-14',
-    category: 'Swimming',
+    title: 'USC Warriors Dominate Basketball Championship Finals',
+    excerpt: 'The University of San Carlos Warriors secured their third consecutive basketball championship with a thrilling 89-85 victory over the University of Cebu Webmasters.',
+    author: 'Sports Reporter',
+    publishedAt: '2024-01-12',
+    category: 'Basketball',
+    readTime: '3 min read',
     image: '/img/cesafi-banner.jpg',
-    featured: false,
-    readTime: '2 min read'
+    featured: false
   },
   {
     id: 3,
-    title: 'CESAFI Football Tournament Kicks Off with Exciting Matches',
-    excerpt: 'The opening matches of the football tournament delivered thrilling action and unexpected results.',
-    content: 'Full article content here...',
-    author: 'Football Correspondent',
-    publishedAt: '2024-01-13',
-    category: 'Football',
+    title: 'New Athletic Facilities Open at Cebu Sports Complex',
+    excerpt: 'State-of-the-art training facilities and upgraded courts are now available for all CESAFI member schools, promising enhanced training experiences for student-athletes.',
+    author: 'Facilities Team',
+    publishedAt: '2024-01-10',
+    category: 'Facilities',
+    readTime: '4 min read',
     image: '/img/cesafi-banner.jpg',
-    featured: false,
-    readTime: '4 min read'
+    featured: false
   },
   {
     id: 4,
-    title: 'Track and Field Athletes Break Personal Bests',
-    excerpt: 'Multiple athletes achieved new personal records in various track and field events during the weekend competition.',
-    content: 'Full article content here...',
-    author: 'Athletics Reporter',
-    publishedAt: '2024-01-12',
-    category: 'Athletics',
+    title: 'CESAFI Announces Partnership with Major Sports Brands',
+    excerpt: 'New partnerships with leading sports equipment manufacturers will provide better gear and training resources for all participating schools and athletes.',
+    author: 'Partnership Team',
+    publishedAt: '2024-01-08',
+    category: 'Partnerships',
+    readTime: '3 min read',
     image: '/img/cesafi-banner.jpg',
-    featured: false,
-    readTime: '3 min read'
+    featured: false
   }
 ];
 
-const getCategoryIcon = (category: string) => {
-  switch (category.toLowerCase()) {
-    case 'basketball':
-      return Trophy;
-    case 'swimming':
-      return TrendingUp;
-    case 'football':
-      return Users;
-    default:
-      return Trophy;
-  }
-};
-
-const getCategoryColor = (category: string) => {
-  switch (category.toLowerCase()) {
-    case 'basketball':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300';
-    case 'swimming':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
-    case 'football':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
-    case 'athletics':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300';
-    default:
-      return 'bg-muted text-muted-foreground';
-  }
-};
-
 export default function LatestNews() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], [100, -100]);
+  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+
   const featuredArticle = newsArticles.find(article => article.featured);
   const regularArticles = newsArticles.filter(article => !article.featured);
 
   return (
-    <section className="py-24 bg-card">
+    <section ref={ref} className="py-32 bg-background relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
+        {/* Header with Parallax */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
+          style={{ y, opacity }}
+          className="text-center mb-20"
         >
-          <h2 className={`${mangoGrotesque.className} text-4xl lg:text-5xl font-bold text-foreground mb-6`}>
-            LATEST NEWS & UPDATES
+          <h2 className={`${moderniz.className} text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-8 leading-tight`}>
+            LATEST
+            <br />
+            <span className="text-primary">NEWS</span>
           </h2>
-          <p className={`${roboto.className} text-xl text-muted-foreground max-w-3xl mx-auto`}>
-            Stay updated with the latest happenings, achievements, and stories from the CESAFI community.
+          <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>
+            Stay updated with the latest happenings in CESAFI. 
+            From championship victories to groundbreaking partnerships.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Featured Article */}
-          {featuredArticle && (
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="lg:col-span-2"
-            >
-              <article className="bg-background rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 group">
-                <div className="relative h-64 lg:h-80 overflow-hidden">
+        {/* Featured Article */}
+        {featuredArticle && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="mb-20"
+          >
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-3xl overflow-hidden border border-primary/20">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                {/* Image */}
+                <div className="relative h-64 lg:h-auto">
                   <Image
                     src={featuredArticle.image}
                     alt={featuredArticle.title}
                     fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover"
                   />
                   <div className="absolute top-4 left-4">
-                    <span className={`${getCategoryColor(featuredArticle.category)} px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2`}>
-                      <Trophy size={16} />
+                    <span className={`${roboto.className} bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold uppercase tracking-wide`}>
+                      Featured
+                    </span>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-8 lg:p-12 flex flex-col justify-center">
+                  <div className="mb-4">
+                    <span className={`${roboto.className} text-primary font-semibold text-sm uppercase tracking-wide`}>
                       {featuredArticle.category}
                     </span>
                   </div>
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
-                      FEATURED
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-8">
-                  <h3 className={`${mangoGrotesque.className} text-2xl lg:text-3xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors duration-300`}>
+                  
+                  <h3 className={`${roboto.className} text-2xl lg:text-3xl xl:text-4xl font-bold text-foreground mb-4 leading-tight`}>
                     {featuredArticle.title}
                   </h3>
                   
-                  <p className={`${roboto.className} text-muted-foreground text-lg leading-relaxed mb-6`}>
+                  <p className={`${roboto.className} text-lg text-muted-foreground mb-6 leading-relaxed`}>
                     {featuredArticle.excerpt}
                   </p>
-                  
-                  <div className="flex items-center justify-between">
+
+                  <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
-                        <User size={16} />
+                        <User className="w-4 h-4" />
                         <span>{featuredArticle.author}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Calendar size={16} />
+                        <Calendar className="w-4 h-4" />
                         <span>{new Date(featuredArticle.publishedAt).toLocaleDateString()}</span>
                       </div>
-                      <span>{featuredArticle.readTime}</span>
                     </div>
-                    
-                    <button className="flex items-center gap-2 text-primary hover:text-primary/80 font-semibold transition-colors duration-200">
-                      Read More
-                      <ArrowRight size={16} />
-                    </button>
+                    <span className={`${roboto.className} text-sm text-muted-foreground`}>
+                      {featuredArticle.readTime}
+                    </span>
+                  </div>
+
+                  <button className={`${roboto.className} bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-semibold text-lg uppercase tracking-wide transition-all duration-300 hover:scale-105 shadow-lg flex items-center gap-3 w-fit`}>
+                    Read Full Story
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Regular Articles Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {regularArticles.map((article, index) => (
+            <motion.div
+              key={article.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              viewport={{ once: true }}
+              className="group"
+            >
+              <div className="bg-muted/30 rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+                {/* Article Image */}
+                <div className="relative h-48">
+                  <Image
+                    src={article.image}
+                    alt={article.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className={`${roboto.className} bg-background/90 text-foreground px-2 py-1 rounded text-xs font-medium`}>
+                      {article.category}
+                    </span>
                   </div>
                 </div>
-              </article>
-            </motion.div>
-          )}
 
-          {/* Regular Articles */}
-          <div className="space-y-6">
-            {regularArticles.map((article, index) => {
-              const CategoryIcon = getCategoryIcon(article.category);
-              
-              return (
-                <motion.article
-                  key={article.id}
-                  initial={{ opacity: 0, x: 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  className="bg-background rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group"
-                >
-                  <div className="flex">
-                    <div className="relative w-32 h-24 flex-shrink-0">
-                      <Image
-                        src={article.image}
-                        alt={article.title}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
+                {/* Article Content */}
+                <div className="p-6">
+                  <h4 className={`${roboto.className} text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300 line-clamp-2`}>
+                    {article.title}
+                  </h4>
+                  
+                  <p className={`${roboto.className} text-muted-foreground mb-4 line-clamp-3`}>
+                    {article.excerpt}
+                  </p>
+
+                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      <span>{article.author}</span>
                     </div>
-                    
-                    <div className="flex-1 p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`${getCategoryColor(article.category)} px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1`}>
-                          <CategoryIcon size={12} />
-                          {article.category}
-                        </span>
-                      </div>
-                      
-                      <h4 className={`${mangoGrotesque.className} text-sm font-semibold text-foreground mb-2 group-hover:text-primary transition-colors duration-300 line-clamp-2`}>
-                        {article.title}
-                      </h4>
-                      
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
-                        <span>{article.readTime}</span>
-                      </div>
-                    </div>
+                    <span>{article.readTime}</span>
                   </div>
-                </motion.article>
-              );
-            })}
-          </div>
+
+                  <button className={`${roboto.className} text-primary hover:text-primary/80 font-semibold text-sm uppercase tracking-wide transition-colors duration-200 flex items-center gap-2`}>
+                    Read More
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
 
         {/* View All News Button */}
@@ -225,11 +215,10 @@ export default function LatestNews() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           viewport={{ once: true }}
-          className="text-center mt-12"
+          className="text-center mt-16"
         >
-          <button className={`${mangoGrotesque.className} bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-semibold text-lg uppercase tracking-wide transition-all duration-200 hover:scale-105 shadow-lg flex items-center gap-3 mx-auto`}>
+          <button className={`${roboto.className} bg-foreground hover:bg-foreground/90 text-background px-10 py-5 rounded-2xl font-semibold text-xl uppercase tracking-wide transition-all duration-300 hover:scale-105 shadow-lg`}>
             View All News
-            <ArrowRight size={20} />
           </button>
         </motion.div>
       </div>

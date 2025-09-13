@@ -6,8 +6,7 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useSeason } from '@/components/contexts/season-provider';
 import { getScheduleMatches, getScheduleMatchesByDate } from '@/actions/matches';
-import { ScheduleFilters, SchedulePaginationOptions, ScheduleResponse } from '@/lib/types/matches';
-import { groupMatchesByDate, sortDateKeys } from '@/lib/utils/schedule-utils';
+import { ScheduleFilters, SchedulePaginationOptions } from '@/lib/types/matches';
 
 export const scheduleKeys = {
   all: ['schedule'] as const,

@@ -24,13 +24,13 @@ We're leveraging cutting-edge technologies to ensure the CESAFI Sports Hub is fa
 
 ### **Core Framework & Runtime**
 
-- **Next.js 15.4.2** with **React 19.1.0** - High-performance, server-side rendered application with App Router
+- **Next.js 15.5.2** with **React 19.1.0** - High-performance, server-side rendered application with App Router
 - **TypeScript 5+** (Strict mode) - End-to-end type safety from database to UI
 - **Turbopack** - Lightning-fast development builds and hot reloading
 
 ### **Backend & Database**
 
-- **Supabase 2.52.0** - PostgreSQL database with real-time capabilities, authentication, and file storage
+- **Supabase 2.55.0** - PostgreSQL database with real-time capabilities, authentication, and file storage
 - **Row-Level Security (RLS)** - Database-level permission enforcement
 - **Auto-generated TypeScript types** - Type safety directly from database schema
 
@@ -170,13 +170,6 @@ The CESAFI Sports Website is currently in **early development**. We're actively 
 5. **Error handling** - Use consistent ServiceResponse<T> pattern
 6. **Business rules** - Enforce in validation layer with Zod schemas
 
-### **Current Issues & Technical Debt**
-
-- **Middleware disabled** - Security headers commented out in `src/middleware.ts`
-- **Landing page** - Currently shows only "test" content
-- **No tests** - Testing framework ready but no tests written
-- **Generic error handling** - Some services need more specific error handling
-
 ---
 
 ## 💻 Getting Started (For Contributors)
@@ -271,14 +264,13 @@ To maintain a clean and organized codebase, we follow a consistent branching str
 
 The CESAFI Sports Website is brought to life by a dedicated team of passionate volunteers. We're always looking for talented individuals to join us in shaping the future of CESAFI's digital presence.
 
-| Role                  | Name                | GitHub Profile                                     |
-| :-------------------- | :------------------ | :------------------------------------------------- |
-| **Project Lead**      | Porter, Nicolo Ryne | [@nicoryne](https://github.com/nicoryne)           |
-| Frontend Developer    | [Team Member Name]  | [@Member1GitHub](https://github.com/Member1GitHub) |
-| Backend Developer     | [Team Member Name]  | [@Member2GitHub](https://github.com/Member2GitHub) |
-| UI/UX Designer        | [Team Member Name]  | [@Member3GitHub](https://github.com/Member3GitHub) |
-| Quality Assurance     | [Team Member Name]  | [@Member4GitHub](https://github.com/Member4GitHub) |
-| Website Administrator | [Team Member Name]  | [@Member5GitHub](https://github.com/Member5GitHub) |
+| Role                 | Name               | GitHub Profile                           |
+| :------------------- | :----------------- | :--------------------------------------- |
+| Project Lead         | Nicolo Porter      | [@nicoryne](https://github.com/nicoryne) |
+| Frontend             | Adrian Sajulga     | [@wetooa](https://github.com/Wetooa)     |
+| Backend & Cloudinary | Derrick Binangbang | [@drkcutie](https://github.com/drkcutie) |
+| Backend & Supabase   | Gelo Cadavos       | [@Eloe321](https://github.com/Eloe321)   |
+| Frontend & Branding  | Zak Floreta        | [@Kaazzz](https://github.com/Kaazzz)     |
 
 ---
 

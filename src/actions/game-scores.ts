@@ -1,7 +1,7 @@
 'use server';
 
-import { GameScoreInsert, GameScoreUpdate } from '@/lib/types/game-scores';
 import { GameScoreService } from '@/services/game-scores';
+import { createGameScoreSchema, updateGameScoreSchema } from '@/lib/validations/game-scores';
 import { revalidatePath } from 'next/cache';
 
 // Core context-based fetching actions
@@ -18,8 +18,19 @@ export async function getGameScoresByMatchId(matchId: number) {
 }
 
 // CRUD operations
-export async function createGameScore(data: GameScoreInsert) {
-  const result = await GameScoreService.insert(data);
+export async function createGameScore(data: unknown) {
+  // Validate the input data
+  const validationResult = createGameScoreSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await GameScoreService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');
@@ -28,8 +39,19 @@ export async function createGameScore(data: GameScoreInsert) {
   return result;
 }
 
-export async function updateGameScoreById(data: GameScoreUpdate) {
-  const result = await GameScoreService.updateById(data);
+export async function updateGameScoreById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateGameScoreSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await GameScoreService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');

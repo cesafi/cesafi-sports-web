@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { mangoGrotesque, roboto } from '@/lib/fonts';
+import { moderniz, roboto } from '@/lib/fonts';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -19,19 +19,19 @@ export default function Footer() {
                 height={32}
                 className="w-8 h-8"
               />
-                          <span className={`${mangoGrotesque.className} text-lg font-bold`}>
+                          <span className={`${moderniz.className} text-lg font-bold`}>
               CESAFI
             </span>
           </div>
           <p className={`${roboto.className} text-muted-foreground text-sm leading-relaxed`}>
             Cebu Schools Athletic Foundation is the central hub for showcasing athletic excellence, 
-            academic-driven sports, and esports-inspired energy within Cebu's schools.
+            academic-driven sports, and esports-inspired energy within Cebu&apos;s schools.
           </p>
           </div>
 
           {/* Quick Links Column */}
           <div className="space-y-4">
-            <h3 className={`${mangoGrotesque.className} text-lg font-semibold`}>
+            <h3 className={`${moderniz.className} text-lg font-semibold`}>
               Quick Links
             </h3>
             <ul className={`${roboto.className} space-y-2 text-sm`}>
@@ -56,7 +56,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/about-us" className="text-muted-foreground hover:text-primary transition-colors">
                   About Us
                 </Link>
               </li>
@@ -65,7 +65,7 @@ export default function Footer() {
 
           {/* Contact Column */}
           <div className="space-y-4">
-            <h3 className={`${mangoGrotesque.className} text-lg font-semibold`}>
+            <h3 className={`${moderniz.className} text-lg font-semibold`}>
               Contact
             </h3>
             <div className={`${roboto.className} space-y-2 text-sm text-muted-foreground`}>
@@ -77,7 +77,7 @@ export default function Footer() {
 
           {/* Partners Column */}
           <div className="space-y-4">
-            <h3 className={`${mangoGrotesque.className} text-lg font-semibold`}>
+            <h3 className={`${moderniz.className} text-lg font-semibold`}>
               Partners
             </h3>
             <div className={`${roboto.className} text-sm text-muted-foreground`}>

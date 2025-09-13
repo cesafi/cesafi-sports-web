@@ -1,7 +1,7 @@
 'use server';
 
-import { MatchParticipantInsert, MatchParticipantUpdate } from '@/lib/types/match-participants';
 import { MatchParticipantService } from '@/services/match-participants';
+import { createMatchParticipantSchema, updateMatchParticipantSchema } from '@/lib/validations/match-participants';
 import { revalidatePath } from 'next/cache';
 
 // Core context-based fetching actions
@@ -18,8 +18,19 @@ export async function getMatchParticipantByMatchAndTeam(matchId: number, teamId:
 }
 
 // CRUD operations
-export async function createMatchParticipant(data: MatchParticipantInsert) {
-  const result = await MatchParticipantService.insert(data);
+export async function createMatchParticipant(data: unknown) {
+  // Validate the input data
+  const validationResult = createMatchParticipantSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await MatchParticipantService.insert(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');
@@ -29,8 +40,19 @@ export async function createMatchParticipant(data: MatchParticipantInsert) {
   return result;
 }
 
-export async function updateMatchParticipantById(data: MatchParticipantUpdate) {
-  const result = await MatchParticipantService.updateById(data);
+export async function updateMatchParticipantById(data: unknown) {
+  // Validate the input data
+  const validationResult = updateMatchParticipantSchema.safeParse(data);
+  
+  if (!validationResult.success) {
+    return {
+      success: false,
+      error: 'Validation failed',
+      validationErrors: validationResult.error.flatten().fieldErrors
+    };
+  }
+
+  const result = await MatchParticipantService.updateById(validationResult.data);
 
   if (result.success) {
     revalidatePath('/admin/dashboard/matches');

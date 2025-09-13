@@ -1,8 +1,17 @@
-import { PaginatedResponse, PaginationOptions, ServiceResponse, FilterValue } from '@/lib/types/base';
+import { z } from 'zod';
+import {
+  PaginatedResponse,
+  PaginationOptions,
+  ServiceResponse,
+  FilterValue
+} from '@/lib/types/base';
 import { BaseService } from './base';
-import { Game, GameInsert, GameUpdate } from '@/lib/types/games';
+import { Game } from '@/lib/types/games';
+import { createGameSchema, updateGameSchema } from '@/lib/validations/games';
 
 const TABLE_NAME = 'games';
+const MATCHES_TABLE = 'matches';
+const GAME_SCORES_TABLE = 'game_scores';
 
 export class GameService extends BaseService {
   static async getPaginated(
@@ -126,18 +135,10 @@ export class GameService extends BaseService {
   ): Promise<ServiceResponse<PaginatedResponse<Game>>> {
     try {
       const supabase = await this.getClient();
-      const { page = 1, pageSize = 10, search, filters } = options;
+      const { page = 1, pageSize = 10, filters } = options;
       const offset = (page - 1) * pageSize;
 
-      let query = supabase
-        .from(TABLE_NAME)
-        .select('*', { count: 'exact' })
-        .eq('match_id', matchId);
-
-      // Apply search if provided
-      if (search) {
-        query = query.or(`game_number.eq.${search}`);
-      }
+      let query = supabase.from(TABLE_NAME).select('*', { count: 'exact' }).eq('match_id', matchId);
 
       // Apply filters if provided
       if (filters) {
@@ -166,8 +167,7 @@ export class GameService extends BaseService {
           data: data || [],
           totalCount,
           pageCount,
-          currentPage: page,
-          pageSize
+          currentPage: page
         }
       };
     } catch (err) {
@@ -175,13 +175,13 @@ export class GameService extends BaseService {
     }
   }
 
-  static async insert(data: GameInsert): Promise<ServiceResponse<undefined>> {
+  static async insert(data: z.infer<typeof createGameSchema>): Promise<ServiceResponse<undefined>> {
     try {
       const supabase = await this.getClient();
 
       // Validate that the match_id exists
       const { data: matchExists, error: matchError } = await supabase
-        .from('matches')
+        .from(MATCHES_TABLE)
         .select('id, best_of')
         .eq('id', data.match_id)
         .single();
@@ -290,7 +290,9 @@ export class GameService extends BaseService {
     }
   }
 
-  static async updateById(data: GameUpdate): Promise<ServiceResponse<undefined>> {
+  static async updateById(
+    data: z.infer<typeof updateGameSchema>
+  ): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
         return { success: false, error: 'Entity ID is required to update.' };
@@ -312,7 +314,7 @@ export class GameService extends BaseService {
       // Validate match_id if provided
       if (data.match_id && data.match_id !== currentGame.match_id) {
         const { data: matchExists, error: matchError } = await supabase
-          .from('matches')
+          .from(MATCHES_TABLE)
           .select('id, best_of')
           .eq('id', data.match_id)
           .single();
@@ -362,7 +364,7 @@ export class GameService extends BaseService {
 
         // Get match's best_of
         const { data: matchData, error: matchError } = await supabase
-          .from('matches')
+          .from(MATCHES_TABLE)
           .select('best_of')
           .eq('id', matchId)
           .single();
@@ -455,7 +457,7 @@ export class GameService extends BaseService {
 
       // Check if game has associated scores before deletion
       const { data: scores, error: scoresError } = await supabase
-        .from('game_scores')
+        .from(GAME_SCORES_TABLE)
         .select('id')
         .eq('game_id', id)
         .limit(1);
