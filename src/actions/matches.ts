@@ -139,3 +139,15 @@ export async function getMatchesBySchoolId(
 ) {
   return await MatchService.getMatchesBySchoolId(schoolId, options);
 }
+
+export async function getUpcomingMatchesWithDetails(limit: number = 4) {
+  return await MatchService.getUpcomingWithDetails(limit);
+}
+
+export async function getScheduleMatchesWithCategories(options: SchedulePaginationOptions) {
+  return await MatchService.getScheduleMatches(options);
+}
+
+export async function getAvailableSportCategories() {
+  return await MatchService.getAvailableSportCategories();
+}

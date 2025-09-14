@@ -1,76 +1,143 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { Calendar, MapPin, Trophy, Clock } from 'lucide-react';
 import { moderniz, roboto } from '@/lib/fonts';
+import { MatchWithFullDetails } from '@/lib/types/matches';
 
-// Mock upcoming games data - in production this would come from your matches database
-const upcomingGames = [
-  {
-    id: 1,
-    homeTeam: 'University of San Carlos',
-    awayTeam: 'University of Cebu',
-    sport: 'Basketball',
-    date: '2024-01-20',
-    time: '18:00',
-    venue: 'Cebu Coliseum',
-    status: 'upcoming',
-    category: 'Men\'s Division'
-  },
-  {
-    id: 2,
-    homeTeam: 'Cebu Institute of Technology',
-    awayTeam: 'University of San Jose Recoletos',
-    sport: 'Football',
-    date: '2024-01-22',
-    time: '15:30',
-    venue: 'Cebu Sports Complex',
-    status: 'upcoming',
-    category: 'Men\'s Division'
-  },
-  {
-    id: 3,
-    homeTeam: 'University of the Philippines Cebu',
-    awayTeam: 'Cebu Normal University',
-    sport: 'Volleyball',
-    date: '2024-01-25',
-    time: '16:00',
-    venue: 'Cebu City Sports Center',
-    status: 'upcoming',
-    category: 'Women\'s Division'
-  },
-  {
-    id: 4,
-    homeTeam: 'Southwestern University',
-    awayTeam: 'University of San Carlos',
-    sport: 'Basketball',
-    date: '2024-01-28',
-    time: '19:00',
-    venue: 'Cebu Coliseum',
-    status: 'upcoming',
-    category: 'Men\'s Division'
-  }
-];
+interface UpcomingGamesProps {
+  initialMatches: MatchWithFullDetails[];
+}
 
-export default function UpcomingGames() {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
+export default function UpcomingGames({ initialMatches }: UpcomingGamesProps) {
+  const [isMounted, setIsMounted] = useState(false);
+  
+  const upcomingGames = initialMatches.map((match) => {
+    // Handle multiple participants (for sports like Track and Field)
+    const participants = match.match_participants || [];
+    
+    // For most sports, we expect 2 participants (home and away)
+    // For sports with more participants, we'll show the first two
+    const homeTeam = participants[0]?.schools_teams?.schools?.name || 'Team A';
+    const awayTeam = participants[1]?.schools_teams?.schools?.name || 'Team B';
+    
+    return {
+      id: match.id,
+      homeTeam,
+      awayTeam,
+      sport: match.sports_seasons_stages?.sports_categories?.sports?.name || 'Basketball',
+      date: match.scheduled_at || new Date().toISOString(),
+      time: match.scheduled_at ? new Date(match.scheduled_at).toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      }) : '18:00',
+      venue: match.venue || 'Cebu Coliseum',
+      status: 'upcoming',
+      category: `${match.sports_seasons_stages?.sports_categories?.division || 'Men'}'s Division`,
+      // Additional info for multi-participant sports
+      totalParticipants: participants.length,
+      allParticipants: participants.map(p => p.schools_teams?.schools?.name).filter(Boolean)
+    };
   });
 
-  const y = useTransform(scrollYProgress, [0, 1], [100, -100]);
-  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+  // Handle hydration
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Don't render scroll-based animations until mounted
+  if (!isMounted) {
+    return (
+      <section className="py-32 bg-background relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <h2 className={`${moderniz.className} text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-8 leading-tight`}>
+              UPCOMING
+              <br />
+              <span className="text-primary">GAMES</span>
+            </h2>
+            <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>
+              Witness the most thrilling athletic competitions in Cebu. 
+              Mark your calendars for these epic showdowns.
+            </p>
+          </div>
+          {/* Static content without animations */}
+          {upcomingGames.length > 0 ? (
+            <div className="space-y-8">
+              {/* Featured Game */}
+              <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-3xl p-8 lg:p-12 border border-primary/20">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                  <div className="text-center lg:text-right">
+                    <div className={`${roboto.className} text-2xl lg:text-3xl font-bold text-foreground mb-4`}>
+                      {upcomingGames[0].homeTeam}
+                    </div>
+                    <div className={`${roboto.className} text-lg text-muted-foreground`}>
+                      Home Team
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                        <Trophy className="w-8 h-8 text-primary-foreground" />
+                      </div>
+                    </div>
+                    <div className={`${roboto.className} text-2xl font-bold text-primary mb-2`}>
+                      VS
+                    </div>
+                    <div className={`${roboto.className} text-sm text-muted-foreground mb-4`}>
+                      {upcomingGames[0].sport} • {upcomingGames[0].category}
+                    </div>
+                  </div>
+                  <div className="text-center lg:text-left">
+                    <div className={`${roboto.className} text-2xl lg:text-3xl font-bold text-foreground mb-4`}>
+                      {upcomingGames[0].awayTeam}
+                    </div>
+                    <div className={`${roboto.className} text-lg text-muted-foreground`}>
+                      Away Team
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>
+                No upcoming games scheduled at the moment. Check back soon for exciting matchups!
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Handle case when there are no upcoming games
+  if (upcomingGames.length === 0) {
+    return (
+      <section className="py-32 bg-background relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className={`${moderniz.className} text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-8 leading-tight`}>
+              UPCOMING
+              <br />
+              <span className="text-primary">GAMES</span>
+            </h2>
+            <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>
+              No upcoming games scheduled at the moment. Check back soon for exciting matchups!
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section ref={ref} className="py-32 bg-background relative overflow-hidden">
+    <section className="py-32 bg-background relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header with Parallax */}
-        <motion.div
-          style={{ y, opacity }}
-          className="text-center mb-20"
-        >
+        {/* Header */}
+        <div className="text-center mb-20">
           <h2 className={`${moderniz.className} text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-8 leading-tight`}>
             UPCOMING
             <br />
@@ -80,9 +147,10 @@ export default function UpcomingGames() {
             Witness the most thrilling athletic competitions in Cebu. 
             Mark your calendars for these epic showdowns.
           </p>
-        </motion.div>
+        </div>
 
         {/* Featured Game - Large Display */}
+        {upcomingGames.length > 0 && (
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -144,6 +212,7 @@ export default function UpcomingGames() {
             </div>
           </div>
         </motion.div>
+        )}
 
         {/* Other Games - Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -3,16 +3,16 @@ import SchoolProfile from '@/components/schools/school-profile';
 
 interface SchoolProfilePageProps {
   params: Promise<{
-    abbreviation: string;
+    slug: string;
   }>;
 }
 
 export default async function SchoolProfilePage({ params }: SchoolProfilePageProps) {
-  const { abbreviation } = await params;
+  const { slug } = await params;
 
-  if (!abbreviation) {
+  if (!slug) {
     notFound();
   }
 
-  return <SchoolProfile schoolAbbreviation={abbreviation} />;
+  return <SchoolProfile schoolAbbreviation={slug} />;
 }

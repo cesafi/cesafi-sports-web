@@ -1,72 +1,38 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useActiveSchools } from '@/hooks/use-schools';
-import { Skeleton } from '@/components/ui/skeleton';
+// Removed unused Skeleton import
 import { Building2, Plus } from 'lucide-react';
 import { roboto } from '@/lib/fonts';
+import SchoolsSearch from './schools-search';
+import { School } from '@/lib/types/schools';
 
-export default function SchoolsGrid() {
-  const { data: schools, isLoading, error, isFetching } = useActiveSchools();
+interface SchoolsGridProps {
+  initialSchools: School[];
+}
 
-  // Show loading state while data is being fetched
-  if (isLoading || isFetching) {
-    return (
-      <section className="py-12 bg-gradient-to-br from-background via-background/95 to-muted/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-background/40 backdrop-blur-lg rounded-lg shadow-lg border border-border/30 overflow-hidden">
-                <div className="p-8 text-center h-80 flex flex-col justify-between">
-                  {/* Logo Skeleton */}
-                  <div className="flex justify-center">
-                    <Skeleton className="h-32 w-32 rounded-lg bg-muted/80" />
-                  </div>
-                  
-                  {/* Text Skeleton */}
-                  <div className="space-y-2">
-                    <Skeleton className="h-6 w-3/4 mx-auto bg-muted/80" />
-                    <Skeleton className="h-4 w-1/2 mx-auto bg-muted/80" />
-                  </div>
-                  
-                  {/* Button Skeleton */}
-                  <Skeleton className="h-8 w-24 mx-auto rounded-full bg-muted/80" />
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Loading Indicator */}
-          <div className="mt-12 text-center">
-            <div className="inline-flex items-center gap-2 text-muted-foreground">
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-              <span className="text-sm">Loading schools...</span>
-            </div>
-          </div>
-        </div>
-      </section>
+export default function SchoolsGrid({ initialSchools }: SchoolsGridProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const schools = initialSchools;
+
+  // Filter schools based on search term
+  const filteredSchools = useMemo(() => {
+    if (!schools) return [];
+    
+    if (!searchTerm.trim()) return schools;
+    
+    const term = searchTerm.toLowerCase().trim();
+    return schools.filter(school => 
+      school.name.toLowerCase().includes(term) ||
+      school.abbreviation.toLowerCase().includes(term)
     );
-  }
+  }, [schools, searchTerm]);
 
-  // Show error state only if there's an actual error
-  if (error) {
-    return (
-      <section className="py-20 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="space-y-4">
-            <Building2 className="h-16 w-16 text-muted-foreground mx-auto" />
-            <h3 className="text-xl font-semibold text-foreground">Unable to load schools</h3>
-            <p className="text-muted-foreground">Please try again later.</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Show empty state only if data has loaded but is empty
-  if (schools && schools.length === 0) {
+  // Show empty state if no schools
+  if (schools.length === 0) {
     return (
       <section className="py-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -80,14 +46,28 @@ export default function SchoolsGrid() {
     );
   }
 
-  // If we reach here but schools is undefined, show loading as fallback
-  if (!schools) {
+  // Show no search results state
+  if (schools.length > 0 && filteredSchools.length === 0) {
     return (
       <section className="py-12 bg-gradient-to-br from-background via-background/95 to-muted/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 text-muted-foreground">
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-            <span className="text-sm">Loading schools...</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Search Bar */}
+          <div className="mb-12">
+            <SchoolsSearch 
+              searchTerm={searchTerm} 
+              onSearchChange={setSearchTerm} 
+            />
+          </div>
+          
+          {/* No Results */}
+          <div className="text-center py-20">
+            <div className="space-y-4">
+              <Building2 className="h-16 w-16 text-muted-foreground mx-auto" />
+              <h3 className="text-xl font-semibold text-foreground">No schools found</h3>
+              <p className="text-muted-foreground">
+                No schools match your search for &quot;{searchTerm}&quot;. Try a different search term.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -97,8 +77,25 @@ export default function SchoolsGrid() {
   return (
     <section className="py-12 bg-gradient-to-br from-background via-background/95 to-muted/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Search Bar */}
+        <div className="mb-12">
+          <SchoolsSearch 
+            searchTerm={searchTerm} 
+            onSearchChange={setSearchTerm} 
+          />
+        </div>
+
+        {/* Results Count */}
+        {searchTerm && (
+          <div className="mb-8 text-center">
+            <p className="text-muted-foreground">
+              Showing {filteredSchools.length} of {schools.length} schools
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {schools.map((school, index) => (
+          {filteredSchools.map((school, index) => (
             <motion.div
               key={school.id}
               initial={{ opacity: 0, y: 20 }}

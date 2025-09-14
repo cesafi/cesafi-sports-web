@@ -54,6 +54,7 @@ export function usePaginatedArticles(
       }
       return data.data;
     },
+    enabled: queryOptions?.enabled ?? true,
     ...queryOptions
   });
 }

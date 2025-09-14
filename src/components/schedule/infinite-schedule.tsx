@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { ScheduleDateGroup, groupMatchesByDate } from './utils';
+import { formatCategoryName } from '@/lib/utils/sports';
 import DateGroup from './date-group';
 import DateNavigation from './date-navigation';
 import FloatingNavButton from './floating-nav-button';
@@ -46,11 +47,21 @@ export default function InfiniteSchedule({
   const topLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const bottomLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter matches by sport
+  // Filter matches by sport category
   const filteredMatches = useMemo(() => {
     return matches.filter((match) => {
       if (selectedSport === 'all') return true;
-      return match.sports_seasons_stages.sports_categories.sports.name === selectedSport;
+      
+      // Get the formatted category name for this match using sports utils
+      const category = match.sports_seasons_stages.sports_categories;
+      const sportName = category.sports.name;
+      const division = category.division;
+      const level = category.levels;
+      
+      // Format the category name to match the selected sport using sports utils
+      const formattedCategoryName = `${sportName} - ${formatCategoryName(division, level)}`;
+      
+      return formattedCategoryName === selectedSport;
     });
   }, [matches, selectedSport]);
 

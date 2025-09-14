@@ -1,80 +1,39 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { motion } from 'framer-motion';
+// Removed unused React imports
 import Image from 'next/image';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import { moderniz, roboto } from '@/lib/fonts';
+import { Article } from '@/lib/types/articles';
 
-// Mock news data - in production this would come from your articles database
-const newsArticles = [
-  {
-    id: 1,
-    title: 'CESAFI Season 2024 Kicks Off with Record-Breaking Opening Ceremony',
-    excerpt: 'The Cebu Schools Athletic Foundation officially launched its 2024 season with an unprecedented opening ceremony featuring over 5,000 student-athletes from 8 member schools.',
-    author: 'CESAFI Media Team',
-    publishedAt: '2024-01-15',
-    category: 'Season Updates',
-    readTime: '5 min read',
-    image: '/img/cesafi-banner.jpg',
-    featured: true
-  },
-  {
-    id: 2,
-    title: 'USC Warriors Dominate Basketball Championship Finals',
-    excerpt: 'The University of San Carlos Warriors secured their third consecutive basketball championship with a thrilling 89-85 victory over the University of Cebu Webmasters.',
-    author: 'Sports Reporter',
-    publishedAt: '2024-01-12',
-    category: 'Basketball',
-    readTime: '3 min read',
-    image: '/img/cesafi-banner.jpg',
-    featured: false
-  },
-  {
-    id: 3,
-    title: 'New Athletic Facilities Open at Cebu Sports Complex',
-    excerpt: 'State-of-the-art training facilities and upgraded courts are now available for all CESAFI member schools, promising enhanced training experiences for student-athletes.',
-    author: 'Facilities Team',
-    publishedAt: '2024-01-10',
-    category: 'Facilities',
-    readTime: '4 min read',
-    image: '/img/cesafi-banner.jpg',
-    featured: false
-  },
-  {
-    id: 4,
-    title: 'CESAFI Announces Partnership with Major Sports Brands',
-    excerpt: 'New partnerships with leading sports equipment manufacturers will provide better gear and training resources for all participating schools and athletes.',
-    author: 'Partnership Team',
-    publishedAt: '2024-01-08',
-    category: 'Partnerships',
-    readTime: '3 min read',
-    image: '/img/cesafi-banner.jpg',
-    featured: false
-  }
-];
+interface LatestNewsProps {
+  initialArticles: Article[];
+}
 
-export default function LatestNews() {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
+export default function LatestNews({ initialArticles }: LatestNewsProps) {
+  const newsArticles = initialArticles.map((article, index) => ({
+    id: article.id,
+    title: article.title,
+    excerpt: (article.content as { excerpt?: string })?.excerpt || 'Read more about this exciting update...',
+    author: (article.content as { author?: string })?.author || 'CESAFI Media Team',
+    publishedAt: article.created_at,
+    category: (article.content as { category?: string })?.category || 'General',
+    readTime: (article.content as { readTime?: string })?.readTime || '3 min read',
+    image: (article.content as { image?: string })?.image || '/img/cesafi-banner.jpg',
+    featured: (article.content as { featured?: boolean })?.featured || index === 0
+  }));
 
-  const y = useTransform(scrollYProgress, [0, 1], [100, -100]);
-  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+  // Removed hydration handling as it's not needed
 
   const featuredArticle = newsArticles.find(article => article.featured);
   const regularArticles = newsArticles.filter(article => !article.featured);
 
   return (
-    <section ref={ref} className="py-32 bg-background relative overflow-hidden">
+    <section className="py-32 bg-background relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header with Parallax */}
-        <motion.div
-          style={{ y, opacity }}
-          className="text-center mb-20"
-        >
+        {/* Header */}
+        <div className="text-center mb-20">
           <h2 className={`${moderniz.className} text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-8 leading-tight`}>
             LATEST
             <br />
@@ -84,7 +43,7 @@ export default function LatestNews() {
             Stay updated with the latest happenings in CESAFI. 
             From championship victories to groundbreaking partnerships.
           </p>
-        </motion.div>
+        </div>
 
         {/* Featured Article */}
         {featuredArticle && (

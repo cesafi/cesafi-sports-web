@@ -1,9 +1,11 @@
 import { ScheduleMatch } from '@/lib/types/matches';
+import { isYesterday, formatDate } from '@/lib/utils/date-formatting';
 
 export interface ScheduleDateGroup {
   date: string;
   displayDate: string;
   isToday: boolean;
+  isYesterday: boolean;
   isPast: boolean;
   matches: ScheduleMatch[];
 }
@@ -15,44 +17,7 @@ export const getSchoolLogo = (_schoolAbbreviation: string): string => {
   return '/img/cesafi-logo.webp';
 };
 
-// Date formatting utilities
-export const formatDate = (date: Date): string => {
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
-
-export const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
-};
-
-export const formatDateShort = (date: Date): string => {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  });
-};
-
-export const isToday = (date: Date): boolean => {
-  const today = new Date();
-  return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  );
-};
-
-export const isPast = (date: Date): boolean => {
-  const now = new Date();
-  return date < now;
-};
+// Date formatting utilities are now in @/lib/utils/date-formatting
 
 export const isUpcoming = (date: Date): boolean => {
   const now = new Date();
@@ -65,10 +30,12 @@ export const groupMatchesByDate = (matches: ScheduleMatch[]): ScheduleDateGroup[
     (acc, match) => {
       const date = match.displayDate;
       if (!acc[date]) {
+        const matchDate = new Date(match.scheduled_at ?? new Date());
         acc[date] = {
           date: match.displayDate,
-          displayDate: formatDate(new Date(match.scheduled_at ?? new Date())),
+          displayDate: formatDate(matchDate),
           isToday: match.isToday,
+          isYesterday: isYesterday(matchDate),
           isPast: match.isPast,
           matches: []
         };

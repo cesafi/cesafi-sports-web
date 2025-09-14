@@ -1,24 +1,33 @@
 
 import InfiniteLogoCarousel from '@/components/landing/sponsors-logo-carousel';
+import { getActiveSponsors } from '@/actions/sponsors';
+import { Sponsor } from '@/lib/types/sponsors';
 
-// Mock sponsor logos - in production this would come from your sponsors data
-const sponsorLogos = [
-  { src: '/img/cesafi-logo.webp', alt: 'Sponsor 1', url: '#' },
-  { src: '/img/cesafi-logo.webp', alt: 'Sponsor 2', url: '#' },
-  { src: '/img/cesafi-logo.webp', alt: 'Sponsor 3', url: '#' },
-  { src: '/img/cesafi-logo.webp', alt: 'Sponsor 4', url: '#' },
-  { src: '/img/cesafi-logo.webp', alt: 'Sponsor 5', url: '#' },
-  { src: '/img/cesafi-logo.webp', alt: 'Sponsor 6', url: '#' },
-  { src: '/img/cesafi-logo.webp', alt: 'Sponsor 7', url: '#' },
-  { src: '/img/cesafi-logo.webp', alt: 'Sponsor 8', url: '#' },
-];
+export default async function SponsorsCarousel() {
+  const sponsorsResponse = await getActiveSponsors();
 
-export default function SponsorsCarousel() {
+  // Handle the case where the API call fails
+  if (!sponsorsResponse.success || !sponsorsResponse.data) {
+    return (
+      <section className="overflow-hidden">
+        <div className="py-8 w-full text-center text-gray-500">
+          Unable to load sponsors
+        </div>
+      </section>
+    );
+  }
+
+  const sponsors = sponsorsResponse.data;
+
+  const logos = sponsors.map((sponsor: Sponsor) => ({
+    src: sponsor.logo_url || '/img/cesafi-logo.webp',
+    alt: sponsor.logo_url ? sponsor.title : `${sponsor.title} - CESAFI Logo`
+  }));
+
   return (
     <section className="overflow-hidden">
-
       <InfiniteLogoCarousel
-        logos={sponsorLogos}
+        logos={logos}
         direction="left"
         speed="slow"
         className="py-8 w-full"

@@ -1,11 +1,10 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+// Removed unused dropdown menu imports
 import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
-import { formatDateShort, isToday } from './utils';
+import { formatDateForHeader } from '@/lib/utils/date-formatting';
 
 interface DateNavigationProps {
   readonly currentDate: Date;
@@ -70,58 +69,69 @@ export default function DateNavigation({
     }
   };
 
-  return (
-    <Card className="sticky top-24 z-10 border-border bg-card shadow-sm mt-6">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          {/* Left side: Current date display */}
-          <div className="flex items-center">
-            <h2 className="font-mango-grotesque text-foreground text-2xl font-bold">
-              {isToday(currentDate) ? 'Today' : formatDateShort(currentDate)}
-            </h2>
-          </div>
+  // Date formatting is now handled by the utility function
 
-          {/* Right side: Date navigation and filters */}
-          <div className="flex items-center gap-4">
-            {/* Date Navigation - Unified button style */}
+  return (
+    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
+      <div className="px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Left side: Date display and navigation like LoL Esports */}
+          <div className="flex items-center gap-6">
+            {/* Large date display */}
+            <h1 className="font-mango-grotesque text-foreground text-2xl font-bold">
+              {formatDateForHeader(currentDate)}
+            </h1>
+
+            {/* Date Navigation */}
             <div className="flex items-center">
               <Button
-                variant="outline"
-                size="default"
+                variant="ghost"
+                size="sm"
                 onClick={goToPreviousDay}
                 disabled={!hasMorePast && availableDates.length > 0 && availableDates.findIndex(date => 
                   date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
                 ) <= 0}
-                className="rounded-r-none border-r-0 h-9"
+                className="h-8 w-8 p-0 hover:bg-muted"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
 
               <Button
-                variant="outline"
-                size="default"
+                variant="ghost"
+                size="sm"
                 onClick={handleGoToToday}
-                className="rounded-none border-r-0 border-l-0 h-9"
+                className="h-8 px-3 mx-1 hover:bg-muted"
               >
                 Today
               </Button>
 
               <Button
-                variant="outline"
-                size="default"
+                variant="ghost"
+                size="sm"
                 onClick={goToNextDay}
                 disabled={!hasMoreFuture && availableDates.length > 0 && availableDates.findIndex(date => 
                   date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
                 ) >= availableDates.length - 1}
-                className="rounded-l-none h-9"
+                className="h-8 w-8 p-0 hover:bg-muted"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
 
+            {/* League/Season Filter Button */}
+            <Button variant="ghost" size="sm" className="h-8 px-3 hover:bg-muted">
+              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold mr-2">
+                4
+              </div>
+              <span className="text-sm">Leagues</span>
+            </Button>
+          </div>
+
+          {/* Right side: Sport filter and settings */}
+          <div className="flex items-center gap-3">
             {/* Sport Filter */}
             <Select value={selectedSport} onValueChange={onSportChange}>
-              <SelectTrigger className="w-[180px] h-9 bg-background border-border">
+              <SelectTrigger className="w-[180px] h-8 bg-background border-border text-sm">
                 <SelectValue placeholder="All Sports" />
               </SelectTrigger>
               <SelectContent>
@@ -134,20 +144,13 @@ export default function DateNavigation({
               </SelectContent>
             </Select>
 
-            {/* Settings Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56">
-                <div className="p-2 text-sm text-muted-foreground">Settings coming soon...</div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Settings button */}
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted">
+              <Settings className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

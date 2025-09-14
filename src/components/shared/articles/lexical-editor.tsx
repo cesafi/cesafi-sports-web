@@ -44,7 +44,8 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  AlignJustify
+  AlignJustify,
+  Loader2
 } from 'lucide-react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $isRangeSelection, FORMAT_TEXT_COMMAND, TextFormatType } from 'lexical';
@@ -55,6 +56,7 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 import { Json } from '@/lib/types/articles';
 import { useAutoSave } from '@/hooks/use-articles';
+import { useCloudinary } from '@/hooks/use-cloudinary';
 
 // Interface for ImageNode JSON structure
 interface ImageNodeJSON {
@@ -180,6 +182,7 @@ function ToolbarPlugin({
   const [isAlignRight, setIsAlignRight] = useState(false);
   const [isAlignJustify, setIsAlignJustify] = useState(false);
   const [wordCount, setWordCount] = useState(0);
+  const { uploadImage, isUploading } = useCloudinary();
 
   const updateToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -312,26 +315,41 @@ function ToolbarPlugin({
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         try {
-          // Create local file URL
-          const imageUrl = URL.createObjectURL(file);
+          // Validate file size (10MB max)
+          if (file.size > 10 * 1024 * 1024) {
+            toast.error('Image size must be less than 10MB');
+            return;
+          }
 
-          editor.update(() => {
-            const selection = $getSelection();
-            if ($isRangeSelection(selection)) {
-              // Insert image at current cursor position using custom ImageNode
-              const imageNode = $createImageNode(imageUrl, 'Uploaded image');
-              selection.insertNodes([imageNode]);
-            }
+          // Upload to Cloudinary
+          const result = await uploadImage(file, {
+            folder: 'cesafi-articles',
+            resource_type: 'image',
+            quality: 'auto',
+            format: 'auto'
           });
 
-          toast.success('Image inserted successfully');
+          if (result.success && result.data) {
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                // Insert image at current cursor position using custom ImageNode
+                const imageNode = $createImageNode(result.data!.secure_url, 'Article image');
+                selection.insertNodes([imageNode]);
+              }
+            });
+
+            toast.success('Image uploaded and inserted successfully');
+          } else {
+            toast.error(result.error || 'Failed to upload image');
+          }
         } catch (error) {
-          console.error('Error inserting image:', error);
-          toast.error('Failed to insert image');
+          console.error('Error uploading image:', error);
+          toast.error('Failed to upload image');
         }
       }
     };
@@ -525,9 +543,14 @@ function ToolbarPlugin({
           variant="ghost"
           size="sm"
           onClick={insertImage}
+          disabled={isUploading}
           className="h-8 w-8 p-0"
         >
-          <ImageIcon className="h-4 w-4" />
+          {isUploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ImageIcon className="h-4 w-4" />
+          )}
         </Button>
         <Button
           type="button"

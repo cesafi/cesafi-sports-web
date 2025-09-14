@@ -2,20 +2,30 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAllSeasons } from '@/hooks/use-seasons';
-import { useAllVolunteers } from '@/hooks/use-volunteers';
-import { useAllDepartments } from '@/hooks/use-departments';
-import { Skeleton } from '@/components/ui/skeleton';
+// Removed unused Skeleton import
 import DepartmentGroups from './department-groups';
 import { Calendar, Users } from 'lucide-react';
 import { moderniz, roboto } from '@/lib/fonts';
+import { Season } from '@/lib/types/seasons';
+import { Volunteer } from '@/lib/types/volunteers';
+import { Department } from '@/lib/types/departments';
 
-export default function SeasonalTabs() {
+interface SeasonalTabsProps {
+  initialSeasons: Season[];
+  initialVolunteers: Volunteer[];
+  initialDepartments: Department[];
+}
+
+export default function SeasonalTabs({ 
+  initialSeasons, 
+  initialVolunteers, 
+  initialDepartments 
+}: SeasonalTabsProps) {
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
 
-  const { data: seasons, isLoading: seasonsLoading } = useAllSeasons();
-  const { data: volunteers, isLoading: volunteersLoading } = useAllVolunteers();
-  const { data: departments, isLoading: departmentsLoading } = useAllDepartments();
+  const seasons = initialSeasons;
+  const volunteers = initialVolunteers;
+  const departments = initialDepartments;
 
   // Set the first season as default when seasons load
   if (!selectedSeasonId && seasons && seasons.length > 0) {
@@ -32,37 +42,6 @@ export default function SeasonalTabs() {
     department,
     volunteers: filteredVolunteers.filter(volunteer => volunteer.department_id === department.id)
   })).filter(group => group.volunteers.length > 0) || [];
-
-  if (seasonsLoading || volunteersLoading || departmentsLoading) {
-    return (
-      <section className="py-16 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Tabs Skeleton */}
-          <div className="flex justify-center mb-12">
-            <div className="flex flex-wrap gap-2 p-1 bg-muted/30 rounded-lg">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-32 rounded-md" />
-              ))}
-            </div>
-          </div>
-
-          {/* Content Skeleton */}
-          <div className="space-y-12">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="space-y-6">
-                <Skeleton className="h-8 w-48" />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[...Array(6)].map((_, j) => (
-                    <Skeleton key={j} className="h-80 rounded-lg" />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   if (!seasons || seasons.length === 0) {
     return (

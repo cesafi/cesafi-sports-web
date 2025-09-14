@@ -17,6 +17,7 @@ import {
   MatchInsert,
   MatchUpdate
 } from '@/lib/types/matches';
+import { formatCategoryName } from '@/lib/utils/sports';
 
 const TABLE_NAME = 'matches';
 const SPORTS_SEASONS_STAGES_TABLE = 'sports_seasons_stages';
@@ -103,6 +104,69 @@ export class MatchService extends BaseService {
       return { success: true, data: data || [] };
     } catch (err) {
       return this.formatError(err, `Failed to fetch recent ${TABLE_NAME} entities.`);
+    }
+  }
+
+  static async getUpcomingWithDetails(
+    limit: number = 5
+  ): Promise<ServiceResponse<MatchWithFullDetails[]>> {
+    try {
+      const supabase = await this.getClient();
+      const now = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select(
+          `
+          *,
+          sports_seasons_stages!inner(
+            id,
+            competition_stage,
+            season_id,
+            sport_category_id,
+            sports_categories!inner(
+              id,
+              division,
+              levels,
+              sports!inner(
+                id,
+                name
+              )
+            ),
+            seasons(
+              id,
+              start_at,
+              end_at
+            )
+          ),
+          match_participants!inner(
+            id,
+            match_id,
+            team_id,
+            match_score,
+            schools_teams!inner(
+              id,
+              name,
+              schools!inner(
+                name,
+                abbreviation,
+                logo_url
+              )
+            )
+          )
+          `
+        )
+        .gte('scheduled_at', now)
+        .order('scheduled_at', { ascending: true })
+        .limit(limit);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: data || [] };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch upcoming matches with details.`);
     }
   }
 
@@ -1064,6 +1128,51 @@ export class MatchService extends BaseService {
       return { success: true, data: data || [] };
     } catch (err) {
       return this.formatError(err, `Failed to fetch matches by school ID.`);
+    }
+  }
+
+  /**
+   * Get available sport categories for filtering
+   */
+  static async getAvailableSportCategories(): Promise<ServiceResponse<Array<{
+    id: number;
+    division: string;
+    levels: string;
+    sport_name: string;
+    formatted_name: string;
+  }>>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from('sports_categories')
+        .select(`
+          id,
+          division,
+          levels,
+          sports!inner(
+            name
+          )
+        `)
+        .order('sports.name', { ascending: true })
+        .order('division', { ascending: true })
+        .order('levels', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      // Format the categories with proper naming using sports utils
+      const formattedCategories = data?.map(category => ({
+        id: category.id,
+        division: category.division,
+        levels: category.levels,
+        sport_name: category.sports.name,
+        formatted_name: `${category.sports.name} - ${formatCategoryName(category.division, category.levels)}`
+      })) || [];
+
+      return { success: true, data: formattedCategories };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch available sport categories.`);
     }
   }
 }

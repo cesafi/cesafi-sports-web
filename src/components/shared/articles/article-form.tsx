@@ -13,9 +13,9 @@ import { Article, ArticleInsert, ArticleUpdate, ArticleStatus } from '@/lib/type
 import { createArticleSchema, updateArticleSchema } from '@/lib/validations/articles';
 import { ZodError } from 'zod';
 import { LexicalEditor } from '@/components/shared/articles/lexical-editor';
-// import { useCloudinary } from '@/hooks/use-cloudinary'; // Disabled for now
+import { useCloudinary } from '@/hooks/use-cloudinary';
 import slugify from 'slugify';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 
 interface ArticleFormProps {
   mode: 'create' | 'edit';
@@ -63,7 +63,7 @@ export function ArticleForm({
   const [editorContent, setEditorContent] = useState<string>('');
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string>('');
-  // const { uploadImage } = useCloudinary(); // Disabled for now
+  const { uploadImage, isUploading: isUploadingCover } = useCloudinary();
 
   // Form initialization
   useEffect(() => {
@@ -99,9 +99,35 @@ export function ArticleForm({
   const handleCoverImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file size (10MB max)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image size must be less than 10MB');
+        return;
+      }
+
       setCoverImageFile(file);
       const preview = URL.createObjectURL(file);
       setCoverImagePreview(preview);
+
+      // Upload to Cloudinary immediately
+      try {
+        const result = await uploadImage(file, {
+          folder: 'cesafi-articles/cover-images',
+          resource_type: 'image',
+          quality: 'auto',
+          format: 'auto'
+        });
+
+        if (result.success && result.data) {
+          setFormData(prev => ({ ...prev, cover_image_url: result.data!.secure_url }));
+          toast.success('Cover image uploaded successfully');
+        } else {
+          toast.error(result.error || 'Failed to upload cover image');
+        }
+      } catch (error) {
+        console.error('Cover image upload error:', error);
+        toast.error('Failed to upload cover image');
+      }
     }
   };
 
@@ -371,8 +397,15 @@ export function ArticleForm({
                     type="file"
                     accept="image/*"
                     onChange={handleCoverImageChange}
+                    disabled={isUploadingCover}
                     className="flex-1"
                   />
+                  {isUploadingCover && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Uploading cover image...
+                    </div>
+                  )}
                   {coverImagePreview && (
                     <div className="mt-4">
                       <Image
