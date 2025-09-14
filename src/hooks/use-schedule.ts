@@ -4,6 +4,7 @@
  */
 
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { useSeason } from '@/components/contexts/season-provider';
 import { getScheduleMatches, getScheduleMatchesByDate } from '@/actions/matches';
 import { ScheduleFilters, SchedulePaginationOptions, ScheduleResponse } from '@/lib/types/matches';
@@ -29,11 +30,11 @@ export function useInfiniteSchedule(
   const { currentSeason } = useSeason();
   const { limit = 20, direction = 'future', filters = {} } = options;
 
-  // Merge season filter with provided filters
-  const mergedFilters: ScheduleFilters = {
+  // Merge season filter with provided filters - memoized to prevent unnecessary re-renders
+  const mergedFilters: ScheduleFilters = useMemo(() => ({
     ...filters,
     season_id: filters.season_id || currentSeason?.id
-  };
+  }), [filters, currentSeason?.id]);
 
   return useInfiniteQuery({
     queryKey: scheduleKeys.infinite({ limit, direction, filters: mergedFilters }),
@@ -78,11 +79,11 @@ export function useInfiniteSchedule(
 export function useScheduleByDate(filters: ScheduleFilters = {}) {
   const { currentSeason } = useSeason();
 
-  // Merge season filter with provided filters
-  const mergedFilters: ScheduleFilters = {
+  // Merge season filter with provided filters - memoized to prevent unnecessary re-renders
+  const mergedFilters: ScheduleFilters = useMemo(() => ({
     ...filters,
     season_id: filters.season_id || currentSeason?.id
-  };
+  }), [filters, currentSeason?.id]);
 
   return useQuery({
     queryKey: scheduleKeys.byDate(mergedFilters),
@@ -105,10 +106,10 @@ export function useScheduleByDate(filters: ScheduleFilters = {}) {
 export function useUpcomingMatches(limit: number = 5, filters: ScheduleFilters = {}) {
   const { currentSeason } = useSeason();
 
-  const mergedFilters: ScheduleFilters = {
+  const mergedFilters: ScheduleFilters = useMemo(() => ({
     ...filters,
     season_id: filters.season_id || currentSeason?.id
-  };
+  }), [filters, currentSeason?.id]);
 
   return useQuery({
     queryKey: [...scheduleKeys.all, 'upcoming', limit, mergedFilters],
@@ -134,10 +135,10 @@ export function useUpcomingMatches(limit: number = 5, filters: ScheduleFilters =
 export function useRecentMatches(limit: number = 5, filters: ScheduleFilters = {}) {
   const { currentSeason } = useSeason();
 
-  const mergedFilters: ScheduleFilters = {
+  const mergedFilters: ScheduleFilters = useMemo(() => ({
     ...filters,
     season_id: filters.season_id || currentSeason?.id
-  };
+  }), [filters, currentSeason?.id]);
 
   return useQuery({
     queryKey: [...scheduleKeys.all, 'recent', limit, mergedFilters],
@@ -164,12 +165,12 @@ export function useTodayMatches(filters: ScheduleFilters = {}) {
   const { currentSeason } = useSeason();
   const today = new Date().toISOString().split('T')[0];
 
-  const mergedFilters: ScheduleFilters = {
+  const mergedFilters: ScheduleFilters = useMemo(() => ({
     ...filters,
     season_id: filters.season_id || currentSeason?.id,
     date_from: today,
     date_to: today
-  };
+  }), [filters, currentSeason?.id, today]);
 
   return useQuery({
     queryKey: [...scheduleKeys.all, 'today', mergedFilters],
@@ -198,12 +199,12 @@ export function useThisWeekMatches(filters: ScheduleFilters = {}) {
   const endOfWeek = new Date(today);
   endOfWeek.setDate(today.getDate() + 7);
 
-  const mergedFilters: ScheduleFilters = {
+  const mergedFilters: ScheduleFilters = useMemo(() => ({
     ...filters,
     season_id: filters.season_id || currentSeason?.id,
     date_from: today.toISOString(),
     date_to: endOfWeek.toISOString()
-  };
+  }), [filters, currentSeason?.id, today, endOfWeek]);
 
   return useQuery({
     queryKey: [...scheduleKeys.all, 'thisWeek', mergedFilters],

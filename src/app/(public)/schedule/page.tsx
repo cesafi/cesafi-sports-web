@@ -1,14 +1,11 @@
-// Removed unused Card and CardContent imports
-import { ExternalLink } from 'lucide-react';
+import { Calendar, Filter, TrendingUp } from 'lucide-react';
 import { SeasonProvider } from '@/components/contexts/season-provider';
 import { ScheduleContent } from '@/components/schedule';
 import { getScheduleMatchesWithCategories, getAvailableSportCategories } from '@/actions/matches';
 import { getLatestArticles } from '@/actions/landing';
-import { moderniz, roboto } from '@/lib/fonts';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { Article } from '@/lib/types/articles';
-import Link from 'next/link';
-import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui';
 
 export default async function SchedulePage() {
   // Fetch initial data server-side
@@ -22,122 +19,90 @@ export default async function SchedulePage() {
     getLatestArticles(3)
   ]);
 
-  const matches: ScheduleMatch[] = matchesResult.success && matchesResult.data ? matchesResult.data.matches : [];
+  const matches: ScheduleMatch[] =
+    matchesResult.success && matchesResult.data ? matchesResult.data.matches : [];
   const categories = categoriesResult.success && categoriesResult.data ? categoriesResult.data : [];
-  const news: Article[] = newsResult.success && newsResult.data ? newsResult.data : [];
-
-  // Group categories by sport for timeline
-  const sportsTimeline = categories.reduce((acc, category) => {
-    const sportName = category.sport_name;
-    if (!acc[sportName]) {
-      acc[sportName] = [];
-    }
-    acc[sportName].push(category);
-    return acc;
-  }, {} as Record<string, typeof categories>);
+  const _news: Article[] = newsResult.success && newsResult.data ? newsResult.data : [];
 
   return (
     <SeasonProvider>
-      <div className="bg-background h-screen overflow-hidden">
-        {/* Fixed Layout with Scrollable Schedule */}
-        <div className="flex h-full px-4 lg:px-6">
-          {/* Left Sidebar - Sports Timeline (Fixed) */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
-            <div className="h-full overflow-y-auto">
-              <div className="py-6">
-                <div className="mb-6">
-                  <h2 className={`${moderniz.className} text-foreground text-xl font-bold mb-2`}>
-                    CESAFI SPORTS
-                  </h2>
-                  <p className={`${roboto.className} text-muted-foreground text-sm`}>
-                    Current Season Schedule
-                  </p>
-                </div>
-                
-                <div className="space-y-4">
-                  {Object.entries(sportsTimeline).map(([sportName, sportCategories]) => (
-                    <div key={sportName} className="border-l-2 border-primary/20 pl-4">
-                      <div className={`${moderniz.className} text-foreground font-semibold text-sm mb-2`}>
-                        {sportName}
-                      </div>
-                      <div className="space-y-1">
-                        {sportCategories.map((category) => (
-                          <div key={category.id} className="text-muted-foreground text-xs">
-                            {category.formatted_name}
-                          </div>
-                        ))}
-                      </div>
+      <div className="bg-background min-h-screen">
+        {/* Header */}
+        <div className="border-border bg-card border-b">
+          <div className="container mx-auto px-4 py-8">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="bg-primary/10 rounded-lg p-2">
+                <Calendar className="text-primary h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="font-mango-grotesque text-foreground text-3xl font-bold">
+                  Match Schedule
+                </h1>
+                <p className="text-muted-foreground font-roboto mt-1">
+                  Follow all CESAFI matches with real-time updates and live scores
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-emerald/10 rounded-lg p-2">
+                      <TrendingUp className="text-emerald h-5 w-5" />
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <div>
+                      <p className="text-muted-foreground font-roboto text-sm">Live Matches</p>
+                      <p className="font-mango-grotesque text-foreground text-2xl font-bold">
+                        {matches.filter((m) => m.status === 'ongoing').length}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary/10 rounded-lg p-2">
+                      <Calendar className="text-primary h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground font-roboto text-sm">
+                        Today&apos;s Matches
+                      </p>
+                      <p className="font-mango-grotesque text-foreground text-2xl font-bold">
+                        {matches.filter((m) => m.isToday).length}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gold/10 rounded-lg p-2">
+                      <Filter className="text-gold h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground font-roboto text-sm">This Week</p>
+                      <p className="font-mango-grotesque text-foreground text-2xl font-bold">
+                        {matches.filter((m) => !m.isPast).length}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
+        </div>
 
-          {/* Main Content Area */}
-          <div className="flex-1 flex flex-col min-w-0">
-            {/* Schedule Content (Scrollable) */}
-            <div className="flex-1 overflow-y-auto">
-              <ScheduleContent initialMatches={matches} availableCategories={categories} />
-            </div>
-          </div>
-
-          {/* Right Sidebar - News (Fixed) */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
-            <div className="h-full overflow-y-auto">
-              <div className="py-6">
-                <div className="mb-6">
-                  <h2 className={`${moderniz.className} text-foreground text-xl font-bold mb-2`}>
-                    LATEST NEWS
-                  </h2>
-                  <p className={`${roboto.className} text-muted-foreground text-sm`}>
-                    Stay updated with CESAFI
-                  </p>
-                </div>
-                
-                <div className="space-y-4">
-                  {news.map((article) => (
-                    <Link 
-                      key={article.id} 
-                      href={`/articles/${article.slug}`}
-                      className="block group hover:bg-muted/50 rounded-lg p-3 transition-colors"
-                    >
-                      <div className="flex gap-3">
-                        <div className="relative w-16 h-12 bg-muted rounded overflow-hidden flex-shrink-0">
-                          <Image
-                            src={article.cover_image_url || '/img/cesafi-banner.jpg'}
-                            alt={article.title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className={`${roboto.className} text-foreground text-sm font-medium line-clamp-2 group-hover:text-primary transition-colors`}>
-                            {article.title}
-                          </h3>
-                          <p className={`${roboto.className} text-muted-foreground text-xs mt-1`}>
-                            {new Date(article.published_at || article.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                  
-                  <Link 
-                    href="/news"
-                    className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors text-sm font-medium mt-4"
-                  >
-                    <span>View Full News</span>
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Main Content */}
+        <div className="container mx-auto max-w-[1000px] px-4 py-8">
+          <ScheduleContent 
+            initialMatches={matches} 
+            availableCategories={categories} 
+          />
         </div>
       </div>
     </SeasonProvider>

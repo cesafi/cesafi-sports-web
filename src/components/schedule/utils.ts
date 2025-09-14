@@ -85,3 +85,31 @@ export const determineWinner = (
 
   return participants; // Tie
 };
+
+// Additional utility functions for date navigation
+export const isToday = (date: Date): boolean => {
+  const today = new Date();
+  return date.toDateString() === today.toDateString();
+};
+
+export const formatDateShort = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+// Format date for header display - two lines like "SUNDAY" and "Sep 14"
+export const formatDateHeader = (date: Date): { weekday: string; date: string } => {
+  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+  const dateStr = date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
+  });
+  
+  return {
+    weekday,
+    date: dateStr
+  };
+};

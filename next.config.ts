@@ -26,7 +26,7 @@ const securityHeaders = [
       img-src 'self' data: blob: *.supabase.co *.googleapis.com *.gstatic.com *.cloudflareinsights.com *.cloudinary.com cdn.manilastandard.net images.unsplash.com via.placeholder.com picsum.photos source.unsplash.com *.googleusercontent.com sports.inquirer.net newsinfo.inquirer.net cebudailynews.inquirer.net www.sunstar.com.ph www.thefreeman.net cebunews.net www.philstar.com www.gmanetwork.com www.abs-cbn.com www.rappler.com;
       font-src 'self' data:;
       connect-src 'self' *.supabase.co wss://*.supabase.co *.cloudflareinsights.com https://api.cloudinary.com;
-      frame-src 'self' *.google.com *.googleapis.com;
+      frame-src 'self' *.google.com *.googleapis.com *.youtube.com;
       worker-src 'self' blob:;
     `
       .replace(/\s{2,}/g, ' ')

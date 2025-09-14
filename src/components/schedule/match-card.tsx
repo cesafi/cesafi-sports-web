@@ -1,10 +1,12 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-// Removed unused Badge import
+import { Badge } from '@/components/ui/badge';
 import {
   Clock,
+  MapPin,
   Trophy,
+  Users,
   Volleyball,
   Activity,
   Zap,
@@ -21,14 +23,6 @@ import Image from 'next/image';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { determineWinner } from './utils';
 import { getSportIcon } from '@/lib/utils/sports';
-
-// Utility function to format competition stage names
-const formatCompetitionStage = (stage: string): string => {
-  return stage
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-};
 
 interface MatchCardProps {
   readonly match: ScheduleMatch;
@@ -101,98 +95,155 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
     }
   };
 
-  // Removed unused status helper functions
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'finished':
+        return 'bg-green-500/10 text-green-600 border-green-500/20';
+      case 'ongoing':
+        return 'bg-red-500/10 text-red-600 border-red-500/20';
+      case 'upcoming':
+        return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
+      case 'cancelled':
+        return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
+      default:
+        return 'bg-gray-500/10 text-gray-600 border-gray-500/20';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'finished':
+        return 'Finished';
+      case 'ongoing':
+        return 'Live';
+      case 'upcoming':
+        return 'Upcoming';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  };
 
   return (
     <Card
       className="border-border bg-card hover:border-primary/20 cursor-pointer overflow-hidden transition-all duration-200 hover:scale-[1.01] hover:shadow-lg"
       onClick={() => onMatchClick?.(match)}
     >
-      <CardContent className="p-4">
-        {/* Compact Match Layout - Like LoL Esports sample */}
-        <div className="flex items-center justify-between">
-          {/* Left: Play button / Status indicator */}
+      {/* Main Content */}
+      <CardContent className="p-6">
+        {/* Match Header */}
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
-              {match.status === 'ongoing' ? (
-                <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-              ) : match.status === 'finished' ? (
-                <Trophy className="h-4 w-4 text-yellow-500" />
-              ) : (
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              )}
+            <Badge variant="outline" className={getStatusColor(match.status)}>
+              {getStatusText(match.status)}
+            </Badge>
+            <div className="text-muted-foreground font-roboto flex items-center gap-2 text-sm">
+              {getSportIconComponent(match.sports_seasons_stages.sports_categories.sports.name)}
+              <span>
+                {match.sports_seasons_stages.sports_categories.sports.name} •{' '}
+                {match.sports_seasons_stages.sports_categories.levels} •{' '}
+                {match.sports_seasons_stages.sports_categories.division}
+              </span>
             </div>
-            
-            {/* Team 1 */}
-            <div className="flex items-center gap-2">
+          </div>
+          <div className="text-muted-foreground font-roboto text-sm">
+            {match.sports_seasons_stages.competition_stage}
+          </div>
+        </div>
+
+        {/* Teams and Scores */}
+        <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+          {/* Team 1 */}
+          <div className="flex items-center justify-end gap-2">
+            <div className="min-w-0 text-right">
+              <div className="font-mango-grotesque text-foreground truncate text-lg font-semibold">
+                {team1.schoolAbbreviation}
+              </div>
+              <div className="text-muted-foreground font-roboto truncate text-sm">
+                {team1.schoolName}
+              </div>
+            </div>
+            <div className="relative">
               <Image
                 src={team1.schoolLogo ?? '/img/cesafi-logo.webp'}
                 alt={`${team1.schoolAbbreviation} logo`}
-                width={32}
-                height={32}
-                className="border-border h-8 w-8 rounded-full border object-cover"
+                width={48}
+                height={48}
+                className="border-border h-12 w-12 rounded-full border-2 object-cover"
               />
-              <div className="font-mango-grotesque text-foreground text-sm font-semibold">
-                {team1.schoolAbbreviation}
-              </div>
+              {team1.isWinner && match.status === 'finished' && (
+                <div className="absolute -top-1 -right-1">
+                  <Trophy className="h-4 w-4 text-yellow-500" />
+                </div>
+              )}
             </div>
-          </div>
-
-          {/* Center: Scores */}
-          <div className="flex items-center gap-2">
             <div
-              className={`font-mango-grotesque text-lg font-bold ${
+              className={`font-mango-grotesque text-4xl font-bold ${
                 team1.isWinner && match.status === 'finished' ? 'text-primary' : 'text-foreground'
               }`}
             >
               {team1.score ?? '-'}
             </div>
-            <div className="text-muted-foreground font-roboto text-sm">/</div>
+          </div>
+
+          {/* VS - Perfectly Centered */}
+          <div className="flex justify-center">
+            <div className="text-muted-foreground font-mango-grotesque text-sm font-medium">vs</div>
+          </div>
+
+          {/* Team 2 */}
+          <div className="flex items-center justify-start gap-2">
             <div
-              className={`font-mango-grotesque text-lg font-bold ${
-                team2.isWinner && match.status === 'finished' ? 'text-primary' : 'text-muted-foreground'
+              className={`font-mango-grotesque text-4xl font-bold ${
+                team2.isWinner && match.status === 'finished' ? 'text-primary' : 'text-foreground'
               }`}
             >
               {team2.score ?? '-'}
             </div>
-          </div>
-
-          {/* Right: Team 2 and Match Info */}
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <div className="font-mango-grotesque text-foreground text-sm font-semibold">
+            <div className="relative">
+              <Image
+                src={team2.schoolLogo ?? '/img/cesafi-logo.webp'}
+                alt={`${team2.schoolAbbreviation} logo`}
+                width={48}
+                height={48}
+                className="border-border h-12 w-12 rounded-full border-2 object-cover"
+              />
+              {team2.isWinner && match.status === 'finished' && (
+                <div className="absolute -top-1 -right-1">
+                  <Trophy className="h-4 w-4 text-yellow-500" />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 text-left">
+              <div className="font-mango-grotesque text-foreground truncate text-lg font-semibold">
                 {team2.schoolAbbreviation}
               </div>
-              <div className="text-muted-foreground font-roboto text-xs">
-                {match.displayTime}
+              <div className="text-muted-foreground font-roboto truncate text-sm">
+                {team2.schoolName}
               </div>
             </div>
-            <Image
-              src={team2.schoolLogo ?? '/img/cesafi-logo.webp'}
-              alt={`${team2.schoolAbbreviation} logo`}
-              width={32}
-              height={32}
-              className="border-border h-8 w-8 rounded-full border object-cover"
-            />
-            <div className="text-muted-foreground font-roboto text-xs">
-              BO{match.best_of}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom: Sport and Stage Info */}
-        <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {getSportIconComponent(match.sports_seasons_stages.sports_categories.sports.name)}
-            <div className="text-muted-foreground font-roboto text-xs">
-              {match.sports_seasons_stages.sports_categories.sports.name} • {formatCompetitionStage(match.sports_seasons_stages.competition_stage)}
-            </div>
-          </div>
-          <div className="text-muted-foreground font-roboto text-xs">
-            {match.venue}
           </div>
         </div>
       </CardContent>
+
+      {/* Match Details Footer */}
+      <div className="bg-muted/50 px-6 py-4">
+        <div className="text-muted-foreground font-roboto flex items-center justify-between text-base font-medium">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            <span>{match.displayTime}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            <span>{match.venue}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            <span>Best of {match.best_of}</span>
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }

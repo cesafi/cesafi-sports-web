@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { ScheduleDateGroup, groupMatchesByDate } from './utils';
-import { formatCategoryName } from '@/lib/utils/sports';
 import DateGroup from './date-group';
 import DateNavigation from './date-navigation';
 import FloatingNavButton from './floating-nav-button';
@@ -39,6 +38,8 @@ export default function InfiniteSchedule({
     'Swimming'
   ]
 }: InfiniteScheduleProps) {
+  const [dateGroups, setDateGroups] = useState<ScheduleDateGroup[]>([]);
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [displayedDate, setDisplayedDate] = useState(new Date()); // Date shown on left side
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [floatingButtonDirection, setFloatingButtonDirection] = useState<'up' | 'down'>('up');
@@ -47,99 +48,84 @@ export default function InfiniteSchedule({
   const topLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const bottomLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter matches by sport category
+  // Filter matches by sport - memoized to prevent unnecessary re-renders
   const filteredMatches = useMemo(() => {
     return matches.filter((match) => {
       if (selectedSport === 'all') return true;
-      
-      // Get the formatted category name for this match using sports utils
-      const category = match.sports_seasons_stages.sports_categories;
-      const sportName = category.sports.name;
-      const division = category.division;
-      const level = category.levels;
-      
-      // Format the category name to match the selected sport using sports utils
-      const formattedCategoryName = `${sportName} - ${formatCategoryName(division, level)}`;
-      
-      return formattedCategoryName === selectedSport;
+      return match.sports_seasons_stages.sports_categories.sports.name === selectedSport;
     });
   }, [matches, selectedSport]);
 
   // Group filtered matches by date
-  const dateGroups = useMemo(() => {
-    return groupMatchesByDate(filteredMatches);
+  useEffect(() => {
+    const grouped = groupMatchesByDate(filteredMatches);
+    setDateGroups(grouped);
   }, [filteredMatches]);
 
   // Handle scroll detection for floating button and displayed date
-  const handleScroll = useCallback(() => {
-    const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
-    const todayGroup = dateGroups.find((group) => group.date === todayString);
+  useEffect(() => {
+    const handleScroll = () => {
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+      const todayGroup = dateGroups.find((group) => group.date === todayString);
 
-    // Find the currently visible date group
-    let visibleDateGroup: ScheduleDateGroup | null = null;
-    let minDistance = Infinity;
+      // Find the currently visible date group
+      let visibleDateGroup: ScheduleDateGroup | null = null;
+      let minDistance = Infinity;
 
-    for (const group of dateGroups) {
-      const element = document.getElementById(`date-group-${group.date}`);
-      if (element) {
-        const rect = element.getBoundingClientRect();
-        const distanceFromTop = Math.abs(rect.top);
+      for (const group of dateGroups) {
+        const element = document.getElementById(`date-group-${group.date}`);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const distanceFromTop = Math.abs(rect.top);
 
-        // If the element is visible in the viewport
-        if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
-          if (distanceFromTop < minDistance) {
-            minDistance = distanceFromTop;
-            visibleDateGroup = group;
+          // If the element is visible in the viewport
+          if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+            if (distanceFromTop < minDistance) {
+              minDistance = distanceFromTop;
+              visibleDateGroup = group;
+            }
           }
         }
       }
-    }
 
-    // Update displayed date if we found a visible group
-    if (visibleDateGroup) {
-      const newDisplayedDate = new Date(visibleDateGroup.date);
-      setDisplayedDate((prevDate) => {
-        // Only update if the date is actually different
-        if (prevDate.toISOString().split('T')[0] !== newDisplayedDate.toISOString().split('T')[0]) {
-          return newDisplayedDate;
-        }
-        return prevDate;
-      });
-    }
-
-    // Floating button logic
-    if (!todayGroup) {
-      setShowFloatingButton(false);
-      return;
-    }
-
-    const todayElement = document.getElementById(`date-group-${todayString}`);
-    if (!todayElement) {
-      setShowFloatingButton(false);
-      return;
-    }
-
-    const rect = todayElement.getBoundingClientRect();
-    const isTodayVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-
-    if (!isTodayVisible) {
-      setShowFloatingButton(true);
-      // Determine direction based on scroll position
-      if (rect.top < 0) {
-        setFloatingButtonDirection('up'); // We're below today, need to go up
-      } else {
-        setFloatingButtonDirection('down'); // We're above today, need to go down
+      // Update displayed date if we found a visible group
+      if (visibleDateGroup) {
+        setDisplayedDate(new Date(visibleDateGroup.date));
       }
-    } else {
-      setShowFloatingButton(false);
-    }
-  }, [dateGroups]);
 
-  useEffect(() => {
+      // Floating button logic - only show when scrolled away from today
+      if (!todayGroup) {
+        // If no today group, don't show floating button
+        setShowFloatingButton(false);
+        return;
+      }
+
+      const todayElement = document.getElementById(`date-group-${todayString}`);
+      if (!todayElement) {
+        setShowFloatingButton(false);
+        return;
+      }
+
+      const rect = todayElement.getBoundingClientRect();
+      const isTodayVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+
+      if (!isTodayVisible) {
+        setShowFloatingButton(true);
+        // Determine direction based on scroll position
+        if (rect.top < 0) {
+          setFloatingButtonDirection('up'); // We're below today, need to go up
+        } else {
+          setFloatingButtonDirection('down'); // We're above today, need to go down
+        }
+      } else {
+        setShowFloatingButton(false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+  }, [dateGroups]);
 
   // Set up intersection observers for infinite scroll
   useEffect(() => {
@@ -191,33 +177,31 @@ export default function InfiniteSchedule({
 
   const handleDateNavigation = useCallback(
     (direction: 'previous' | 'next') => {
-      const availableDates = dateGroups.map((group) => new Date(group.date));
-      const currentIndex = availableDates.findIndex(
-        (date) => date.toISOString().split('T')[0] === displayedDate.toISOString().split('T')[0]
-      );
-
-      let targetDate: Date;
-      if (direction === 'previous' && currentIndex > 0) {
-        targetDate = availableDates[currentIndex - 1];
-      } else if (direction === 'next' && currentIndex < availableDates.length - 1) {
-        targetDate = availableDates[currentIndex + 1];
+      const targetDate = new Date(currentDate);
+      if (direction === 'previous') {
+        targetDate.setDate(targetDate.getDate() - 1);
       } else {
-        return; // No more dates in that direction
+        targetDate.setDate(targetDate.getDate() + 1);
       }
 
-      // Scroll to the target date group
+      // Find the date group for the target date
       const targetDateString = targetDate.toISOString().split('T')[0];
-      const element = document.getElementById(`date-group-${targetDateString}`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const targetGroup = dateGroups.find((group) => group.date === targetDateString);
+
+      if (targetGroup) {
+        // Scroll to the target date group
+        const element = document.getElementById(`date-group-${targetDateString}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
 
-      setDisplayedDate(targetDate);
+      setCurrentDate(targetDate);
     },
-    [displayedDate, dateGroups]
+    [currentDate, dateGroups]
   );
 
-  const handleGoToToday = useCallback(() => {
+  const handleFloatingButtonClick = useCallback(() => {
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
     const todayGroup = dateGroups.find((group) => group.date === todayString);
@@ -238,24 +222,20 @@ export default function InfiniteSchedule({
       }
     }
 
-    setDisplayedDate(today);
+    setCurrentDate(today);
   }, [dateGroups]);
-
-  // Alias for floating button
-  const handleFloatingButtonClick = handleGoToToday;
 
   return (
     <div className="space-y-6">
       {/* Date Navigation */}
       <DateNavigation
         currentDate={displayedDate}
-        onDateChange={setDisplayedDate}
-        hasMatches={dateGroups.some(
+        onDateChange={setCurrentDate}
+        _hasMatches={dateGroups.some(
           (group) => group.date === displayedDate.toISOString().split('T')[0]
         )}
         onPreviousDay={() => handleDateNavigation('previous')}
         onNextDay={() => handleDateNavigation('next')}
-        onGoToToday={handleGoToToday}
         selectedSport={selectedSport}
         onSportChange={onSportChange}
         availableSports={availableSports}
@@ -278,10 +258,7 @@ export default function InfiniteSchedule({
         <div className="space-y-12">
           {dateGroups.map((dateGroup) => (
             <div key={dateGroup.date} id={`date-group-${dateGroup.date}`}>
-              <DateGroup 
-                dateGroup={dateGroup} 
-                onMatchClick={onMatchClick ? (match) => onMatchClick(match as ScheduleMatch) : undefined} 
-              />
+              <DateGroup dateGroup={dateGroup} onMatchClick={onMatchClick} />
             </div>
           ))}
         </div>

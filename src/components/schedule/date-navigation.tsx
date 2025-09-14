@@ -1,18 +1,28 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-// Removed unused dropdown menu imports
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
-import { formatDateForHeader } from '@/lib/utils/date-formatting';
+import { isToday, formatDateHeader } from './utils';
 
 interface DateNavigationProps {
   readonly currentDate: Date;
   readonly onDateChange: (date: Date) => void;
-  readonly hasMatches: boolean;
+  readonly _hasMatches: boolean;
   readonly onPreviousDay?: () => void;
   readonly onNextDay?: () => void;
-  readonly onGoToToday?: () => void;
   readonly selectedSport?: string;
   readonly onSportChange?: (sport: string) => void;
   readonly availableSports?: string[];
@@ -24,12 +34,20 @@ interface DateNavigationProps {
 export default function DateNavigation({
   currentDate,
   onDateChange,
+  _hasMatches,
   onPreviousDay,
   onNextDay,
-  onGoToToday,
   selectedSport = 'all',
   onSportChange,
-  availableSports = ['Basketball', 'Volleyball', 'Football', 'Tennis', 'Badminton', 'Track and Field', 'Swimming'],
+  availableSports = [
+    'Basketball',
+    'Volleyball',
+    'Football',
+    'Tennis',
+    'Badminton',
+    'Track and Field',
+    'Swimming'
+  ],
   availableDates = [],
   hasMorePast = false,
   hasMoreFuture = false
@@ -38,8 +56,8 @@ export default function DateNavigation({
     if (onPreviousDay) {
       onPreviousDay();
     } else if (availableDates.length > 0) {
-      const currentIndex = availableDates.findIndex(date => 
-        date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
+      const currentIndex = availableDates.findIndex(
+        (date) => date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
       );
       if (currentIndex > 0) {
         onDateChange(availableDates[currentIndex - 1]);
@@ -51,8 +69,8 @@ export default function DateNavigation({
     if (onNextDay) {
       onNextDay();
     } else if (availableDates.length > 0) {
-      const currentIndex = availableDates.findIndex(date => 
-        date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
+      const currentIndex = availableDates.findIndex(
+        (date) => date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
       );
       if (currentIndex < availableDates.length - 1) {
         onDateChange(availableDates[currentIndex + 1]);
@@ -61,77 +79,78 @@ export default function DateNavigation({
   };
 
   const handleGoToToday = () => {
-    if (onGoToToday) {
-      onGoToToday();
-    } else {
-      const today = new Date();
-      onDateChange(today);
-    }
+    const today = new Date();
+    onDateChange(today);
   };
 
-  // Date formatting is now handled by the utility function
-
   return (
-    <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
-      <div className="px-6 py-4">
+    <Card className="border-border bg-card sticky top-24 z-10 mt-6 shadow-sm">
+      <CardContent className="p-6">
         <div className="flex items-center justify-between">
-          {/* Left side: Date display and navigation like LoL Esports */}
-          <div className="flex items-center gap-6">
-            {/* Large date display */}
-            <h1 className="font-mango-grotesque text-foreground text-2xl font-bold">
-              {formatDateForHeader(currentDate)}
-            </h1>
+          {/* Left side: Current date display */}
+          <div className="flex items-center">
+            <div className="flex flex-col">
+              <div className="font-mango-grotesque text-foreground text-sm font-medium uppercase tracking-wide">
+                {isToday(currentDate) ? 'TODAY' : formatDateHeader(currentDate).weekday}
+              </div>
+              <div className="font-mango-grotesque text-foreground text-2xl font-bold">
+                {isToday(currentDate) ? formatDateHeader(new Date()).date : formatDateHeader(currentDate).date}
+              </div>
+            </div>
+          </div>
 
-            {/* Date Navigation */}
+          {/* Right side: Date navigation and filters */}
+          <div className="flex items-center gap-4">
+            {/* Date Navigation - Unified button style */}
             <div className="flex items-center">
               <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
+                size="default"
                 onClick={goToPreviousDay}
-                disabled={!hasMorePast && availableDates.length > 0 && availableDates.findIndex(date => 
-                  date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
-                ) <= 0}
-                className="h-8 w-8 p-0 hover:bg-muted"
+                disabled={
+                  !hasMorePast &&
+                  availableDates.length > 0 &&
+                  availableDates.findIndex(
+                    (date) =>
+                      date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
+                  ) <= 0
+                }
+                className="h-9 rounded-r-none border-r-0"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
 
               <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
+                size="default"
                 onClick={handleGoToToday}
-                className="h-8 px-3 mx-1 hover:bg-muted"
+                className="h-9 rounded-none border-r-0 border-l-0"
               >
                 Today
               </Button>
 
               <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
+                size="default"
                 onClick={goToNextDay}
-                disabled={!hasMoreFuture && availableDates.length > 0 && availableDates.findIndex(date => 
-                  date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
-                ) >= availableDates.length - 1}
-                className="h-8 w-8 p-0 hover:bg-muted"
+                disabled={
+                  !hasMoreFuture &&
+                  availableDates.length > 0 &&
+                  availableDates.findIndex(
+                    (date) =>
+                      date.toISOString().split('T')[0] === currentDate.toISOString().split('T')[0]
+                  ) >=
+                    availableDates.length - 1
+                }
+                className="h-9 rounded-l-none"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* League/Season Filter Button */}
-            <Button variant="ghost" size="sm" className="h-8 px-3 hover:bg-muted">
-              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold mr-2">
-                4
-              </div>
-              <span className="text-sm">Leagues</span>
-            </Button>
-          </div>
-
-          {/* Right side: Sport filter and settings */}
-          <div className="flex items-center gap-3">
             {/* Sport Filter */}
             <Select value={selectedSport} onValueChange={onSportChange}>
-              <SelectTrigger className="w-[180px] h-8 bg-background border-border text-sm">
+              <SelectTrigger className="bg-background border-border h-9 w-[180px]">
                 <SelectValue placeholder="All Sports" />
               </SelectTrigger>
               <SelectContent>
@@ -144,13 +163,20 @@ export default function DateNavigation({
               </SelectContent>
             </Select>
 
-            {/* Settings button */}
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted">
-              <Settings className="h-4 w-4" />
-            </Button>
+            {/* Settings Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                <div className="text-muted-foreground p-2 text-sm">Settings coming soon...</div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

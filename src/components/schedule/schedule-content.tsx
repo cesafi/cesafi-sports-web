@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { InfiniteSchedule } from '@/components/schedule';
 import { ScheduleMatch } from '@/lib/types/matches';
+import { useInfiniteSchedule } from '@/hooks/use-schedule';
 
 interface ScheduleContentProps {
   initialMatches: ScheduleMatch[];
@@ -21,36 +22,80 @@ export default function ScheduleContent({ initialMatches, availableCategories }:
   const [selectedMatch, setSelectedMatch] = useState<ScheduleMatch | null>(null);
   const [selectedSport, setSelectedSport] = useState<string>('all');
 
-  const handleMatchClick = (match: ScheduleMatch) => {
+  // Memoize the sport filter to prevent unnecessary re-renders
+  const sportFilter = useMemo(() => {
+    return selectedSport === 'all' ? undefined : 
+      availableCategories.find(cat => cat.formatted_name === selectedSport)?.id;
+  }, [selectedSport, availableCategories]);
+
+  // Use the infinite schedule hook for client-side data fetching
+  const {
+    data,
+    hasNextPage,
+    hasPreviousPage,
+    isFetching,
+    isFetchingNextPage,
+    isFetchingPreviousPage,
+    fetchNextPage,
+    fetchPreviousPage,
+    error: _error
+  } = useInfiniteSchedule({
+    limit: 20,
+    direction: 'future',
+    filters: {
+      sport_id: sportFilter
+    }
+  });
+
+  const matches = data?.matches || [];
+
+  // Memoize handlers to prevent unnecessary re-renders
+  const handleMatchClick = useCallback((match: ScheduleMatch) => {
     setSelectedMatch(match);
-  };
+  }, []);
 
-  const handleLoadMore = (direction: 'future' | 'past') => {
-    // TODO: Implement load more functionality when API is ready
-    // This will be implemented when we connect to the actual API
-    console.log(`Loading more ${direction} matches...`);
-  };
+  const handleLoadMore = useCallback((direction: 'future' | 'past') => {
+    if (direction === 'future' && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    } else if (direction === 'past' && hasPreviousPage && !isFetchingPreviousPage) {
+      fetchPreviousPage();
+    }
+  }, [hasNextPage, hasPreviousPage, isFetchingNextPage, isFetchingPreviousPage, fetchNextPage, fetchPreviousPage]);
 
-  // Create sport options from categories
-  const sportOptions = availableCategories.map(category => ({
-    value: category.formatted_name,
-    label: category.formatted_name
-  }));
+  const handleSportChange = useCallback((sport: string) => {
+    setSelectedSport(sport);
+  }, []);
+
+  // Memoize sport options to prevent unnecessary re-renders
+  const sportOptions = useMemo(() => 
+    availableCategories.map(category => ({
+      value: category.formatted_name,
+      label: category.formatted_name
+    })), [availableCategories]
+  );
+
+  // Memoize available sports array
+  const availableSports = useMemo(() => 
+    sportOptions.map(option => option.value), [sportOptions]
+  );
+
+  // Use server-side initial data if client-side data is not ready yet
+  const displayMatches = matches.length > 0 ? matches : initialMatches;
 
   return (
-    <>
-      {/* Main Content - Add top padding for navbar spacing */}
-      <div className="pt-8 pb-6">
+    <div className="flex h-full flex-col">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0">
         <InfiniteSchedule
-          matches={initialMatches}
+          matches={displayMatches}
           onMatchClick={handleMatchClick}
           onLoadMore={handleLoadMore}
-          hasMoreFuture={false} // TODO: Implement when API is ready - will be true when we have more future data to load
-          hasMorePast={false} // TODO: Implement when API is ready - will be true when we have more past data to load
-          isLoading={false}
+          hasMoreFuture={hasNextPage}
+          hasMorePast={hasPreviousPage}
+          isLoading={isFetching || isFetchingNextPage || isFetchingPreviousPage}
           selectedSport={selectedSport}
-          onSportChange={setSelectedSport}
-          availableSports={sportOptions.map(option => option.value)}
+          onSportChange={handleSportChange}
+          availableSports={availableSports}
         />
       </div>
 
@@ -70,6 +115,6 @@ export default function ScheduleContent({ initialMatches, availableCategories }:
           </Card>
         </div>
       )}
-    </>
+    </div>
   );
 }
