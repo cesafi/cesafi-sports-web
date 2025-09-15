@@ -40,7 +40,9 @@ export class ArticleService extends BaseService {
         throw error;
       }
 
-      return { success: true, data };
+      // Explicitly type the data as Article[]
+      const articles: Article[] = (data || []) as Article[];
+      return { success: true, data: articles };
     } catch (err) {
       return this.formatError(err, `Failed to fetch all ${TABLE_NAME} entity.`);
     }
@@ -84,6 +86,30 @@ export class ArticleService extends BaseService {
     }
   }
 
+  static async getRecentPublished(
+    limit: number = 6
+  ): Promise<ServiceResponse<Article[]>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        throw error;
+      }
+
+      // Explicitly type the data as Article[]
+      const articles: Article[] = (data || []) as Article[];
+      return { success: true, data: articles };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch recent published ${TABLE_NAME}.`);
+    }
+  }
+
   static async getById(id: string): Promise<ServiceResponse<Article>> {
     try {
       const supabase = await this.getClient();
@@ -93,7 +119,9 @@ export class ArticleService extends BaseService {
         throw error;
       }
 
-      return { success: true, data };
+      // Explicitly type the data as Article
+      const article: Article = data as Article;
+      return { success: true, data: article };
     } catch (err) {
       return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity.`);
     }

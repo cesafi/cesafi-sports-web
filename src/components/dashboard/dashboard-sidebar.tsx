@@ -10,7 +10,11 @@ import {
   Volleyball,
   Target,
   Shield,
-  Group
+  Group,
+  Home,
+  HelpCircle,
+  Calendar,
+  Image as ImageIcon
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -52,8 +56,7 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
       case 'head_writer':
         return [
           { href: '/head-writer', label: 'Overview', icon: Grid3X3 },
-          { href: '/head-writer/articles', label: 'Articles', icon: FileText },
-          { href: '/head-writer/writers', label: 'Writers', icon: Users }
+          { href: '/head-writer/articles', label: 'Articles', icon: FileText }
         ];
       case 'writer':
         return [
@@ -70,6 +73,26 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
     }
   };
 
+  const getLandingPageNavigationItems = (role: string): NavigationItem[] => {
+    const basePath = role === 'head_writer' ? '/head-writer' : '/admin';
+    
+    if (role === 'head_writer') {
+      // Head writers can only manage Timeline and FAQ
+      return [
+        { href: `${basePath}/timeline`, label: 'Timeline', icon: Calendar },
+        { href: `${basePath}/faq`, label: 'FAQ', icon: HelpCircle },
+      ];
+    }
+    
+    // Admins get full access to all landing page content
+    return [
+      { href: `${basePath}/timeline`, label: 'Timeline', icon: Calendar },
+      { href: `${basePath}/faq`, label: 'FAQ', icon: HelpCircle },
+      { href: `${basePath}/hero-section`, label: 'Hero Section', icon: Home },
+      { href: `${basePath}/photo-gallery`, label: 'Photo Gallery', icon: ImageIcon },
+    ];
+  };
+
   const getSeasonalNavigationItems = (): NavigationItem[] => {
     return [
       { href: '/admin/league-stage', label: 'League Stages', icon: Group },
@@ -80,6 +103,7 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
   };
 
   const generalItems = getGeneralNavigationItems(userRole);
+  const landingPageItems = getLandingPageNavigationItems(userRole);
   const seasonalItems = getSeasonalNavigationItems();
 
   return (
@@ -131,6 +155,40 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
             })}
           </div>
         </div>
+
+        {/* Landing Page Content Category - Only show for admin and head_writer */}
+        {(userRole === 'admin' || userRole === 'head_writer') && (
+          <div className="space-y-2">
+            <h3 className="text-sidebar-foreground/70 text-xs font-semibold tracking-wider uppercase">
+              Landing Page Content
+            </h3>
+            <div className="space-y-1">
+              {landingPageItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-sidebar-primary/10 text-sidebar-primary border-sidebar-primary border-l-4'
+                        : 'text-sidebar-foreground hover:bg-sidebar-primary/5 hover:text-sidebar-foreground'
+                    )}
+                  >
+                    <item.icon
+                      className={cn(
+                        'h-5 w-5',
+                        isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground'
+                      )}
+                    />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Seasonal Category - Only show for roles that need season context */}
         {needsSeasonContext && (

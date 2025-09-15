@@ -15,6 +15,7 @@ const navItems = [
   { name: 'Schools', href: '/schools' },
   { name: 'Volunteers', href: '/volunteers' },
   { name: 'About Us', href: '/about-us' },
+  { name: 'Contact Us', href: '/contact' },
 ];
 
 export default function Navbar() {

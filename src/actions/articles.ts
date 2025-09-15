@@ -10,11 +10,15 @@ export async function getPaginatedArticles(options: ArticlePaginationOptions) {
   return await ArticleService.getPaginated(options);
 }
 
-export async function getAllArticles() {
+export async function getAllArticles(): Promise<ServiceResponse<Article[]>> {
   return await ArticleService.getAll();
 }
 
-export async function getArticleById(id: string) {
+export async function getRecentPublishedArticles(limit: number = 6): Promise<ServiceResponse<Article[]>> {
+  return await ArticleService.getRecentPublished(limit);
+}
+
+export async function getArticleById(id: string): Promise<ServiceResponse<Article>> {
   return await ArticleService.getById(id);
 }
 

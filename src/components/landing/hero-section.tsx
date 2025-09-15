@@ -2,6 +2,7 @@
 
 import { useScroll } from 'framer-motion';
 import { useRef } from 'react';
+import LazyYouTube from '@/components/ui/lazy-youtube';
 
 export default function HeroSection() {
   const ref = useRef(null);
@@ -14,18 +15,15 @@ export default function HeroSection() {
     <section ref={ref} className="relative min-h-screen overflow-hidden">
       {/* Full-screen YouTube video background */}
       <div className="absolute inset-0">
-        <iframe
-          src="https://www.youtube.com/embed/8Mz9ytswq7E?autoplay=1&mute=1&loop=1&playlist=8Mz9ytswq7E&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&fs=0&disablekb=1&start=0"
+        <LazyYouTube
+          videoId="8Mz9ytswq7E"
           title="𝐂𝐄𝐒𝐀𝐅𝐈 𝐒𝐄𝐀𝐒𝐎𝐍 𝟐𝟓 𝐇𝐈𝐆𝐇 𝐒𝐂𝐇𝐎𝐎𝐋 𝐀𝐍𝐃 𝐂𝐎𝐋𝐋𝐄𝐆𝐄 𝐁𝐀𝐒𝐊𝐄𝐓𝐁𝐀𝐋𝐋 𝐁𝐀𝐓𝐓𝐋𝐄"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-          className="absolute inset-0 h-full w-full object-cover"
-          frameBorder="0"
-          style={{
-            pointerEvents: 'none',
-            transform: 'scale(1.1)',
-            transformOrigin: 'center center'
-          }}
+          autoplay={true}
+          muted={true}
+          loop={true}
+          controls={false}
+          showThumbnail={false}
+          className="scale-110 pointer-events-none"
         />
       </div>
 

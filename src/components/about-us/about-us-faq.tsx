@@ -1,48 +1,40 @@
 'use client';
 
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { useRef, useState } from 'react';
-import { Plus, Minus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useRef, useState, useEffect, useMemo } from 'react';
+import { Plus, Minus, Loader2 } from 'lucide-react';
 import { moderniz, roboto } from '@/lib/fonts';
+import { useAllFaq } from '@/hooks/use-faq';
+import dynamic from 'next/dynamic';
 
-const faqItems = [
-  {
-    id: 1,
-    question: "When is the season?",
-    answer: "The CESAFI season runs from August to March, with championships and tournaments throughout the academic year.",
-    isOpen: false
-  },
-  {
-    id: 2,
-    question: "How can I watch?",
-    answer: "CESAFI games are broadcast live across all major platforms and social media channels, free to watch for all sports enthusiasts.",
-    isOpen: true
-  },
-  {
-    id: 3,
-    question: "How can I see previous winners?",
-    answer: "Visit our winners archive to see all past champions and tournament results from previous seasons.",
-    isOpen: false
-  },
-  {
-    id: 4,
-    question: "Can I volunteer for CESAFI?",
-    answer: "Yes! We welcome volunteers to help with events, scoring, and various tournament activities. Contact us to get involved.",
-    isOpen: false
-  }
-];
+// Dynamically import scroll effects only on client side
+const ScrollEffects = dynamic(
+  () => import('./scroll-effects').then(mod => mod.ScrollEffects),
+  { ssr: false }
+);
 
 export default function AboutUsFaq() {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
+  const ref = useRef<HTMLElement>(null);
 
-  const y = useTransform(scrollYProgress, [0, 1], [50, -50]);
-  const opacity = useTransform(scrollYProgress, [0, 0.3, 0.7, 1], [0, 1, 1, 0]);
+  const { data: faqResponse, isLoading, error } = useAllFaq();
+  const faqItems = useMemo(() => {
+    if (faqResponse?.success && 'data' in faqResponse && Array.isArray(faqResponse.data)) {
+      return faqResponse.data;
+    }
+    return [];
+  }, [faqResponse]);
 
-  const [openItems, setOpenItems] = useState<number[]>([2]); // Start with "How can I watch?" open
+  const [openItems, setOpenItems] = useState<number[]>([]);
+
+  // Initialize open items based on database is_open values
+  useEffect(() => {
+    if (faqItems && faqItems.length > 0) {
+      const defaultOpenItems = faqItems
+        .filter(item => item.is_open)
+        .map(item => item.id);
+      setOpenItems(defaultOpenItems);
+    }
+  }, [faqItems]);
 
   const toggleItem = (id: number) => {
     setOpenItems(prev => 
@@ -52,16 +44,125 @@ export default function AboutUsFaq() {
     );
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <section className="py-40 bg-muted/30 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center min-h-[500px]">
+            <div className="text-center">
+              {/* Loading animation */}
+              <div className="w-24 h-24 mx-auto mb-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+              
+              {/* Loading text */}
+              <h3 className={`${moderniz.className} text-2xl font-bold text-foreground mb-4`}>
+                Loading FAQ
+              </h3>
+              <p className={`${roboto.className} text-muted-foreground text-lg`}>
+                Please wait while we fetch the frequently asked questions...
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <section className="py-40 bg-muted/30 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center min-h-[500px]">
+            <div className="text-center max-w-md">
+              {/* Error icon */}
+              <div className="w-24 h-24 mx-auto mb-8 bg-destructive/10 rounded-full flex items-center justify-center">
+                <span className="text-4xl">⚠️</span>
+              </div>
+              
+              {/* Error title */}
+              <h3 className={`${moderniz.className} text-2xl font-bold text-foreground mb-4`}>
+                Unable to Load FAQ
+              </h3>
+              
+              {/* Error description */}
+              <p className={`${roboto.className} text-muted-foreground text-lg leading-relaxed mb-6`}>
+                We encountered an issue while loading the frequently asked questions. Please try again later.
+              </p>
+              
+              {/* Retry button */}
+              <button 
+                onClick={() => window.location.reload()}
+                className={`${moderniz.className} inline-flex items-center justify-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-semibold text-sm transition-colors duration-200`}
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Empty state
+  if (!faqItems || faqItems.length === 0) {
+    return (
+      <section className="py-40 bg-muted/30 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center min-h-[500px]">
+            <div className="text-center max-w-md">
+              {/* Icon */}
+              <div className="w-24 h-24 mx-auto mb-8 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-4xl">❓</span>
+              </div>
+              
+              {/* Title */}
+              <h3 className={`${moderniz.className} text-2xl font-bold text-foreground mb-4`}>
+                No FAQ Items Yet
+              </h3>
+              
+              {/* Description */}
+              <p className={`${roboto.className} text-muted-foreground text-lg leading-relaxed mb-6`}>
+                We&apos;re working on adding frequently asked questions to help you learn more about CESAFI. Check back soon!
+              </p>
+              
+              {/* Call to action */}
+              <div className="space-y-3">
+                <p className={`${roboto.className} text-sm text-muted-foreground`}>
+                  In the meantime, you can:
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <a 
+                    href="/about-us" 
+                    className={`${moderniz.className} inline-flex items-center justify-center px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-semibold text-sm transition-colors duration-200`}
+                  >
+                    Learn About CESAFI
+                  </a>
+                  <a 
+                    href="/contact" 
+                    className={`${moderniz.className} inline-flex items-center justify-center px-6 py-3 border border-border hover:bg-muted text-foreground rounded-lg font-semibold text-sm transition-colors duration-200`}
+                  >
+                    Contact Us
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section ref={ref} className="py-40 bg-muted/30 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
           
           {/* Left Column - FAQ */}
-          <motion.div
-            style={{ y, opacity }}
-            className="space-y-6"
-          >
+          <ScrollEffects ref={ref}>
+            <div className="space-y-6">
             {faqItems.map((item, index) => (
               <motion.div
                 key={item.id}
@@ -149,7 +250,8 @@ export default function AboutUsFaq() {
                 </AnimatePresence>
               </motion.div>
             ))}
-          </motion.div>
+            </div>
+          </ScrollEffects>
 
           {/* Right Column - Image */}
           <motion.div

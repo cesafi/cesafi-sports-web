@@ -1,34 +1,9 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { Database } from '@/../database.types';
 import { type NextRequest, NextResponse } from 'next/server';
+import { isProtectedRoute, isKnownRoute, getRedirectUrl, hasAccessToRoute } from '@/lib/routes';
 
 type UserRole = Database['public']['Enums']['user_roles'];
-
-const publicRoutes = [
-  /^\/$/, // Root path
-  /^\/favicon\.ico$/, // Favicon
-  /^\/_next\/public/, // Next.js public assets
-  /^\/sitemap\.xml$/, // Sitemap
-  /^\/robots\.txt$/, // Robots.txt
-  /^\/login(.*)/, // Login and sub-routes
-  /^\/sign-in(.*)/, // Alternative sign-in routes
-  /^\/sign-up(.*)/, // Sign-up routes
-  /^\/about-us(.*)/, // About us and sub-routes
-  /^\/volunteers(.*)/, // Volunteers and sub-routes
-  /^\/news(.*)/, // News and sub-routes
-  /^\/schedule(.*)/, // Schedule and sub-routes
-  /^\/schools(.*)/, // Schools and sub-routes
-  /^\/articles(.*)/, // Articles and sub-routes
-  /^\/partners(.*)/, // Partners and sub-routes
-  /^\/error$/ // Error page
-];
-
-const roleDashboards: Record<UserRole, string> = {
-  admin: '/admin',
-  head_writer: '/head-writer',
-  league_operator: '/league-operator',
-  writer: '/writer'
-};
 
 export const updateSession = async (request: NextRequest) => {
   let response = NextResponse.next({
@@ -72,22 +47,32 @@ export const updateSession = async (request: NextRequest) => {
     } = await supabase.auth.getUser();
 
     const url = request.nextUrl.pathname;
+    const role = user?.app_metadata?.role as UserRole | undefined;
 
-    const isProtectedRoute = !publicRoutes.some((route) => route.test(url));
-
-    if (isProtectedRoute && (userError || !user)) {
-      return NextResponse.redirect(new URL('/login', request.url));
+    // Check if the route is known (exists in our application)
+    if (!isKnownRoute(url)) {
+      return NextResponse.redirect(new URL('/not-found', request.url));
     }
 
-    if (user) {
-      const role = user.app_metadata?.role as UserRole | undefined;
-      const isAtLoginPage = url === '/login';
+    // Handle protected routes
+    if (isProtectedRoute(url)) {
+      if (userError || !user) {
+        return NextResponse.redirect(new URL('/no-access', request.url));
+      }
+      
+      // Check if user has the right role for this protected route
+      if (role && !hasAccessToRoute(url, role)) {
+        return NextResponse.redirect(new URL('/no-access', request.url));
+      }
+    }
 
-      if (url === '/' || isAtLoginPage) {
-        if (role && role in roleDashboards) {
-          return NextResponse.redirect(new URL(roleDashboards[role], request.url));
-        }
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Handle authenticated user redirects
+    if (user) {
+      const redirectUrl = getRedirectUrl(url, role);
+      
+      // If we need to redirect (different from current URL)
+      if (redirectUrl !== url) {
+        return NextResponse.redirect(new URL(redirectUrl, request.url));
       }
     }
 

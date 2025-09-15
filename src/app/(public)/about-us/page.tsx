@@ -1,32 +1,37 @@
 import AboutUsFaq from '@/components/about-us/about-us-faq';
-import AboutUsNews from '@/components/about-us/about-us-news';
+import AboutUsArticles from '@/components/about-us/about-us-articles';
+import AboutUsArticlesLoading from '@/components/about-us/about-us-articles-loading';
+import CesafiTimeline from '@/components/about-us/cesafi-timeline';
 import { moderniz, roboto } from '@/lib/fonts';
 import Image from 'next/image';
+import { Suspense } from 'react';
 
 export default function AboutUsPage() {
+
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center overflow-hidden bg-background pt-20">
+      <section className="bg-background relative flex min-h-screen items-center overflow-hidden pt-20">
         {/* Background with dynamic light streaks */}
         <div className="absolute inset-0">
-          <div className="w-full h-full bg-gradient-to-br from-background via-muted/20 to-background" />
-          
+          <div className="from-background via-muted/20 to-background h-full w-full bg-gradient-to-br" />
+
           {/* Static light streaks */}
           <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute top-1/4 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent blur-sm opacity-30" />
-            <div className="absolute top-1/2 left-0 w-full h-1 bg-gradient-to-r from-transparent via-secondary to-transparent blur-sm opacity-20" />
-            <div className="absolute top-3/4 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent to-transparent blur-sm opacity-40" />
+            <div className="via-primary absolute top-1/4 left-0 h-1 w-full bg-gradient-to-r from-transparent to-transparent opacity-30 blur-sm" />
+            <div className="via-secondary absolute top-1/2 left-0 h-1 w-full bg-gradient-to-r from-transparent to-transparent opacity-20 blur-sm" />
+            <div className="via-accent absolute top-3/4 left-0 h-1 w-full bg-gradient-to-r from-transparent to-transparent opacity-40 blur-sm" />
           </div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Left Section - Text Content */}
             <div className="space-y-8">
               <div>
-                <h1 className={`${moderniz.className} text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground mb-6 leading-tight`}>
+                <h1
+                  className={`${moderniz.className} text-foreground mb-6 text-5xl leading-tight font-bold lg:text-6xl xl:text-7xl`}
+                >
                   CESAFI
                   <br />
                   <span className="text-primary">SPORTS</span>
@@ -34,14 +39,18 @@ export default function AboutUsPage() {
               </div>
 
               <div>
-                <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground leading-relaxed`}>
-                  Honoring the athletes, coaches, and institutions who define the future of competitive sports in Cebu.
+                <p
+                  className={`${roboto.className} text-muted-foreground text-xl leading-relaxed lg:text-2xl`}
+                >
+                  Honoring the athletes, coaches, and institutions who define the future of
+                  competitive sports in Cebu.
                 </p>
               </div>
 
               <div>
-                <p className={`${roboto.className} text-lg text-muted-foreground leading-relaxed`}>
-                  CESAFI is dedicated to showcasing top-class performance and innovation from the players, teams, schools, events, and personalities within the Cebu sports scene.
+                <p className={`${roboto.className} text-muted-foreground text-lg leading-relaxed`}>
+                  CESAFI is dedicated to showcasing top-class performance and innovation from the
+                  players, teams, schools, events, and personalities within the Cebu sports scene.
                 </p>
               </div>
             </div>
@@ -50,8 +59,8 @@ export default function AboutUsPage() {
             <div className="relative">
               {/* Main Image Container */}
               <div className="relative">
-                <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/20 rounded-3xl p-8 border border-primary/20">
-                  <div className="relative h-96 bg-muted/30 rounded-2xl overflow-hidden">
+                <div className="from-primary/20 via-primary/10 to-secondary/20 border-primary/20 rounded-3xl border bg-gradient-to-br p-8">
+                  <div className="bg-muted/30 relative h-96 overflow-hidden rounded-2xl">
                     <Image
                       src="/img/cesafi-banner.jpg"
                       alt="CESAFI Sports Excellence"
@@ -60,10 +69,10 @@ export default function AboutUsPage() {
                       className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                    
+
                     {/* Overlay Text */}
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <h3 className={`${moderniz.className} text-2xl font-bold text-white mb-2`}>
+                    <div className="absolute right-6 bottom-6 left-6">
+                      <h3 className={`${moderniz.className} mb-2 text-2xl font-bold text-white`}>
                         Athletic Excellence
                       </h3>
                       <p className={`${roboto.className} text-white/90`}>
@@ -74,9 +83,11 @@ export default function AboutUsPage() {
                 </div>
 
                 {/* Floating Award/Trophy Element */}
-                <div className="absolute -top-4 -right-4 w-20 h-20 bg-accent rounded-full flex items-center justify-center shadow-lg">
-                  <div className="w-12 h-12 bg-accent-foreground rounded-full flex items-center justify-center">
-                    <span className={`${moderniz.className} text-accent font-bold text-lg`}>🏆</span>
+                <div className="bg-accent absolute -top-4 -right-4 flex h-20 w-20 items-center justify-center rounded-full shadow-lg">
+                  <div className="bg-accent-foreground flex h-12 w-12 items-center justify-center rounded-full">
+                    <span className={`${moderniz.className} text-accent text-lg font-bold`}>
+                      🏆
+                    </span>
                   </div>
                 </div>
               </div>
@@ -88,8 +99,13 @@ export default function AboutUsPage() {
       {/* FAQ Section */}
       <AboutUsFaq />
 
-      {/* News Integration */}
-      <AboutUsNews />
+      {/* CESAFI Timeline Section */}
+      <CesafiTimeline />
+
+      {/* Latest Articles Section with Suspense */}
+      <Suspense fallback={<AboutUsArticlesLoading />}>
+        <AboutUsArticles />
+      </Suspense>
     </>
   );
 }

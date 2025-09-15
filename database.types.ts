@@ -53,23 +53,92 @@ export type Database = {
         }
         Relationships: []
       }
+      cesafi_timeline: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: number
+          image_url: string
+          is_highlight: boolean
+          title: string
+          updated_at: string | null
+          year: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          id?: number
+          image_url: string
+          is_highlight?: boolean
+          title: string
+          updated_at?: string | null
+          year: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: number
+          image_url?: string
+          is_highlight?: boolean
+          title?: string
+          updated_at?: string | null
+          year?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           created_at: string
           id: number
           name: string
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           created_at?: string
           id?: number
           name: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           created_at?: string
           id?: number
           name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faq: {
+        Row: {
+          answer: string
+          created_at: string
+          display_order: number
+          id: number
+          is_active: boolean
+          is_open: boolean
+          question: string
+          updated_at: string | null
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          display_order: number
+          id?: number
+          is_active?: boolean
+          is_open: boolean
+          question: string
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          display_order?: number
+          id?: number
+          is_active?: boolean
+          is_open?: boolean
+          question?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -156,6 +225,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hero_section_live: {
+        Row: {
+          created_at: string
+          end_at: string
+          id: number
+          video_link: string
+        }
+        Insert: {
+          created_at?: string
+          end_at: string
+          id?: number
+          video_link: string
+        }
+        Update: {
+          created_at?: string
+          end_at?: string
+          id?: number
+          video_link?: string
+        }
+        Relationships: []
       }
       match_participants: {
         Row: {
@@ -251,6 +341,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      photo_gallery: {
+        Row: {
+          caption: string
+          category: string
+          created_at: string
+          id: number
+          photo_by: string
+          photo_url: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          caption: string
+          category: string
+          created_at?: string
+          id?: number
+          photo_by: string
+          photo_url: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          caption?: string
+          category?: string
+          created_at?: string
+          id?: number
+          photo_by?: string
+          photo_url?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       schools: {
         Row: {

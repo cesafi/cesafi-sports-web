@@ -10,12 +10,16 @@ export const moderniz = localFont({
     }
   ],
   variable: '--font-moderniz',
-  display: 'swap'
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'arial']
 });
 
 export const roboto = Roboto({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-roboto',
-  display: 'swap'
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'arial']
 });

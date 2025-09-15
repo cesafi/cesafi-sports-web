@@ -1,4 +1,4 @@
-import HeroSection from '@/components/landing/hero-section';
+import HeroSectionDynamic from '@/components/landing/hero-section-dynamic';
 import AboutCesafi from '@/components/landing/about-cesafi';
 import UpcomingGames from '@/components/landing/upcoming-games';
 import PhotoGallery from '@/components/landing/photo-gallery';
@@ -22,7 +22,7 @@ export default async function LandingPage() {
   return (
     <>
       {/* Hero Section - Full screen impact */}
-      <HeroSection />
+      <HeroSectionDynamic />
 
       {/* Schools Carousel - Member institutions */}
       <SchoolsCarousel />

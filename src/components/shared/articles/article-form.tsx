@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,9 +12,9 @@ import { Article, ArticleInsert, ArticleUpdate, ArticleStatus } from '@/lib/type
 import { createArticleSchema, updateArticleSchema } from '@/lib/validations/articles';
 import { ZodError } from 'zod';
 import { LexicalEditor } from '@/components/shared/articles/lexical-editor';
-import { useCloudinary } from '@/hooks/use-cloudinary';
+import { ImageUpload } from '@/components/shared/image-upload';
 import slugify from 'slugify';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 
 interface ArticleFormProps {
   mode: 'create' | 'edit';
@@ -61,9 +60,6 @@ export function ArticleForm({
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [editorContent, setEditorContent] = useState<string>('');
-  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
-  const [coverImagePreview, setCoverImagePreview] = useState<string>('');
-  const { uploadImage, isUploading: isUploadingCover } = useCloudinary();
 
   // Form initialization
   useEffect(() => {
@@ -78,7 +74,6 @@ export function ArticleForm({
         published_at: article.published_at || null
       });
       setEditorContent(article.content ? JSON.stringify(article.content) : '');
-      setCoverImagePreview(article.cover_image_url);
     } else {
       setFormData({
         title: '',
@@ -90,70 +85,16 @@ export function ArticleForm({
         published_at: null
       } as ArticleInsert);
       setEditorContent('');
-      setCoverImagePreview('');
     }
     setErrors({});
-    setCoverImageFile(null);
   }, [mode, article]);
 
-  const handleCoverImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('Image size must be less than 10MB');
-        return;
-      }
-
-      setCoverImageFile(file);
-      const preview = URL.createObjectURL(file);
-      setCoverImagePreview(preview);
-
-      // Upload to Cloudinary immediately
-      try {
-        const result = await uploadImage(file, {
-          folder: 'cesafi-articles/cover-images',
-          resource_type: 'image',
-          quality: 'auto',
-          format: 'auto'
-        });
-
-        if (result.success && result.data) {
-          setFormData(prev => ({ ...prev, cover_image_url: result.data!.secure_url }));
-          toast.success('Cover image uploaded successfully');
-        } else {
-          toast.error(result.error || 'Failed to upload cover image');
-        }
-      } catch (error) {
-        console.error('Cover image upload error:', error);
-        toast.error('Failed to upload cover image');
-      }
-    }
-  };
-
-  const uploadCoverImage = async () => {
-    if (coverImageFile) {
-      try {
-        // Temporary placeholder for cover image URL
-        const tempImageUrl = `temp-cover-image-${Date.now()}.jpg`;
-        setFormData(prev => ({ ...prev, cover_image_url: tempImageUrl }));
-        return tempImageUrl;
-      } catch (error) {
-        toast.error('Failed to process cover image');
-        throw error;
-      }
-    }
-    return formData.cover_image_url;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
     try {
-      // Upload cover image if needed
-      const coverImageUrl = await uploadCoverImage();
-
       // Generate slug from title
       const title = formData.title?.trim() || 'untitled';
       const slug = slugify(title, { 
@@ -174,7 +115,6 @@ export function ArticleForm({
       const submitData = {
         ...formData,
         content: parsedContent, // Use parsed JSON content
-        cover_image_url: coverImageUrl,
         slug: slug
       };
 
@@ -392,33 +332,16 @@ export function ArticleForm({
                 <CardTitle>Cover Image</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverImageChange}
-                    disabled={isUploadingCover}
-                    className="flex-1"
-                  />
-                  {isUploadingCover && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Uploading cover image...
-                    </div>
-                  )}
-                  {coverImagePreview && (
-                    <div className="mt-4">
-                      <Image
-                        src={coverImagePreview}
-                        alt="Cover preview"
-                        width={400}
-                        height={192}
-                        className="w-full h-48 object-cover rounded-lg border"
-                      />
-                    </div>
-                  )}
-                </div>
-                {errors.cover_image_url && <p className="text-sm text-red-500">{errors.cover_image_url}</p>}
+                <ImageUpload
+                  onUpload={(url) => setFormData(prev => ({ ...prev, cover_image_url: url }))}
+                  onRemove={() => setFormData(prev => ({ ...prev, cover_image_url: '' }))}
+                  preset="ARTICLE_COVER"
+                  currentImageUrl={formData.cover_image_url}
+                  placeholder="Upload article cover image"
+                  description="Upload a cover image for your article (16:9 aspect ratio recommended)"
+                  required={false}
+                  error={errors.cover_image_url}
+                />
               </CardContent>
             </Card>
 

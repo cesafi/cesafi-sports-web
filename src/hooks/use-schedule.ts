@@ -195,9 +195,13 @@ export function useTodayMatches(filters: ScheduleFilters = {}) {
  */
 export function useThisWeekMatches(filters: ScheduleFilters = {}) {
   const { currentSeason } = useSeason();
-  const today = new Date();
-  const endOfWeek = new Date(today);
-  endOfWeek.setDate(today.getDate() + 7);
+  
+  const today = useMemo(() => new Date(), []);
+  const endOfWeek = useMemo(() => {
+    const endDate = new Date(today);
+    endDate.setDate(today.getDate() + 7);
+    return endDate;
+  }, [today]);
 
   const mergedFilters: ScheduleFilters = useMemo(() => ({
     ...filters,
