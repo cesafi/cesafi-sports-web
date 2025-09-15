@@ -127,6 +127,28 @@ export class ArticleService extends BaseService {
     }
   }
 
+  static async getBySlug(slug: string): Promise<ServiceResponse<Article>> {
+    try {
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .select()
+        .eq('slug', slug)
+        .eq('status', 'published')
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Explicitly type the data as Article
+      const article: Article = data as Article;
+      return { success: true, data: article };
+    } catch (err) {
+      return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity by slug.`);
+    }
+  }
+
   static async insert(
     data: ArticleInsert
   ): Promise<ServiceResponse<Article>> {

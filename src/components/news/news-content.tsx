@@ -9,6 +9,8 @@ import NewsSearch from './news-search';
 import NewsPagination from './news-pagination';
 import { Article } from '@/lib/types/articles';
 import { moderniz, roboto } from '@/lib/fonts';
+import { extractPlainText } from '@/lib/utils/content-renderer';
+import { calculateSportsReadTime } from '@/lib/utils/read-time';
 
 interface NewsContentProps {
   initialArticles: Article[];
@@ -49,18 +51,21 @@ export default function NewsContent({
   const currentPagination = currentPage === 1 ? initialPagination : articlesData;
 
   // Transform articles to match ArticleCard format
-  const currentArticles = rawArticles.map((article) => ({
-    id: article.id,
-    title: article.title,
-    slug: article.slug,
-    excerpt: (article.content as { excerpt?: string })?.excerpt || 'Read more about this exciting update...',
-    author: (article.content as { author?: string })?.author || 'CESAFI Media Team',
-    publishedAt: article.published_at || article.created_at,
-    category: (article.content as { category?: string })?.category || 'General',
-    readTime: (article.content as { readTime?: string })?.readTime || '3 min read',
-    image: article.cover_image_url || '/img/cesafi-banner.jpg',
-    featured: (article.content as { featured?: boolean })?.featured || false
-  }));
+  const currentArticles = rawArticles.map((article) => {
+    const readTimeResult = calculateSportsReadTime(article.content);
+    return {
+      id: article.id.toString(),
+      title: article.title,
+      slug: article.slug,
+      excerpt: (article.content as { excerpt?: string })?.excerpt || extractPlainText(article.content, 150),
+      author: article.authored_by || 'CESAFI Media Team',
+      publishedAt: article.published_at || article.created_at,
+      category: (article.content as { category?: string })?.category || 'General',
+      readTime: readTimeResult.formattedTime,
+      image: article.cover_image_url || '/img/cesafi-banner.jpg',
+      featured: (article.content as { featured?: boolean })?.featured || false
+    };
+  });
 
   // Use articles directly without category filtering
   const filteredArticles = currentArticles;

@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { moderniz, roboto } from '@/lib/fonts';
+import { formatSmartDate } from '@/lib/utils/date';
 
 interface ArticleCardProps {
   article: {
@@ -17,7 +18,7 @@ interface ArticleCardProps {
     excerpt: string;
     author: string;
     publishedAt: string;
-    category: string;
+    category?: string;
     readTime?: string;
     image: string;
     featured?: boolean;
@@ -51,7 +52,6 @@ export default function ArticleCard({ article, variant = 'default', index = 0 }:
             </div>
             <CardContent className="p-8 flex flex-col justify-center">
               <div className="space-y-4">
-                <Badge variant="outline">{article.category}</Badge>
                 <h3 className={`${moderniz.className} text-2xl lg:text-3xl font-bold text-foreground`}>
                   {article.title}
                 </h3>
@@ -65,7 +65,7 @@ export default function ArticleCard({ article, variant = 'default', index = 0 }:
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    {new Date(article.publishedAt).toLocaleDateString()}
+                    {formatSmartDate(article.publishedAt)}
                   </div>
                   {article.readTime && <span>{article.readTime}</span>}
                 </div>
@@ -101,14 +101,8 @@ export default function ArticleCard({ article, variant = 'default', index = 0 }:
                 {article.title}
               </h4>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="outline" className="text-xs px-1 py-0">
-                  {article.category}
-                </Badge>
                 <span>
-                  {new Date(article.publishedAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric'
-                  })}
+                  {formatSmartDate(article.publishedAt)}
                 </span>
               </div>
             </div>
@@ -134,9 +128,6 @@ export default function ArticleCard({ article, variant = 'default', index = 0 }:
             fill
             className="object-cover"
           />
-          <div className="absolute top-4 left-4">
-            <Badge variant="secondary">{article.category}</Badge>
-          </div>
         </div>
         <CardContent className="p-6 flex flex-col h-[calc(100%-12rem)]">
           <div className="flex-1 space-y-4">
@@ -155,7 +146,7 @@ export default function ArticleCard({ article, variant = 'default', index = 0 }:
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {new Date(article.publishedAt).toLocaleDateString()}
+                {formatSmartDate(article.publishedAt)}
               </div>
             </div>
             <Link href={`/news/${article.slug}`} className="block">

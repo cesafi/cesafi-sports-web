@@ -60,7 +60,7 @@ export default function ArticlesManagementPage() {
 
   const handleViewArticle = (article: Article) => {
     // Open published article in a new tab
-    window.open(`/articles/${article.slug}`, '_blank');
+    window.open(`/news/${article.slug}`, '_blank');
   };
 
   const columns = getArticlesTableColumns();

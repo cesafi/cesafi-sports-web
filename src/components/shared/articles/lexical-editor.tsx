@@ -45,7 +45,8 @@ import {
   AlignCenter,
   AlignRight,
   AlignJustify,
-  Loader2
+  Loader2,
+  HelpCircle
 } from 'lucide-react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { $isRangeSelection, FORMAT_TEXT_COMMAND, TextFormatType } from 'lexical';
@@ -57,6 +58,12 @@ import Image from 'next/image';
 import { Json } from '@/lib/types/articles';
 import { useAutoSave } from '@/hooks/use-articles';
 import { useCloudinary } from '@/hooks/use-cloudinary';
+import { getLexicalEditorTheme } from '@/lib/utils/content-renderer';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 // Interface for ImageNode JSON structure
 interface ImageNodeJSON {
@@ -147,6 +154,14 @@ class ImageNode extends DecoratorNode<React.JSX.Element> {
 
   static importJSON(json: ImageNodeJSON): ImageNode {
     return new ImageNode(json.src, json.alt);
+  }
+
+  isInline(): false {
+    return false;
+  }
+
+  isKeyboardSelectable(): boolean {
+    return true;
   }
 }
 
@@ -366,6 +381,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatText('bold')}
           className="h-8 w-8 p-0"
+          title="Bold (Ctrl+B)"
         >
           <Bold className="h-4 w-4" />
         </Button>
@@ -375,6 +391,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatText('italic')}
           className="h-8 w-8 p-0"
+          title="Italic (Ctrl+I)"
         >
           <Italic className="h-4 w-4" />
         </Button>
@@ -384,6 +401,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatText('underline')}
           className="h-8 w-8 p-0"
+          title="Underline (Ctrl+U)"
         >
           <Underline className="h-4 w-4" />
         </Button>
@@ -393,6 +411,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatText('strikethrough')}
           className="h-8 w-8 p-0"
+          title="Strikethrough (Ctrl+Shift+S)"
         >
           <Strikethrough className="h-4 w-4" />
         </Button>
@@ -402,6 +421,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatText('code')}
           className="h-8 w-8 p-0"
+          title="Inline Code (Ctrl+E)"
         >
           <Code className="h-4 w-4" />
         </Button>
@@ -411,7 +431,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={clearFormatting}
           className="h-8 w-8 p-0"
-          title="Clear formatting"
+          title="Clear formatting (Ctrl+\)"
         >
           <span className="text-xs font-bold">Aa</span>
         </Button>
@@ -427,6 +447,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={formatParagraph}
           className="h-8 px-2"
+          title="Paragraph (Ctrl+Alt+0)"
         >
           P
         </Button>
@@ -436,6 +457,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatHeading('h1')}
           className="h-8 px-2"
+          title="Heading 1 (Ctrl+Alt+1)"
         >
           <Heading1 className="h-4 w-4" />
         </Button>
@@ -445,6 +467,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatHeading('h2')}
           className="h-8 px-2"
+          title="Heading 2 (Ctrl+Alt+2)"
         >
           <Heading2 className="h-4 w-4" />
         </Button>
@@ -454,6 +477,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatHeading('h3')}
           className="h-8 px-2"
+          title="Heading 3 (Ctrl+Alt+3)"
         >
           <Heading3 className="h-4 w-4" />
         </Button>
@@ -463,6 +487,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={formatQuote}
           className="h-8 w-8 p-0"
+          title="Blockquote (Ctrl+Shift+Q)"
         >
           <Quote className="h-4 w-4" />
         </Button>
@@ -478,6 +503,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => insertList('bullet')}
           className="h-8 w-8 p-0"
+          title="Bullet List (Ctrl+Shift+7)"
         >
           <List className="h-4 w-4" />
         </Button>
@@ -487,6 +513,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => insertList('number')}
           className="h-8 w-8 p-0"
+          title="Numbered List (Ctrl+Shift+8)"
         >
           <ListOrdered className="h-4 w-4" />
         </Button>
@@ -502,6 +529,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatAlignment('left')}
           className="h-8 w-8 p-0"
+          title="Align Left (Ctrl+Shift+L)"
         >
           <AlignLeft className="h-4 w-4" />
         </Button>
@@ -511,6 +539,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatAlignment('center')}
           className="h-8 w-8 p-0"
+          title="Align Center (Ctrl+Shift+E)"
         >
           <AlignCenter className="h-4 w-4" />
         </Button>
@@ -520,6 +549,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatAlignment('right')}
           className="h-8 w-8 p-0"
+          title="Align Right (Ctrl+Shift+R)"
         >
           <AlignRight className="h-4 w-4" />
         </Button>
@@ -529,6 +559,7 @@ function ToolbarPlugin({
           size="sm"
           onClick={() => formatAlignment('justify')}
           className="h-8 w-8 p-0"
+          title="Justify (Ctrl+Shift+J)"
         >
           <AlignJustify className="h-4 w-4" />
         </Button>
@@ -545,6 +576,7 @@ function ToolbarPlugin({
           onClick={insertImage}
           disabled={isUploading}
           className="h-8 w-8 p-0"
+          title="Insert Image (Ctrl+Shift+I)"
         >
           {isUploading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -558,9 +590,134 @@ function ToolbarPlugin({
           size="sm"
           onClick={insertHorizontalRule}
           className="h-8 w-8 p-0"
+          title="Horizontal Rule (Ctrl+Shift+-)"
         >
           <Minus className="h-4 w-4" />
         </Button>
+      </div>
+
+      <Separator orientation="vertical" className="h-8" />
+
+      {/* Help & Shortcuts */}
+      <div className="flex gap-1">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Keyboard Shortcuts"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80" align="end">
+            <div className="space-y-4">
+              <h4 className="font-semibold text-sm">Keyboard Shortcuts</h4>
+              
+              <div className="space-y-3 text-xs">
+                <div>
+                  <h5 className="font-medium mb-1">Text Formatting</h5>
+                  <div className="space-y-1 text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>Bold</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+B</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Italic</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+I</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Underline</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+U</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Strikethrough</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Shift+S</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Inline Code</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+E</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Clear Format</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+\</kbd>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h5 className="font-medium mb-1">Block Types</h5>
+                  <div className="space-y-1 text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>Paragraph</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Alt+0</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Heading 1</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Alt+1</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Heading 2</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Alt+2</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Heading 3</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Alt+3</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Blockquote</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Shift+Q</kbd>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h5 className="font-medium mb-1">Lists & Alignment</h5>
+                  <div className="space-y-1 text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>Bullet List</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Shift+7</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Numbered List</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Shift+8</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Align Left</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Shift+L</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Align Center</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Shift+E</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Align Right</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Shift+R</kbd>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Justify</span>
+                      <kbd className="bg-muted px-1 rounded">Ctrl+Shift+J</kbd>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h5 className="font-medium mb-1">Markdown Shortcuts</h5>
+                  <div className="space-y-1 text-muted-foreground">
+                    <div>Type <kbd className="bg-muted px-1 rounded"># </kbd> for H1</div>
+                    <div>Type <kbd className="bg-muted px-1 rounded">## </kbd> for H2</div>
+                    <div>Type <kbd className="bg-muted px-1 rounded">### </kbd> for H3</div>
+                    <div>Type <kbd className="bg-muted px-1 rounded">&gt; </kbd> for blockquote</div>
+                    <div>Type <kbd className="bg-muted px-1 rounded">- </kbd> for bullet list</div>
+                    <div>Type <kbd className="bg-muted px-1 rounded">1. </kbd> for numbered list</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <Separator orientation="vertical" className="h-8" />
@@ -640,32 +797,7 @@ export function LexicalEditor({
 
   const initialConfig = {
     namespace: 'ArticleEditor',
-    theme: {
-      root: 'p-4 min-h-[400px] focus:outline-none',
-      paragraph: 'mb-2',
-      heading: {
-        h1: 'text-3xl font-bold mb-4',
-        h2: 'text-2xl font-bold mb-3',
-        h3: 'text-xl font-bold mb-2',
-      },
-      quote: 'border-l-4 border-border pl-4 italic my-4',
-      list: {
-        nested: {
-          listitem: 'list-none',
-        },
-        ol: 'list-decimal list-inside mb-2',
-        ul: 'list-disc list-inside mb-2',
-        listitem: 'mb-1',
-      },
-      link: 'text-blue-600 underline',
-      text: {
-        bold: 'font-bold',
-        italic: 'italic',
-        underline: 'underline',
-        strikethrough: 'line-through',
-        code: 'bg-secondary px-1 py-0.5 rounded text-sm font-mono',
-      },
-    },
+    theme: getLexicalEditorTheme(),
     nodes: [
       HeadingNode,
       ListNode,
@@ -695,7 +827,7 @@ export function LexicalEditor({
 
 
   return (
-    <div className={`border border-border rounded-lg overflow-hidden ${className}`}>
+    <div className={`lexical-editor border border-border rounded-lg overflow-hidden ${className}`}>
       <LexicalComposer initialConfig={initialConfig}>
         <div className="relative">
           <ToolbarPlugin
@@ -729,6 +861,7 @@ export function LexicalEditor({
               outputFormat={outputFormat}
             />
             <InitialContentPlugin initialContent={initialContent} />
+            <KeyboardShortcutsPlugin />
             <ImagePlugin />
           </div>
         </div>
@@ -751,7 +884,7 @@ function OnChangePlugin({
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         if (outputFormat === 'json') {
-          // Output Lexical's native JSON format
+          // Output Lexical's native JSON format with proper ImageNode serialization
           const editorStateJSON = editorState.toJSON();
           const jsonString = JSON.stringify(editorStateJSON);
           onChange(jsonString);
@@ -775,6 +908,157 @@ function ImagePlugin() {
     return editor.registerNodeTransform(ImageNode, () => {
       // Handle any image node transformations if needed
     });
+  }, [editor]);
+
+  return null;
+}
+
+// Plugin for keyboard shortcuts
+function KeyboardShortcutsPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const { ctrlKey, metaKey, shiftKey, altKey, key } = event;
+      const isModifier = ctrlKey || metaKey;
+
+      if (!isModifier) return;
+
+      // Text formatting shortcuts
+      if (key === 'b' && !shiftKey && !altKey) {
+        event.preventDefault();
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
+        return;
+      }
+
+      if (key === 'i' && !shiftKey && !altKey) {
+        event.preventDefault();
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
+        return;
+      }
+
+      if (key === 'u' && !shiftKey && !altKey) {
+        event.preventDefault();
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
+        return;
+      }
+
+      if (key === 'e' && !shiftKey && !altKey) {
+        event.preventDefault();
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code');
+        return;
+      }
+
+      // Shift + Ctrl shortcuts
+      if (shiftKey) {
+        switch (key) {
+          case 'S':
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
+            break;
+          case 'Q':
+            event.preventDefault();
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                $setBlocksType(selection, () => $createQuoteNode());
+              }
+            });
+            break;
+          case 'L':
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'left');
+            break;
+          case 'E':
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'center');
+            break;
+          case 'R':
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'right');
+            break;
+          case 'J':
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, 'justify');
+            break;
+          case 'Digit7':
+          case '7':
+            event.preventDefault();
+            editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+            break;
+          case 'Digit8':
+          case '8':
+            event.preventDefault();
+            editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+            break;
+        }
+      }
+
+      // Alt + Ctrl shortcuts for headings
+      if (altKey) {
+        switch (key) {
+          case '0':
+            event.preventDefault();
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                $setBlocksType(selection, () => $createParagraphNode());
+              }
+            });
+            break;
+          case '1':
+            event.preventDefault();
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                $setBlocksType(selection, () => $createHeadingNode('h1'));
+              }
+            });
+            break;
+          case '2':
+            event.preventDefault();
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                $setBlocksType(selection, () => $createHeadingNode('h2'));
+              }
+            });
+            break;
+          case '3':
+            event.preventDefault();
+            editor.update(() => {
+              const selection = $getSelection();
+              if ($isRangeSelection(selection)) {
+                $setBlocksType(selection, () => $createHeadingNode('h3'));
+              }
+            });
+            break;
+        }
+      }
+
+      // Clear formatting shortcut (Ctrl+\)
+      if (key === '\\' && !shiftKey && !altKey) {
+        event.preventDefault();
+        editor.update(() => {
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            selection.formatText('bold', 0);
+            selection.formatText('italic', 0);
+            selection.formatText('underline', 0);
+            selection.formatText('strikethrough', 0);
+            selection.formatText('code', 0);
+          }
+        });
+      }
+    };
+
+    const editorElement = editor.getRootElement();
+    if (editorElement) {
+      editorElement.addEventListener('keydown', handleKeyDown);
+      return () => {
+        editorElement.removeEventListener('keydown', handleKeyDown);
+      };
+    }
   }, [editor]);
 
   return null;

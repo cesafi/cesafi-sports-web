@@ -1,6 +1,8 @@
-import { NewsCard } from '@/components/shared';
+import { ArticleCard } from '@/components/shared';
 import { getRecentPublishedArticles } from '@/actions/articles';
 import { moderniz, roboto } from '@/lib/fonts';
+import { extractPlainText } from '@/lib/utils/content-renderer';
+import { calculateSportsReadTime } from '@/lib/utils/read-time';
 
 export default async function AboutUsArticles() {
   // Fetch only recent published articles for the news section
@@ -38,13 +40,29 @@ export default async function AboutUsArticles() {
 
         {/* Articles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {articles.map((article, index) => (
-            <NewsCard
-              key={article.id}
-              article={article}
-              index={index}
-            />
-          ))}
+          {articles.map((article, index) => {
+            const readTimeResult = calculateSportsReadTime(article.content);
+            const transformedArticle = {
+              id: article.id.toString(),
+              title: article.title,
+              slug: article.slug,
+              excerpt: (article.content as { excerpt?: string })?.excerpt || extractPlainText(article.content, 150),
+              author: article.authored_by || 'CESAFI Media Team',
+              publishedAt: article.published_at || article.created_at,
+              category: (article.content as { category?: string })?.category || 'General',
+              readTime: readTimeResult.formattedTime,
+              image: article.cover_image_url || '/img/cesafi-banner.jpg'
+            };
+
+            return (
+              <ArticleCard
+                key={article.id}
+                article={transformedArticle}
+                variant="default"
+                index={index}
+              />
+            );
+          })}
         </div>
       </div>
     </section>

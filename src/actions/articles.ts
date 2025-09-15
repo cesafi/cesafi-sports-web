@@ -22,6 +22,10 @@ export async function getArticleById(id: string): Promise<ServiceResponse<Articl
   return await ArticleService.getById(id);
 }
 
+export async function getArticleBySlug(slug: string): Promise<ServiceResponse<Article>> {
+  return await ArticleService.getBySlug(slug);
+}
+
 export async function createArticle(data: unknown): Promise<ServiceResponse<Article>> {
   // Validate the input data
   const validationResult = createArticleSchema.safeParse(data);

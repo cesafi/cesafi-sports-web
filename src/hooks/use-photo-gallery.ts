@@ -17,6 +17,12 @@ export const useAllPhotoGallery = () => {
   return useQuery({
     queryKey: [PHOTO_GALLERY_QUERY_KEY, 'all'],
     queryFn: () => getAllPhotoGallery(),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error('error' in data ? data.error : 'Failed to fetch photo gallery.');
+      }
+      return 'data' in data ? data.data : [];
+    },
     placeholderData: (previousData) => previousData,
   });
 };

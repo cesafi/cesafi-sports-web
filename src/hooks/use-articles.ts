@@ -11,6 +11,8 @@ import {
   getPaginatedArticles,
   getAllArticles,
   getArticleById,
+  getArticleBySlug,
+  getRecentPublishedArticles,
   createArticle,
   updateArticleById,
   deleteArticleById
@@ -86,6 +88,41 @@ export function useArticleById(
     select: (data) => {
       if (!data.success || !data.data) {
         throw new Error(data.success === false ? data.error : `Article with ID ${id} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useArticleBySlug(
+  slug: string,
+  queryOptions?: UseQueryOptions<ServiceResponse<Article>, Error, Article>
+) {
+  return useQuery({
+    queryKey: [...articleKeys.all, 'slug', slug],
+    queryFn: () => getArticleBySlug(slug),
+    enabled: !!slug,
+    select: (data) => {
+      if (!data.success || !data.data) {
+        throw new Error(data.success === false ? data.error : `Article with slug ${slug} not found.`);
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
+export function useRecentPublishedArticles(
+  limit: number = 6,
+  queryOptions?: UseQueryOptions<ServiceResponse<Article[]>, Error, Article[]>
+) {
+  return useQuery({
+    queryKey: [...articleKeys.all, 'recent-published', limit],
+    queryFn: () => getRecentPublishedArticles(limit),
+    select: (data) => {
+      if (!data.success || !data.data) {
+        throw new Error(data.success === false ? data.error : 'Failed to fetch recent published articles.');
       }
       return data.data;
     },

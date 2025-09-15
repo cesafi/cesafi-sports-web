@@ -3,6 +3,7 @@ import { DashboardLayout } from '@/components/dashboard';
 import { getCurrentUserAction } from '@/actions/auth';
 import { UserRole } from '@/lib/types/auth';
 import { getRoleDisplayName } from '@/lib/utils/roles';
+import { SeasonProvider } from '@/components/contexts/season-provider';
 
 interface WriterLayoutProps {
   children: React.ReactNode;
@@ -24,13 +25,15 @@ export default async function WriterLayout({ children }: WriterLayoutProps) {
   }
 
   return (
-    <DashboardLayout
-      userRole={user.userRole as UserRole}
-      userRoleDisplay={getRoleDisplayName(user.userRole as UserRole)}
-      userName={user.userName}
-      userEmail={user.email || ''}
-    >
-      {children}
-    </DashboardLayout>
+    <SeasonProvider>
+      <DashboardLayout
+        userRole={user.userRole as UserRole}
+        userRoleDisplay={getRoleDisplayName(user.userRole as UserRole)}
+        userName={user.userName}
+        userEmail={user.email || ''}
+      >
+        {children}
+      </DashboardLayout>
+    </SeasonProvider>
   );
 }

@@ -2,9 +2,15 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Calendar, User, ArrowRight } from 'lucide-react';
-import { roboto } from '@/lib/fonts';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { moderniz, roboto } from '@/lib/fonts';
 import { Article } from '@/lib/types/articles';
+import { extractPlainText } from '@/lib/utils/content-renderer';
+import { formatSmartDate } from '@/lib/utils/date';
+import { calculateSportsReadTime } from '@/lib/utils/read-time';
 
 interface NewsCardProps {
   article: Article;
@@ -14,16 +20,17 @@ interface NewsCardProps {
 
 export default function NewsCard({ article, index, className = '' }: NewsCardProps) {
   // Transform article to match the expected format
+  const readTimeResult = calculateSportsReadTime(article.content);
   const newsArticle = {
-    id: article.id,
+    id: article.id.toString(),
     title: article.title,
-    description: (article.content as { excerpt?: string })?.excerpt || 'Read more about this exciting update...',
-    content: article.content,
-    image: (article.content as { image?: string })?.image || '/img/cesafi-banner.jpg',
+    slug: article.slug,
+    excerpt: (article.content as { excerpt?: string })?.excerpt || extractPlainText(article.content, 150),
+    image: article.cover_image_url || '/img/cesafi-banner.jpg',
     publishedAt: article.published_at || article.created_at,
-    author: (article.content as { author?: string })?.author || 'CESAFI Media Team',
+    author: article.authored_by || 'CESAFI Media Team',
     category: (article.content as { category?: string })?.category || 'General',
-    readTime: (article.content as { readTime?: string })?.readTime || '3 min read'
+    readTime: readTimeResult.formattedTime
   };
 
   return (
@@ -32,56 +39,47 @@ export default function NewsCard({ article, index, className = '' }: NewsCardPro
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: index * 0.1 }}
       viewport={{ once: true }}
+      whileHover={{ y: -8 }}
       className={`group ${className}`}
     >
-      <div className="bg-background/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
-        {/* Article Image */}
+      <Card className="h-full overflow-hidden bg-background/60 backdrop-blur-sm border-border/30 hover:border-primary/30 transition-all duration-300">
         <div className="relative h-48">
           <Image
             src={newsArticle.image}
             alt={newsArticle.title}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover"
           />
-          <div className="absolute top-3 left-3">
-            <span className={`${roboto.className} bg-background/90 text-foreground px-2 py-1 rounded text-xs font-medium`}>
-              {newsArticle.category}
-            </span>
-          </div>
         </div>
-
-        {/* Article Content */}
-        <div className="p-6">
-          <h4 className={`${roboto.className} text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300 line-clamp-2`}>
-            {newsArticle.title}
-          </h4>
-          
-          <p className={`${roboto.className} text-muted-foreground mb-4 line-clamp-3`}>
-            {newsArticle.description}
-          </p>
-
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              <span>{newsArticle.author}</span>
-            </div>
-            <span>{newsArticle.readTime}</span>
+        <CardContent className="p-6 flex flex-col h-[calc(100%-12rem)]">
+          <div className="flex-1 space-y-4">
+            <h3 className={`${moderniz.className} text-lg font-bold text-foreground line-clamp-2`}>
+              {newsArticle.title}
+            </h3>
+            <p className={`${roboto.className} text-muted-foreground text-sm line-clamp-3`}>
+              {newsArticle.excerpt}
+            </p>
           </div>
-
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>{new Date(newsArticle.publishedAt).toLocaleDateString()}</span>
+          <div className="space-y-4 mt-4">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <User className="h-3 w-3" />
+                {newsArticle.author}
+              </div>
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {formatSmartDate(newsArticle.publishedAt)}
+              </div>
             </div>
+            <Link href={`/news/${newsArticle.slug}`} className="block">
+              <Button variant="outline" size="sm" className="w-full">
+                Read More
+                <ArrowRight className="ml-2 h-3 w-3" />
+              </Button>
+            </Link>
           </div>
-
-          <button className={`${roboto.className} text-primary hover:text-primary/80 font-semibold text-sm uppercase tracking-wide transition-colors duration-200 flex items-center gap-2`}>
-            Read More
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 }

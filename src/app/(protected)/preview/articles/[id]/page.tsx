@@ -1,13 +1,30 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import Head from 'next/head';
-import { useArticleById } from '@/hooks/use-articles';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Eye, Calendar, User, FileText } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import {
+  ArrowLeft,
+  Calendar,
+  User,
+  Clock,
+  ChevronRight,
+  Home,
+  Eye,
+  AlertTriangle
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+// import { Alert, AlertDescription } from '@/components/ui/alert';
+import ShareButtons from '@/components/shared/share-buttons';
+import { moderniz, roboto } from '@/lib/fonts';
+import { useArticleById } from '@/hooks/use-articles';
+import { renderArticleContent, extractPlainText, getArticleContentProps } from '@/lib/utils/content-renderer';
+import { formatSmartDate } from '@/lib/utils/date';
+import { calculateSportsReadTime } from '@/lib/utils/read-time';
+import '@/styles/article-content.css';
 
 export default function ArticlePreviewPage() {
   const params = useParams();
@@ -16,185 +33,234 @@ export default function ArticlePreviewPage() {
 
   const { data: article, isLoading, error } = useArticleById(articleId);
 
-  // Generate excerpt from content
-  const generateExcerpt = (content: unknown, maxLength: number = 150): string => {
-    if (!content) return '';
-    
-    // If content is a string, use it directly
-    let textContent = typeof content === 'string' ? content : '';
-    
-    // If content is an object with HTML, extract text
-    if (typeof content === 'object' && content !== null) {
-      // Simple text extraction - remove HTML tags
-      textContent = JSON.stringify(content).replace(/<[^>]*>/g, '').replace(/\\n/g, ' ').replace(/\\"/g, '"');
-    }
-    
-    // Clean up and truncate
-    textContent = textContent.trim();
-    if (textContent.length <= maxLength) return textContent;
-    
-    return textContent.substring(0, maxLength).trim() + '...';
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'bg-muted text-muted-foreground';
-      case 'review':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'approved':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'revise':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'published':
-        return 'bg-primary/10 text-primary';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'Draft';
-      case 'review':
-        return 'Under Review';
-      case 'approved':
-        return 'Approved';
-      case 'revise':
-        return 'Needs Revision';
-      case 'cancelled':
-        return 'Cancelled';
-      case 'published':
-        return 'Published';
-      default:
-        return status;
-    }
-  };
-
-  if (isLoading) {
+  if (isLoading || !article) {
     return (
-      <div className="w-full space-y-8 p-6">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-8 w-8" />
-          <Skeleton className="h-8 w-64" />
+      <div className="bg-background min-h-screen">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
+          <div className="animate-pulse space-y-8">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="h-64 bg-muted rounded"></div>
+            <div className="space-y-4">
+              <div className="h-8 bg-muted rounded w-3/4"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-muted rounded"></div>
+                <div className="h-4 bg-muted rounded"></div>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <Card>
-          <CardHeader className="space-y-4">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
   if (error || !article) {
     return (
-      <div className="w-full space-y-8 p-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
-          </Button>
+      <div className="bg-background min-h-screen">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
+          <Card>
+            <CardContent className="text-center py-12">
+              <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h1 className="text-2xl font-bold text-foreground mb-4">Article Not Found</h1>
+              <p className="text-muted-foreground mb-6">
+                The article you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to preview it.
+              </p>
+              <Button onClick={() => router.back()}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Go Back
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-        <Card>
-          <CardContent className="text-center py-12">
-            <h1 className="text-2xl font-bold text-foreground mb-4">Article Not Found</h1>
-            <p className="text-muted-foreground mb-6">
-              The article you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to preview it.
-            </p>
-            <Button onClick={() => router.back()}>Go Back</Button>
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
+  // Transform article data for display (exactly like published version)
+  const readTimeResult = calculateSportsReadTime(article.content);
+  const displayArticle = {
+    id: article.id.toString(),
+    title: article.title,
+    slug: article.slug || `preview-${article.id}`,
+    excerpt:
+      (article.content as { excerpt?: string })?.excerpt || extractPlainText(article.content, 200),
+    content: renderArticleContent(article.content),
+    author: article.authored_by || 'CESAFI Media Team',
+    publishedAt: article.published_at || article.created_at,
+    updatedAt: article.updated_at,
+    category: (article.content as { category?: string })?.category || 'General',
+    readTime: readTimeResult.formattedTime,
+    wordCount: readTimeResult.words,
+    image: article.cover_image_url || '/img/cesafi-banner.jpg',
+    tags: (article.content as { tags?: string[] })?.tags || [],
+    status: article.status
+  };
+
   return (
-    <>
-      <Head>
-        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
-        <meta name="googlebot" content="noindex, nofollow" />
-        <title>Preview: {article.title}</title>
-      </Head>
-      <div className="w-full space-y-8 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Go Back
-            </Button>
+    <div className="bg-background min-h-screen">
+      {/* Preview Banner */}
+      <div className="bg-yellow-500/10 border-b border-yellow-500/20 py-3">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400">
+              <Eye className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Preview Mode - Exact published appearance
+              </span>
+            </div>
             <div className="flex items-center gap-2">
-              <Eye className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Preview Mode</span>
+              <Badge variant="outline" className="text-xs">
+                Status: {displayArticle.status}
+              </Badge>
+              <Button variant="outline" size="sm" onClick={() => router.back()}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Articles
+              </Button>
             </div>
           </div>
-          <Badge className={`${getStatusColor(article.status)} border`}>
-            {getStatusLabel(article.status)}
-          </Badge>
         </div>
+      </div>
 
-        {/* Article Preview */}
-        <Card>
-          <CardHeader className="space-y-6">
-            <div className="space-y-4">
-              <div>
-                <CardTitle className="text-3xl font-bold">{article.title}</CardTitle>
-                <p className="text-muted-foreground mt-2">{generateExcerpt(article.content)}</p>
-              </div>
-              
-              {/* Article Meta */}
+      {/* Breadcrumbs - Exactly like published version */}
+      <section className="bg-muted/30 py-4 border-b border-border/30">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <nav className="flex items-center space-x-2 text-sm">
+            <Link href="/" className="flex items-center text-muted-foreground hover:text-foreground transition-colors">
+              <Home className="h-4 w-4" />
+            </Link>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <Link href="/news" className="text-muted-foreground hover:text-foreground transition-colors">
+              News
+            </Link>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <span className="text-foreground font-medium line-clamp-1">
+              {displayArticle.title}
+            </span>
+          </nav>
+        </div>
+      </section>
+
+      {/* Hero Image - Exactly like published version */}
+      <section className="relative h-[40vh] overflow-hidden md:h-[50vh]">
+        <div className="absolute inset-0">
+          <Image 
+            src={displayArticle.image} 
+            alt={displayArticle.title} 
+            fill 
+            className="object-cover" 
+            priority 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        </div>
+      </section>
+
+      {/* Article Header - Exactly like published version */}
+      <section className="py-8 border-b border-border/30">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className={`${moderniz.className} text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight`}>
+              {displayArticle.title}
+            </h1>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  <span>{article.authored_by}</span>
+                  <span className="font-medium">{displayArticle.author}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  <span>Created {new Date(article.created_at).toLocaleDateString()}</span>
+                  <span>{formatSmartDate(displayArticle.publishedAt)}</span>
                 </div>
-                {article.updated_at !== article.created_at && (
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    <span>Updated {new Date(article.updated_at).toLocaleDateString()}</span>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>{displayArticle.readTime}</span>
+                </div>
+              </div>
+
+              {/* Share Buttons - Top (Preview Mode) */}
+              <div className="flex-shrink-0">
+                <ShareButtons 
+                  url={`/news/${displayArticle.slug}`}
+                  title={displayArticle.title}
+                  variant="compact"
+                  disabled={true}
+                />
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="prose prose-gray max-w-none">
-              {/* This would render the article content */}
-              <div 
-                className="article-content"
-                dangerouslySetInnerHTML={{ __html: article.content || '<p>No content available</p>' }}
-              />
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Preview Notice */}
-        <Card className="border-dashed border-2 border-muted">
-          <CardContent className="text-center py-8">
-            <div className="flex items-center justify-center gap-2 text-muted-foreground mb-3">
-              <Eye className="h-4 w-4" />
-              <span className="text-sm font-medium">Preview Mode</span>
+            {displayArticle.excerpt && (
+              <p className={`${roboto.className} text-lg text-muted-foreground leading-relaxed italic border-l-4 border-primary/30 pl-6 py-2`}>
+                {displayArticle.excerpt}
+              </p>
+            )}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Article Content - Exactly like published version */}
+      <section className="py-12">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <article
+              {...getArticleContentProps(article.content)}
+            />
+
+            {/* Tags - Exactly like published version */}
+            {displayArticle.tags && displayArticle.tags.length > 0 && (
+              <div className="mt-12 pt-8 border-t border-border/30">
+                <h3 className={`${moderniz.className} text-foreground mb-4 text-lg font-semibold`}>
+                  Related Topics
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {displayArticle.tags.map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-sm px-3 py-1">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Share Buttons - Bottom (Preview Mode) */}
+            <div className="mt-12 pt-8 border-t border-border/30">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                <div>
+                  <h3 className={`${moderniz.className} text-foreground mb-2 text-lg font-semibold`}>
+                    Share this article (Preview)
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    Sharing will be enabled when published
+                  </p>
+                </div>
+                <ShareButtons 
+                  url={`/news/${displayArticle.slug}`}
+                  title={displayArticle.title}
+                  variant="full"
+                  disabled={true}
+                />
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              This is a private preview. This article is not visible to the public and will not be indexed by search engines.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </>
+
+            {/* Back to Articles */}
+            <div className="mt-12 pt-8 border-t border-border/30">
+              <Button variant="outline" className="group" onClick={() => router.back()}>
+                <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                Back to Articles Management
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+    </div>
   );
 }

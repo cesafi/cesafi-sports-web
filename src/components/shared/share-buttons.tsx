@@ -10,12 +10,16 @@ import { toast } from 'sonner';
 interface ShareButtonsProps {
   title: string;
   url?: string;
+  variant?: 'default' | 'compact' | 'expanded' | 'full';
+  disabled?: boolean;
 }
 
-export default function ShareButtons({ title, url }: ShareButtonsProps) {
+export default function ShareButtons({ title, url, variant = 'default', disabled = false }: ShareButtonsProps) {
   const [isSharing, setIsSharing] = useState(false);
 
   const handleShare = async (platform?: string) => {
+    if (disabled) return;
+    
     setIsSharing(true);
     const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
 
@@ -36,6 +40,115 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
     }
   };
 
+  // Compact variant - horizontal buttons without card
+  if (variant === 'compact') {
+    return (
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare('twitter')}
+          disabled={disabled || isSharing}
+        >
+          <Twitter className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare('facebook')}
+          disabled={disabled || isSharing}
+        >
+          <Facebook className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare()}
+          disabled={disabled || isSharing}
+        >
+          <LinkIcon className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+
+  // Expanded variant - horizontal buttons with labels
+  if (variant === 'expanded') {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare('twitter')}
+          disabled={disabled || isSharing}
+          className="flex items-center gap-2"
+        >
+          <Twitter className="h-4 w-4" />
+          Twitter
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare('facebook')}
+          disabled={disabled || isSharing}
+          className="flex items-center gap-2"
+        >
+          <Facebook className="h-4 w-4" />
+          Facebook
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare()}
+          disabled={disabled || isSharing}
+          className="flex items-center gap-2"
+        >
+          <LinkIcon className="h-4 w-4" />
+          Copy Link
+        </Button>
+      </div>
+    );
+  }
+
+  // Full variant - horizontal buttons with labels (same as expanded but different name for clarity)
+  if (variant === 'full') {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare('twitter')}
+          disabled={disabled || isSharing}
+          className="flex items-center gap-2"
+        >
+          <Twitter className="h-4 w-4" />
+          Twitter
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare('facebook')}
+          disabled={disabled || isSharing}
+          className="flex items-center gap-2"
+        >
+          <Facebook className="h-4 w-4" />
+          Facebook
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleShare()}
+          disabled={disabled || isSharing}
+          className="flex items-center gap-2"
+        >
+          <LinkIcon className="h-4 w-4" />
+          Copy Link
+        </Button>
+      </div>
+    );
+  }
+
+  // Default variant - card with vertical buttons
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -50,7 +163,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
           size="sm"
           className="w-full justify-start"
           onClick={() => handleShare('twitter')}
-          disabled={isSharing}
+          disabled={disabled || isSharing}
         >
           <Twitter className="h-4 w-4 mr-2" />
           Twitter
@@ -60,7 +173,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
           size="sm"
           className="w-full justify-start"
           onClick={() => handleShare('facebook')}
-          disabled={isSharing}
+          disabled={disabled || isSharing}
         >
           <Facebook className="h-4 w-4 mr-2" />
           Facebook
@@ -70,7 +183,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
           size="sm"
           className="w-full justify-start"
           onClick={() => handleShare()}
-          disabled={isSharing}
+          disabled={disabled || isSharing}
         >
           <LinkIcon className="h-4 w-4 mr-2" />
           Copy Link

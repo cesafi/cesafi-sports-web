@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Article, ArticleInsert, ArticleUpdate, ArticleStatus } from '@/lib/types/articles';
@@ -89,7 +95,6 @@ export function ArticleForm({
     setErrors({});
   }, [mode, article]);
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -97,10 +102,10 @@ export function ArticleForm({
     try {
       // Generate slug from title
       const title = formData.title?.trim() || 'untitled';
-      const slug = slugify(title, { 
-        lower: true, 
-        strict: true, 
-        remove: /[*+~.()'"!:@]/g 
+      const slug = slugify(title, {
+        lower: true,
+        strict: true,
+        remove: /[*+~.()'"!:@]/g
       });
 
       // Parse editor content as JSON (Lexical JSON format)
@@ -157,18 +162,21 @@ export function ArticleForm({
 
   const isWriter = userRole === 'writer';
   const canEditStatus = userRole === 'admin' || userRole === 'head-writer';
-  const canEditAuthor = userRole === 'admin' || userRole === 'head-writer';
+  const canEditAuthor =
+    userRole === 'admin' ||
+    userRole === 'head-writer' ||
+    (userRole === 'writer' && mode === 'create');
 
   return (
     <div className="w-full">
       {/* Header */}
       <Button variant="ghost" size="sm" onClick={handleBack}>
-        <ArrowLeft className="h-4 w-4 mr-2" />
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Back
       </Button>
 
-      <div className="flex items-center justify-between mt-4">
-        <div className="flex items-center space-x-4 mb-4">
+      <div className="mt-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center space-x-4">
           <div>
             <h1 className="text-2xl font-bold">
               {mode === 'create' ? 'Create New Article' : 'Edit Article'}
@@ -176,8 +184,7 @@ export function ArticleForm({
             <p className="text-muted-foreground">
               {mode === 'create'
                 ? 'Write and publish a new article'
-                : `Editing: ${article?.title || 'Article'}`
-              }
+                : `Editing: ${article?.title || 'Article'}`}
             </p>
           </div>
         </div>
@@ -193,12 +200,12 @@ export function ArticleForm({
           >
             {isSubmitting ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
                 Saving...
               </>
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="mr-2 h-4 w-4" />
                 {mode === 'create' ? 'Create' : 'Update'}
               </>
             )}
@@ -208,17 +215,18 @@ export function ArticleForm({
 
       {/* Writer-specific message */}
       {isWriter && article?.status !== 'revise' && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
           <p className="text-sm text-yellow-800">
-            You can only edit articles with &quot;Revise&quot; status. This article is currently in &quot;{getStatusLabel(article?.status || '')}&quot; status.
+            You can only edit articles with &quot;Revise&quot; status. This article is currently in
+            &quot;{getStatusLabel(article?.status || '')}&quot; status.
           </p>
         </div>
       )}
 
       <form id="article-form" onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             {/* Title */}
             <Card>
               <CardHeader>
@@ -228,7 +236,7 @@ export function ArticleForm({
                 <div className="space-y-2">
                   <Input
                     value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter article title"
                     className={errors.title ? 'border-red-500' : ''}
                   />
@@ -247,8 +255,10 @@ export function ArticleForm({
                   <LexicalEditor
                     initialContent={editorContent}
                     onChange={(content) => {
-                      setEditorContent(typeof content === 'string' ? content : JSON.stringify(content));
-                      setFormData(prev => ({ ...prev, content }));
+                      setEditorContent(
+                        typeof content === 'string' ? content : JSON.stringify(content)
+                      );
+                      setFormData((prev) => ({ ...prev, content }));
                     }}
                     className="min-h-[500px]"
                     articleId={article?.id}
@@ -275,12 +285,16 @@ export function ArticleForm({
                   <Input
                     id="authored_by"
                     value={formData.authored_by}
-                    onChange={(e) => setFormData(prev => ({ ...prev, authored_by: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, authored_by: e.target.value }))
+                    }
                     placeholder="Enter author name"
                     disabled={!canEditAuthor}
                     className={errors.authored_by ? 'border-red-500' : ''}
                   />
-                  {errors.authored_by && <p className="text-sm text-red-500">{errors.authored_by}</p>}
+                  {errors.authored_by && (
+                    <p className="text-sm text-red-500">{errors.authored_by}</p>
+                  )}
                 </div>
 
                 {/* Status */}
@@ -289,7 +303,9 @@ export function ArticleForm({
                     <Label htmlFor="status">Status</Label>
                     <Select
                       value={formData.status}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as ArticleStatus }))}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, status: value as ArticleStatus }))
+                      }
                     >
                       <SelectTrigger className={errors.status ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Select status" />
@@ -313,14 +329,24 @@ export function ArticleForm({
                     <Input
                       id="published_at"
                       type="datetime-local"
-                      value={formData.published_at ? new Date(formData.published_at).toISOString().slice(0, 16) : ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        published_at: e.target.value ? new Date(e.target.value).toISOString() : null
-                      }))}
+                      value={
+                        formData.published_at
+                          ? new Date(formData.published_at).toISOString().slice(0, 16)
+                          : ''
+                      }
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          published_at: e.target.value
+                            ? new Date(e.target.value).toISOString()
+                            : null
+                        }))
+                      }
                       className={errors.published_at ? 'border-red-500' : ''}
                     />
-                    {errors.published_at && <p className="text-sm text-red-500">{errors.published_at}</p>}
+                    {errors.published_at && (
+                      <p className="text-sm text-red-500">{errors.published_at}</p>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -333,8 +359,8 @@ export function ArticleForm({
               </CardHeader>
               <CardContent className="space-y-4">
                 <ImageUpload
-                  onUpload={(url) => setFormData(prev => ({ ...prev, cover_image_url: url }))}
-                  onRemove={() => setFormData(prev => ({ ...prev, cover_image_url: '' }))}
+                  onUpload={(url) => setFormData((prev) => ({ ...prev, cover_image_url: url }))}
+                  onRemove={() => setFormData((prev) => ({ ...prev, cover_image_url: '' }))}
                   preset="ARTICLE_COVER"
                   currentImageUrl={formData.cover_image_url}
                   placeholder="Upload article cover image"
@@ -376,11 +402,17 @@ export function ArticleForm({
 
 function getStatusLabel(status: string) {
   switch (status) {
-    case 'review': return 'Review';
-    case 'approved': return 'Approved';
-    case 'revise': return 'Revise';
-    case 'cancelled': return 'Cancelled';
-    case 'published': return 'Published';
-    default: return status;
+    case 'review':
+      return 'Review';
+    case 'approved':
+      return 'Approved';
+    case 'revise':
+      return 'Revise';
+    case 'cancelled':
+      return 'Cancelled';
+    case 'published':
+      return 'Published';
+    default:
+      return status;
   }
 }
