@@ -18,6 +18,7 @@ import {
   MatchUpdate
 } from '@/lib/types/matches';
 import { formatCategoryName } from '@/lib/utils/sports';
+import { nowUtc, ensureUtcIsoString } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'matches';
 const SPORTS_SEASONS_STAGES_TABLE = 'sports_seasons_stages';
@@ -112,7 +113,7 @@ export class MatchService extends BaseService {
   ): Promise<ServiceResponse<MatchWithFullDetails[]>> {
     try {
       const supabase = await this.getClient();
-      const now = new Date().toISOString();
+      const nowUtcString = nowUtc();
       
       const { data, error } = await supabase
         .from(TABLE_NAME)
@@ -156,7 +157,7 @@ export class MatchService extends BaseService {
           )
           `
         )
-        .gte('scheduled_at', now)
+        .gte('scheduled_at', nowUtcString)
         .order('scheduled_at', { ascending: true })
         .limit(limit);
 
@@ -708,6 +709,16 @@ export class MatchService extends BaseService {
   ): Promise<ServiceResponse<Match>> {
     try {
       const supabase = await this.getClient();
+      
+      // Ensure all dates are stored as UTC ISO strings
+      const utcMatchData = {
+        ...data,
+        scheduled_at: data.scheduled_at ? ensureUtcIsoString(data.scheduled_at) : null,
+        start_at: data.start_at ? ensureUtcIsoString(data.start_at) : null,
+        end_at: data.end_at ? ensureUtcIsoString(data.end_at) : null,
+        created_at: nowUtc(),
+        updated_at: nowUtc()
+      };
 
       // Validate that the stage_id exists
       const { data: stageExists, error: stageError } = await supabase
@@ -728,8 +739,8 @@ export class MatchService extends BaseService {
       }
 
       // Check for scheduling conflicts if scheduled_at is provided
-      if (data.scheduled_at) {
-        const scheduledDate = new Date(data.scheduled_at);
+      if (utcMatchData.scheduled_at) {
+        const scheduledDate = new Date(utcMatchData.scheduled_at);
         const bufferMinutes = 30; // 30-minute buffer between matches
         const startBuffer = new Date(scheduledDate.getTime() - bufferMinutes * 60000);
         const endBuffer = new Date(scheduledDate.getTime() + bufferMinutes * 60000);
@@ -753,7 +764,7 @@ export class MatchService extends BaseService {
         }
       }
 
-      const { data: newMatch, error } = await supabase.from(TABLE_NAME).insert(data).select().single();
+      const { data: newMatch, error } = await supabase.from(TABLE_NAME).insert(utcMatchData).select().single();
 
       if (error) {
         throw error;
@@ -774,6 +785,21 @@ export class MatchService extends BaseService {
       }
 
       const supabase = await this.getClient();
+      
+      // Ensure all dates are stored as UTC ISO strings
+      const utcMatchData: MatchUpdate = { 
+        ...data
+      };
+      
+      if (data.scheduled_at !== undefined) {
+        utcMatchData.scheduled_at = data.scheduled_at ? ensureUtcIsoString(data.scheduled_at) : null;
+      }
+      if (data.start_at !== undefined) {
+        utcMatchData.start_at = data.start_at ? ensureUtcIsoString(data.start_at) : null;
+      }
+      if (data.end_at !== undefined) {
+        utcMatchData.end_at = data.end_at ? ensureUtcIsoString(data.end_at) : null;
+      }
 
       // Validate stage_id if provided
       if (data.stage_id) {
@@ -796,8 +822,8 @@ export class MatchService extends BaseService {
       }
 
       // Check for scheduling conflicts if scheduled_at is being updated
-      if (data.scheduled_at) {
-        const scheduledDate = new Date(data.scheduled_at);
+      if (utcMatchData.scheduled_at) {
+        const scheduledDate = new Date(utcMatchData.scheduled_at);
         const bufferMinutes = 30; // 30-minute buffer between matches
         const startBuffer = new Date(scheduledDate.getTime() - bufferMinutes * 60000);
         const endBuffer = new Date(scheduledDate.getTime() + bufferMinutes * 60000);
@@ -823,7 +849,7 @@ export class MatchService extends BaseService {
       }
 
       // Validate time sequence if updating time fields
-      if (data.start_at || data.end_at || data.scheduled_at) {
+      if (utcMatchData.start_at || utcMatchData.end_at || utcMatchData.scheduled_at) {
         // Get current match data to fill in missing times
         const { data: currentMatch, error: currentError } = await supabase
           .from(TABLE_NAME)
@@ -836,9 +862,9 @@ export class MatchService extends BaseService {
         }
 
         const scheduledAt =
-          data.scheduled_at !== undefined ? data.scheduled_at : currentMatch.scheduled_at;
-        const startAt = data.start_at !== undefined ? data.start_at : currentMatch.start_at;
-        const endAt = data.end_at !== undefined ? data.end_at : currentMatch.end_at;
+          utcMatchData.scheduled_at !== undefined ? utcMatchData.scheduled_at : currentMatch.scheduled_at;
+        const startAt = utcMatchData.start_at !== undefined ? utcMatchData.start_at : currentMatch.start_at;
+        const endAt = utcMatchData.end_at !== undefined ? utcMatchData.end_at : currentMatch.end_at;
 
         // Validate time sequence
         if (scheduledAt && startAt && new Date(scheduledAt) > new Date(startAt)) {
@@ -856,7 +882,10 @@ export class MatchService extends BaseService {
         }
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update({
+        ...utcMatchData,
+        updated_at: nowUtc()
+      }).eq('id', data.id);
 
       if (error) {
         throw error;
@@ -885,6 +914,16 @@ export class MatchService extends BaseService {
   ): Promise<ServiceResponse<Match>> {
     try {
       const supabase = await this.getClient();
+      
+      // Ensure all dates are stored as UTC ISO strings
+      const utcMatchData = {
+        ...matchData,
+        scheduled_at: matchData.scheduled_at ? ensureUtcIsoString(matchData.scheduled_at) : null,
+        start_at: matchData.start_at ? ensureUtcIsoString(matchData.start_at) : null,
+        end_at: matchData.end_at ? ensureUtcIsoString(matchData.end_at) : null,
+        created_at: nowUtc(),
+        updated_at: nowUtc()
+      };
 
       // Validate that the stage_id exists
       const { data: stageExists, error: stageError } = await supabase
@@ -905,8 +944,8 @@ export class MatchService extends BaseService {
       }
 
       // Check for scheduling conflicts if scheduled_at is provided
-      if (matchData.scheduled_at) {
-        const scheduledDate = new Date(matchData.scheduled_at);
+      if (utcMatchData.scheduled_at) {
+        const scheduledDate = new Date(utcMatchData.scheduled_at);
         const bufferMinutes = 30; // 30-minute buffer between matches
         const startBuffer = new Date(scheduledDate.getTime() - bufferMinutes * 60000);
         const endBuffer = new Date(scheduledDate.getTime() + bufferMinutes * 60000);
@@ -952,7 +991,7 @@ export class MatchService extends BaseService {
       // Insert the match first
       const { data: insertedMatch, error: matchError } = await supabase
         .from(TABLE_NAME)
-        .insert(matchData)
+        .insert(utcMatchData)
         .select('id')
         .single();
 

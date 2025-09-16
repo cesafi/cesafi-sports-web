@@ -6,6 +6,7 @@ import {
 } from '@/lib/types/base';
 import { BaseService } from './base';
 import { Sport, SportCategoryFormData, SportInsert, SportUpdate } from '@/lib/types/sports';
+import { nowUtc } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'sports';
 const SPORTS_CATEGORIES_TABLE = 'sports_categories';
@@ -116,7 +117,11 @@ export class SportService extends BaseService {
         };
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(data);
+      const { error } = await supabase.from(TABLE_NAME).insert({
+        ...data,
+        created_at: nowUtc(),
+        updated_at: nowUtc()
+      });
 
       if (error) {
         throw error;
@@ -157,7 +162,11 @@ export class SportService extends BaseService {
       // Start a transaction by inserting the sport first
       const { data: insertedSport, error: sportError } = await supabase
         .from(TABLE_NAME)
-        .insert(sportData)
+        .insert({
+          ...sportData,
+          created_at: nowUtc(),
+          updated_at: nowUtc()
+        })
         .select('id')
         .single();
 
@@ -318,7 +327,10 @@ export class SportService extends BaseService {
         }
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update({
+        ...data,
+        updated_at: nowUtc()
+      }).eq('id', data.id);
 
       if (error) {
         throw error;

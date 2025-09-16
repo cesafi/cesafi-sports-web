@@ -6,6 +6,8 @@ export const createFaqSchema = z.object({
   is_open: z.boolean().default(false),
   display_order: z.number().int().min(0, 'Display order must be a positive number'),
   is_active: z.boolean().default(true),
+  category: z.string().default('General'),
+  is_highlight: z.boolean().default(false),
 });
 
 export const updateFaqSchema = createFaqSchema.partial();

@@ -3,7 +3,7 @@
 import { VolunteersPaginationOptions } from '@/lib/types/volunteers';
 import { VolunteerService } from '@/services/volunteers';
 import { createVolunteerSchema, updateVolunteerSchema } from '@/lib/validations/volunteers';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { ServiceResponse } from '@/lib/types/base';
 
 export async function getPaginatedVolunteers(options: VolunteersPaginationOptions) {
@@ -32,7 +32,7 @@ export async function createVolunteer(data: unknown): Promise<ServiceResponse<un
 
   const result = await VolunteerService.insert(validationResult.data);
   if (result.success) {
-    revalidatePath('/admin/volunteers');
+    RevalidationHelper.revalidateVolunteers();
   }
   return result;
 }
@@ -51,7 +51,7 @@ export async function updateVolunteerById(data: unknown): Promise<ServiceRespons
 
   const result = await VolunteerService.updateById(validationResult.data);
   if (result.success) {
-    revalidatePath('/admin/volunteers');
+    RevalidationHelper.revalidateVolunteers();
   }
   return result;
 }
@@ -59,7 +59,7 @@ export async function updateVolunteerById(data: unknown): Promise<ServiceRespons
 export async function deleteVolunteerById(id: string) {
   const result = await VolunteerService.deleteById(id);
   if (result.success) {
-    revalidatePath('/admin/volunteers');
+    RevalidationHelper.revalidateVolunteers();
   }
   return result;
 }

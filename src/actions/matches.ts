@@ -9,7 +9,7 @@ import {
 import { MatchService } from '@/services/matches';
 import { createMatchSchema, updateMatchSchema } from '@/lib/validations/matches';
 import { ServiceResponse } from '@/lib/types/base';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
 export async function getPaginatedMatches(options: MatchPaginationOptions) {
   return await MatchService.getPaginated(options);
@@ -62,7 +62,7 @@ export async function createMatch(data: unknown): Promise<ServiceResponse<Match>
   const result = await MatchService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateMatches();
   }
 
   return result;
@@ -83,7 +83,7 @@ export async function createMatchWithParticipants(data: unknown, participantTeam
   const result = await MatchService.insertWithParticipants(validationResult.data, participantTeamIds);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateMatches();
   }
 
   return result;
@@ -104,7 +104,7 @@ export async function updateMatchById(data: unknown): Promise<ServiceResponse<Ma
   const result = await MatchService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateMatches();
   }
 
   return result;
@@ -114,7 +114,7 @@ export async function deleteMatchById(id: number) {
   const result = await MatchService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateMatches();
   }
 
   return result;

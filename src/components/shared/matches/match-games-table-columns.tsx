@@ -13,8 +13,8 @@ export const getMatchGamesTableColumns = (): TableColumn<GameWithDetails>[] => [
     render: (game: GameWithDetails) => (
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-          <Trophy className="text-primary h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <Trophy className="text-primary h-5 w-5" />
           </div>
         </div>
         <div className="min-w-0 flex-1">
@@ -35,11 +35,11 @@ export const getMatchGamesTableColumns = (): TableColumn<GameWithDetails>[] => [
     width: '15%',
     render: (game: GameWithDetails) => {
       if (game.start_at && game.end_at) {
-        return <Badge variant="default">Completed</Badge>;
+        return <Badge variant="secondary" style={{ backgroundColor: 'var(--color-emerald)' }}>Completed</Badge>;
       } else if (game.start_at) {
-        return <Badge variant="secondary">In Progress</Badge>;
+        return <Badge variant="secondary" style={{ backgroundColor: 'var(--color-amber)' }}>In Progress</Badge>;
       } else {
-        return <Badge variant="secondary">Scheduled</Badge>;
+        return <Badge variant="secondary" style={{ backgroundColor: 'var(--color-slate)' }}>Scheduled</Badge>;
       }
     }
   },
@@ -55,13 +55,13 @@ export const getMatchGamesTableColumns = (): TableColumn<GameWithDetails>[] => [
             <div className="flex items-center space-x-2">
               <Play className="h-3 w-3 text-green-600" />
               <span className="text-xs text-muted-foreground">Started:</span>
-              <span className="text-sm font-medium">{formatTableDate(game.start_at)}</span>
+              {formatTableDate(game.start_at)}
             </div>
             {game.end_at && (
               <div className="flex items-center space-x-2">
                 <Clock className="h-3 w-3 text-red-600" />
                 <span className="text-xs text-muted-foreground">Ended:</span>
-                <span className="text-sm">{formatTableDate(game.end_at)}</span>
+                {formatTableDate(game.end_at)}
               </div>
             )}
           </>

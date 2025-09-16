@@ -2,7 +2,7 @@
 
 import { SchoolsTeamService } from '@/services/schools-teams';
 import { createSchoolTeamSchema, updateSchoolTeamSchema } from '@/lib/validations/schools-teams';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { ServiceResponse } from '@/lib/types/base';
 
 // Context-based fetching methods
@@ -53,9 +53,8 @@ export async function createSchoolsTeam(data: unknown): Promise<ServiceResponse<
   const result = await SchoolsTeamService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/schools');
-    revalidatePath('/admin/dashboard/seasons');
-    revalidatePath('/admin/dashboard/sports');
+    RevalidationHelper.revalidateSchools();
+    RevalidationHelper.revalidateSeasons();
   }
 
   return result;
@@ -76,9 +75,8 @@ export async function updateSchoolsTeamById(data: unknown): Promise<ServiceRespo
   const result = await SchoolsTeamService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/schools');
-    revalidatePath('/admin/dashboard/seasons');
-    revalidatePath('/admin/dashboard/sports');
+    RevalidationHelper.revalidateSchools();
+    RevalidationHelper.revalidateSeasons();
   }
 
   return result;
@@ -88,9 +86,8 @@ export async function deleteSchoolsTeamById(id: string) {
   const result = await SchoolsTeamService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/schools');
-    revalidatePath('/admin/dashboard/seasons');
-    revalidatePath('/admin/dashboard/sports');
+    RevalidationHelper.revalidateSchools();
+    RevalidationHelper.revalidateSeasons();
   }
 
   return result;

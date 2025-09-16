@@ -4,7 +4,7 @@ import { GameScoreService } from '@/services/game-scores';
 import { createGameScoreSchema, updateGameScoreSchema } from '@/lib/validations/game-scores';
 import { ServiceResponse } from '@/lib/types/base';
 import { GameScore } from '@/lib/types/game-scores';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
 // Core context-based fetching actions
 export async function getGameScoresByGameId(gameId: number) {
@@ -35,7 +35,7 @@ export async function createGameScore(data: unknown): Promise<ServiceResponse<Ga
   const result = await GameScoreService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateGameScores();
   }
 
   return result;
@@ -56,7 +56,7 @@ export async function updateGameScoreById(data: unknown): Promise<ServiceRespons
   const result = await GameScoreService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateGameScores();
   }
 
   return result;
@@ -66,7 +66,7 @@ export async function deleteGameScoreById(id: number) {
   const result = await GameScoreService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateGameScores();
   }
 
   return result;

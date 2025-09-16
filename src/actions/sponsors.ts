@@ -3,7 +3,7 @@
 import { SponsorPaginationOptions } from '@/lib/types/sponsors';
 import { SponsorService } from '@/services/sponsors';
 import { createSponsorSchema, updateSponsorSchema } from '@/lib/validations/sponsors';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { ServiceResponse } from '@/lib/types/base';
 
 export async function getPaginatedSponsors(options: SponsorPaginationOptions) {
@@ -62,7 +62,7 @@ export async function createSponsor(data: unknown): Promise<ServiceResponse<unde
   const result = await SponsorService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/sponsors');
+    RevalidationHelper.revalidateSponsors();
   }
 
   return result;
@@ -83,7 +83,7 @@ export async function updateSponsorById(data: unknown): Promise<ServiceResponse<
   const result = await SponsorService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/sponsors');
+    RevalidationHelper.revalidateSponsors();
   }
 
   return result;
@@ -93,7 +93,7 @@ export async function deleteSponsorById(id: string) {
   const result = await SponsorService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/sponsors');
+    RevalidationHelper.revalidateSponsors();
   }
 
   return result;

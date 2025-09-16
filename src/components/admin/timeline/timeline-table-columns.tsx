@@ -1,6 +1,7 @@
 import { TableColumn } from '@/lib/types/table';
 import { Timeline } from '@/lib/types/timeline';
 import { Badge } from '@/components/ui/badge';
+import { formatTableDate } from '@/lib/utils/date';
 import { Eye, Edit, Trash2, Star, StarOff } from 'lucide-react';
 import Image from 'next/image';
 
@@ -52,30 +53,11 @@ export const timelineTableColumns: TableColumn<Timeline>[] = [
     header: 'Category',
     sortable: true,
     width: '120px',
-    render: (timeline) => {
-      const getCategoryColor = (category: string) => {
-        switch (category) {
-          case 'founding':
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-          case 'milestone':
-            return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-          case 'award':
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-          case 'expansion':
-            return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-          case 'achievement':
-            return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-          default:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-        }
-      };
-
-      return (
-        <Badge className={getCategoryColor(timeline.category)}>
-          {timeline.category.charAt(0).toUpperCase() + timeline.category.slice(1)}
-        </Badge>
-      );
-    }
+    render: (timeline) => (
+      <Badge className="bg-blue-100 text-blue-800 border border-blue-200">
+        {timeline.category.charAt(0).toUpperCase() + timeline.category.slice(1)}
+      </Badge>
+    )
   },
   {
     key: 'is_highlight',
@@ -98,8 +80,8 @@ export const timelineTableColumns: TableColumn<Timeline>[] = [
     sortable: true,
     width: '120px',
     render: (timeline) => (
-      <div className="text-xs text-muted-foreground">
-        {new Date(timeline.created_at).toLocaleDateString()}
+      <div className="text-sm text-muted-foreground">
+        {formatTableDate(timeline.created_at)}
       </div>
     )
   }
@@ -132,7 +114,7 @@ export const getTimelineActions = (
     label: 'Toggle Highlight',
     icon: <Star className="h-4 w-4" />,
     onClick: onToggleHighlight,
-    variant: 'ghost' as const,
+    variant: 'accent' as const,
     size: 'sm' as const
   },
   {
@@ -140,7 +122,7 @@ export const getTimelineActions = (
     label: 'Delete',
     icon: <Trash2 className="h-4 w-4" />,
     onClick: onDelete,
-    variant: 'destructive' as const,
+    variant: 'ghost' as const,
     size: 'sm' as const
   }
 ];

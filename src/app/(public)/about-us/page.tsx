@@ -2,11 +2,25 @@ import AboutUsFaq from '@/components/about-us/about-us-faq';
 import AboutUsArticles from '@/components/about-us/about-us-articles';
 import AboutUsArticlesLoading from '@/components/about-us/about-us-articles-loading';
 import CesafiTimeline from '@/components/about-us/cesafi-timeline';
+import { getAboutUsFaq } from '@/actions/faq';
+import { Faq } from '@/lib/types/faq';
 import { moderniz, roboto } from '@/lib/fonts';
 import Image from 'next/image';
 import { Suspense } from 'react';
 
-export default function AboutUsPage() {
+export default async function AboutUsPage() {
+  // Fetch About Us FAQs server-side
+  let aboutUsFaqs: Faq[] = [];
+  
+  try {
+    const faqResult = await getAboutUsFaq();
+    if (faqResult.success && 'data' in faqResult && Array.isArray(faqResult.data)) {
+      aboutUsFaqs = faqResult.data;
+    }
+  } catch (error) {
+    console.error('Error fetching About Us FAQ items:', error);
+    // aboutUsFaqs remains empty array
+  }
 
   return (
     <>
@@ -97,7 +111,7 @@ export default function AboutUsPage() {
       </section>
 
       {/* FAQ Section */}
-      <AboutUsFaq />
+      <AboutUsFaq initialFaqs={aboutUsFaqs} />
 
       {/* CESAFI Timeline Section */}
       <CesafiTimeline />

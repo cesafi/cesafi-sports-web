@@ -3,7 +3,7 @@
 import { PaginationOptions, ServiceResponse } from '@/lib/types/base';
 import { SeasonService } from '@/services/seasons';
 import { createSeasonSchema, updateSeasonSchema } from '@/lib/validations/seasons';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
 export async function getPaginatedSeasons(options: PaginationOptions) {
   return await SeasonService.getPaginated(options);
@@ -32,7 +32,7 @@ export async function createSeason(data: unknown): Promise<ServiceResponse<undef
   const result = await SeasonService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/seasons');
+    RevalidationHelper.revalidateSeasons();
   }
 
   return result;
@@ -53,7 +53,7 @@ export async function updateSeasonById(data: unknown): Promise<ServiceResponse<u
   const result = await SeasonService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/seasons');
+    RevalidationHelper.revalidateSeasons();
   }
 
   return result;
@@ -76,7 +76,7 @@ export async function deleteSeasonById(id: number) {
   const result = await SeasonService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/seasons');
+    RevalidationHelper.revalidateSeasons();
   }
 
   return result;

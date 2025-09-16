@@ -62,17 +62,17 @@ export function FaqTable({ initialData }: FaqTableProps) {
     setDeleteDialogOpen(true);
   }, []);
 
-  const handleToggleOpen = useCallback(
+  const handleToggleHighlight = useCallback(
     async (faq: Faq) => {
       try {
         await updateMutation.mutateAsync({
           id: faq.id,
-          data: { is_open: !faq.is_open }
+          data: { is_highlight: !faq.is_highlight }
         });
-        toast.success(`FAQ item ${faq.is_open ? 'closed' : 'opened'} by default`);
+        toast.success(`FAQ item ${faq.is_highlight ? 'removed from' : 'added to'} landing page highlights`);
       } catch (error) {
-        toast.error('Failed to toggle FAQ default state');
-        console.error('Error toggling FAQ default state:', error);
+        toast.error('Failed to toggle FAQ highlight status');
+        console.error('Error toggling FAQ highlight:', error);
       }
     },
     [updateMutation]
@@ -93,7 +93,7 @@ export function FaqTable({ initialData }: FaqTableProps) {
   };
 
   // Table actions
-  const actions = getFaqActions(handleView, handleEdit, handleDelete, handleToggleOpen);
+  const actions = getFaqActions(handleView, handleEdit, handleDelete, handleToggleHighlight);
 
   // Handle table state changes
   const handlePageChange = (page: number) => {
@@ -142,7 +142,8 @@ export function FaqTable({ initialData }: FaqTableProps) {
       setSelectedFaq(undefined);
       setFormDialogOpen(true);
     },
-    icon: <Plus className="h-4 w-4" />
+    icon: <Plus className="h-4 w-4" />,
+    variant: 'primary' as const
   };
 
   return (

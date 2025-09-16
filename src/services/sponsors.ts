@@ -7,6 +7,7 @@ import {
 import { BaseService } from './base';
 import { Sponsor, SponsorInsert, SponsorUpdate } from '@/lib/types/sponsors';
 import CloudinaryService from './cloudinary';
+import { nowUtc } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'sponsors';
 
@@ -107,7 +108,11 @@ export class SponsorService extends BaseService {
     try {
       const supabase = await this.getClient();
 
-      const { error } = await supabase.from(TABLE_NAME).insert(data);
+      const { error } = await supabase.from(TABLE_NAME).insert({
+        ...data,
+        created_at: nowUtc(),
+        updated_at: nowUtc()
+      });
 
       if (error) {
         throw error;
@@ -126,7 +131,10 @@ export class SponsorService extends BaseService {
       }
 
       const supabase = await this.getClient();
-      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update({
+        ...data,
+        updated_at: nowUtc()
+      }).eq('id', data.id);
 
       if (error) {
         throw error;

@@ -14,6 +14,7 @@ import {
   createSportsSeasonsStageSchema,
   updateSportsSeasonsStageSchema
 } from '@/lib/validations/sports-seasons-stages';
+import { nowUtc } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'sports_seasons_stages';
 const SPORTS_CATEGORIES_TABLE = 'sports_categories';
@@ -207,7 +208,11 @@ export class SportsSeasonsStageService extends BaseService {
         return { success: false, error: 'Referenced season does not exist.' };
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(data);
+      const { error } = await supabase.from(TABLE_NAME).insert({
+        ...data,
+        created_at: nowUtc(),
+        updated_at: nowUtc()
+      });
 
       if (error) {
         throw error;
@@ -306,7 +311,10 @@ export class SportsSeasonsStageService extends BaseService {
         }
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update({
+        ...data,
+        updated_at: nowUtc()
+      }).eq('id', data.id);
 
       if (error) {
         throw error;

@@ -16,7 +16,7 @@ import { sendContactEmail } from '@/lib/actions/contact';
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
-  subject: z.enum(['general', 'media', 'technical', 'other']),
+  subject: z.enum(['general', 'media', 'technical', 'partnership', 'other']),
   message: z.string().min(10, 'Message must be at least 10 characters'),
 });
 
@@ -26,6 +26,7 @@ const subjectOptions = [
   { value: 'general', label: 'General Inquiry' },
   { value: 'media', label: 'Media & Press' },
   { value: 'technical', label: 'Technical Support' },
+  { value: 'partnership', label: 'Partnership' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -140,6 +141,7 @@ export default function ContactForm() {
         {/* Submit Button */}
         <Button
           type="submit"
+          variant="primary"
           disabled={isSubmitting}
           className="w-full"
           size="lg"

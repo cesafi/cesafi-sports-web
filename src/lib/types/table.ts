@@ -21,7 +21,7 @@ export interface TableAction<T extends BaseEntity> {
   label: string;
   icon: ReactNode;
   onClick: (item: T) => void;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?: 'default' | 'primary' | 'secondary' | 'accent' | 'destructive' | 'outline' | 'primary-outline' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   disabled?: (item: T) => boolean;
   hidden?: (item: T) => boolean;

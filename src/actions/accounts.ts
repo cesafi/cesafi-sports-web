@@ -7,6 +7,7 @@ import { PaginationOptions } from '@/lib/types/base';
 import { checkAuthAction } from './auth';
 import { UserRole } from '@/lib/types/auth';
 import { TableFilters } from '@/lib/types/table';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import crypto from 'crypto';
 
 export async function getAllAccouns(): Promise<{ success: boolean; data?: AccountEntity[]; error?: string }> {
@@ -75,6 +76,10 @@ export async function updateAccount(userId: string, accountData: UpdateAccountFo
 
     const result = await AccountsService.updateAccount(userId, accountData);
 
+    if (result.success) {
+      RevalidationHelper.revalidateAdminDashboard(); // Account changes affect admin dashboard
+    }
+
     return result;
   } catch {
     return {
@@ -87,6 +92,11 @@ export async function updateAccount(userId: string, accountData: UpdateAccountFo
 export async function createAccount(accountData: CreateAccountFormData): Promise<{ success: boolean; data?: AccountEntity; error?: string }> {
   try {
     const result = await AccountsService.createAccount(accountData);
+    
+    if (result.success) {
+      RevalidationHelper.revalidateAdminDashboard(); // New accounts affect admin dashboard
+    }
+    
     return result;
   } catch (error) {
     return {
@@ -99,6 +109,11 @@ export async function createAccount(accountData: CreateAccountFormData): Promise
 export async function updateAccountRole(userId: string, newRole: string): Promise<{ success: boolean; data?: AccountEntity; error?: string }> {
   try {
     const result = await AccountsService.updateAccountRole(userId, newRole as UserRole);
+    
+    if (result.success) {
+      RevalidationHelper.revalidateAdminDashboard(); // Role changes affect admin dashboard
+    }
+    
     return result;
   } catch (error) {
     return {
@@ -123,6 +138,11 @@ export async function resetPassword(userId: string, newPassword: string): Promis
 export async function deleteAccount(userId: string): Promise<{ success: boolean; data?: undefined; error?: string }> {
   try {
     const result = await AccountsService.deleteAccount(userId);
+    
+    if (result.success) {
+      RevalidationHelper.revalidateAdminDashboard(); // Account deletion affects admin dashboard
+    }
+    
     return result;
   } catch (error) {
     return {

@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { HeroSectionService } from '@/services/hero-section';
 import { HeroSectionLiveInsert, HeroSectionLiveUpdate, HeroSectionLivePaginationOptions } from '@/lib/types/hero-section';
 import { createHeroSectionLiveSchema, updateHeroSectionLiveSchema } from '@/lib/validations/hero-section';
@@ -64,8 +64,7 @@ export async function createHeroSectionLive(data: HeroSectionLiveInsert) {
   try {
     const validatedData = createHeroSectionLiveSchema.parse(data);
     const result = await HeroSectionService.insert(validatedData);
-    revalidatePath('/admin/hero-section');
-    revalidatePath('/'); // Revalidate home page
+    RevalidationHelper.revalidateHeroSection();
     return result;
   } catch (error: unknown) {
     console.error('Error creating hero section live:', error);
@@ -80,8 +79,7 @@ export async function updateHeroSectionLive(id: number, data: HeroSectionLiveUpd
   try {
     const validatedData = updateHeroSectionLiveSchema.parse(data);
     const result = await HeroSectionService.updateById(id, validatedData);
-    revalidatePath('/admin/hero-section');
-    revalidatePath('/'); // Revalidate home page
+    RevalidationHelper.revalidateHeroSection();
     return result;
   } catch (error: unknown) {
     console.error(`Error updating hero section live with ID ${id}:`, error);
@@ -95,8 +93,7 @@ export async function updateHeroSectionLive(id: number, data: HeroSectionLiveUpd
 export async function deleteHeroSectionLive(id: number) {
   try {
     const result = await HeroSectionService.deleteById(id);
-    revalidatePath('/admin/hero-section');
-    revalidatePath('/'); // Revalidate home page
+    RevalidationHelper.revalidateHeroSection();
     return result;
   } catch (error) {
     console.error(`Error deleting hero section live with ID ${id}:`, error);

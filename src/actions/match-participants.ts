@@ -4,6 +4,7 @@ import { MatchParticipantService } from '@/services/match-participants';
 import { createMatchParticipantSchema, updateMatchParticipantSchema } from '@/lib/validations/match-participants';
 import { ServiceResponse } from '@/lib/types/base';
 import { MatchParticipant } from '@/lib/types/match-participants';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { revalidatePath } from 'next/cache';
 
 // Core context-based fetching actions
@@ -35,8 +36,7 @@ export async function createMatchParticipant(data: unknown): Promise<ServiceResp
   const result = await MatchParticipantService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
-    revalidatePath('/admin/dashboard/schools');
+    RevalidationHelper.revalidateMatchParticipants();
   }
 
   return result;
@@ -57,8 +57,7 @@ export async function updateMatchParticipantById(data: unknown): Promise<Service
   const result = await MatchParticipantService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
-    revalidatePath('/admin/dashboard/schools');
+    RevalidationHelper.revalidateMatchParticipants();
   }
 
   return result;
@@ -68,8 +67,7 @@ export async function deleteMatchParticipantById(id: number) {
   const result = await MatchParticipantService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
-    revalidatePath('/admin/dashboard/schools');
+    RevalidationHelper.revalidateMatchParticipants();
   }
 
   return result;
@@ -90,13 +88,11 @@ export async function updateMatchScores(
   const result = await MatchParticipantService.updateMatchScores(scoreUpdates);
 
   if (result.success) {
-    // Revalidate relevant paths
-    revalidatePath('/admin/dashboard/matches');
-    revalidatePath('/admin/dashboard/schools');
-    // Also revalidate any match detail pages
+    RevalidationHelper.revalidateMatchParticipants();
+    // Also revalidate specific match detail pages
     if (scoreUpdates.length > 0) {
       const matchId = scoreUpdates[0].match_id;
-      revalidatePath(`/admin/dashboard/matches/${matchId}`);
+      revalidatePath(`/admin/matches/${matchId}`);
     }
   }
 

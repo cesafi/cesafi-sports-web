@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { moderniz, roboto } from '@/lib/fonts';
+import { navItems } from '@/lib/constants/navigation';
+import { RealTimeClock } from '@/components/real-time-clock';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -32,46 +34,16 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className={`${moderniz.className} text-lg font-semibold`}>Quick Links</h3>
             <ul className={`${roboto.className} space-y-2 text-sm`}>
-              <li>
-                <Link
-                  href="/sports"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Sports
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/schools"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Schools
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/news"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  News
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/gallery"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Gallery
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about-us"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  About Us
-                </Link>
-              </li>
+              {navItems.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -103,9 +75,18 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="border-border mt-12 border-t pt-8">
           <div className="flex flex-col items-center justify-between space-y-4 text-center md:flex-row md:space-y-0">
-            <p className={`${roboto.className} text-muted-foreground text-sm`}>
-              © {currentYear} Cebu Schools Athletic Foundation. All rights reserved.
-            </p>
+            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+              <p className={`${roboto.className} text-muted-foreground text-sm`}>
+                © {currentYear} Cebu Schools Athletic Foundation. All rights reserved.
+              </p>
+              <div className="hidden md:block w-px h-4 bg-border" />
+              <RealTimeClock 
+                className="text-muted-foreground"
+                showIcon={true}
+                showTimezone={false}
+                size="sm"
+              />
+            </div>
             <div className="flex space-x-6">
               <Link
                 href="/privacy-policy"

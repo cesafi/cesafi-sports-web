@@ -7,6 +7,7 @@ import {
   SchoolsTeamUpdate
 } from '@/lib/types/schools-teams';
 import { BaseService } from './base';
+import { nowUtc } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'schools_teams';
 const SCHOOLS_TABLE = 'schools';
@@ -228,7 +229,11 @@ export class SchoolsTeamService extends BaseService {
         return { success: false, error: 'Referenced sport does not exist.' };
       }
 
-      const { error } = await supabase.from(TABLE_NAME).insert(data);
+      const { error } = await supabase.from(TABLE_NAME).insert({
+        ...data,
+        created_at: nowUtc(),
+        updated_at: nowUtc()
+      });
 
       if (error) {
         throw error;
@@ -325,7 +330,10 @@ export class SchoolsTeamService extends BaseService {
         }
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update({
+        ...data,
+        updated_at: nowUtc()
+      }).eq('id', data.id);
 
       if (error) {
         throw error;

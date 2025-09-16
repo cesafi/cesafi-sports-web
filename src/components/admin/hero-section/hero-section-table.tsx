@@ -44,19 +44,20 @@ export function HeroSectionTable({ initialData }: HeroSectionTableProps) {
   const pageCount = (heroSectionData?.success && 'data' in heroSectionData ? heroSectionData.data?.pageCount : 0) || initialData?.pageCount || 0;
 
   const columns = getHeroSectionColumns();
-  const actions = getHeroSectionActions().map(action => ({
-    ...action,
-    onClick: (hero: HeroSectionLive) => {
+  const actions = getHeroSectionActions(
+    (hero: HeroSectionLive) => {
       setSelectedHero(hero);
-      if (action.key === 'view') {
-        setIsViewDialogOpen(true);
-      } else if (action.key === 'edit') {
-        setIsCreateDialogOpen(true);
-      } else if (action.key === 'delete') {
-        setIsDeleteDialogOpen(true);
-      }
+      setIsViewDialogOpen(true);
     },
-  }));
+    (hero: HeroSectionLive) => {
+      setSelectedHero(hero);
+      setIsCreateDialogOpen(true);
+    },
+    (hero: HeroSectionLive) => {
+      setSelectedHero(hero);
+      setIsDeleteDialogOpen(true);
+    }
+  );
 
   const handleDelete = async () => {
     if (selectedHero) {

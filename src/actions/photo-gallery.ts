@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { PhotoGalleryService } from '@/services/photo-gallery';
 import { PhotoGalleryInsert, PhotoGalleryUpdate, PhotoGalleryPaginationOptions } from '@/lib/types/photo-gallery';
 import { createPhotoGallerySchema, updatePhotoGallerySchema } from '@/lib/validations/photo-gallery';
@@ -64,8 +64,7 @@ export async function createPhotoGallery(data: PhotoGalleryInsert) {
   try {
     const validatedData = createPhotoGallerySchema.parse(data);
     const result = await PhotoGalleryService.insert(validatedData);
-    revalidatePath('/admin/photo-gallery');
-    revalidatePath('/about-us'); // Revalidate public page
+    RevalidationHelper.revalidatePhotoGallery();
     return result;
   } catch (error: unknown) {
     console.error('Error creating photo gallery:', error);
@@ -80,8 +79,7 @@ export async function updatePhotoGallery(id: number, data: PhotoGalleryUpdate) {
   try {
     const validatedData = updatePhotoGallerySchema.parse(data);
     const result = await PhotoGalleryService.updateById(id, validatedData);
-    revalidatePath('/admin/photo-gallery');
-    revalidatePath('/about-us'); // Revalidate public page
+    RevalidationHelper.revalidatePhotoGallery();
     return result;
   } catch (error: unknown) {
     console.error(`Error updating photo gallery with ID ${id}:`, error);
@@ -95,8 +93,7 @@ export async function updatePhotoGallery(id: number, data: PhotoGalleryUpdate) {
 export async function deletePhotoGallery(id: number) {
   try {
     const result = await PhotoGalleryService.deleteById(id);
-    revalidatePath('/admin/photo-gallery');
-    revalidatePath('/about-us'); // Revalidate public page
+    RevalidationHelper.revalidatePhotoGallery();
     return result;
   } catch (error) {
     console.error(`Error deleting photo gallery with ID ${id}:`, error);

@@ -3,6 +3,7 @@ import { ServiceResponse } from '../lib/types/base';
 import { GameScoreDetailedView, GameScore } from '../lib/types/game-scores';
 import { BaseService } from './base';
 import { createGameScoreSchema, updateGameScoreSchema } from '@/lib/validations/game-scores';
+import { nowUtc } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'game_scores';
 const GAMES_TABLE = 'games';
@@ -91,7 +92,11 @@ export class GameScoreService extends BaseService {
         return { success: false, error: 'Referenced match participant does not exist.' };
       }
 
-      const { data: newGameScore, error } = await supabase.from(TABLE_NAME).insert(data).select().single();
+      const { data: newGameScore, error } = await supabase.from(TABLE_NAME).insert({
+        ...data,
+        created_at: nowUtc(),
+        updated_at: nowUtc()
+      }).select().single();
 
       if (error) {
         throw error;
@@ -145,7 +150,10 @@ export class GameScoreService extends BaseService {
         }
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update({
+        ...data,
+        updated_at: nowUtc()
+      }).eq('id', data.id);
 
       if (error) {
         throw error;

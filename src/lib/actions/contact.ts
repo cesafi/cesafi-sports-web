@@ -8,7 +8,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const contactSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Please enter a valid email address'),
-    subject: z.enum(['general', 'media', 'technical', 'other']),
+    subject: z.enum(['general', 'media', 'technical', 'partnership', 'other']),
     message: z.string().min(10, 'Message must be at least 10 characters'),
 });
 
@@ -16,6 +16,7 @@ const subjectLabels = {
     general: 'General Inquiry',
     media: 'Media & Press',
     technical: 'Technical Support',
+    partnership: 'Partnership',
     other: 'Other',
 } as const;
 

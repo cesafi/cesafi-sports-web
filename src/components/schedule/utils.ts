@@ -1,5 +1,5 @@
 import { ScheduleMatch } from '@/lib/types/matches';
-import { isYesterday, formatDate } from '@/lib/utils/date-formatting';
+import { isYesterday, formatDate } from '@/lib/utils/date';
 
 export interface ScheduleDateGroup {
   date: string;
@@ -17,7 +17,7 @@ export const getSchoolLogo = (_schoolAbbreviation: string): string => {
   return '/img/cesafi-logo.webp';
 };
 
-// Date formatting utilities are now in @/lib/utils/date-formatting
+// Date formatting utilities are in @/lib/utils/date
 
 export const isUpcoming = (date: Date): boolean => {
   const now = new Date();

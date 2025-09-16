@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   getPaginatedFaq, 
   getAllFaq, 
+  getHighlightedFaq,
+  getAboutUsFaq,
   getFaqById, 
   createFaq, 
   updateFaq, 
@@ -36,6 +38,28 @@ export function useAllFaq() {
   return useQuery({
     queryKey: faqKeys.allItems(),
     queryFn: getAllFaq,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+/**
+ * Hook to fetch highlighted FAQ items (for landing page)
+ */
+export function useHighlightedFaq() {
+  return useQuery({
+    queryKey: [...faqKeys.all, 'highlighted'] as const,
+    queryFn: getHighlightedFaq,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+/**
+ * Hook to fetch About Us FAQ items (General and Events categories)
+ */
+export function useAboutUsFaq() {
+  return useQuery({
+    queryKey: [...faqKeys.all, 'aboutUs'] as const,
+    queryFn: getAboutUsFaq,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }

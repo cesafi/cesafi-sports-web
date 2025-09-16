@@ -3,7 +3,7 @@
 import { PaginationOptions, ServiceResponse } from '@/lib/types/base';
 import { SportsSeasonsStageService } from '@/services/sports-seasons-stages';
 import { createSportsSeasonsStageSchema, updateSportsSeasonsStageSchema } from '@/lib/validations/sports-seasons-stages';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
 export async function getPaginatedSportsSeasonsStages(options: PaginationOptions) {
   return await SportsSeasonsStageService.getPaginated(options);
@@ -36,7 +36,7 @@ export async function createSportsSeasonsStage(data: unknown): Promise<ServiceRe
   const result = await SportsSeasonsStageService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/league-stage');
+    RevalidationHelper.revalidateLeagueStage();
   }
 
   return result;
@@ -57,7 +57,7 @@ export async function updateSportsSeasonsStageById(data: unknown): Promise<Servi
   const result = await SportsSeasonsStageService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/league-stage');
+    RevalidationHelper.revalidateLeagueStage();
   }
 
   return result;
@@ -67,7 +67,7 @@ export async function deleteSportsSeasonsStageById(id: number) {
   const result = await SportsSeasonsStageService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/league-stage');
+    RevalidationHelper.revalidateLeagueStage();
   }
 
   return result;

@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { FaqService } from '@/services/faq';
 import { FaqInsert, FaqUpdate, FaqPaginationOptions } from '@/lib/types/faq';
 import { createFaqSchema, updateFaqSchema } from '@/lib/validations/faq';
@@ -23,11 +23,37 @@ export async function getPaginatedFaq(options: FaqPaginationOptions) {
  */
 export async function getAllFaq() {
   try {
-    const faqItems = await FaqService.getAll();
-    return { success: true, data: faqItems };
+    const result = await FaqService.getAllActive();
+    return result;
   } catch (error) {
     console.error('Error fetching all FAQ:', error);
     return { success: false, error: 'Failed to fetch FAQ items' };
+  }
+}
+
+/**
+ * Get highlighted FAQ items (for landing page)
+ */
+export async function getHighlightedFaq() {
+  try {
+    const result = await FaqService.getHighlighted();
+    return result;
+  } catch (error) {
+    console.error('Error fetching highlighted FAQ:', error);
+    return { success: false, error: 'Failed to fetch highlighted FAQ items' };
+  }
+}
+
+/**
+ * Get FAQ items for About Us page (General and Events categories)
+ */
+export async function getAboutUsFaq() {
+  try {
+    const result = await FaqService.getByCategories(['General', 'Events', 'Organization']);
+    return result;
+  } catch (error) {
+    console.error('Error fetching About Us FAQ:', error);
+    return { success: false, error: 'Failed to fetch About Us FAQ items' };
   }
 }
 
@@ -36,11 +62,8 @@ export async function getAllFaq() {
  */
 export async function getFaqById(id: number) {
   try {
-    const faq = await FaqService.getById(id);
-    if (!faq) {
-      return { success: false, error: 'FAQ item not found' };
-    }
-    return { success: true, data: faq };
+    const result = await FaqService.getById(id);
+    return result;
   } catch (error) {
     console.error('Error fetching FAQ by ID:', error);
     return { success: false, error: 'Failed to fetch FAQ item' };
@@ -58,9 +81,7 @@ export async function createFaq(data: FaqInsert) {
     const faq = await FaqService.insert(validatedData);
     
     // Revalidate relevant paths
-    revalidatePath('/admin/faq');
-    revalidatePath('/head-writer/faq');
-    revalidatePath('/about-us');
+    RevalidationHelper.revalidateFAQ();
     
     return { success: true, data: faq };
   } catch (error) {
@@ -83,9 +104,7 @@ export async function updateFaq(id: number, data: FaqUpdate) {
     const faq = await FaqService.updateById(id, validatedData);
     
     // Revalidate relevant paths
-    revalidatePath('/admin/faq');
-    revalidatePath('/head-writer/faq');
-    revalidatePath('/about-us');
+    RevalidationHelper.revalidateFAQ();
     
     return { success: true, data: faq };
   } catch (error) {
@@ -105,9 +124,7 @@ export async function deleteFaq(id: number) {
     await FaqService.deleteById(id);
     
     // Revalidate relevant paths
-    revalidatePath('/admin/faq');
-    revalidatePath('/head-writer/faq');
-    revalidatePath('/about-us');
+    RevalidationHelper.revalidateFAQ();
     
     return { success: true };
   } catch (error) {
@@ -124,9 +141,7 @@ export async function reorderFaq(faqIds: number[]) {
     await FaqService.reorderFaq(faqIds);
     
     // Revalidate relevant paths
-    revalidatePath('/admin/faq');
-    revalidatePath('/head-writer/faq');
-    revalidatePath('/about-us');
+    RevalidationHelper.revalidateFAQ();
     
     return { success: true };
   } catch (error) {

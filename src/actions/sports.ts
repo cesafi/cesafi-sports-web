@@ -4,7 +4,7 @@ import { PaginationOptions, ServiceResponse } from '@/lib/types/base';
 import { SportCategoryFormData } from '@/lib/types/sports';
 import { SportService } from '@/services/sports';
 import { createSportSchema, updateSportSchema } from '@/lib/validations/sports';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
 export async function getPaginatedSports(options: PaginationOptions) {
   try {
@@ -50,7 +50,7 @@ export async function createSport(data: unknown): Promise<ServiceResponse<undefi
 
   const result = await SportService.insert(validationResult.data);
   if (result.success) {
-    revalidatePath('/admin/sports');
+    RevalidationHelper.revalidateSports();
   }
   return result;
 }
@@ -72,8 +72,7 @@ export async function createSportWithCategories(
 
   const result = await SportService.insertWithCategories(validationResult.data, categories);
   if (result.success) {
-    revalidatePath('/admin/sports');
-    revalidatePath('/admin/sport-categories');
+    RevalidationHelper.revalidateSports();
   }
   return result;
 }
@@ -84,8 +83,7 @@ export async function addCategoriesToExistingSport(
 ) {
   const result = await SportService.addCategoriesToExistingSport(sportId, categories);
   if (result.success) {
-    revalidatePath('/admin/sports');
-    revalidatePath('/admin/sport-categories');
+    RevalidationHelper.revalidateSports();
   }
   return result;
 }
@@ -104,7 +102,7 @@ export async function updateSportById(data: unknown): Promise<ServiceResponse<un
 
   const result = await SportService.updateById(validationResult.data);
   if (result.success) {
-    revalidatePath('/admin/sports');
+    RevalidationHelper.revalidateSports();
   }
   return result;
 }
@@ -112,7 +110,7 @@ export async function updateSportById(data: unknown): Promise<ServiceResponse<un
 export async function deleteSportById(id: number) {
   const result = await SportService.deleteById(id);
   if (result.success) {
-    revalidatePath('/admin/sports');
+    RevalidationHelper.revalidateSports();
   }
   return result;
 }

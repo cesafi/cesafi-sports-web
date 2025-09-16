@@ -16,6 +16,7 @@ import {
 } from '../ui/dropdown-menu';
 import { useLogout } from '@/hooks/use-auth';
 import { SmartBreadcrumbs } from '../shared';
+import { DashboardClock } from '../real-time-clock';
 
 interface DashboardHeaderProps {
   userEmail?: string;
@@ -69,8 +70,10 @@ export default function DashboardHeader({
         />
       </div>
 
-      {/* Right side - Theme switcher and User menu */}
+      {/* Right side - Clock, Theme switcher and User menu */}
       <div className="flex items-center gap-4">
+        <DashboardClock className="text-muted-foreground" />
+        <div className="w-px h-6 bg-border" />
         <ThemeSwitcher />
 
         {isMounted ? (

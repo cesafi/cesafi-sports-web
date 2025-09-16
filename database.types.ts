@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -113,30 +113,36 @@ export type Database = {
       faq: {
         Row: {
           answer: string
+          category: string
           created_at: string
           display_order: number
           id: number
           is_active: boolean
+          is_highlight: boolean
           is_open: boolean
           question: string
           updated_at: string | null
         }
         Insert: {
           answer: string
+          category?: string
           created_at?: string
           display_order: number
           id?: number
           is_active?: boolean
+          is_highlight?: boolean
           is_open: boolean
           question: string
           updated_at?: string | null
         }
         Update: {
           answer?: string
+          category?: string
           created_at?: string
           display_order?: number
           id?: number
           is_active?: boolean
+          is_highlight?: boolean
           is_open?: boolean
           question?: string
           updated_at?: string | null

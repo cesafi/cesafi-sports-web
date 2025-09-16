@@ -4,7 +4,7 @@ import { PaginationOptions, ServiceResponse } from '@/lib/types/base';
 import { GameService } from '@/services/games';
 import { createGameSchema, updateGameSchema } from '@/lib/validations/games';
 import { Game } from '@/lib/types/games';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
 export async function getPaginatedGames(options: PaginationOptions) {
   return await GameService.getPaginated(options);
@@ -41,7 +41,7 @@ export async function createGame(data: unknown): Promise<ServiceResponse<Game>> 
   const result = await GameService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateGames();
   }
 
   return result;
@@ -62,7 +62,7 @@ export async function updateGameById(data: unknown): Promise<ServiceResponse<Gam
   const result = await GameService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateGames();
   }
 
   return result;
@@ -72,7 +72,7 @@ export async function deleteGameById(id: number) {
   const result = await GameService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/matches');
+    RevalidationHelper.revalidateGames();
   }
 
   return result;

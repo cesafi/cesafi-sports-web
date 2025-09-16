@@ -3,7 +3,7 @@
 import { PaginationOptions, FilterValue } from '@/lib/types/base';
 import { TimelineInsert, TimelineUpdate } from '@/lib/types/timeline';
 import { TimelineService } from '@/services/timeline';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
 export async function getPaginatedTimeline(
   options: PaginationOptions<Record<string, FilterValue>>
@@ -55,9 +55,7 @@ export async function createTimeline(data: TimelineInsert) {
   const result = await TimelineService.insert(data);
 
   if (result.success) {
-    revalidatePath('/admin/timeline');
-    revalidatePath('/head-writer/timeline');
-    revalidatePath('/about-us');
+    RevalidationHelper.revalidateTimeline();
   }
 
   return result;
@@ -67,9 +65,7 @@ export async function updateTimelineById(data: TimelineUpdate) {
   const result = await TimelineService.updateById(data);
 
   if (result.success) {
-    revalidatePath('/admin/timeline');
-    revalidatePath('/head-writer/timeline');
-    revalidatePath('/about-us');
+    RevalidationHelper.revalidateTimeline();
   }
 
   return result;
@@ -79,9 +75,7 @@ export async function deleteTimelineById(id: number) {
   const result = await TimelineService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/timeline');
-    revalidatePath('/head-writer/timeline');
-    revalidatePath('/about-us');
+    RevalidationHelper.revalidateTimeline();
   }
 
   return result;
@@ -91,9 +85,7 @@ export async function reorderTimeline(ids: number[]) {
   const result = await TimelineService.reorderTimeline(ids);
 
   if (result.success) {
-    revalidatePath('/admin/timeline');
-    revalidatePath('/head-writer/timeline');
-    revalidatePath('/about-us');
+    RevalidationHelper.revalidateTimeline();
   }
 
   return result;

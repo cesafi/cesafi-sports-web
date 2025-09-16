@@ -4,7 +4,8 @@ import { PaginationOptions, ServiceResponse } from '@/lib/types/base';
 import { DepartmentService } from '@/services/departments';
 import { createDepartmentSchema, updateDepartmentSchema } from '@/lib/validations/departments';
 import { Department } from '@/lib/types/departments';
-import { revalidatePath } from 'next/cache';
+// import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
 export async function getPaginatedDepartments(options: PaginationOptions) {
   return await DepartmentService.getPaginated(options);
@@ -33,7 +34,7 @@ export async function createDepartment(data: unknown): Promise<ServiceResponse<D
   const result = await DepartmentService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/departments');
+    RevalidationHelper.revalidateDepartments();
   }
 
   return result;
@@ -54,7 +55,7 @@ export async function updateDepartmentById(data: unknown): Promise<ServiceRespon
   const result = await DepartmentService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/departments');
+    RevalidationHelper.revalidateDepartments();
   }
 
   return result;
@@ -64,7 +65,7 @@ export async function deleteDepartmentById(id: number) {
   const result = await DepartmentService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/departments');
+    RevalidationHelper.revalidateDepartments();
   }
 
   return result;

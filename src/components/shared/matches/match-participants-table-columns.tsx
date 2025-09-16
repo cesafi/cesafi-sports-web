@@ -43,7 +43,7 @@ export const getMatchParticipantsTableColumns = (): TableColumn<MatchParticipant
     header: 'Status',
     sortable: false,
     render: (_participant) => (
-      <Badge variant="default">
+      <Badge variant="secondary" style={{ backgroundColor: 'var(--color-emerald)' }}>
         Active
       </Badge>
     )
@@ -53,7 +53,7 @@ export const getMatchParticipantsTableColumns = (): TableColumn<MatchParticipant
     header: 'Joined Match',
     sortable: true,
     render: (participant) => (
-      <div className="text-sm">
+      <div className="text-sm text-muted-foreground">
         {formatTableDate(participant.created_at)}
       </div>
     )

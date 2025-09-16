@@ -22,6 +22,7 @@ export const PUBLIC_ROUTES = [
   '/about-us',
   '/articles',
   '/contact',
+  '/faq',
   '/news',
   '/news/[slug]', // Dynamic route pattern
   '/schedule',
@@ -96,6 +97,7 @@ export const ROUTE_PATTERNS = {
     /^\/about-us$/,
     /^\/articles$/,
     /^\/contact$/,
+    /^\/faq$/,
     /^\/news$/,
     /^\/news\/[^\/]+$/, // /news/[slug]
     /^\/schedule$/,

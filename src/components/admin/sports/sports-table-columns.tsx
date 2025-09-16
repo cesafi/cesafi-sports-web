@@ -1,7 +1,7 @@
 import { TableColumn } from '@/lib/types/table';
 import { Sport } from '@/lib/types/sports';
 import { formatTableDate } from '@/lib/utils/date';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Trophy } from 'lucide-react';
 import { getCategoryCountBySportId } from '@/actions/sport-categories';
 import { useEffect, useState } from 'react';
 
@@ -23,19 +23,26 @@ const CategoryCount = ({ sportId }: { sportId: number }) => {
     fetchCount();
   }, [sportId]);
 
-  return <div className="text-muted-foreground text-sm">Categories: {count ?? '...'}</div>;
+  return <div className="text-xs text-muted-foreground">Categories: {count ?? '...'}</div>;
 };
 
 export const getSportsTableColumns = (): TableColumn<Sport>[] => [
   {
-    key: 'name',
-    header: 'Sport Name',
-    sortable: true,
+    key: 'sportInfo',
+    header: 'Sport Information',
+    sortable: false,
     width: '40%',
     render: (sport: Sport) => (
-      <div className="flex flex-col space-y-1">
-        <div className="text-foreground font-medium">{sport.name}</div>
-        <CategoryCount sportId={sport.id} />
+      <div className="flex items-center space-x-3">
+        <div className="flex-shrink-0">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <Trophy className="text-primary h-5 w-5" />
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium text-foreground truncate">{sport.name}</div>
+          <CategoryCount sportId={sport.id} />
+        </div>
       </div>
     )
   },
@@ -45,7 +52,9 @@ export const getSportsTableColumns = (): TableColumn<Sport>[] => [
     sortable: true,
     width: '30%',
     render: (sport: Sport) => (
-      <div className="text-muted-foreground text-sm">{formatTableDate(sport.created_at)}</div>
+      <div className="text-sm text-muted-foreground">
+        {formatTableDate(sport.created_at)}
+      </div>
     )
   },
   {
@@ -54,7 +63,9 @@ export const getSportsTableColumns = (): TableColumn<Sport>[] => [
     sortable: true,
     width: '30%',
     render: (sport: Sport) => (
-      <div className="text-muted-foreground text-sm">{formatTableDate(sport.updated_at)}</div>
+      <div className="text-sm text-muted-foreground">
+        {formatTableDate(sport.updated_at)}
+      </div>
     )
   }
 ];

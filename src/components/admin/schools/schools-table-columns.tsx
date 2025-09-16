@@ -1,4 +1,4 @@
-import { Calendar, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { TableColumn } from '@/lib/types/table';
 import { School } from '@/lib/types/schools';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,9 @@ import Image from 'next/image';
 
 export const getSchoolsTableColumns = (): TableColumn<School>[] => [
   {
-    key: 'name',
-    header: 'School Name',
-    sortable: true,
+    key: 'schoolInfo',
+    header: 'School Information',
+    sortable: false,
     width: '45%',
     render: (school: School) => (
       <div className="flex items-center space-x-3">
@@ -35,8 +35,8 @@ export const getSchoolsTableColumns = (): TableColumn<School>[] => [
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{school.name}</p>
-          <p className="text-muted-foreground truncate text-xs">{school.abbreviation}</p>
+          <div className="text-sm font-medium text-foreground truncate">{school.name}</div>
+          <div className="text-xs text-muted-foreground">{school.abbreviation}</div>
         </div>
       </div>
     )
@@ -47,7 +47,7 @@ export const getSchoolsTableColumns = (): TableColumn<School>[] => [
     sortable: true,
     width: '20%',
     render: (school: School) => (
-      <Badge variant="secondary" className="font-mono capitalize">
+      <Badge className="bg-blue-100 text-blue-800 border-blue-200 border font-mono">
         {school.abbreviation}
       </Badge>
     )
@@ -58,7 +58,12 @@ export const getSchoolsTableColumns = (): TableColumn<School>[] => [
     sortable: true,
     width: '20%',
     render: (school: School) => (
-      <Badge variant={school.is_active ? 'default' : 'secondary'} className="capitalize">
+      <Badge 
+        className={`${school.is_active 
+          ? 'bg-green-100 text-green-800 border-green-200' 
+          : 'bg-muted text-muted-foreground border-muted'
+        } border`}
+      >
         {school.is_active ? 'Active' : 'Inactive'}
       </Badge>
     )
@@ -69,9 +74,8 @@ export const getSchoolsTableColumns = (): TableColumn<School>[] => [
     sortable: true,
     width: '15%',
     render: (school: School) => (
-      <div className="text-muted-foreground flex items-center space-x-2 text-xs">
-        <Calendar className="h-3 w-3" />
-        <span>{formatTableDate(school.created_at)}</span>
+      <div className="text-sm text-muted-foreground">
+        {formatTableDate(school.created_at)}
       </div>
     )
   }

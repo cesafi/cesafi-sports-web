@@ -1,111 +1,120 @@
 import { Faq } from '@/lib/types/faq';
 import { TableColumn, TableAction } from '@/lib/types/table';
-import { Eye, Edit, Trash2, Star } from 'lucide-react';
+import { Eye, Edit, Trash2, Star, MessageSquare } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { formatTableDate } from '@/lib/utils/date';
 
 export const getFaqColumns = (): TableColumn<Faq>[] => [
   {
-    key: 'display_order',
-    header: 'Order',
-    width: '80px',
+    key: 'faqInfo',
+    header: 'FAQ Information',
+    sortable: false,
+    width: '40%',
     render: (faq) => (
-      <div className="text-center font-medium">
-        {faq.display_order}
+      <div className="flex items-center space-x-3">
+        <div className="flex-shrink-0">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <MessageSquare className="text-primary h-5 w-5" />
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium text-foreground truncate">
+            {faq.question}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Order: {faq.display_order}
+          </div>
+        </div>
       </div>
-    ),
-  },
-  {
-    key: 'question',
-    header: 'Question',
-    render: (faq) => (
-      <div className="max-w-xs truncate font-medium" title={faq.question}>
-        {faq.question}
-      </div>
-    ),
+    )
   },
   {
     key: 'answer',
     header: 'Answer',
+    sortable: false,
+    width: '25%',
     render: (faq) => (
-      <div className="max-w-xs truncate text-muted-foreground" title={faq.answer}>
+      <div className="text-sm text-muted-foreground line-clamp-2" title={faq.answer}>
         {faq.answer}
       </div>
-    ),
+    )
   },
   {
-    key: 'is_open',
-    header: 'Default Open',
-    width: '120px',
+    key: 'category',
+    header: 'Category',
+    sortable: true,
+    width: '15%',
     render: (faq) => (
-      <div className="text-center">
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-          faq.is_open 
-            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-            : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-        }`}>
-          {faq.is_open ? 'Yes' : 'No'}
-        </span>
-      </div>
-    ),
+      <Badge className="bg-blue-100 text-blue-800 border-blue-200 border capitalize">
+        {faq.category || 'General'}
+      </Badge>
+    )
   },
   {
-    key: 'is_active',
+    key: 'status',
     header: 'Status',
-    width: '100px',
+    sortable: true,
+    width: '10%',
     render: (faq) => (
-      <div className="text-center">
-        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-          faq.is_active 
-            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-        }`}>
-          {faq.is_active ? 'Active' : 'Inactive'}
-        </span>
-      </div>
-    ),
+      <Badge
+        className={`${faq.is_active 
+          ? 'bg-green-100 text-green-800 border-green-200' 
+          : 'bg-muted text-muted-foreground border-muted'
+        } border`}
+      >
+        {faq.is_active ? 'Active' : 'Inactive'}
+      </Badge>
+    )
   },
   {
     key: 'created_at',
     header: 'Created',
-    width: '120px',
+    sortable: true,
+    width: '10%',
     render: (faq) => (
       <div className="text-sm text-muted-foreground">
-        {new Date(faq.created_at).toLocaleDateString()}
+        {formatTableDate(faq.created_at)}
       </div>
-    ),
-  },
+    )
+  }
 ];
 
-export const getFaqActions = (onView: (faq: Faq) => void, onEdit: (faq: Faq) => void, onDelete: (faq: Faq) => void, onToggleHighlight: (faq: Faq) => void): TableAction<Faq>[] => [
+export const getFaqActions = (
+  onView: (faq: Faq) => void,
+  onEdit: (faq: Faq) => void,
+  onDelete: (faq: Faq) => void,
+  onToggleHighlight: (faq: Faq) => void
+): TableAction<Faq>[] => [
   {
     key: 'view',
-    label: 'View',
+    label: 'View FAQ',
     icon: <Eye className="h-4 w-4" />,
     onClick: onView,
-    variant: 'ghost',
-    size: 'sm',
+    variant: 'ghost' as const,
+    size: 'sm' as const
   },
   {
     key: 'edit',
-    label: 'Edit',
+    label: 'Edit FAQ',
     icon: <Edit className="h-4 w-4" />,
     onClick: onEdit,
-    variant: 'ghost',
-    size: 'sm',
+    variant: 'ghost' as const,
+    size: 'sm' as const
   },
   {
     key: 'toggle-highlight',
-    label: 'Toggle Default Open',
+    label: 'Toggle Highlight',
     icon: <Star className="h-4 w-4" />,
     onClick: onToggleHighlight,
-    variant: 'ghost',
-    size: 'sm',
+    variant: 'ghost' as const,
+    size: 'sm' as const
   },
   {
     key: 'delete',
-    label: 'Delete',
+    label: 'Delete FAQ',
     icon: <Trash2 className="h-4 w-4" />,
     onClick: onDelete,
-    variant: 'destructive',
-    size: 'sm',
-  },
+    variant: 'ghost' as const,
+    size: 'sm' as const
+  }
 ];

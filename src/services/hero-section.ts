@@ -1,6 +1,7 @@
 import { BaseService } from './base';
 import { HeroSectionLive, HeroSectionLiveInsert, HeroSectionLiveUpdate, HeroSectionLivePaginationOptions, HeroSectionLiveWithDetails, CurrentHeroSectionResponse } from '@/lib/types/hero-section';
 import { ServiceResponse, PaginatedResponse } from '@/lib/types/base';
+import { isLiveActive, isLiveExpired, calculateTimeRemaining, nowUtc, ensureUtcIsoString } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'hero_section_live' as const;
 
@@ -54,12 +55,12 @@ export class HeroSectionService extends BaseService {
   static async getCurrentActive(): Promise<CurrentHeroSectionResponse> {
     try {
       const client = await this.getClient();
-      const now = new Date().toISOString();
+      const nowUtcString = nowUtc();
       
       const { data, error } = await client
         .from(TABLE_NAME)
         .select('*')
-        .gt('end_at', now)
+        .gt('end_at', nowUtcString)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -69,12 +70,16 @@ export class HeroSectionService extends BaseService {
         return { success: true, data: null };
       }
 
-      // Add computed fields
+      // Add computed fields using UTC-aware utilities
+      const isActive = isLiveActive(data.created_at, data.end_at);
+      const isExpired = isLiveExpired(data.end_at);
+      const timeRemaining = calculateTimeRemaining(data.end_at);
+
       const heroSectionWithDetails: HeroSectionLiveWithDetails = {
         ...data,
-        is_active: true,
-        is_expired: false,
-        time_remaining: this.calculateTimeRemaining(data.end_at),
+        is_active: isActive,
+        is_expired: isExpired,
+        time_remaining: timeRemaining || undefined,
         formatted_end_date: new Date(data.end_at).toLocaleString(),
       };
 
@@ -109,9 +114,17 @@ export class HeroSectionService extends BaseService {
   static async insert(heroData: HeroSectionLiveInsert): Promise<ServiceResponse<HeroSectionLive>> {
     try {
       const client = await this.getClient();
+      
+      // Ensure all dates are stored as UTC ISO strings
+      const utcHeroData = {
+        ...heroData,
+        end_at: ensureUtcIsoString(heroData.end_at),
+        created_at: heroData.created_at ? ensureUtcIsoString(heroData.created_at) : nowUtc()
+      };
+
       const { data, error } = await client
         .from(TABLE_NAME)
-        .insert(heroData)
+        .insert(utcHeroData)
         .select()
         .single();
 
@@ -128,9 +141,19 @@ export class HeroSectionService extends BaseService {
   static async updateById(id: number, heroData: HeroSectionLiveUpdate): Promise<ServiceResponse<HeroSectionLive>> {
     try {
       const client = await this.getClient();
+      
+      // Ensure all dates are stored as UTC ISO strings
+      const utcHeroData: HeroSectionLiveUpdate = { ...heroData };
+      if (utcHeroData.end_at) {
+        utcHeroData.end_at = ensureUtcIsoString(utcHeroData.end_at);
+      }
+      if (utcHeroData.created_at) {
+        utcHeroData.created_at = ensureUtcIsoString(utcHeroData.created_at);
+      }
+
       const { data, error } = await client
         .from(TABLE_NAME)
-        .update(heroData)
+        .update(utcHeroData)
         .eq('id', id)
         .select()
         .single();
@@ -160,22 +183,5 @@ export class HeroSectionService extends BaseService {
     }
   }
 
-  /**
-   * Calculate time remaining until expiration
-   */
-  private static calculateTimeRemaining(endAt: string): string {
-    const now = new Date();
-    const endDate = new Date(endAt);
-    const diffMs = endDate.getTime() - now.getTime();
 
-    if (diffMs <= 0) return 'Expired';
-
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-  }
 }

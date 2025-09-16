@@ -5,6 +5,7 @@ import { ArticleService } from '@/services/articles';
 import { createArticleSchema, updateArticleSchema } from '@/lib/validations/articles';
 import { ServiceResponse } from '@/lib/types/base';
 import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
 export async function getPaginatedArticles(options: ArticlePaginationOptions) {
   return await ArticleService.getPaginated(options);
@@ -41,7 +42,7 @@ export async function createArticle(data: unknown): Promise<ServiceResponse<Arti
   const result = await ArticleService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/articles');
+    RevalidationHelper.revalidateArticles();
     revalidatePath('/articles');
   }
 
@@ -63,7 +64,7 @@ export async function updateArticleById(data: unknown): Promise<ServiceResponse<
   const result = await ArticleService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/articles');
+    RevalidationHelper.revalidateArticles();
     revalidatePath('/articles');
     if (validationResult.data.id) {
       revalidatePath(`/articles/${validationResult.data.id}`);
@@ -77,7 +78,7 @@ export async function deleteArticleById(id: string) {
   const result = await ArticleService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/dashboard/articles');
+    RevalidationHelper.revalidateArticles();
     revalidatePath('/articles');
   }
 

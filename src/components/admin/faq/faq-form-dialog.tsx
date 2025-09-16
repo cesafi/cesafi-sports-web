@@ -43,11 +43,14 @@ export function FaqFormDialog({ faq, open, onOpenChange }: FaqFormDialogProps) {
       is_open: false,
       display_order: 0,
       is_active: true,
+      category: 'General',
+      is_highlight: false,
     },
   });
 
   const isOpen = watch('is_open');
   const isActive = watch('is_active');
+  const isHighlight = watch('is_highlight');
 
   // Reset form when dialog opens/closes or faq changes
   useEffect(() => {
@@ -59,6 +62,8 @@ export function FaqFormDialog({ faq, open, onOpenChange }: FaqFormDialogProps) {
           is_open: faq.is_open,
           display_order: faq.display_order,
           is_active: faq.is_active,
+          category: faq.category || 'General',
+          is_highlight: faq.is_highlight || false,
         });
       } else {
         reset({
@@ -67,6 +72,8 @@ export function FaqFormDialog({ faq, open, onOpenChange }: FaqFormDialogProps) {
           is_open: false,
           display_order: 0,
           is_active: true,
+          category: 'General',
+          is_highlight: false,
         });
       }
     }
@@ -133,6 +140,20 @@ export function FaqFormDialog({ faq, open, onOpenChange }: FaqFormDialogProps) {
               )}
             </div>
 
+            {/* Category */}
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                {...register('category')}
+                placeholder="Enter category (e.g., General, Sports, Schools)"
+                className={errors.category ? 'border-destructive' : ''}
+              />
+              {errors.category && (
+                <p className="text-sm text-destructive">{errors.category.message}</p>
+              )}
+            </div>
+
             {/* Display Order */}
             <div className="space-y-2">
               <Label htmlFor="display_order">Display Order *</Label>
@@ -149,7 +170,7 @@ export function FaqFormDialog({ faq, open, onOpenChange }: FaqFormDialogProps) {
             </div>
 
             {/* Toggle Switches */}
-            <div className="flex space-x-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-center space-x-2">
                 <Switch
                   id="is_open"
@@ -157,6 +178,15 @@ export function FaqFormDialog({ faq, open, onOpenChange }: FaqFormDialogProps) {
                   onCheckedChange={(checked) => setValue('is_open', checked)}
                 />
                 <Label htmlFor="is_open">Default Open</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is_highlight"
+                  checked={isHighlight}
+                  onCheckedChange={(checked) => setValue('is_highlight', checked)}
+                />
+                <Label htmlFor="is_highlight">Highlight on Landing</Label>
               </div>
 
               <div className="flex items-center space-x-2">

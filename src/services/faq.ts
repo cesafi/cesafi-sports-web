@@ -78,6 +78,53 @@ export class FaqService extends BaseService {
     }
 
     /**
+     * Get highlighted FAQ items for landing page display
+     */
+    static async getHighlighted(): Promise<ServiceResponse<Faq[]>> {
+        try {
+            const supabase = await this.getClient();
+            const { data, error } = await supabase
+                .from(TABLE_NAME)
+                .select()
+                .eq('is_active', true)
+                .eq('is_highlight', true)
+                .order('display_order', { ascending: true });
+
+            if (error) {
+                throw error;
+            }
+
+            return { success: true, data: data || [] };
+        } catch (err) {
+            return this.formatError(err, `Failed to fetch highlighted FAQ items.`);
+        }
+    }
+
+    /**
+     * Get FAQ items by categories for About Us page
+     */
+    static async getByCategories(categories: string[]): Promise<ServiceResponse<Faq[]>> {
+        try {
+            const supabase = await this.getClient();
+            const { data, error } = await supabase
+                .from(TABLE_NAME)
+                .select()
+                .eq('is_active', true)
+                .in('category', categories)
+                .order('display_order', { ascending: true })
+                .limit(6); // Limit to 6 items for About Us page
+
+            if (error) {
+                throw error;
+            }
+
+            return { success: true, data: data || [] };
+        } catch (err) {
+            return this.formatError(err, `Failed to fetch FAQ items by categories.`);
+        }
+    }
+
+    /**
      * Get FAQ item by ID
      */
     static async getById(id: number): Promise<ServiceResponse<Faq>> {

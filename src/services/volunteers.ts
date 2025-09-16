@@ -4,6 +4,7 @@ import { BaseService } from './base';
 import { Volunteer, VolunteersPaginationOptions } from '@/lib/types/volunteers';
 import CloudinaryService from './cloudinary';
 import { createVolunteerSchema, updateVolunteerSchema } from '@/lib/validations/volunteers';
+import { nowUtc } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'volunteers';
 
@@ -135,7 +136,9 @@ export class VolunteerService extends BaseService {
 
       const { error } = await supabase.from(TABLE_NAME).insert({
         ...data,
-        full_name: data.full_name.trim()
+        full_name: data.full_name.trim(),
+        created_at: nowUtc(),
+        updated_at: nowUtc()
       });
 
       if (error) {
@@ -192,7 +195,10 @@ export class VolunteerService extends BaseService {
         updateData.full_name = updateData.full_name.trim();
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(updateData).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update({
+        ...updateData,
+        updated_at: nowUtc()
+      }).eq('id', data.id);
 
       if (error) {
         throw error;

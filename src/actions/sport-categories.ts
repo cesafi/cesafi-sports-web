@@ -2,7 +2,7 @@
 
 import { SportCategoryService } from '@/services/sport-categories';
 import { createSportCategorySchema, updateSportCategorySchema } from '@/lib/validations/sport-categories';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { ServiceResponse } from '@/lib/types/base';
 
 // Context-based fetching methods
@@ -61,7 +61,7 @@ export async function createSportCategory(data: unknown): Promise<ServiceRespons
 
   const result = await SportCategoryService.insert(validationResult.data);
   if (result.success) {
-    revalidatePath('/admin/sport-categories');
+    RevalidationHelper.revalidateSports(); // Sport categories affect sports
   }
   return result;
 }
@@ -80,7 +80,7 @@ export async function updateSportCategoryById(data: unknown): Promise<ServiceRes
 
   const result = await SportCategoryService.updateById(validationResult.data);
   if (result.success) {
-    revalidatePath('/admin/sport-categories');
+    RevalidationHelper.revalidateSports(); // Sport categories affect sports
   }
   return result;
 }
@@ -88,7 +88,7 @@ export async function updateSportCategoryById(data: unknown): Promise<ServiceRes
 export async function deleteSportCategoryById(id: number) {
   const result = await SportCategoryService.deleteById(id);
   if (result.success) {
-    revalidatePath('/admin/sport-categories');
+    RevalidationHelper.revalidateSports(); // Sport categories affect sports
   }
   return result;
 }

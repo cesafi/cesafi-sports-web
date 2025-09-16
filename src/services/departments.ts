@@ -8,6 +8,7 @@ import {
 import { BaseService } from './base';
 import { Department } from '@/lib/types/departments';
 import { createDepartmentSchema, updateDepartmentSchema } from '@/lib/validations/departments';
+import { nowUtc } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'departments';
 const VOLUNTEERS_TABLE = 'volunteers';
@@ -111,7 +112,9 @@ export class DepartmentService extends BaseService {
 
       const { data: newDepartment, error } = await supabase.from(TABLE_NAME).insert({
         ...data,
-        name: data.name.trim()
+        name: data.name.trim(),
+        created_at: nowUtc(),
+        updated_at: nowUtc()
       }).select().single();
 
       if (error) {
@@ -154,7 +157,10 @@ export class DepartmentService extends BaseService {
         }
       }
 
-      const updateData = { ...data };
+      const updateData = { 
+        ...data,
+        updated_at: nowUtc()
+      };
       if (updateData.name) {
         updateData.name = updateData.name.trim();
       }

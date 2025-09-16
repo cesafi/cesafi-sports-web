@@ -10,13 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2, Video, Calendar } from 'lucide-react';
+import { Loader2, Video, Calendar, Info } from 'lucide-react';
+import { utcToLocal, getBrowserTimezone } from '@/lib/utils/utc-time';
 
 interface HeroSectionFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   hero?: HeroSectionLive | null;
-  onSubmit?: (data: Partial<HeroSectionLive>) => void;
+  onSubmit?: (data: CreateHeroSectionLiveInput | UpdateHeroSectionLiveInput) => void;
 }
 
 export function HeroSectionFormDialog({ open, onOpenChange, hero, onSubmit }: HeroSectionFormDialogProps) {
@@ -39,9 +40,13 @@ export function HeroSectionFormDialog({ open, onOpenChange, hero, onSubmit }: He
 
   useEffect(() => {
     if (hero) {
+      // Convert UTC date from database to local datetime-local format for the input
+      const localEndDate = utcToLocal(hero.end_at);
+      const localDateTimeString = localEndDate.toISOString().slice(0, 16); // Format for datetime-local input
+      
       reset({
         video_link: hero.video_link,
-        end_at: hero.end_at,
+        end_at: localDateTimeString,
       });
     } else {
       reset({
@@ -112,9 +117,16 @@ export function HeroSectionFormDialog({ open, onOpenChange, hero, onSubmit }: He
                 {errors.end_at && (
                   <p className="text-sm text-red-600">{errors.end_at.message}</p>
                 )}
-                <p className="text-sm text-gray-500">
-                  The video will stop showing after this date and time. Must be in the future.
-                </p>
+                <div className="flex items-start space-x-2 text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Timezone Information</p>
+                    <p className="text-blue-700">
+                      Enter time in your local timezone ({getBrowserTimezone()}). 
+                      It will be automatically converted to UTC for storage.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -127,15 +139,20 @@ export function HeroSectionFormDialog({ open, onOpenChange, hero, onSubmit }: He
                     Video URL: <code className="bg-white px-2 py-1 rounded text-xs">{watch('video_link')}</code>
                   </p>
                   {watch('end_at') && (
-                    <p className="text-sm text-gray-600">
-                      Expires: <code className="bg-white px-2 py-1 rounded text-xs">{new Date(watch('end_at')!).toLocaleString()}</code>
-                    </p>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-600">
+                        Local Time: <code className="bg-white px-2 py-1 rounded text-xs">{new Date(watch('end_at')!).toLocaleString()}</code>
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        UTC Time: <code className="bg-white px-2 py-1 rounded text-xs">{new Date(watch('end_at')!).toISOString()}</code>
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-3">
               <Button
                 type="button"
                 variant="outline"
@@ -144,7 +161,11 @@ export function HeroSectionFormDialog({ open, onOpenChange, hero, onSubmit }: He
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                variant="primary"
+                disabled={isLoading}
+              >
                 {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 {isEditing ? 'Update Hero Section' : 'Add Hero Section'}
               </Button>

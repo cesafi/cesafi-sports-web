@@ -12,6 +12,7 @@ import {
   createMatchParticipantSchema,
   updateMatchParticipantSchema
 } from '@/lib/validations/match-participants';
+import { nowUtc } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'match_participants';
 const MATCHES_TABLE = 'matches';
@@ -153,7 +154,11 @@ export class MatchParticipantService extends BaseService {
         return { success: false, error: 'Referenced team does not exist.' };
       }
 
-      const { data: newMatchParticipant, error } = await supabase.from(TABLE_NAME).insert(data).select().single();
+      const { data: newMatchParticipant, error } = await supabase.from(TABLE_NAME).insert({
+        ...data,
+        created_at: nowUtc(),
+        updated_at: nowUtc()
+      }).select().single();
 
       if (error) {
         throw error;
@@ -238,7 +243,10 @@ export class MatchParticipantService extends BaseService {
         }
       }
 
-      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update({
+        ...data,
+        updated_at: nowUtc()
+      }).eq('id', data.id);
 
       if (error) {
         throw error;

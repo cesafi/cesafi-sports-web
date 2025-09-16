@@ -3,7 +3,7 @@
 import { SchoolPaginationOptions } from '@/lib/types/schools';
 import { SchoolService } from '@/services/schools';
 import { createSchoolSchema, updateSchoolSchema } from '@/lib/validations/schools';
-import { revalidatePath } from 'next/cache';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { ServiceResponse } from '@/lib/types/base';
 
 
@@ -68,7 +68,7 @@ export async function createSchool(data: unknown): Promise<ServiceResponse<undef
   const result = await SchoolService.insert(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/schools');
+    RevalidationHelper.revalidateSchools();
   }
 
   return result;
@@ -89,7 +89,7 @@ export async function updateSchoolById(data: unknown): Promise<ServiceResponse<u
   const result = await SchoolService.updateById(validationResult.data);
 
   if (result.success) {
-    revalidatePath('/admin/schools');
+    RevalidationHelper.revalidateSchools();
   }
 
   return result;
@@ -99,7 +99,7 @@ export async function deleteSchoolById(id: string) {
   const result = await SchoolService.deleteById(id);
 
   if (result.success) {
-    revalidatePath('/admin/schools');
+    RevalidationHelper.revalidateSchools();
   }
 
   return result;

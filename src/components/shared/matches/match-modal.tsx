@@ -16,6 +16,7 @@ import { useStageTeams } from '@/hooks/use-stage-teams';
 import { generateMatchName, generateMatchDescription } from '@/lib/utils/match-naming';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Power } from 'lucide-react';
+import { utcToLocal } from '@/lib/utils/utc-time';
 
 interface MatchModalProps {
   open: boolean;
@@ -45,6 +46,8 @@ export function MatchModal({
     venue: '',
     stage_id: selectedStageId || 0,
     scheduled_at: null,
+    start_at: null,
+    end_at: null,
     best_of: 1,
     status: 'upcoming'
   });
@@ -109,7 +112,9 @@ export function MatchModal({
           description: match.description,
           venue: match.venue,
           stage_id: match.stage_id,
-          scheduled_at: match.scheduled_at,
+          scheduled_at: match.scheduled_at ? utcToLocal(match.scheduled_at).toISOString().slice(0, 16) : null,
+          start_at: match.start_at ? utcToLocal(match.start_at).toISOString().slice(0, 16) : null,
+          end_at: match.end_at ? utcToLocal(match.end_at).toISOString().slice(0, 16) : null,
           best_of: match.best_of,
           status: 'upcoming'
         });
@@ -121,6 +126,8 @@ export function MatchModal({
           venue: '',
           stage_id: selectedStageId || 0,
           scheduled_at: null,
+          start_at: null,
+          end_at: null,
           best_of: 1,
           status: 'upcoming'
         });
@@ -189,7 +196,8 @@ export function MatchModal({
   };
 
   const handleDateChange = (field: 'scheduled_at' | 'start_at' | 'end_at', value: string) => {
-    const dateValue = value ? new Date(value).toISOString() : null;
+    // The datetime-local input gives us local time, we'll let the validation schema convert to UTC
+    const dateValue = value || null;
     setFormData(prev => ({ ...prev, [field]: dateValue }));
   };
 
@@ -217,7 +225,12 @@ export function MatchModal({
           <Button type="button" variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          <Button type="submit" form="match-form" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            form="match-form" 
+            variant="primary"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? 'Saving...' : mode === 'add' ? 'Create Match' : 'Update Match'}
           </Button>
         </div>

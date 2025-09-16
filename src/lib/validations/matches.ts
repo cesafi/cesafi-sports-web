@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { toUtcIsoString, isValidUtcIsoString } from '@/lib/utils/utc-time';
 
 export const createMatchSchema = z
   .object({
@@ -21,9 +22,39 @@ export const createMatchSchema = z
     status: z.enum(['upcoming', 'ongoing', 'finished', 'cancelled'], {
       message: 'Status must be one of: upcoming, ongoing, finished, cancelled.'
     }).default('upcoming'),
-    scheduled_at: z.string().optional().nullable(),
-    start_at: z.string().optional().nullable(),
-    end_at: z.string().optional().nullable()
+    scheduled_at: z.string()
+      .optional()
+      .nullable()
+      .transform((date) => {
+        if (!date) return null;
+        return toUtcIsoString(date);
+      })
+      .refine(
+        (utcDate) => !utcDate || isValidUtcIsoString(utcDate),
+        'Invalid scheduled date format'
+      ),
+    start_at: z.string()
+      .optional()
+      .nullable()
+      .transform((date) => {
+        if (!date) return null;
+        return toUtcIsoString(date);
+      })
+      .refine(
+        (utcDate) => !utcDate || isValidUtcIsoString(utcDate),
+        'Invalid start date format'
+      ),
+    end_at: z.string()
+      .optional()
+      .nullable()
+      .transform((date) => {
+        if (!date) return null;
+        return toUtcIsoString(date);
+      })
+      .refine(
+        (utcDate) => !utcDate || isValidUtcIsoString(utcDate),
+        'Invalid end date format'
+      )
   })
   .refine(
     (data) => {
@@ -74,9 +105,39 @@ export const updateMatchSchema = z
     status: z.enum(['upcoming', 'ongoing', 'finished', 'cancelled'], {
       message: 'Status must be one of: upcoming, ongoing, finished, cancelled.'
     }).optional(),
-    scheduled_at: z.string().optional().nullable(),
-    start_at: z.string().optional().nullable(),
-    end_at: z.string().optional().nullable()
+    scheduled_at: z.string()
+      .optional()
+      .nullable()
+      .transform((date) => {
+        if (!date) return null;
+        return toUtcIsoString(date);
+      })
+      .refine(
+        (utcDate) => !utcDate || isValidUtcIsoString(utcDate),
+        'Invalid scheduled date format'
+      ),
+    start_at: z.string()
+      .optional()
+      .nullable()
+      .transform((date) => {
+        if (!date) return null;
+        return toUtcIsoString(date);
+      })
+      .refine(
+        (utcDate) => !utcDate || isValidUtcIsoString(utcDate),
+        'Invalid start date format'
+      ),
+    end_at: z.string()
+      .optional()
+      .nullable()
+      .transform((date) => {
+        if (!date) return null;
+        return toUtcIsoString(date);
+      })
+      .refine(
+        (utcDate) => !utcDate || isValidUtcIsoString(utcDate),
+        'Invalid end date format'
+      )
   })
   .refine(
     (data) => {
