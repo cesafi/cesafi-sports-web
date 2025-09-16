@@ -53,8 +53,8 @@ export async function createSchoolsTeam(data: unknown): Promise<ServiceResponse<
   const result = await SchoolsTeamService.insert(validationResult.data);
 
   if (result.success) {
-    RevalidationHelper.revalidateSchools();
-    RevalidationHelper.revalidateSeasons();
+    // Use comprehensive revalidation for schools teams operations
+    RevalidationHelper.revalidateSchoolsTeamsOperation();
   }
 
   return result;
@@ -75,8 +75,8 @@ export async function updateSchoolsTeamById(data: unknown): Promise<ServiceRespo
   const result = await SchoolsTeamService.updateById(validationResult.data);
 
   if (result.success) {
-    RevalidationHelper.revalidateSchools();
-    RevalidationHelper.revalidateSeasons();
+    // Use comprehensive revalidation for schools teams operations
+    RevalidationHelper.revalidateSchoolsTeamsOperation();
   }
 
   return result;
@@ -86,8 +86,8 @@ export async function deleteSchoolsTeamById(id: string) {
   const result = await SchoolsTeamService.deleteById(id);
 
   if (result.success) {
-    RevalidationHelper.revalidateSchools();
-    RevalidationHelper.revalidateSeasons();
+    // Use comprehensive revalidation for schools teams operations
+    RevalidationHelper.revalidateSchoolsTeamsOperation();
   }
 
   return result;

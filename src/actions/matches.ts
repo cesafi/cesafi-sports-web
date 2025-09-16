@@ -120,6 +120,28 @@ export async function deleteMatchById(id: number) {
   return result;
 }
 
+/**
+ * Delete match with all related data (games, game scores, participants)
+ * This is the recommended way to delete matches as it handles all dependencies automatically
+ */
+export async function deleteMatchByIdWithCascade(id: number) {
+  const result = await MatchService.deleteByIdWithCascade(id);
+
+  if (result.success) {
+    // Use comprehensive revalidation for match deletion
+    RevalidationHelper.revalidateMatchDeletion();
+  }
+
+  return result;
+}
+
+/**
+ * Get preview of what would be deleted when deleting a match with cascade
+ */
+export async function getMatchDeletionPreview(id: number) {
+  return await MatchService.getDeletionPreview(id);
+}
+
 // New server actions for schedule feature
 export async function getScheduleMatches(options: SchedulePaginationOptions) {
   return await MatchService.getScheduleMatches(options);

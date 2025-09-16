@@ -9,7 +9,7 @@ import {
 import { MatchWithStageDetails } from '@/lib/types/matches';
 import { MatchModal } from '@/components/shared/matches';
 import { LeagueStageSelector } from '@/components/shared/matches';
-import { ConfirmationModal } from '@/components/ui/confirmation-modal';
+import { MatchDeletionModal } from '@/components/shared/matches/match-deletion-modal';
 import {
   MatchInsert,
   MatchUpdate
@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { useSeason } from '@/components/contexts/season-provider';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useMatchRefetch } from '@/hooks/use-matches';
 
 interface MatchesTableProps {
   userRole: 'admin' | 'league_operator';
@@ -35,6 +36,7 @@ export function MatchesTable({ userRole, showLeagueStageSelector = true }: Match
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [matchToDelete, setMatchToDelete] = useState<MatchWithStageDetails | undefined>();
   const router = useRouter();
+  const { refetchAllMatchData } = useMatchRefetch();
 
   const {
     matches,
@@ -96,6 +98,11 @@ export function MatchesTable({ userRole, showLeagueStageSelector = true }: Match
       deleteMatch(matchToDelete.id);
       setIsDeleteModalOpen(false);
       setMatchToDelete(undefined);
+      
+      // Force comprehensive refetch after deletion
+      setTimeout(() => {
+        refetchAllMatchData();
+      }, 500); // Small delay to ensure server-side revalidation completes
     } catch {
       setIsDeleteModalOpen(false);
       setMatchToDelete(undefined);
@@ -214,18 +221,16 @@ export function MatchesTable({ userRole, showLeagueStageSelector = true }: Match
         isSubmitting={isCreating || isUpdating}
       />
 
-      {/* Confirmation Modal */}
-      <ConfirmationModal
+      {/* Enhanced Deletion Modal */}
+      <MatchDeletionModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setMatchToDelete(undefined);
+        }}
         onConfirm={confirmDeleteMatch}
-        type="delete"
-        title="Delete Match"
-        message={`Are you sure you want to delete the match "${matchToDelete?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        destructive={true}
-        isLoading={isDeleting}
+        match={matchToDelete}
+        isDeleting={isDeleting}
       />
     </div>
   );

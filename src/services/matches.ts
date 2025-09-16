@@ -1092,6 +1092,170 @@ export class MatchService extends BaseService {
   }
 
   /**
+   * Get information about what would be deleted if a match is deleted with cascade
+   */
+  static async getDeletionPreview(id: number): Promise<ServiceResponse<{
+    match: Match;
+    gamesCount: number;
+    gameScoresCount: number;
+    participantsCount: number;
+  }>> {
+    try {
+      if (!id) {
+        return { success: false, error: 'Entity ID is required.' };
+      }
+
+      const supabase = await this.getClient();
+
+      // Get match details
+      const { data: match, error: matchError } = await supabase
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (matchError) {
+        throw matchError;
+      }
+
+      // Get games count
+      const { count: gamesCount, error: gamesError } = await supabase
+        .from(GAMES_TABLE)
+        .select('*', { count: 'exact', head: true })
+        .eq('match_id', id);
+
+      if (gamesError) {
+        throw gamesError;
+      }
+
+      // Get game scores count
+      const { data: games, error: gamesDataError } = await supabase
+        .from(GAMES_TABLE)
+        .select('id')
+        .eq('match_id', id);
+
+      if (gamesDataError) {
+        throw gamesDataError;
+      }
+
+      let gameScoresCount = 0;
+      if (games && games.length > 0) {
+        const gameIds = games.map(game => game.id);
+        const { count, error: scoresError } = await supabase
+          .from('game_scores')
+          .select('*', { count: 'exact', head: true })
+          .in('game_id', gameIds);
+
+        if (scoresError) {
+          throw scoresError;
+        }
+
+        gameScoresCount = count || 0;
+      }
+
+      // Get participants count
+      const { count: participantsCount, error: participantsError } = await supabase
+        .from(MATCH_PARTICIPANTS_TABLE)
+        .select('*', { count: 'exact', head: true })
+        .eq('match_id', id);
+
+      if (participantsError) {
+        throw participantsError;
+      }
+
+      return {
+        success: true,
+        data: {
+          match,
+          gamesCount: gamesCount || 0,
+          gameScoresCount,
+          participantsCount: participantsCount || 0
+        }
+      };
+    } catch (err) {
+      return this.formatError(err, 'Failed to get deletion preview.');
+    }
+  }
+
+  /**
+   * Delete match with cascading deletion of all related data
+   * This will automatically delete:
+   * 1. All game scores for games in this match
+   * 2. All games in this match
+   * 3. All match participants
+   * 4. The match itself
+   */
+  static async deleteByIdWithCascade(id: number): Promise<ServiceResponse<undefined>> {
+    try {
+      if (!id) {
+        return { success: false, error: 'Entity ID is required to delete.' };
+      }
+
+      const supabase = await this.getClient();
+
+      // Start a transaction-like operation by getting all related data first
+      // Get all games for this match
+      const { data: games, error: gamesError } = await supabase
+        .from(GAMES_TABLE)
+        .select('id')
+        .eq('match_id', id);
+
+      if (gamesError) {
+        throw gamesError;
+      }
+
+      // Delete all game scores for all games in this match
+      if (games && games.length > 0) {
+        const gameIds = games.map(game => game.id);
+        
+        // Delete game scores first
+        const { error: gameScoresError } = await supabase
+          .from('game_scores')
+          .delete()
+          .in('game_id', gameIds);
+
+        if (gameScoresError) {
+          throw gameScoresError;
+        }
+
+        // Delete games
+        const { error: deleteGamesError } = await supabase
+          .from(GAMES_TABLE)
+          .delete()
+          .eq('match_id', id);
+
+        if (deleteGamesError) {
+          throw deleteGamesError;
+        }
+      }
+
+      // Delete match participants
+      const { error: participantsError } = await supabase
+        .from(MATCH_PARTICIPANTS_TABLE)
+        .delete()
+        .eq('match_id', id);
+
+      if (participantsError) {
+        throw participantsError;
+      }
+
+      // Finally delete the match
+      const { error: matchError } = await supabase
+        .from(TABLE_NAME)
+        .delete()
+        .eq('id', id);
+
+      if (matchError) {
+        throw matchError;
+      }
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to delete ${TABLE_NAME} entity with cascade.`);
+    }
+  }
+
+  /**
    * Get matches by school ID through match participants
    */
   static async getMatchesBySchoolId(

@@ -496,6 +496,40 @@ export class GameService extends BaseService {
     }
   }
 
+  /**
+   * Delete game with cascading deletion of all related game scores
+   */
+  static async deleteByIdWithCascade(id: number): Promise<ServiceResponse<undefined>> {
+    try {
+      if (!id) {
+        return { success: false, error: 'Entity ID is required to delete.' };
+      }
+
+      const supabase = await this.getClient();
+
+      // Delete all game scores for this game first
+      const { error: scoresError } = await supabase
+        .from(GAME_SCORES_TABLE)
+        .delete()
+        .eq('game_id', id);
+
+      if (scoresError) {
+        throw scoresError;
+      }
+
+      // Delete the game
+      const { error } = await supabase.from(TABLE_NAME).delete().eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to delete ${TABLE_NAME} entity with cascade.`);
+    }
+  }
+
   static async calculateMatchDuration(matchId: number): Promise<ServiceResponse<string>> {
     try {
       const supabase = await this.getClient();

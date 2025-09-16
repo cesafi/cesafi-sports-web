@@ -78,6 +78,20 @@ export async function deleteGameById(id: number) {
   return result;
 }
 
+/**
+ * Delete game with all related game scores
+ * This is the recommended way to delete games as it handles score dependencies automatically
+ */
+export async function deleteGameByIdWithCascade(id: number) {
+  const result = await GameService.deleteByIdWithCascade(id);
+
+  if (result.success) {
+    RevalidationHelper.revalidateGames();
+  }
+
+  return result;
+}
+
 export async function calculateMatchDuration(matchId: number) {
   return await GameService.calculateMatchDuration(matchId);
 }

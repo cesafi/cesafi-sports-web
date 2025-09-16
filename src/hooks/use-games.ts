@@ -17,6 +17,7 @@ import {
   createGame,
   updateGameById,
   deleteGameById,
+  deleteGameByIdWithCascade,
   calculateMatchDuration
 } from '@/actions/games';
 
@@ -218,6 +219,35 @@ export function useDeleteGame(
   });
 }
 
+export function useDeleteGameWithCascade(
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, number>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteGameByIdWithCascade,
+    onSuccess: (result, id, context) => {
+      if (result.success) {
+        toast.success('Game and all related scores deleted successfully');
+        queryClient.invalidateQueries({ queryKey: gameKeys.all });
+        queryClient.invalidateQueries({ queryKey: gameKeys.details(id) });
+        // Invalidate all match-related queries since we don't know which match this game belonged to
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        // Invalidate related entities
+        queryClient.invalidateQueries({ queryKey: ['game_scores'] });
+      } else {
+        toast.error(result.error || 'Failed to delete game');
+      }
+      mutationOptions?.onSuccess?.(result, id, context);
+    },
+    onError: (error, id, context) => {
+      toast.error('Failed to delete game');
+      console.error('Failed to delete game:', error);
+      mutationOptions?.onError?.(error, id, context);
+    },
+    ...mutationOptions
+  });
+}
+
 // Table-specific hook for games management
 export function useGamesTable(matchId: number | null, callbacks?: {
   onGameCreated?: () => void;
@@ -305,12 +335,12 @@ export function useGamesTable(matchId: number | null, callbacks?: {
     }
   });
 
-  // Delete game mutation
+  // Delete game mutation (with cascade deletion)
   const deleteGameMutation = useMutation({
-    mutationFn: deleteGameById,
+    mutationFn: deleteGameByIdWithCascade,
     onSuccess: (result) => {
       if (result.success) {
-        toast.success('Game deleted successfully');
+        toast.success('Game and all related scores deleted successfully');
         if (matchId) {
           queryClient.invalidateQueries({ queryKey: gameKeys.byMatch(matchId) });
           // Also invalidate the general games queries

@@ -57,6 +57,31 @@ export class RevalidationHelper {
     }
 
     /**
+     * Comprehensive revalidation for schools teams operations
+     * This should be called when a school team is created, updated, or deleted
+     */
+    static revalidateSchoolsTeamsOperation() {
+        // Revalidate schools and seasons (direct relationships)
+        this.revalidateSchools();
+        this.revalidateSeasons();
+        
+        // Revalidate matches since teams are used in match participants
+        this.revalidateMatches();
+        this.revalidateMatchParticipants();
+        
+        // Revalidate league stage since teams participate in stages
+        this.revalidateLeagueStage();
+        
+        // Revalidate dashboards since team operations affect stats
+        this.revalidateAdminDashboard();
+        this.revalidateLeagueOperatorDashboard();
+        
+        // Revalidate specific school team routes
+        revalidatePath('/admin/school-teams');
+        revalidatePath('/admin/schools');
+    }
+
+    /**
      * Revalidate seasons-related routes
      */
     static revalidateSeasons() {
@@ -76,11 +101,32 @@ export class RevalidationHelper {
     static revalidateMatches() {
         revalidatePath('/admin/matches');
         revalidatePath('/league-operator');
+        revalidatePath('/league-operator/matches');
         this.revalidateAdminDashboard(); // Recent matches affect dashboard
 
         // Public pages that display matches
         revalidatePath('/'); // Landing page shows upcoming matches
         revalidatePath('/schedule'); // Schedule page shows all matches
+    }
+
+    /**
+     * Comprehensive revalidation for match deletion
+     * This should be called when a match is deleted to ensure all related data is refreshed
+     */
+    static revalidateMatchDeletion() {
+        // Revalidate all match-related routes
+        this.revalidateMatches();
+        this.revalidateMatchParticipants();
+        this.revalidateGames();
+        this.revalidateGameScores();
+        
+        // Revalidate dashboards since match deletion affects stats and recent activity
+        this.revalidateLeagueOperatorDashboard();
+        this.revalidateAdminDashboard();
+        
+        // Revalidate specific match detail pages (they should redirect or show 404)
+        revalidatePath('/admin/matches/[id]', 'page');
+        revalidatePath('/league-operator/matches/[id]', 'page');
     }
 
     /**

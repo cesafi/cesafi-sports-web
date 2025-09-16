@@ -3,6 +3,7 @@
 import { AlertTriangle, Trash2, AlertCircle, Info } from 'lucide-react';
 import { Button } from './button';
 import { ModalLayout } from './modal-layout';
+import { ReactNode } from 'react';
 
 export type ConfirmationType = 'delete' | 'warning' | 'info';
 
@@ -11,12 +12,13 @@ interface ConfirmationModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  message: string;
+  message: string | ReactNode;
   type?: ConfirmationType;
   confirmText?: string;
   cancelText?: string;
   isLoading?: boolean;
   destructive?: boolean;
+  disabled?: boolean;
 }
 
 const getConfirmationConfig = (type: ConfirmationType) => {
@@ -62,12 +64,13 @@ export function ConfirmationModal({
   confirmText,
   cancelText,
   isLoading = false,
-  destructive = true
+  destructive = true,
+  disabled = false
 }: ConfirmationModalProps) {
   const config = getConfirmationConfig(type);
   
   const handleConfirm = () => {
-    if (!isLoading) {
+    if (!isLoading && !disabled) {
       onConfirm();
     }
   };
@@ -95,7 +98,7 @@ export function ConfirmationModal({
             variant={destructive ? config.confirmVariant : 'default'}
             onClick={handleConfirm}
             className="flex-1"
-            disabled={isLoading}
+            disabled={isLoading || disabled}
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
@@ -113,9 +116,15 @@ export function ConfirmationModal({
         <div className="flex items-start gap-3">
           {config.icon}
           <div className="flex-1">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {message}
-            </p>
+            {typeof message === 'string' ? (
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {message}
+              </p>
+            ) : (
+              <div className="text-sm text-muted-foreground leading-relaxed">
+                {message}
+              </div>
+            )}
           </div>
         </div>
       </div>

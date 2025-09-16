@@ -187,7 +187,9 @@ export function useCreateSchoolsTeam(
     mutationFn: createSchoolsTeam,
     onSuccess: (result, variables, context) => {
       if (result.success) {
-        // Invalidate related queries
+        toast.success('Team created successfully');
+        
+        // Invalidate schools teams queries
         queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
         if (variables.school_id) {
           queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.bySchool(variables.school_id) });
@@ -198,14 +200,31 @@ export function useCreateSchoolsTeam(
         if (variables.sport_category_id) {
           queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.bySportCategory(variables.sport_category_id) });
         }
-        // Also invalidate related entity queries
+        
+        // Invalidate related entity queries
         queryClient.invalidateQueries({ queryKey: schoolKeys.all });
         queryClient.invalidateQueries({ queryKey: seasonKeys.all });
         queryClient.invalidateQueries({ queryKey: sportKeys.all });
+        
+        // Invalidate match-related queries since teams are used in matches
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+        
+        // Invalidate dashboard queries
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['overview'] });
+        
+        // Force refetch of active queries
+        queryClient.refetchQueries({ queryKey: schoolsTeamKeys.all });
+      } else {
+        toast.error(result.error || 'Failed to create team');
       }
       mutationOptions?.onSuccess?.(result, variables, context);
     },
     onError: (error, variables, context) => {
+      toast.error('Failed to create team');
       console.error('Failed to create schools team:', error);
       mutationOptions?.onError?.(error, variables, context);
     },
@@ -221,7 +240,9 @@ export function useUpdateSchoolsTeam(
     mutationFn: updateSchoolsTeamById,
     onSuccess: (result, variables, context) => {
       if (result.success) {
-        // Invalidate related queries
+        toast.success('Team updated successfully');
+        
+        // Invalidate schools teams queries
         queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
         if (variables.id) {
           queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.details(variables.id) });
@@ -235,14 +256,31 @@ export function useUpdateSchoolsTeam(
         if (variables.sport_category_id) {
           queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.bySportCategory(variables.sport_category_id) });
         }
-        // Also invalidate related entity queries
+        
+        // Invalidate related entity queries
         queryClient.invalidateQueries({ queryKey: schoolKeys.all });
         queryClient.invalidateQueries({ queryKey: seasonKeys.all });
         queryClient.invalidateQueries({ queryKey: sportKeys.all });
+        
+        // Invalidate match-related queries since team updates affect matches
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+        
+        // Invalidate dashboard queries
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['overview'] });
+        
+        // Force refetch of active queries
+        queryClient.refetchQueries({ queryKey: schoolsTeamKeys.all });
+      } else {
+        toast.error(result.error || 'Failed to update team');
       }
       mutationOptions?.onSuccess?.(result, variables, context);
     },
     onError: (error, variables, context) => {
+      toast.error('Failed to update team');
       console.error('Failed to update schools team:', error);
       mutationOptions?.onError?.(error, variables, context);
     },
@@ -258,20 +296,36 @@ export function useDeleteSchoolsTeam(
     mutationFn: deleteSchoolsTeamById,
     onSuccess: (result, id, context) => {
       if (result.success) {
-        // Invalidate related queries
+        toast.success('Team deleted successfully');
+        
+        // Invalidate schools teams queries
         queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
         queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.details(id) });
-        // Also invalidate related entity queries
+        
+        // Invalidate related entity queries
         queryClient.invalidateQueries({ queryKey: schoolKeys.all });
         queryClient.invalidateQueries({ queryKey: seasonKeys.all });
         queryClient.invalidateQueries({ queryKey: sportKeys.all });
-        // CRITICAL: Invalidate match participants since this team might be in matches
-        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        
+        // CRITICAL: Invalidate match-related queries since this team might be in matches
         queryClient.invalidateQueries({ queryKey: ['matches'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+        
+        // Invalidate dashboard queries
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['overview'] });
+        
+        // Force refetch of active queries
+        queryClient.refetchQueries({ queryKey: schoolsTeamKeys.all });
+      } else {
+        toast.error(result.error || 'Failed to delete team');
       }
       mutationOptions?.onSuccess?.(result, id, context);
     },
     onError: (error, id, context) => {
+      toast.error('Failed to delete team');
       console.error('Failed to delete schools team:', error);
       mutationOptions?.onError?.(error, id, context);
     },
@@ -336,9 +390,20 @@ export function useSchoolsTeamsTable(selectedSchoolId: string | null) {
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Team created successfully');
+        
+        // Invalidate current table data
         if (selectedSchoolId) {
           queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.bySchool(selectedSchoolId) });
         }
+        
+        // Comprehensive invalidation
+        queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        
+        // Force refetch current table
+        refetch();
       } else {
         toast.error(result.error || 'Failed to create team');
       }
@@ -354,9 +419,20 @@ export function useSchoolsTeamsTable(selectedSchoolId: string | null) {
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Team updated successfully');
+        
+        // Invalidate current table data
         if (selectedSchoolId) {
           queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.bySchool(selectedSchoolId) });
         }
+        
+        // Comprehensive invalidation
+        queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        
+        // Force refetch current table
+        refetch();
       } else {
         toast.error(result.error || 'Failed to update team');
       }
@@ -372,9 +448,20 @@ export function useSchoolsTeamsTable(selectedSchoolId: string | null) {
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Team deleted successfully');
+        
+        // Invalidate current table data
         if (selectedSchoolId) {
           queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.bySchool(selectedSchoolId) });
         }
+        
+        // Comprehensive invalidation
+        queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['matches'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        
+        // Force refetch current table
+        refetch();
       } else {
         toast.error(result.error || 'Failed to delete team');
       }
@@ -437,5 +524,84 @@ export function useSchoolsTeamsTable(selectedSchoolId: string | null) {
     onSearchChange: handleSearch,
     onFiltersChange: handleFilters,
     resetFilters
+  };
+}
+
+// ============================================================================
+// COMPREHENSIVE REFETCH HOOKS
+// ============================================================================
+
+/**
+ * Custom hook for comprehensive schools teams-related data refetching
+ * Use this when you need to ensure all schools teams-related data is fresh
+ */
+export function useSchoolsTeamsRefetch() {
+  const queryClient = useQueryClient();
+
+  const refetchAllSchoolsTeamsData = () => {
+    // Invalidate and refetch all schools teams queries
+    queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.all });
+    queryClient.refetchQueries({ queryKey: schoolsTeamKeys.all });
+    
+    // Invalidate related entity queries
+    queryClient.invalidateQueries({ queryKey: schoolKeys.all });
+    queryClient.invalidateQueries({ queryKey: seasonKeys.all });
+    
+    // Invalidate match-related queries since teams are used in matches
+    queryClient.invalidateQueries({ queryKey: ['matches'] });
+    queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+    queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+    queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+    
+    // Invalidate dashboard and overview queries
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['overview'] });
+    queryClient.invalidateQueries({ queryKey: ['recent'] });
+    queryClient.invalidateQueries({ queryKey: ['upcoming'] });
+  };
+
+  const refetchTeamsBySchool = (schoolId: string) => {
+    queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.bySchool(schoolId) });
+    queryClient.refetchQueries({ queryKey: schoolsTeamKeys.bySchool(schoolId) });
+  };
+
+  const refetchTeamsBySeason = (seasonId: number) => {
+    queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.bySeason(seasonId) });
+    queryClient.refetchQueries({ queryKey: schoolsTeamKeys.bySeason(seasonId) });
+  };
+
+  const refetchTeamsBySportCategory = (sportCategoryId: number) => {
+    queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.bySportCategory(sportCategoryId) });
+    queryClient.refetchQueries({ queryKey: schoolsTeamKeys.bySportCategory(sportCategoryId) });
+  };
+
+  const refetchTeamById = (teamId: string) => {
+    queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.details(teamId) });
+    queryClient.refetchQueries({ queryKey: schoolsTeamKeys.details(teamId) });
+  };
+
+  const refetchActiveTeamsBySchool = (schoolId: string) => {
+    queryClient.invalidateQueries({ queryKey: schoolsTeamKeys.activeBySchool(schoolId) });
+    queryClient.refetchQueries({ queryKey: schoolsTeamKeys.activeBySchool(schoolId) });
+  };
+
+  const refetchMatchRelatedData = () => {
+    // Specifically refetch match-related data that depends on teams
+    queryClient.invalidateQueries({ queryKey: ['matches'] });
+    queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+    queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+    queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+    queryClient.refetchQueries({ queryKey: ['matches'] });
+    queryClient.refetchQueries({ queryKey: ['match_participants'] });
+  };
+
+  return {
+    refetchAllSchoolsTeamsData,
+    refetchTeamsBySchool,
+    refetchTeamsBySeason,
+    refetchTeamsBySportCategory,
+    refetchTeamById,
+    refetchActiveTeamsBySchool,
+    refetchMatchRelatedData
   };
 }

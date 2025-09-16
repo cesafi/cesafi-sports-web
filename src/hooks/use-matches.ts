@@ -6,6 +6,7 @@ import {
   UseMutationOptions,
   useInfiniteQuery
 } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 import {
   getPaginatedMatches,
@@ -18,6 +19,7 @@ import {
   createMatchWithParticipants,
   updateMatchById,
   deleteMatchById,
+  deleteMatchByIdWithCascade,
   getScheduleMatches,
   getScheduleMatchesByDate,
   getMatchesBySchoolId
@@ -28,7 +30,6 @@ import { MatchInsert, MatchUpdate, MatchPaginationOptions, Match, MatchWithStage
 import { PaginatedResponse, ServiceResponse } from '@/lib/types/base';
 import { useTable } from './use-table';
 import { TableFilters } from '@/lib/types/table';
-import { toast } from 'sonner';
 import { useSeason } from '@/components/contexts/season-provider';
 
 export const matchKeys = {
@@ -269,6 +270,54 @@ export function useDeleteMatch(
   });
 }
 
+export function useDeleteMatchWithCascade(
+  mutationOptions?: UseMutationOptions<ServiceResponse<undefined>, Error, number>
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteMatchByIdWithCascade,
+    onSuccess: (result, id, context) => {
+      if (result.success) {
+        toast.success('Match and all related data deleted successfully');
+        
+        // Invalidate all match-related queries
+        queryClient.invalidateQueries({ queryKey: matchKeys.all });
+        queryClient.invalidateQueries({ queryKey: matchKeys.details(id) });
+        
+        // Invalidate schedule queries
+        queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+        
+        // Invalidate related entities
+        queryClient.invalidateQueries({ queryKey: ['games'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['game_scores'] });
+        
+        // Invalidate dashboard and overview queries
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['overview'] });
+        queryClient.invalidateQueries({ queryKey: ['recent'] });
+        queryClient.invalidateQueries({ queryKey: ['upcoming'] });
+        
+        // Invalidate any school-specific match queries
+        queryClient.invalidateQueries({ queryKey: ['matches', 'bySchool'] });
+        
+        // Force refetch of any active queries
+        queryClient.refetchQueries({ queryKey: matchKeys.all });
+      } else {
+        toast.error(result.error || 'Failed to delete match');
+      }
+      mutationOptions?.onSuccess?.(result, id, context);
+    },
+    onError: (error, id, context) => {
+      toast.error('Failed to delete match');
+      console.error('Failed to delete match:', error);
+      mutationOptions?.onError?.(error, id, context);
+    },
+    ...mutationOptions
+  });
+}
+
 // ============================================================================
 // TABLE HOOKS
 // ============================================================================
@@ -374,15 +423,34 @@ export function useMatchesTable(selectedStageId: number | null) {
     }
   });
 
-  // Delete match mutation
+  // Delete match mutation (with cascading delete)
   const deleteMatchMutation = useMutation({
-    mutationFn: deleteMatchById,
+    mutationFn: deleteMatchByIdWithCascade,
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Match deleted successfully');
+        
+        // Invalidate stage-specific queries
         if (selectedStageId) {
           queryClient.invalidateQueries({ queryKey: matchKeys.byStage(selectedStageId) });
         }
+        
+        // Invalidate all match-related queries
+        queryClient.invalidateQueries({ queryKey: matchKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+        
+        // Invalidate related entities
+        queryClient.invalidateQueries({ queryKey: ['games'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+        queryClient.invalidateQueries({ queryKey: ['game_scores'] });
+        
+        // Invalidate dashboard queries
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['overview'] });
+        
+        // Force refetch of current table data
+        refetch();
       } else {
         toast.error(result.error || 'Failed to delete match');
       }
@@ -585,4 +653,64 @@ export function useInfiniteScheduleMatches(
     },
     ...queryOptions
   });
+}
+
+// ============================================================================
+// COMPREHENSIVE REFETCH HOOKS
+// ============================================================================
+
+/**
+ * Custom hook for comprehensive match-related data refetching
+ * Use this when you need to ensure all match-related data is fresh
+ */
+export function useMatchRefetch() {
+  const queryClient = useQueryClient();
+
+  const refetchAllMatchData = () => {
+    // Invalidate and refetch all match queries
+    queryClient.invalidateQueries({ queryKey: matchKeys.all });
+    queryClient.refetchQueries({ queryKey: matchKeys.all });
+    
+    // Invalidate schedule queries
+    queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+    queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+    
+    // Invalidate related entities
+    queryClient.invalidateQueries({ queryKey: ['games'] });
+    queryClient.invalidateQueries({ queryKey: ['match_participants'] });
+    queryClient.invalidateQueries({ queryKey: ['game_scores'] });
+    
+    // Invalidate dashboard and overview queries
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['overview'] });
+    queryClient.invalidateQueries({ queryKey: ['recent'] });
+    queryClient.invalidateQueries({ queryKey: ['upcoming'] });
+    
+    // Invalidate school-specific match queries
+    queryClient.invalidateQueries({ queryKey: ['matches', 'bySchool'] });
+  };
+
+  const refetchMatchById = (matchId: number) => {
+    queryClient.invalidateQueries({ queryKey: matchKeys.details(matchId) });
+    queryClient.refetchQueries({ queryKey: matchKeys.details(matchId) });
+  };
+
+  const refetchMatchesByStage = (stageId: number) => {
+    queryClient.invalidateQueries({ queryKey: matchKeys.byStage(stageId) });
+    queryClient.refetchQueries({ queryKey: matchKeys.byStage(stageId) });
+  };
+
+  const refetchScheduleData = () => {
+    queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+    queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+    queryClient.refetchQueries({ queryKey: ['matches', 'schedule'] });
+    queryClient.refetchQueries({ queryKey: ['matches', 'scheduleByDate'] });
+  };
+
+  return {
+    refetchAllMatchData,
+    refetchMatchById,
+    refetchMatchesByStage,
+    refetchScheduleData
+  };
 }

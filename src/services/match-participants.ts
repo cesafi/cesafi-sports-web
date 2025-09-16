@@ -308,6 +308,40 @@ export class MatchParticipantService extends BaseService {
     }
   }
 
+  /**
+   * Delete match participant with cascading deletion of all related game scores
+   */
+  static async deleteByIdWithCascade(id: number): Promise<ServiceResponse<undefined>> {
+    try {
+      if (!id) {
+        return { success: false, error: 'Match participant ID is required to delete.' };
+      }
+
+      const supabase = await this.getClient();
+
+      // Delete all game scores for this participant first
+      const { error: scoresError } = await supabase
+        .from(GAME_SCORES_TABLE)
+        .delete()
+        .eq('match_participant_id', id);
+
+      if (scoresError) {
+        throw scoresError;
+      }
+
+      // Delete the match participant
+      const { error } = await supabase.from(TABLE_NAME).delete().eq('id', id);
+
+      if (error) {
+        throw error;
+      }
+
+      return { success: true, data: undefined };
+    } catch (err) {
+      return this.formatError(err, `Failed to delete match participant with cascade.`);
+    }
+  }
+
   static async getMatchParticipantsWithDetails(
     matchId: number
   ): Promise<ServiceResponse<MatchParticipantWithFullDetails[]>> {

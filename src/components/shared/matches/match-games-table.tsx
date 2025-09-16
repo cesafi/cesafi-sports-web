@@ -270,9 +270,25 @@ export function MatchGamesTable({ matchId, isLoading: externalLoading }: MatchGa
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDeleteGame}
         type="delete"
-        title="Delete Game"
-        message={`Are you sure you want to delete game ${gameToDelete?.game_number}? This action cannot be undone.`}
-        confirmText="Delete"
+        title="Delete Game & All Scores"
+        message={
+          <div className="space-y-3">
+            <p>Are you sure you want to delete <strong>Game {gameToDelete?.game_number}</strong>?</p>
+            <div className="text-sm bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 rounded-md">
+              <p className="font-medium text-amber-800 dark:text-amber-200 mb-2">⚠️ Cascade Deletion Active</p>
+              <p className="text-amber-700 dark:text-amber-300 mb-2">This will automatically delete:</p>
+              <ul className="list-disc list-inside space-y-1 text-amber-700 dark:text-amber-300">
+                <li><strong>All game scores</strong> for this game</li>
+                <li><strong>The game itself</strong></li>
+              </ul>
+            </div>
+            <div className="text-sm bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-3 rounded-md">
+              <p className="font-medium text-red-800 dark:text-red-200">🚨 This action cannot be undone!</p>
+              <p className="text-red-700 dark:text-red-300 mt-1">All game data will be permanently removed.</p>
+            </div>
+          </div>
+        }
+        confirmText="Delete Game & Scores"
         cancelText="Cancel"
         destructive={true}
         isLoading={isDeleting}
