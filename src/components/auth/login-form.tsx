@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useLogin } from '@/hooks/use-auth';
 import { LoginSchema, type LoginFormData } from '@/lib/validations/auth';
+import { TurnstileWidget } from './turnstile';
 import { toast } from 'sonner';
 import { ZodError } from 'zod';
 
@@ -16,7 +17,8 @@ export function LoginForm() {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
-    password: ''
+    password: '',
+    turnstileToken: ''
   });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const router = useRouter();
@@ -28,6 +30,26 @@ export function LoginForm() {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
+  };
+
+  const handleTurnstileVerify = (token: string) => {
+    setFormData((prev) => ({ ...prev, turnstileToken: token }));
+    if (errors.turnstileToken) {
+      setErrors((prev) => ({ ...prev, turnstileToken: undefined }));
+    }
+  };
+
+  const handleTurnstileError = () => {
+    setFormData((prev) => ({ ...prev, turnstileToken: '' }));
+    toast.error('Security verification failed. Please try again.');
+  };
+
+  const handleTurnstileExpire = () => {
+    setFormData((prev) => ({ ...prev, turnstileToken: '' }));
+    setErrors((prev) => ({
+      ...prev,
+      turnstileToken: 'Security verification expired. Please verify again.'
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -67,18 +89,15 @@ export function LoginForm() {
       if (result.success) {
         setIsRedirecting(true);
 
-        const roleDisplay = result.userRole
-          ? `Welcome! Redirecting to ${result.userRole.replace('_', ' ')} dashboard...`
-          : 'Login successful! Redirecting...';
+        const roleDisplay =
+          'userRole' in result && result.userRole
+            ? `Welcome! Redirecting to ${result.userRole.replace('_', ' ')} dashboard...`
+            : 'Login successful! Redirecting...';
 
         toast.success(roleDisplay);
 
-        // Debug: Check current user session before redirect
-        console.log('About to redirect, checking current session...');
-
         setTimeout(() => {
           try {
-            console.log('Reloading page to trigger middleware redirect...');
             window.location.reload();
           } catch (redirectError) {
             console.error('Redirect error:', redirectError);
@@ -87,8 +106,21 @@ export function LoginForm() {
         }, 1000);
       } else {
         console.log('Login failed:', result.error);
-        if (result.error) {
-          toast.error(result.error);
+
+        if ('rateLimited' in result && result.rateLimited) {
+          // Show rate limit error with more prominent styling
+          toast.error(result.error, {
+            duration: 10000 // Show longer for rate limit errors
+          });
+        } else if (result.error) {
+          // Show remaining attempts if available
+          const message =
+            'remainingAttempts' in result &&
+            result.remainingAttempts !== undefined &&
+            result.remainingAttempts > 0
+              ? `${result.error} (${result.remainingAttempts} attempts remaining)`
+              : result.error;
+          toast.error(message);
         } else {
           toast.error('Login failed. Please check your credentials and try again.');
         }
@@ -115,7 +147,7 @@ export function LoginForm() {
             Email Address
           </Label>
           <div className="relative">
-            <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Mail className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               id="email"
               type="email"
@@ -142,7 +174,7 @@ export function LoginForm() {
             Password
           </Label>
           <div className="relative">
-            <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Lock className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
@@ -158,7 +190,7 @@ export function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isLoading || isRedirecting}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -172,10 +204,25 @@ export function LoginForm() {
           )}
         </div>
 
+        {/* Turnstile Security Verification */}
+        <div className="flex flex-col space-y-2">
+          <TurnstileWidget
+            onVerify={handleTurnstileVerify}
+            onError={handleTurnstileError}
+            onExpire={handleTurnstileExpire}
+          />
+          {errors.turnstileToken && (
+            <div className="flex items-center space-x-2 text-sm text-red-600">
+              <AlertCircle className="h-4 w-4" />
+              <span>{errors.turnstileToken}</span>
+            </div>
+          )}
+        </div>
+
         <Button
           type="submit"
           className="bg-primary text-primary-foreground h-12 w-full rounded-md font-medium"
-          disabled={isLoading || isRedirecting}
+          disabled={isLoading || isRedirecting || !formData.turnstileToken}
         >
           {isLoading ? 'Signing in...' : isRedirecting ? 'Redirecting...' : 'Sign In to Portal'}
         </Button>

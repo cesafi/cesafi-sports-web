@@ -4,7 +4,7 @@ import { LoginFormData } from '@/lib/validations/auth';
 
 export function useLogin() {
   return useMutation({
-    mutationFn: ({ email, password }: LoginFormData) => loginAction(email, password),
+    mutationFn: ({ email, password, turnstileToken }: LoginFormData) => loginAction(email, password, turnstileToken),
     onError: (error: Error) => {
       if (error.message !== 'NEXT_REDIRECT') {
         console.error('Login error:', error);

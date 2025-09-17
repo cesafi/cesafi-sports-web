@@ -1,11 +1,20 @@
 import { ServiceResponse } from '@/lib/types/base';
 import { BaseService } from './base';
 import { AuthCheckResult, LoginResult, UserRole } from '@/lib/types/auth';
+import { verifyTurnstileToken } from '@/lib/utils/turnstile';
 
 export class AuthService extends BaseService {
-  static async login(email: string, password: string): Promise<LoginResult> {
+  static async login(email: string, password: string, turnstileToken?: string): Promise<LoginResult> {
     if (!email || !password) {
       return { success: false, error: 'Email or Password is missing.' };
+    }
+
+    // Verify Turnstile token if provided
+    if (turnstileToken) {
+      const isValidToken = await verifyTurnstileToken(turnstileToken);
+      if (!isValidToken) {
+        return { success: false, error: 'Security verification failed. Please try again.' };
+      }
     }
 
     try {

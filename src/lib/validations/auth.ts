@@ -7,7 +7,10 @@ export const LoginSchema = z.object({
   password: z
     .string()
     .min(1, { message: 'Password is required.' })
-    .min(6, { message: 'Password must be at least 6 characters long.' })
+    .min(6, { message: 'Password must be at least 6 characters long.' }),
+  turnstileToken: z
+    .string()
+    .min(1, { message: 'Please complete the security verification.' })
 });
 
 export type LoginFormData = z.infer<typeof LoginSchema>;
