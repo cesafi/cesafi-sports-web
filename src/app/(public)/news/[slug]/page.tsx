@@ -14,6 +14,7 @@ import { useArticleBySlug, useRecentPublishedArticles } from '@/hooks/use-articl
 import { renderArticleContent, extractPlainText, getArticleContentProps } from '@/lib/utils/content-renderer';
 import { formatSmartDate } from '@/lib/utils/date';
 import { calculateSportsReadTime } from '@/lib/utils/read-time';
+import { getArticleUrl } from '@/lib/utils/site-url';
 import '@/styles/article-content.css';
 
 export default function NewsArticlePage() {
@@ -148,7 +149,7 @@ export default function NewsArticlePage() {
               <div className="flex-shrink-0">
                 <ShareButtons
                   title={displayArticle.title}
-                  url={`https://cesafisports.com/news/${displayArticle.slug}`}
+                  url={getArticleUrl(displayArticle.slug)}
                   variant="compact"
                 />
               </div>
@@ -206,7 +207,7 @@ export default function NewsArticlePage() {
                 </div>
                 <ShareButtons
                   title={displayArticle.title}
-                  url={`https://cesafisports.com/news/${displayArticle.slug}`}
+                  url={getArticleUrl(displayArticle.slug)}
                   variant="expanded"
                 />
               </div>

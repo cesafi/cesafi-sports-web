@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { moderniz } from '@/lib/fonts';
 import { toast } from 'sonner';
+import { isValidShareUrl } from '@/lib/utils/site-url';
 
 interface ShareButtonsProps {
   title: string;
@@ -14,27 +15,83 @@ interface ShareButtonsProps {
   disabled?: boolean;
 }
 
-export default function ShareButtons({ title, url, variant = 'default', disabled = false }: ShareButtonsProps) {
+export default function ShareButtons({
+  title,
+  url,
+  variant = 'default',
+  disabled = false
+}: ShareButtonsProps) {
   const [isSharing, setIsSharing] = useState(false);
 
   const handleShare = async (platform?: string) => {
     if (disabled) return;
-    
+
     setIsSharing(true);
     const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
 
+    // Validate URL to prevent malicious URLs
+    if (!shareUrl || !isValidShareUrl(shareUrl)) {
+      toast.error('Invalid URL for sharing');
+      setIsSharing(false);
+      return;
+    }
+
     try {
       if (platform === 'twitter') {
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+        // Limit title length for Twitter (280 char limit)
+        const truncatedTitle = title.length > 200 ? title.substring(0, 200) + '...' : title;
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(truncatedTitle)}&url=${encodeURIComponent(shareUrl)}`;
+
+        // Open with security attributes
+        const popup = window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
+        if (!popup) {
+          toast.error('Please allow popups to share on Twitter');
+        }
       } else if (platform === 'facebook') {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+
+        // Open with security attributes
+        const popup = window.open(
+          facebookUrl,
+          '_blank',
+          'noopener,noreferrer,width=600,height=400'
+        );
+        if (!popup) {
+          toast.error('Please allow popups to share on Facebook');
+        }
       } else {
-        // Copy to clipboard
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success('Link copied to clipboard!');
+        // Copy to clipboard with fallback
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(shareUrl);
+          toast.success('Link copied to clipboard!');
+        } else {
+          // Fallback for older browsers or non-HTTPS
+          const textArea = document.createElement('textarea');
+          textArea.value = shareUrl;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+
+          try {
+            document.execCommand('copy');
+            toast.success('Link copied to clipboard!');
+          } catch (_) {
+            toast.error('Failed to copy link. Please copy manually: ' + shareUrl);
+          } finally {
+            document.body.removeChild(textArea);
+          }
+        }
       }
-    } catch (_error) {
-      toast.error('Failed to share article');
+    } catch (error) {
+      console.error('Share error:', error);
+      if (platform === 'twitter' || platform === 'facebook') {
+        toast.error('Failed to open sharing window. Please check your popup blocker.');
+      } else {
+        toast.error('Failed to copy link to clipboard');
+      }
     } finally {
       setIsSharing(false);
     }
@@ -152,7 +209,7 @@ export default function ShareButtons({ title, url, variant = 'default', disabled
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle className={`${moderniz.className} text-lg flex items-center gap-2`}>
+        <CardTitle className={`${moderniz.className} flex items-center gap-2 text-lg`}>
           <Share2 className="h-5 w-5" />
           Share Article
         </CardTitle>
@@ -165,7 +222,7 @@ export default function ShareButtons({ title, url, variant = 'default', disabled
           onClick={() => handleShare('twitter')}
           disabled={disabled || isSharing}
         >
-          <Twitter className="h-4 w-4 mr-2" />
+          <Twitter className="mr-2 h-4 w-4" />
           Twitter
         </Button>
         <Button
@@ -175,7 +232,7 @@ export default function ShareButtons({ title, url, variant = 'default', disabled
           onClick={() => handleShare('facebook')}
           disabled={disabled || isSharing}
         >
-          <Facebook className="h-4 w-4 mr-2" />
+          <Facebook className="mr-2 h-4 w-4" />
           Facebook
         </Button>
         <Button
@@ -185,7 +242,7 @@ export default function ShareButtons({ title, url, variant = 'default', disabled
           onClick={() => handleShare()}
           disabled={disabled || isSharing}
         >
-          <LinkIcon className="h-4 w-4 mr-2" />
+          <LinkIcon className="mr-2 h-4 w-4" />
           Copy Link
         </Button>
       </CardContent>

@@ -24,6 +24,7 @@ import { useArticleById } from '@/hooks/use-articles';
 import { renderArticleContent, extractPlainText, getArticleContentProps } from '@/lib/utils/content-renderer';
 import { formatSmartDate } from '@/lib/utils/date';
 import { calculateSportsReadTime } from '@/lib/utils/read-time';
+import { getArticleUrl } from '@/lib/utils/site-url';
 import '@/styles/article-content.css';
 
 export default function ArticlePreviewPage() {
@@ -186,7 +187,7 @@ export default function ArticlePreviewPage() {
               {/* Share Buttons - Top (Preview Mode) */}
               <div className="flex-shrink-0">
                 <ShareButtons 
-                  url={`/news/${displayArticle.slug}`}
+                  url={getArticleUrl(displayArticle.slug)}
                   title={displayArticle.title}
                   variant="compact"
                   disabled={true}
@@ -243,7 +244,7 @@ export default function ArticlePreviewPage() {
                   </p>
                 </div>
                 <ShareButtons 
-                  url={`/news/${displayArticle.slug}`}
+                  url={getArticleUrl(displayArticle.slug)}
                   title={displayArticle.title}
                   variant="full"
                   disabled={true}
