@@ -21,11 +21,11 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: `
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' fonts.googleapis.com static.cloudflareinsights.com https://challenges.cloudflare.com;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' fonts.googleapis.com static.cloudflareinsights.com https://challenges.cloudflare.com vercel.live;
       style-src 'self' 'unsafe-inline' fonts.googleapis.com;
       img-src 'self' data: blob: rqwvkzpkhynfyabvfqmu.supabase.co fonts.gstatic.com static.cloudflareinsights.com *.cloudinary.com;
       font-src 'self' data: fonts.gstatic.com;
-      connect-src 'self' rqwvkzpkhynfyabvfqmu.supabase.co wss://rqwvkzpkhynfyabvfqmu.supabase.co static.cloudflareinsights.com https://api.cloudinary.com https://challenges.cloudflare.com;
+      connect-src 'self' rqwvkzpkhynfyabvfqmu.supabase.co wss://rqwvkzpkhynfyabvfqmu.supabase.co static.cloudflareinsights.com https://api.cloudinary.com https://challenges.cloudflare.com vercel.live;
       frame-src 'self' www.youtube.com https://challenges.cloudflare.com;
       worker-src 'self' blob:;
     `

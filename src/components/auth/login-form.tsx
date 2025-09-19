@@ -107,20 +107,8 @@ export function LoginForm() {
       } else {
         console.log('Login failed:', result.error);
 
-        if ('rateLimited' in result && result.rateLimited) {
-          // Show rate limit error with more prominent styling
-          toast.error(result.error, {
-            duration: 10000 // Show longer for rate limit errors
-          });
-        } else if (result.error) {
-          // Show remaining attempts if available
-          const message =
-            'remainingAttempts' in result &&
-            result.remainingAttempts !== undefined &&
-            result.remainingAttempts > 0
-              ? `${result.error} (${result.remainingAttempts} attempts remaining)`
-              : result.error;
-          toast.error(message);
+        if (result.error) {
+          toast.error(result.error);
         } else {
           toast.error('Login failed. Please check your credentials and try again.');
         }
