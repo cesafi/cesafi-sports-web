@@ -26,7 +26,7 @@ const securityHeaders = [
       img-src 'self' data: blob: rqwvkzpkhynfyabvfqmu.supabase.co fonts.gstatic.com static.cloudflareinsights.com *.cloudinary.com;
       font-src 'self' data: fonts.gstatic.com;
       connect-src 'self' rqwvkzpkhynfyabvfqmu.supabase.co wss://rqwvkzpkhynfyabvfqmu.supabase.co static.cloudflareinsights.com https://api.cloudinary.com https://challenges.cloudflare.com vercel.live;
-      frame-src 'self' www.youtube.com https://challenges.cloudflare.com;
+      frame-src 'self' www.youtube.com https://challenges.cloudflare.com vercel.live;
       worker-src 'self' blob:;
     `
       .replace(/\s{2,}/g, ' ')

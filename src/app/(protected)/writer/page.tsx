@@ -223,6 +223,17 @@ export default function WriterOverviewPage() {
             >
               <Edit3 className="h-5 w-5 text-primary" />
               <div>
+                <p className="font-medium">Edit Drafts</p>
+                <p className="text-sm text-muted-foreground">{writerStats.drafts} draft articles to continue</p>
+              </div>
+            </Link>
+            
+            <Link
+              href="/writer/articles"
+              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+            >
+              <AlertCircle className="h-5 w-5 text-primary" />
+              <div>
                 <p className="font-medium">Revise Articles</p>
                 <p className="text-sm text-muted-foreground">{writerStats.needRevision} articles need revision</p>
               </div>

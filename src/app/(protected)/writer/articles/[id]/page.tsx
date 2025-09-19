@@ -80,15 +80,15 @@ export default function EditArticlePage() {
     );
   }
 
-  // Writers can only edit articles with 'revise' status
-  if (article.status !== 'revise') {
+  // Writers can edit articles with 'revise' or 'draft' status
+  if (!['revise', 'draft'].includes(article.status)) {
     return (
       <div className="w-full space-y-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-foreground mb-4">Cannot Edit Article</h1>
             <p className="text-muted-foreground mb-6">
-              You can only edit articles with &quot;Revise&quot; status. This article is currently in &quot;{getStatusLabel(article.status)}&quot; status.
+              You can only edit articles with &quot;Draft&quot; or &quot;Revise&quot; status. This article is currently in &quot;{getStatusLabel(article.status)}&quot; status.
             </p>
             <Link
               href="/writer/articles"
@@ -118,6 +118,7 @@ export default function EditArticlePage() {
 
 function getStatusLabel(status: string) {
   switch (status) {
+    case 'draft': return 'Draft';
     case 'review': return 'Review';
     case 'approved': return 'Approved';
     case 'revise': return 'Revise';

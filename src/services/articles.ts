@@ -158,11 +158,9 @@ export class ArticleService extends BaseService {
       const insertData = { ...data };
 
       // Handle publishing workflow logic
-      if (insertData.status === 'published' && !insertData.published_at) {
-        insertData.published_at = new Date().toISOString();
-      }
-
-      if (insertData.status !== 'published') {
+      // Note: published_at is now manually set by head writers/admins
+      // Only clear published_at if status is not published/approved
+      if (insertData.status && !['published', 'approved'].includes(insertData.status)) {
         insertData.published_at = null;
       }
 
@@ -195,13 +193,9 @@ export class ArticleService extends BaseService {
       // Handle publishing workflow logic
       const updateData = { ...data };
 
-      // If article is being published and published_at is not set, set it now
-      if (updateData.status === 'published' && !updateData.published_at) {
-        updateData.published_at = new Date().toISOString();
-      }
-
-      // If article is being unpublished, clear published_at
-      if (updateData.status !== 'published') {
+      // Note: published_at is now manually set by head writers/admins
+      // Only clear published_at if status is not published/approved
+      if (updateData.status && !['published', 'approved'].includes(updateData.status)) {
         updateData.published_at = null;
       }
 

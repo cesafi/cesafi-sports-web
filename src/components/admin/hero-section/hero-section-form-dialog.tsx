@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2, Video, Calendar, Info } from 'lucide-react';
-import { utcToLocal, getBrowserTimezone } from '@/lib/utils/utc-time';
+import { DateTimeInput } from '@/components/ui/datetime-input';
+import { Loader2, Video } from 'lucide-react';
+import { utcToLocal } from '@/lib/utils/utc-time';
 
 interface HeroSectionFormDialogProps {
   open: boolean;
@@ -103,31 +104,21 @@ export function HeroSectionFormDialog({ open, onOpenChange, hero, onSubmit }: He
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="end_at">End Date & Time *</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    id="end_at"
-                    type="datetime-local"
-                    className="pl-10"
-                    {...register('end_at')}
-                  />
-                </div>
-                {errors.end_at && (
-                  <p className="text-sm text-red-600">{errors.end_at.message}</p>
-                )}
-                <div className="flex items-start space-x-2 text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Timezone Information</p>
-                    <p className="text-blue-700">
-                      Enter time in your local timezone ({getBrowserTimezone()}). 
-                      It will be automatically converted to UTC for storage.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <DateTimeInput
+                id="end_at"
+                label="End Date & Time"
+                value={watch('end_at') || null}
+                onChange={(utcIsoString) => {
+                  // Update the form value with the UTC ISO string
+                  reset({
+                    ...watch(),
+                    end_at: utcIsoString || ''
+                  });
+                }}
+                error={errors.end_at?.message}
+                helpText="When the hero section should stop being displayed"
+                required={true}
+              />
             </div>
 
             {/* Preview Section */}

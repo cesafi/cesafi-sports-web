@@ -58,7 +58,7 @@ export default function WriterArticlesPage() {
         <div className="flex items-center space-x-2">
           <Badge className="bg-teal-100 text-teal-800 border-teal-200">Writer Access</Badge>
           <p className="text-sm text-teal-800">
-            You can create new articles, preview all your articles, and edit articles that need revision.
+            You can create new articles, preview all your articles, edit drafts, and edit articles that need revision.
           </p>
         </div>
       </div>
@@ -81,7 +81,7 @@ export default function WriterArticlesPage() {
         onSearchChange={onSearchChange}
         onFiltersChange={onFiltersChange}
         title="My Articles"
-        subtitle="View all your articles, preview published ones, and edit articles that need revision."
+        subtitle="View all your articles, preview published ones, edit drafts, and edit articles that need revision."
         searchPlaceholder="Search your articles..."
         showSearch={true}
         showFilters={false}

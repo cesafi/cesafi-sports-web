@@ -15,6 +15,7 @@ import { useAllSportsSeasonsStages } from '@/hooks/use-sports-seasons-stages';
 import { useStageTeams } from '@/hooks/use-stage-teams';
 import { generateMatchName, generateMatchDescription } from '@/lib/utils/match-naming';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateTimeInput } from '@/components/ui/datetime-input';
 import { Power } from 'lucide-react';
 import { utcToLocal } from '@/lib/utils/utc-time';
 
@@ -396,18 +397,13 @@ export function MatchModal({
             </div>
 
             {/* Scheduled Date */}
-            <div className="space-y-2">
-              <Label htmlFor="scheduledAt">Scheduled Date</Label>
-              <Input
-                id="scheduledAt"
-                type="datetime-local"
-                value={formData.scheduled_at ? new Date(formData.scheduled_at).toISOString().slice(0, 16) : ''}
-                onChange={(e) => handleDateChange('scheduled_at', e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                When the match is scheduled to take place
-              </p>
-            </div>
+            <DateTimeInput
+              id="scheduledAt"
+              label="Scheduled Date"
+              value={formData.scheduled_at}
+              onChange={(utcIsoString) => handleDateChange('scheduled_at', utcIsoString || '')}
+              helpText="When the match is scheduled to take place"
+            />
           </CardContent>
         </Card>
 

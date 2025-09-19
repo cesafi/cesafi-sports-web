@@ -58,6 +58,15 @@ export const createArticleSchema = z.object({
     })
     .default('review'),
   published_at: z.string().nullable().optional()
+}).refine((data) => {
+  // If status is published, published_at must be provided
+  if (data.status === 'published' && !data.published_at) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Published articles must have a publish date set.',
+  path: ['published_at']
 });
 
 export const updateArticleSchema = z.object({
@@ -77,4 +86,13 @@ export const updateArticleSchema = z.object({
     })
     .optional(),
   published_at: z.string().nullable().optional()
+}).refine((data) => {
+  // If status is published, published_at must be provided
+  if (data.status === 'published' && !data.published_at) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Published articles must have a publish date set.',
+  path: ['published_at']
 });

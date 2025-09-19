@@ -5,6 +5,7 @@ import { ModalLayout } from '@/components/ui/modal-layout';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { DateTimeInput } from '@/components/ui/datetime-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Play, Square, Calendar, AlertTriangle } from 'lucide-react';
@@ -303,65 +304,50 @@ export function MatchStatusModal({
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Scheduled Time */}
-            <div className="space-y-2">
-              <Label htmlFor="scheduled_at">Scheduled Time</Label>
-              <Input
-                id="scheduled_at"
-                type="datetime-local"
-                value={formData.scheduled_at}
-                onChange={(e) => handleDateTimeChange('scheduled_at', e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                When the match is scheduled to begin
-              </p>
-            </div>
+            <DateTimeInput
+              id="scheduled_at"
+              label="Scheduled Time"
+              value={formData.scheduled_at ? new Date(formData.scheduled_at).toISOString() : null}
+              onChange={(utcIsoString) => handleDateTimeChange('scheduled_at', utcIsoString || '')}
+              helpText="When the match is scheduled to begin"
+            />
 
             {/* Start Time */}
-            <div className="space-y-2">
-              <Label htmlFor="start_at">
-                Actual Start Time
-                {(formData.status === 'ongoing' || formData.status === 'finished') && (
-                  <span className="text-red-500 ml-1">*</span>
-                )}
-              </Label>
-              <Input
-                id="start_at"
-                type="datetime-local"
-                value={formData.start_at}
-                onChange={(e) => handleDateTimeChange('start_at', e.target.value)}
-                className={errors.start_at ? 'border-red-500' : ''}
-              />
-              {errors.start_at && (
-                <p className="text-sm text-red-500">{errors.start_at}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                When the match actually started
-              </p>
-            </div>
+            <DateTimeInput
+              id="start_at"
+              label={
+                <>
+                  Actual Start Time
+                  {(formData.status === 'ongoing' || formData.status === 'finished') && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
+                </>
+              }
+              value={formData.start_at ? new Date(formData.start_at).toISOString() : null}
+              onChange={(utcIsoString) => handleDateTimeChange('start_at', utcIsoString || '')}
+              error={errors.start_at}
+              helpText="When the match actually started"
+              required={formData.status === 'ongoing' || formData.status === 'finished'}
+            />
 
             {/* End Time */}
-            <div className="space-y-2">
-              <Label htmlFor="end_at">
-                End Time
-                {formData.status === 'finished' && (
-                  <span className="text-red-500 ml-1">*</span>
-                )}
-              </Label>
-              <Input
-                id="end_at"
-                type="datetime-local"
-                value={formData.end_at}
-                onChange={(e) => handleDateTimeChange('end_at', e.target.value)}
-                className={errors.end_at ? 'border-red-500' : ''}
-                disabled={formData.status === 'upcoming'}
-              />
-              {errors.end_at && (
-                <p className="text-sm text-red-500">{errors.end_at}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                When the match ended (only for finished matches)
-              </p>
-            </div>
+            <DateTimeInput
+              id="end_at"
+              label={
+                <>
+                  End Time
+                  {formData.status === 'finished' && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
+                </>
+              }
+              value={formData.end_at ? new Date(formData.end_at).toISOString() : null}
+              onChange={(utcIsoString) => handleDateTimeChange('end_at', utcIsoString || '')}
+              error={errors.end_at}
+              helpText="When the match ended (only for finished matches)"
+              required={formData.status === 'finished'}
+              disabled={formData.status === 'upcoming'}
+            />
           </CardContent>
         </Card>
 

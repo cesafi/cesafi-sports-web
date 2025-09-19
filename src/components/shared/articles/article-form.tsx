@@ -18,6 +18,7 @@ import { Article, ArticleInsert, ArticleUpdate, ArticleStatus } from '@/lib/type
 import { createArticleSchema, updateArticleSchema } from '@/lib/validations/articles';
 import { ZodError } from 'zod';
 import { LexicalEditor } from '@/components/shared/articles/lexical-editor';
+import { DateTimeInput } from '@/components/ui/datetime-input';
 import { ImageUpload } from '@/components/shared/image-upload';
 import slugify from 'slugify';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -303,9 +304,19 @@ export function ArticleForm({
                     <Label htmlFor="status">Status</Label>
                     <Select
                       value={formData.status}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, status: value as ArticleStatus }))
-                      }
+                      onValueChange={(value) => {
+                        const newStatus = value as ArticleStatus;
+                        setFormData((prev) => {
+                          const newData = { ...prev, status: newStatus };
+                          
+                          // If changing to published and no published_at is set, set it to now
+                          if (newStatus === 'published' && !prev.published_at) {
+                            newData.published_at = new Date().toISOString();
+                          }
+                          
+                          return newData;
+                        });
+                      }}
                     >
                       <SelectTrigger className={errors.status ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Select status" />
@@ -323,31 +334,25 @@ export function ArticleForm({
                 )}
 
                 {/* Published Date */}
-                {canEditStatus && formData.status === 'approved' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="published_at">Publish Date & Time</Label>
-                    <Input
-                      id="published_at"
-                      type="datetime-local"
-                      value={
-                        formData.published_at
-                          ? new Date(formData.published_at).toISOString().slice(0, 16)
-                          : ''
-                      }
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          published_at: e.target.value
-                            ? new Date(e.target.value).toISOString()
-                            : null
-                        }))
-                      }
-                      className={errors.published_at ? 'border-red-500' : ''}
-                    />
-                    {errors.published_at && (
-                      <p className="text-sm text-red-500">{errors.published_at}</p>
-                    )}
-                  </div>
+                {canEditStatus && formData.status && ['approved', 'published'].includes(formData.status) && (
+                  <DateTimeInput
+                    id="published_at"
+                    label="Publish Date & Time"
+                    value={formData.published_at}
+                    onChange={(utcIsoString) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        published_at: utcIsoString
+                      }))
+                    }
+                    error={errors.published_at}
+                    helpText={
+                      formData.status === 'published' 
+                        ? 'When this article was/will be published'
+                        : 'When this article should be published'
+                    }
+                    required={formData.status === 'published'}
+                  />
                 )}
               </CardContent>
             </Card>
