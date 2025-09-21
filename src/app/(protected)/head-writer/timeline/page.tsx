@@ -15,7 +15,7 @@ export default async function HeadWriterTimelinePage() {
   const timelineData = timelineResult.success && timelineResult.data ? timelineResult.data : null;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Timeline Management</h1>
@@ -25,49 +25,39 @@ export default async function HeadWriterTimelinePage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {timelineData?.totalCount || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Timeline events created
-            </p>
+            <div className="text-2xl font-bold">{timelineData?.totalCount || 0}</div>
+            <p className="text-muted-foreground text-xs">Timeline events created</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Highlight Events</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+            <Star className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {timelineData?.data.filter(event => event.is_highlight).length || 0}
+              {timelineData?.data.filter((event) => event.is_highlight).length || 0}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Featured timeline events
-            </p>
+            <p className="text-muted-foreground text-xs">Featured timeline events</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Content Management</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <FileText className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {timelineData?.data.length || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Events ready for content
-            </p>
+            <div className="text-2xl font-bold">{timelineData?.data.length || 0}</div>
+            <p className="text-muted-foreground text-xs">Events ready for content</p>
           </CardContent>
         </Card>
       </div>

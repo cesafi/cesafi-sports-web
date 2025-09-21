@@ -61,3 +61,4 @@ export const updateHeroSectionLiveSchema = z.object({
 export type CreateHeroSectionLiveInput = z.infer<typeof createHeroSectionLiveSchema>;
 export type UpdateHeroSectionLiveInput = z.infer<typeof updateHeroSectionLiveSchema>;
 
+
