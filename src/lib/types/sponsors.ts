@@ -1,12 +1,12 @@
-import { z } from 'zod';
-import { Database } from '@/../database.types';
+import { Database } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
-import { createSponsorSchema, updateSponsorSchema } from '@/lib/validations/sponsors';
 
+// Direct database type mapping
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
-export type SponsorInsert = z.infer<typeof createSponsorSchema>;
-export type SponsorUpdate = z.infer<typeof updateSponsorSchema>;
+export type SponsorInsert = Database['public']['Tables']['sponsors']['Insert'];
+export type SponsorUpdate = Database['public']['Tables']['sponsors']['Update'];
 
+// Search filters for sponsors
 export interface SponsorSearchFilters {
   title?: string;
   tagline?: string;
@@ -17,6 +17,7 @@ export interface SponsorSearchFilters {
   };
 }
 
+// Pagination options for sponsors
 export type SponsorPaginationOptions = PaginationOptions<
   SponsorSearchFilters & Record<string, FilterValue>
 >;

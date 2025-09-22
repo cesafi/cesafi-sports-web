@@ -14,7 +14,9 @@ import {
   Home,
   HelpCircle,
   Calendar,
-  Image as ImageIcon
+  Image as ImageIcon,
+  HandHeart,
+  ExternalLink
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -50,6 +52,7 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
           { href: '/admin/schools', label: 'Schools', icon: Building2 },
           { href: '/admin/seasons', label: 'Seasons', icon: Trophy },
           { href: '/admin/sports', label: 'Sports', icon: Volleyball },
+          { href: '/admin/sponsors', label: 'Sponsors', icon: HandHeart },
           { href: '/admin/articles', label: 'Articles', icon: FileText },
           { href: '/admin/departments', label: 'Departments', icon: Users }
         ];
@@ -224,6 +227,17 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
           </div>
         )}
       </nav>
+
+      {/* View Website Section */}
+      <div className="border-border border-t p-4">
+        <Link
+          href="/"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-primary/5 hover:text-sidebar-foreground transition-colors"
+        >
+          <ExternalLink className="h-5 w-5" />
+          <span>View Website</span>
+        </Link>
+      </div>
 
       {/* Footer */}
       <div className="border-border border-t p-4">

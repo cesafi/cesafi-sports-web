@@ -6,8 +6,6 @@ import {
 } from '@/lib/types/base';
 import { BaseService } from './base';
 import { Sponsor, SponsorInsert, SponsorUpdate } from '@/lib/types/sponsors';
-import CloudinaryService from './cloudinary';
-import { nowUtc } from '@/lib/utils/utc-time';
 
 const TABLE_NAME = 'sponsors';
 
@@ -23,69 +21,43 @@ export class SponsorService extends BaseService {
         searchableFields
       };
 
-      const result = await this.getPaginatedData<Sponsor, 'sponsors', Record<string, FilterValue>>(
-        'sponsors',
+      const result = await this.getPaginatedData<Sponsor, typeof TABLE_NAME>(
+        TABLE_NAME,
         optionsWithSearchableFields,
         selectQuery
       );
 
       return result;
     } catch (err) {
-      return this.formatError(err, `Failed to retrieve paginated sponsors`);
+      return this.formatError(err, `Failed to retrieve paginated ${TABLE_NAME}.`);
     }
   }
 
   static async getAll(): Promise<ServiceResponse<Sponsor[]>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
-        .from(TABLE_NAME)
-        .select()
-        .order('title', { ascending: true });
+      const { data, error } = await supabase.from(TABLE_NAME).select();
 
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       return { success: true, data };
     } catch (err) {
-      return this.formatError(err, `Failed to fetch all ${TABLE_NAME} entity.`);
+      return this.formatError(err, `Failed to fetch all ${TABLE_NAME}.`);
     }
   }
 
-  static async getActiveSponsors(): Promise<ServiceResponse<Sponsor[]>> {
+  static async getActive(): Promise<ServiceResponse<Sponsor[]>> {
     try {
       const supabase = await this.getClient();
       const { data, error } = await supabase
         .from(TABLE_NAME)
         .select()
         .eq('is_active', true)
-        .order('title', { ascending: true });
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       return { success: true, data };
     } catch (err) {
-      return this.formatError(err, `Failed to fetch active ${TABLE_NAME} entities.`);
-    }
-  }
-
-  static async getCount(): Promise<ServiceResponse<number>> {
-    try {
-      const supabase = await this.getClient();
-      const { count, error } = await supabase
-        .from(TABLE_NAME)
-        .select('*', { count: 'exact', head: true });
-
-      if (error) {
-        throw error;
-      }
-
-      return { success: true, data: count || 0 };
-    } catch (err) {
-      return this.formatError(err, `Failed to get ${TABLE_NAME} count.`);
+      return this.formatError(err, `Failed to fetch active ${TABLE_NAME}.`);
     }
   }
 
@@ -94,10 +66,7 @@ export class SponsorService extends BaseService {
       const supabase = await this.getClient();
       const { data, error } = await supabase.from(TABLE_NAME).select().eq('id', id).single();
 
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       return { success: true, data };
     } catch (err) {
       return this.formatError(err, `Failed to fetch ${TABLE_NAME} entity.`);
@@ -106,15 +75,23 @@ export class SponsorService extends BaseService {
 
   static async insert(data: SponsorInsert): Promise<ServiceResponse<undefined>> {
     try {
-      const supabase = await this.getClient();
+      // Validate required fields
+      if (!data.title) {
+        return { success: false, error: 'Title is required.' };
+      }
 
-      const { error } = await supabase.from(TABLE_NAME).insert({
-        ...data,
-        created_at: nowUtc(),
-        updated_at: nowUtc()
-      });
+      if (!data.tagline) {
+        return { success: false, error: 'Tagline is required.' };
+      }
+
+      const supabase = await this.getClient();
+      const { error } = await supabase.from(TABLE_NAME).insert(data);
 
       if (error) {
+        // Handle specific database errors
+        if (error.code === '23505') {
+          return { success: false, error: 'Sponsor with this title already exists.' };
+        }
         throw error;
       }
 
@@ -127,16 +104,17 @@ export class SponsorService extends BaseService {
   static async updateById(data: SponsorUpdate): Promise<ServiceResponse<undefined>> {
     try {
       if (!data.id) {
-        return { success: false, error: 'Entity ID is required to update.' };
+        return { success: false, error: 'Sponsor ID is required to update.' };
       }
 
       const supabase = await this.getClient();
-      const { error } = await supabase.from(TABLE_NAME).update({
-        ...data,
-        updated_at: nowUtc()
-      }).eq('id', data.id);
+      const { error } = await supabase.from(TABLE_NAME).update(data).eq('id', data.id);
 
       if (error) {
+        // Handle specific database errors
+        if (error.code === '23505') {
+          return { success: false, error: 'Sponsor with this title already exists.' };
+        }
         throw error;
       }
 
@@ -149,48 +127,13 @@ export class SponsorService extends BaseService {
   static async deleteById(id: string): Promise<ServiceResponse<undefined>> {
     try {
       if (!id) {
-        return { success: false, error: 'Entity ID is required to delete.' };
+        return { success: false, error: 'Sponsor ID is required to delete.' };
       }
 
       const supabase = await this.getClient();
-
-      // First, get the sponsor to check if it has a logo
-      const { data: sponsor, error: fetchError } = (await supabase
-        .from(TABLE_NAME)
-        .select('logo_url')
-        .eq('id', id)
-        .single()) as { data: { logo_url: string | null } | null; error: Error | null };
-
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      // Delete the logo from Cloudinary if it exists
-      if (sponsor?.logo_url) {
-        try {
-          // Extract public_id from the URL for deletion
-          const url = sponsor.logo_url;
-          // Match the full path after /upload/ or /upload/vX_Y_Z/ and remove extension
-          const publicIdMatch = url.match(/\/upload\/(?:v\d+\/)?(.+)\.(jpg|jpeg|png|gif|webp)$/i);
-
-          if (publicIdMatch) {
-            const publicId = publicIdMatch[1]; // This includes the full folder path without extension
-
-            await CloudinaryService.deleteImage(publicId, { resourceType: 'image' });
-          }
-        } catch (cloudinaryError) {
-          // Log the error but don't block the database deletion
-          console.warn('Failed to delete sponsor logo from Cloudinary:', cloudinaryError);
-        }
-      }
-
-      // Now delete from database
       const { error } = await supabase.from(TABLE_NAME).delete().eq('id', id);
 
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       return { success: true, data: undefined };
     } catch (err) {
       return this.formatError(err, `Failed to delete ${TABLE_NAME} entity.`);

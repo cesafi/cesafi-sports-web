@@ -1,23 +1,23 @@
 'use server';
 
-import { SponsorPaginationOptions } from '@/lib/types/sponsors';
+import { PaginationOptions, FilterValue } from '@/lib/types/base';
+import { SponsorInsert, SponsorUpdate } from '@/lib/types/sponsors';
 import { SponsorService } from '@/services/sponsors';
-import { createSponsorSchema, updateSponsorSchema } from '@/lib/validations/sponsors';
-import { RevalidationHelper } from '@/lib/utils/revalidation';
-import { ServiceResponse } from '@/lib/types/base';
+import { revalidatePath } from 'next/cache';
 
-export async function getPaginatedSponsors(options: SponsorPaginationOptions) {
+export async function getPaginatedSponsors(
+  options: PaginationOptions<Record<string, FilterValue>>
+) {
   try {
     const result = await SponsorService.getPaginated(options);
-    
+
     if (!result.success || !result.data) {
-      return { 
-        success: false, 
-        error: result.success === false ? result.error : 'No data returned from service' 
+      return {
+        success: false,
+        error: result.success === false ? result.error : 'No data returned from service'
       };
     }
 
-    // Transform the data to match the expected format
     return {
       success: true,
       data: {
@@ -28,9 +28,9 @@ export async function getPaginatedSponsors(options: SponsorPaginationOptions) {
       }
     };
   } catch {
-    return { 
-      success: false, 
-      error: 'Unknown error occurred' 
+    return {
+      success: false,
+      error: 'Unknown error occurred'
     };
   }
 }
@@ -40,50 +40,28 @@ export async function getAllSponsors() {
 }
 
 export async function getActiveSponsors() {
-  return await SponsorService.getActiveSponsors();
+  return await SponsorService.getActive();
 }
 
 export async function getSponsorById(id: string) {
   return await SponsorService.getById(id);
 }
 
-export async function createSponsor(data: unknown): Promise<ServiceResponse<undefined>> {
-  // Validate the input data
-  const validationResult = createSponsorSchema.safeParse(data);
-  
-  if (!validationResult.success) {
-    return {
-      success: false,
-      error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
-    };
-  }
-
-  const result = await SponsorService.insert(validationResult.data);
+export async function createSponsor(data: SponsorInsert) {
+  const result = await SponsorService.insert(data);
 
   if (result.success) {
-    RevalidationHelper.revalidateSponsors();
+    revalidatePath('/admin/sponsors');
   }
 
   return result;
 }
 
-export async function updateSponsorById(data: unknown): Promise<ServiceResponse<undefined>> {
-  // Validate the input data
-  const validationResult = updateSponsorSchema.safeParse(data);
-  
-  if (!validationResult.success) {
-    return {
-      success: false,
-      error: 'Validation failed',
-      validationErrors: validationResult.error.flatten().fieldErrors as Record<string, string[]>
-    };
-  }
-
-  const result = await SponsorService.updateById(validationResult.data);
+export async function updateSponsorById(data: SponsorUpdate) {
+  const result = await SponsorService.updateById(data);
 
   if (result.success) {
-    RevalidationHelper.revalidateSponsors();
+    revalidatePath('/admin/sponsors');
   }
 
   return result;
@@ -93,9 +71,8 @@ export async function deleteSponsorById(id: string) {
   const result = await SponsorService.deleteById(id);
 
   if (result.success) {
-    RevalidationHelper.revalidateSponsors();
+    revalidatePath('/admin/sponsors');
   }
 
   return result;
 }
-

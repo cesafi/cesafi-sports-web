@@ -54,6 +54,7 @@ export const PROTECTED_ROUTES = [
   '/admin/school-teams',
   '/admin/schools',
   '/admin/seasons',
+  '/admin/sponsors',
   '/admin/sports',
   '/admin/timeline',
   '/admin/volunteers',
@@ -127,6 +128,7 @@ export const ROUTE_PATTERNS = {
     /^\/admin\/school-teams$/,
     /^\/admin\/schools$/,
     /^\/admin\/seasons$/,
+    /^\/admin\/sponsors$/,
     /^\/admin\/sports$/,
     /^\/admin\/timeline$/,
     /^\/admin\/volunteers$/,
@@ -204,12 +206,18 @@ export function hasAccessToRoute(pathname: string, userRole: string): boolean {
 }
 
 export function getRedirectUrl(pathname: string, userRole?: string): string {
-  // If user is at root or login page, redirect to their dashboard
-  if (pathname === '/' || pathname === '/login') {
+  // If user is at login page, redirect to their dashboard
+  if (pathname === '/login') {
     if (userRole && userRole in ROLE_DASHBOARDS) {
       return ROLE_DASHBOARDS[userRole as keyof typeof ROLE_DASHBOARDS];
     }
     return '/';
+  }
+  
+  // Allow authenticated users to access the landing page (root path)
+  // Only redirect to dashboard if they're coming from login
+  if (pathname === '/') {
+    return '/'; // Allow access to landing page
   }
   
   // If accessing unknown route, redirect to 404
