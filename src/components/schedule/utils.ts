@@ -10,10 +10,10 @@ export interface ScheduleDateGroup {
   matches: ScheduleMatch[];
 }
 
-// School logo mapping - using CESAFI logo for all schools for now
+// School logo mapping - this function is deprecated
+// Use useSchoolLogoByAbbreviationGetter hook from @/hooks/use-school-logos instead
 export const getSchoolLogo = (_schoolAbbreviation: string): string => {
-  // For now, all schools use the CESAFI logo
-  // Later this can be replaced with actual school logos from Cloudinary
+  // Fallback for backward compatibility - components should use the hook instead
   return '/img/cesafi-logo.webp';
 };
 
@@ -103,11 +103,11 @@ export const formatDateShort = (date: Date): string => {
 // Format date for header display - two lines like "SUNDAY" and "Sep 14"
 export const formatDateHeader = (date: Date): { weekday: string; date: string } => {
   const weekday = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-  const dateStr = date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric' 
+  const dateStr = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric'
   });
-  
+
   return {
     weekday,
     date: dateStr
