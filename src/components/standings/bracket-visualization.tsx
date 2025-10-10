@@ -9,8 +9,8 @@ import { cn } from '@/lib/utils';
 import { useSchoolLogoByAbbreviationGetter } from '@/hooks/use-school-logos';
 
 interface BracketVisualizationProps {
-  standings: BracketStandings;
-  loading?: boolean;
+  readonly standings: BracketStandings;
+  readonly loading?: boolean;
 }
 
 export default function BracketVisualization({ standings, loading }: BracketVisualizationProps) {
@@ -22,7 +22,7 @@ export default function BracketVisualization({ standings, loading }: BracketVisu
         <div className="bg-muted h-8 animate-pulse rounded" />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-muted h-32 animate-pulse rounded" />
+            <div key={`skeleton-${i + 1}`} className="bg-muted h-32 animate-pulse rounded" />
           ))}
         </div>
       </div>
@@ -142,45 +142,62 @@ export default function BracketVisualization({ standings, loading }: BracketVisu
     .sort((a, b) => a - b);
 
   // Calculate positioning for tournament bracket alignment
-  const calculateRoundSpacing = () => {
+  const calculateBracketPositions = () => {
     const baseSpacing = 2; // rem (32px) - base spacing between matches in first round
     const matchHeight = 6; // approximate height of each match card in rem
 
-    const roundSpacings: Record<number, { spacing: number; offset: number }> = {};
+    // For a proper tournament bracket, we need to understand the tournament structure:
+    // Round 1 (Quarterfinals): 4 matches feeding into Round 2 (Semifinals): 2 matches
+    // Round 2 feeds into Round 3 (Final): 1 match
+
+    const roundPositions: Record<number, { positions: number[]; spacing: number }> = {};
 
     rounds.forEach((roundNumber, index) => {
-      const matchCount = matchesByRound[roundNumber].length;
+      const matches = matchesByRound[roundNumber];
+      const matchCount = matches.length;
 
       if (index === 0) {
-        // First round - base spacing, no offset
-        roundSpacings[roundNumber] = { spacing: baseSpacing, offset: 0 };
-      } else {
-        // Calculate spacing based on first column's spacing
-        // Each subsequent round doubles the spacing from the previous round
-        const prevRound = rounds[index - 1];
-        const prevSpacing = roundSpacings[prevRound].spacing;
-
-        let spacing: number;
-        let offset: number;
-
-        if (matchCount === 1) {
-          // For finals (single match), use 4x the base spacing
-          spacing = 0;
-          offset = baseSpacing * 4;
-        } else {
-          // For other rounds, double the previous round's spacing
-          spacing = prevSpacing * 2;
-          offset = 0;
+        // Round 1 (Quarterfinals) - evenly spaced
+        const positions: number[] = [];
+        for (let i = 0; i < matchCount; i++) {
+          positions.push(i * (baseSpacing + matchHeight));
         }
 
-        roundSpacings[roundNumber] = { spacing, offset };
+        roundPositions[roundNumber] = {
+          positions,
+          spacing: baseSpacing
+        };
+      } else if (roundNumber === 2) {
+        // Round 2 (Semifinals) - positioned at midpoints of Round 1 pairs
+        const prevPositions = roundPositions[1].positions; // Round 1 positions
+
+        // Semifinal 1: midpoint between Quarterfinals 1 and 2
+        const semi1Midpoint = (prevPositions[0] + matchHeight + prevPositions[1]) / 2;
+        // Semifinal 2: midpoint between Quarterfinals 3 and 4
+        const semi2Midpoint = (prevPositions[2] + matchHeight + prevPositions[3]) / 2;
+
+        roundPositions[roundNumber] = {
+          positions: [semi1Midpoint, semi2Midpoint],
+          spacing: semi2Midpoint - semi1Midpoint
+        };
+      } else if (roundNumber === 3) {
+        // Round 3 (Final) - positioned at midpoint of Semifinals
+        const prevPositions = roundPositions[2].positions; // Semifinal positions
+
+        // Final: midpoint between Semifinals 1 and 2
+        const finalMidpoint = (prevPositions[0] + matchHeight + prevPositions[1]) / 2;
+
+        roundPositions[roundNumber] = {
+          positions: [finalMidpoint],
+          spacing: 0
+        };
       }
     });
 
-    return roundSpacings;
+    return roundPositions;
   };
 
-  const roundSpacings = calculateRoundSpacing();
+  const roundPositions = calculateBracketPositions();
 
   // Function to get round name based on number of matches and round number
   const getRoundName = (roundNumber: number, matchCount: number, totalRounds: number) => {
@@ -232,18 +249,22 @@ export default function BracketVisualization({ standings, loading }: BracketVisu
                   </div>
 
                   {/* Matches in this round */}
-                  <div
-                    className="flex flex-col"
-                    style={{
-                      marginTop: `${roundSpacings[roundNumber].offset}rem`,
-                      gap: `${roundSpacings[roundNumber].spacing}rem`
-                    }}
-                  >
-                    {roundMatches.map((match) => (
-                      <div key={match.match_id} className="w-72">
-                        <MatchCard match={match} />
-                      </div>
-                    ))}
+                  <div className="flex flex-col">
+                    {roundMatches.map((match, matchIndex) => {
+                      const position = roundPositions[roundNumber].positions[matchIndex];
+
+                      return (
+                        <div
+                          key={match.match_id}
+                          className="relative w-72"
+                          style={{
+                            marginTop: `${position}rem`
+                          }}
+                        >
+                          <MatchCard match={match} />
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
