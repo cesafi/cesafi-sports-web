@@ -1,110 +1,108 @@
-import { Calendar, Filter, TrendingUp } from 'lucide-react';
+import { Calendar, TrendingUp, Clock } from 'lucide-react';
 import { SeasonProvider } from '@/components/contexts/season-provider';
 import { ScheduleContent } from '@/components/schedule';
 import { getScheduleMatchesWithCategories, getAvailableSportCategories } from '@/actions/matches';
-import { getLatestArticles } from '@/actions/landing';
 import { ScheduleMatch } from '@/lib/types/matches';
-import { Article } from '@/lib/types/articles';
-import { Card, CardContent } from '@/components/ui';
+import { moderniz, roboto } from '@/lib/fonts';
 
 export default async function SchedulePage() {
   // Fetch initial data server-side
-  const [matchesResult, categoriesResult, newsResult] = await Promise.all([
+  const [matchesResult, categoriesResult] = await Promise.all([
     getScheduleMatchesWithCategories({
       limit: 50,
       direction: 'future',
       filters: {}
     }),
-    getAvailableSportCategories(),
-    getLatestArticles(3)
+    getAvailableSportCategories()
   ]);
 
   const matches: ScheduleMatch[] =
     matchesResult.success && matchesResult.data ? matchesResult.data.matches : [];
   const categories = categoriesResult.success && categoriesResult.data ? categoriesResult.data : [];
-  const _news: Article[] = newsResult.success && newsResult.data ? newsResult.data : [];
+
+  // Calculate stats
+  const liveMatches = matches.filter((m) => m.status === 'ongoing').length;
+  const todaysMatches = matches.filter((m) => m.isToday).length;
+  const upcomingMatches = matches.filter((m) => !m.isPast).length;
+
+  const stats = [
+    {
+      icon: TrendingUp,
+      value: liveMatches.toString(),
+      label: 'Live Matches',
+      colorClass: 'text-emerald-500'
+    },
+    {
+      icon: Calendar,
+      value: todaysMatches.toString(),
+      label: "Today's Matches",
+      colorClass: 'text-primary'
+    },
+    {
+      icon: Clock,
+      value: upcomingMatches.toString(),
+      label: 'Upcoming',
+      colorClass: 'text-amber-500'
+    }
+  ];
 
   return (
     <SeasonProvider>
       <div className="bg-background min-h-screen">
-        {/* Header */}
-        <div className="border-border bg-card border-b">
-          <div className="container mx-auto px-4 py-6 sm:py-8">
-            <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center">
-              <div className="bg-primary/10 rounded-lg p-2 self-start">
-                <Calendar className="text-primary h-5 w-5 sm:h-6 sm:w-6" />
-              </div>
-              <div>
-                <h1 className="font-mango-grotesque text-foreground text-2xl font-bold sm:text-3xl">
-                  Match Schedule
-                </h1>
-                <p className="text-muted-foreground font-roboto mt-1 text-sm sm:text-base">
-                  Follow all CESAFI matches with real-time updates and live scores
-                </p>
-              </div>
-            </div>
+        {/* Hero Section */}
+        <section className="from-primary/10 via-background to-secondary/10 relative bg-gradient-to-br pt-20 pb-12 sm:pt-24 sm:pb-16">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM2YzYxIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] bg-repeat" />
+          </div>
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Card>
-                <CardContent className="p-3 sm:p-4">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="bg-emerald/10 rounded-lg p-1.5 sm:p-2">
-                      <TrendingUp className="text-emerald h-4 w-4 sm:h-5 sm:w-5" />
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              {/* Main Heading */}
+              <h1
+                className={`${moderniz.className} text-foreground mb-4 text-3xl font-bold sm:mb-6 sm:text-4xl md:text-6xl lg:text-7xl`}
+              >
+                Match <span className="text-primary">Schedule</span>
+              </h1>
+
+              {/* Subtitle */}
+              <p
+                className={`${roboto.className} text-muted-foreground mx-auto mb-8 max-w-3xl text-base leading-relaxed sm:mb-12 sm:text-lg md:text-xl`}
+              >
+                Follow all CESAFI matches with real-time updates and live scores across all sports
+                and categories.
+              </p>
+
+              {/* Stats */}
+              <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto sm:gap-8 sm:grid-cols-2 md:grid-cols-3">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="flex flex-col items-center group">
+                    <div className="p-3 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors duration-300 mb-3 sm:p-4 sm:mb-4">
+                      <stat.icon className={`h-6 w-6 ${stat.colorClass} sm:h-8 sm:w-8`} />
                     </div>
-                    <div>
-                      <p className="text-muted-foreground font-roboto text-xs sm:text-sm">Live Matches</p>
-                      <p className="font-mango-grotesque text-foreground text-xl font-bold sm:text-2xl">
-                        {matches.filter((m) => m.status === 'ongoing').length}
-                      </p>
+                    <div
+                      className={`${moderniz.className} text-2xl font-bold text-foreground mb-1 sm:text-3xl sm:mb-2 md:text-4xl`}
+                    >
+                      {stat.value}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-3 sm:p-4">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="bg-primary/10 rounded-lg p-1.5 sm:p-2">
-                      <Calendar className="text-primary h-4 w-4 sm:h-5 sm:w-5" />
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground font-roboto text-xs sm:text-sm">
-                        Today&apos;s Matches
-                      </p>
-                      <p className="font-mango-grotesque text-foreground text-xl font-bold sm:text-2xl">
-                        {matches.filter((m) => m.isToday).length}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="sm:col-span-2 lg:col-span-1">
-                <CardContent className="p-3 sm:p-4">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="bg-gold/10 rounded-lg p-1.5 sm:p-2">
-                      <Filter className="text-gold h-4 w-4 sm:h-5 sm:w-5" />
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground font-roboto text-xs sm:text-sm">This Week</p>
-                      <p className="font-mango-grotesque text-foreground text-xl font-bold sm:text-2xl">
-                        {matches.filter((m) => !m.isPast).length}
-                      </p>
+                    <div
+                      className={`${roboto.className} text-muted-foreground text-xs font-medium text-center sm:text-sm`}
+                    >
+                      {stat.label}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Main Content */}
         <div className="container mx-auto max-w-[1000px] px-4 py-6 sm:py-8">
-          <ScheduleContent 
-            initialMatches={matches} 
-            availableCategories={categories} 
-          />
+          <ScheduleContent initialMatches={matches} availableCategories={categories} />
         </div>
       </div>
     </SeasonProvider>
   );
 }
+
