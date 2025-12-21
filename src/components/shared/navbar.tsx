@@ -2,20 +2,64 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { roboto } from '@/lib/fonts';
 import ThemeSwitcher from '@/components/theme-switcher';
 import LiveIndicator from '@/components/live-indicator';
 import { useCurrentActiveHeroSection } from '@/hooks/use-hero-section';
 import Image from 'next/image';
-import { navItems } from '@/lib/constants/navigation';
+import { navItems, NavItem } from '@/lib/constants/navigation';
 import { RealTimeClock, CompactClock } from '@/components/real-time-clock';
+
+// Custom Dropdown Component
+function NavDropdown({ item }: { item: NavItem }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div 
+      className="relative group" 
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <button 
+        className={`${roboto.className} px-4 py-2 rounded-lg text-muted-foreground hover:text-primary transition-colors duration-200 font-medium flex items-center gap-1 outline-none group-hover:text-primary`}
+        aria-expanded={isOpen}
+      >
+        {item.name}
+        <ChevronDown 
+          className={`w-4 h-4 opacity-50 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
+        />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute top-full left-0 mt-2 w-48 rounded-xl bg-background/80 backdrop-blur-md border border-border/50 shadow-xl overflow-hidden z-50 p-1.5"
+          >
+            {item.children?.map((child) => (
+              <Link
+                key={child.name}
+                href={child.href}
+                className={`${roboto.className} block w-full px-4 py-2.5 text-sm rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200`}
+              >
+                {child.name}
+              </Link>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: heroData } = useCurrentActiveHeroSection();
-
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-background/80 backdrop-blur-lg border-b border-border shadow-lg">
@@ -29,13 +73,17 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
             {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`${roboto.className} px-4 py-2 rounded-lg text-muted-foreground hover:text-primary transition-colors duration-200 font-medium`}
-              >
-                {item.name}
-              </Link>
+              item.children ? (
+                <NavDropdown key={item.name} item={item} />
+              ) : (
+                <Link
+                  key={item.name}
+                  href={item.href!}
+                  className={`${roboto.className} px-4 py-2 rounded-lg text-muted-foreground hover:text-primary transition-colors duration-200 font-medium`}
+                >
+                  {item.name}
+                </Link>
+              )
             ))}
           </div>
 
@@ -123,23 +171,51 @@ export default function Navbar() {
                 {/* Navigation Links */}
                 <div className="flex-1 px-6 py-8 overflow-y-auto">
                   <div className="space-y-2">
-                    {navItems.map((item, index) => (
-                      <motion.div
-                        key={item.name}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
+              {navItems.map((item, index) => (
+                <div key={item.name}>
+                  {item.children ? (
+                    <div className="space-y-1">
+                      <div className="px-4 py-2 font-semibold text-muted-foreground/70 text-sm uppercase tracking-wider">
+                        {item.name}
+                      </div>
+                      <div className="pl-4 space-y-1">
+                        {item.children.map((child, childIndex) => (
+                          <motion.div
+                            key={child.name}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: (index * 0.1) + (childIndex * 0.05) }}
+                          >
+                            <Link
+                              href={child.href}
+                              onClick={() => setIsMenuOpen(false)}
+                              className={`${roboto.className} flex items-center space-x-3 text-foreground hover:text-primary py-3 px-4 rounded-xl hover:bg-muted/50 font-medium transition-all duration-200 group`}
+                            >
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary/50 group-hover:bg-primary transition-colors duration-200" />
+                              <span className="text-lg">{child.name}</span>
+                            </Link>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Link
+                        href={item.href!}
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`${roboto.className} flex items-center space-x-3 text-foreground hover:text-primary py-4 px-4 rounded-xl hover:bg-muted/50 font-medium transition-all duration-200 group`}
                       >
-                        <Link
-                          href={item.href}
-                          onClick={() => setIsMenuOpen(false)}
-                          className={`${roboto.className} flex items-center space-x-3 text-foreground hover:text-primary py-4 px-4 rounded-xl hover:bg-muted/50 font-medium transition-all duration-200 group`}
-                        >
-                          <div className="w-2 h-2 rounded-full bg-primary/50 group-hover:bg-primary transition-colors duration-200" />
-                          <span className="text-lg">{item.name}</span>
-                        </Link>
-                      </motion.div>
-                    ))}
+                        <div className="w-2 h-2 rounded-full bg-primary/50 group-hover:bg-primary transition-colors duration-200" />
+                        <span className="text-lg">{item.name}</span>
+                      </Link>
+                    </motion.div>
+                  )}
+                </div>
+              ))}
                   </div>
                 </div>
 

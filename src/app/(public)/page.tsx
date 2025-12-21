@@ -4,8 +4,8 @@ import UpcomingGames from '@/components/landing/upcoming-games';
 import PhotoGallery from '@/components/landing/photo-gallery';
 import LatestNews from '@/components/landing/latest-news';
 import LandingFaq from '@/components/landing/landing-faq';
-import SponsorsCarousel from '@/components/landing/sponsors-carousel';
-import SchoolsCarousel from '@/components/landing/schools-carousel';
+import SponsorsGrid from '@/components/landing/sponsors-grid';
+import SchoolsGrid from '@/components/landing/schools-grid';
 import { getLatestArticles, getUpcomingMatches } from '@/actions/landing';
 import { getHighlightedFaq } from '@/actions/faq';
 import { Article } from '@/lib/types/articles';
@@ -30,10 +30,13 @@ export default async function LandingPage() {
       <HeroSection />
 
       {/* Schools Carousel - Member institutions */}
-      <SchoolsCarousel />
+      <SchoolsGrid />
 
       {/* About CESAFI - Mission and vision */}
       <AboutCesafi />
+
+      {/* Sponsors - Move to mid-page for higher visibility */}
+      <SponsorsGrid />
 
       {/* Latest News - Content engagement */}
       <LatestNews initialArticles={articles} />
@@ -47,8 +50,7 @@ export default async function LandingPage() {
       {/* FAQ - Quick answers */}
       <LandingFaq initialFaqs={highlightedFaqs} />
 
-      {/* Sponsors Carousel - Partner organizations */}
-      <SponsorsCarousel />
+      {/* Sponsors previously at bottom - now shown above */}
     </>
   );
 }
