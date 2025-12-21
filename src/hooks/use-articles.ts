@@ -195,150 +195,32 @@ export function useDeleteArticle(
   });
 }
 
+import { useEntityTable } from './use-entity-table';
+
 // Table-specific hook that extends the base article functionality
 export function useArticlesTable() {
   const {
-    tableState,
-    setPage,
-    setPageSize,
-    setSortBy,
-    setSearch,
-    setFilters,
-    resetFilters,
-    paginationOptions
-  } = useTable<Article>({
-    initialPage: 1,
-    initialPageSize: 10,
-    initialSortBy: 'created_at',
-    initialSortOrder: 'desc',
-    pageSizeOptions: [5, 10, 25, 50, 100]
+    data: articles,
+    create: createArticleMutation,
+    update: updateArticleMutation,
+    delete: deleteArticleMutation,
+    ...rest
+  } = useEntityTable<Article, ArticleInsert, ArticleUpdate>({
+    queryKey: ['articles'],
+    fetchAction: getPaginatedArticles,
+    createAction: createArticle,
+    updateAction: (data) => updateArticleById(data),
+    deleteAction: deleteArticleById,
+    entityName: 'Article',
+    defaultSort: { by: 'created_at', order: 'desc' }
   });
-
-  // Fetch paginated data
-  const {
-    data: articleData,
-    isLoading,
-    error,
-    isFetching,
-    refetch
-  } = useQuery({
-    queryKey: ['articles', 'paginated', paginationOptions],
-    queryFn: () => getPaginatedArticles(paginationOptions as PaginationOptions<Record<string, FilterValue>>),
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch articles');
-      }
-      return data.data;
-    }
-  });
-
-  // Show table body loading when fetching (for sorting, searching, filtering)
-  // but not on initial load
-  const tableBodyLoading = isFetching && !isLoading;
-
-  const queryClient = useQueryClient();
-
-  // Create article mutation
-  const createArticleMutation = useMutation({
-    mutationFn: createArticle,
-    onSuccess: (result) => {
-      if (result.success) {
-        toast.success('Article created successfully');
-        queryClient.invalidateQueries({ queryKey: ['articles'] });
-      } else {
-        toast.error(result.error || 'Failed to create article');
-      }
-    },
-    onError: () => {
-      toast.error('An unexpected error occurred');
-    }
-  });
-
-  // Update article mutation
-  const updateArticleMutation = useMutation({
-    mutationFn: (data: ArticleUpdate) => updateArticleById(data),
-    onSuccess: (result) => {
-      if (result.success) {
-        toast.success('Article updated successfully');
-        queryClient.invalidateQueries({ queryKey: ['articles'] });
-      } else {
-        toast.error(result.error || 'Failed to update article');
-      }
-    },
-    onError: () => {
-      toast.error('An unexpected error occurred');
-    }
-  });
-
-  // Delete article mutation
-  const deleteArticleMutation = useMutation({
-    mutationFn: deleteArticleById,
-    onSuccess: (result) => {
-      if (result.success) {
-        toast.success('Article deleted successfully');
-        queryClient.invalidateQueries({ queryKey: ['articles'] });
-      } else {
-        toast.error(result.error || 'Failed to delete article');
-      }
-    },
-    onError: () => {
-      toast.error('An unexpected error occurred');
-    }
-  });
-
-  // Handle search with debouncing
-  const handleSearch = (search: string) => {
-    setSearch(search);
-  };
-
-  // Handle filters
-  const handleFilters = (filters: TableFilters) => {
-    setFilters(filters);
-  };
-
-  // Handle sorting
-  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    setSortBy(sortBy, sortOrder);
-  };
-
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    setPage(page);
-  };
-
-  const handlePageSizeChange = (pageSize: number) => {
-    setPageSize(pageSize);
-  };
 
   return {
-    // Data
-    articles: articleData?.data || [],
-    totalCount: articleData?.totalCount || 0,
-    pageCount: articleData?.pageCount || 0,
-    currentPage: tableState.page,
-    pageSize: tableState.pageSize,
-    loading: isLoading,
-    tableBodyLoading,
-    error: error?.message || null,
-
-    // Mutations
-    createArticle: createArticleMutation.mutate,
-    updateArticle: updateArticleMutation.mutate,
-    deleteArticle: deleteArticleMutation.mutate,
-
-    // Loading states
-    isCreating: createArticleMutation.isPending,
-    isUpdating: updateArticleMutation.isPending,
-    isDeleting: deleteArticleMutation.isPending,
-
-    // Actions
-    refetch,
-    onPageChange: handlePageChange,
-    onPageSizeChange: handlePageSizeChange,
-    onSortChange: handleSort,
-    onSearchChange: handleSearch,
-    onFiltersChange: handleFilters,
-    resetFilters
+    articles,
+    createArticle: createArticleMutation,
+    updateArticle: updateArticleMutation,
+    deleteArticle: deleteArticleMutation,
+    ...rest
   };
 }
 

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { moderniz, roboto } from '@/lib/fonts';
-import { navItems } from '@/lib/constants/navigation';
+import { navItems, NavItem } from '@/lib/constants/navigation';
 import { RealTimeClock } from '@/components/real-time-clock';
 
 export default function Footer() {
@@ -31,21 +31,22 @@ export default function Footer() {
           </div>
 
           {/* Quick Links Column */}
-          <div className="space-y-4">
-            <h3 className={`${moderniz.className} text-lg font-semibold`}>Quick Links</h3>
-            <ul className={`${roboto.className} space-y-2 text-sm`}>
-              {navItems.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className="text-muted-foreground hover:text-primary transition-colors"
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+            {/* Navigation */}
+            <div>
+              <h3 className={`${moderniz.className} text-lg font-bold mb-4`}>Navigation</h3>
+              <ul className="space-y-2">
+                {navItems.flatMap((item) => item.children ? item.children : [item as { name: string; href: string }]).map((item) => (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      className="text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
           {/* Contact Column */}
           <div className="space-y-4">

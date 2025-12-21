@@ -7,7 +7,10 @@ interface PaginationProps {
   totalItems: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
-  onItemsPerPageChange: (itemsPerPage: number) => void;
+  onItemsPerPageChange?: (itemsPerPage: number) => void;
+  showPageSizeSelector?: boolean;
+  resourceName?: string;
+  className?: string;
 }
 
 export function Pagination({
@@ -17,6 +20,9 @@ export function Pagination({
   itemsPerPage,
   onPageChange,
   onItemsPerPageChange,
+  showPageSizeSelector = true,
+  resourceName = "rows",
+  className = "",
 }: PaginationProps) {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
@@ -26,15 +32,22 @@ export function Pagination({
     const range = [];
     const rangeWithDots = [];
 
-    for (
-      let i = Math.max(2, currentPage - delta);
-      i <= Math.min(totalPages - 1, currentPage + delta);
-      i++
-    ) {
+    let start = Math.max(2, currentPage - delta);
+    let end = Math.min(totalPages - 1, currentPage + delta);
+
+    if (start <= 3) {
+      start = 2;
+    }
+
+    if (end >= totalPages - 2) {
+      end = totalPages - 1;
+    }
+
+    for (let i = start; i <= end; i++) {
       range.push(i);
     }
 
-    if (currentPage - delta > 2) {
+    if (start > 2) {
       rangeWithDots.push(1, '...');
     } else {
       rangeWithDots.push(1);
@@ -42,7 +55,7 @@ export function Pagination({
 
     rangeWithDots.push(...range);
 
-    if (currentPage + delta < totalPages - 1) {
+    if (end < totalPages - 1) {
       rangeWithDots.push('...', totalPages);
     } else if (totalPages > 1) {
       rangeWithDots.push(totalPages);
@@ -52,21 +65,29 @@ export function Pagination({
   };
 
   return (
-    <div className="flex items-center justify-between">
+    <div className={`flex items-center justify-between ${className}`}>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span>Rows per page:</span>
-        <select
-          value={itemsPerPage}
-          onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-          className="border rounded px-2 py-1"
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={25}>25</option>
-          <option value={50}>50</option>
-        </select>
+        {showPageSizeSelector && onItemsPerPageChange && (
+          <>
+            <span>Rows per page:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+              className="border rounded px-2 py-1"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </>
+        )}
         <span>
-          {startItem}-{endItem} of {totalItems}
+          {showPageSizeSelector ? (
+             `${startItem}-${endItem} of ${totalItems}`
+          ) : (
+             `Showing ${startItem} to ${endItem} of ${totalItems} ${resourceName}`
+          )}
         </span>
       </div>
 

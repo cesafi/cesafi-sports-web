@@ -422,149 +422,35 @@ export function useDeleteSportCategory(
   });
 }
 
+import { useEntityTable } from './use-entity-table';
+
 // Table-specific hook for sports
 export function useSportsTable() {
   const {
-    tableState,
-    setPage,
-    setPageSize,
-    setSortBy,
-    setSearch,
-    setFilters,
-    resetFilters,
-    paginationOptions
-  } = useTable<Sport>({
-    initialPage: 1,
-    initialPageSize: 10,
-    initialSortBy: 'name',
-    initialSortOrder: 'asc',
-    pageSizeOptions: [5, 10, 25, 50, 100]
+    data: sports,
+    create: createSportMutation,
+    update: updateSportMutation,
+    delete: deleteSportMutation,
+    ...rest
+  } = useEntityTable<Sport, SportInsert, SportUpdate>({
+    queryKey: ['sports'],
+    fetchAction: (options) => 
+        getPaginatedSports(options).then(res => ({
+            ...res,
+            data: res.data 
+        })),
+    createAction: createSport,
+    updateAction: (data) => updateSportById(data),
+    deleteAction: deleteSportById,
+    entityName: 'Sport',
+    defaultSort: { by: 'name', order: 'asc' }
   });
-
-  // Fetch paginated data
-  const {
-    data: sportData,
-    isLoading,
-    error,
-    isFetching,
-    refetch
-  } = useQuery({
-    queryKey: ['sports', 'paginated', paginationOptions],
-    queryFn: () => getPaginatedSports(paginationOptions as PaginationOptions<Record<string, FilterValue>>),
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch sports');
-      }
-      return data.data;
-    }
-  });
-
-  // Show table body loading when fetching (for sorting, searching, filtering)
-  // but not on initial load
-  const tableBodyLoading = isFetching && !isLoading;
-
-  const queryClient = useQueryClient();
-
-  // Create sport mutation
-  const createSportMutation = useMutation({
-    mutationFn: createSport,
-    onSuccess: (result) => {
-      if (result.success) {
-        toast.success('Sport created successfully');
-        queryClient.invalidateQueries({ queryKey: ['sports'] });
-      } else {
-        toast.error(result.error || 'Failed to create sport');
-      }
-    },
-    onError: () => {
-      toast.error('An unexpected error occurred');
-    }
-  });
-
-  // Update sport mutation
-  const updateSportMutation = useMutation({
-    mutationFn: (data: SportUpdate) => updateSportById(data),
-    onSuccess: (result) => {
-      if (result.success) {
-        toast.success('Sport updated successfully');
-        queryClient.invalidateQueries({ queryKey: ['sports'] });
-      } else {
-        toast.error(result.error || 'Failed to update sport');
-      }
-    },
-    onError: () => {
-      toast.error('An unexpected error occurred');
-    }
-  });
-
-  // Delete sport mutation
-  const deleteSportMutation = useMutation({
-    mutationFn: deleteSportById,
-    onSuccess: (result) => {
-      if (result.success) {
-        toast.success('Sport deleted successfully');
-        queryClient.invalidateQueries({ queryKey: ['sports'] });
-      } else {
-        toast.error(result.error || 'Failed to delete sport');
-      }
-    },
-    onError: () => {
-      toast.error('An unexpected error occurred');
-    }
-  });
-
-  // Handle search with debouncing
-  const handleSearch = (search: string) => {
-    setSearch(search);
-  };
-
-  // Handle filters
-  const handleFilters = (filters: TableFilters) => {
-    setFilters(filters);
-  };
-
-  // Handle sorting
-  const handleSort = (sortBy: string, sortOrder: 'asc' | 'desc') => {
-    setSortBy(sortBy, sortOrder);
-  };
-
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    setPage(page);
-  };
-
-  const handlePageSizeChange = (pageSize: number) => {
-    setPageSize(pageSize);
-  };
 
   return {
-    // Data
-    sports: sportData?.data || [],
-    totalCount: sportData?.totalCount || 0,
-    pageCount: sportData?.pageCount || 0,
-    currentPage: tableState.page,
-    pageSize: tableState.pageSize,
-    loading: isLoading,
-    tableBodyLoading,
-    error: error?.message || null,
-
-    // Mutations
-    createSport: createSportMutation.mutate,
-    updateSport: updateSportMutation.mutate,
-    deleteSport: deleteSportMutation.mutate,
-
-    // Loading states
-    isCreating: createSportMutation.isPending,
-    isUpdating: updateSportMutation.isPending,
-    isDeleting: deleteSportMutation.isPending,
-
-    // Actions
-    refetch,
-    onPageChange: handlePageChange,
-    onPageSizeChange: handlePageSizeChange,
-    onSortChange: handleSort,
-    onSearchChange: handleSearch,
-    onFiltersChange: handleFilters,
-    resetFilters
+    sports,
+    createSport: createSportMutation,
+    updateSport: updateSportMutation,
+    deleteSport: deleteSportMutation,
+    ...rest
   };
 }
