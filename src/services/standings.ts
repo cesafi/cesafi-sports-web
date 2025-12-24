@@ -57,7 +57,7 @@ export class StandingsService extends BaseService {
 
       // Get navigation data
       const navigationResult = await this.getStandingsNavigation(filters);
-      if (!navigationResult.success || !navigationResult.data) {
+      if (!navigationResult.success) {
         return {
           success: false,
           error: navigationResult.error || 'Failed to get navigation data.'
@@ -86,7 +86,7 @@ export class StandingsService extends BaseService {
       let standingsData;
       if (targetStage.competition_stage === 'group_stage') {
         const result = await this.getGroupStageStandings(targetStageId);
-        if (!result.success || !result.data) {
+        if (!result.success) {
           return {
             success: false,
             error: result.error || 'Failed to get group stage standings.'
@@ -96,7 +96,7 @@ export class StandingsService extends BaseService {
       } else {
         // For playoffs, finals, playins - use bracket format
         const result = await this.getBracketStandings(targetStageId);
-        if (!result.success || !result.data) {
+        if (!result.success) {
           return {
             success: false,
             error: result.error || 'Failed to get bracket standings.'
@@ -127,15 +127,20 @@ export class StandingsService extends BaseService {
       const supabase = await this.getClient();
       const { season_id, sport_id, sport_category_id } = filters;
 
+      if (!season_id || !sport_id || !sport_category_id) {
+        return {
+          success: false,
+          error: 'Season, sport, and category are required for navigation.'
+        };
+      }
+
       // Get season, sport, category, and stages data
       const { data, error } = await supabase
         .from(SPORTS_SEASONS_STAGES_TABLE)
         .select(
           `
           id,
-          name,
           competition_stage,
-          order_index,
           sports_categories!inner (
             id,
             division,
@@ -155,7 +160,7 @@ export class StandingsService extends BaseService {
         .eq('sports_categories.sports.id', sport_id)
         .eq('sports_categories.id', sport_category_id)
         .eq('seasons.id', season_id)
-        .order('order_index', { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
 
@@ -188,11 +193,11 @@ export class StandingsService extends BaseService {
           levels: category.levels,
           display_name: formatCategoryName(category.division, category.levels)
         },
-        stages: data.map((stage) => ({
+        stages: data.map((stage, index) => ({
           id: stage.id,
-          name: stage.name,
+          name: stage.competition_stage.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
           competition_stage: stage.competition_stage,
-          order: stage.order_index
+          order: index + 1
         }))
       };
 
@@ -217,7 +222,7 @@ export class StandingsService extends BaseService {
       // Get stage details
       const { data: stage, error: stageError } = await supabase
         .from(SPORTS_SEASONS_STAGES_TABLE)
-        .select('id, name, competition_stage')
+        .select('id, competition_stage')
         .eq('id', stageId)
         .single();
 
@@ -338,7 +343,7 @@ export class StandingsService extends BaseService {
 
       const groupStageStandings: GroupStageStandings = {
         stage_id: stage.id,
-        stage_name: stage.name,
+        stage_name: stage.competition_stage.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
         competition_stage: stage.competition_stage,
         groups: [
           {
@@ -367,7 +372,7 @@ export class StandingsService extends BaseService {
       // Get stage details
       const { data: stage, error: stageError } = await supabase
         .from(SPORTS_SEASONS_STAGES_TABLE)
-        .select('id, name, competition_stage')
+        .select('id, competition_stage')
         .eq('id', stageId)
         .single();
 
@@ -465,7 +470,7 @@ export class StandingsService extends BaseService {
 
       const bracketStandings: BracketStandings = {
         stage_id: stage.id,
-        stage_name: stage.name,
+        stage_name: stage.competition_stage.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
         competition_stage: stage.competition_stage,
         bracket: bracketMatches
       };

@@ -45,8 +45,11 @@ export function useStandings(
     queryFn: () => getStandings(filters),
     enabled: !!(filters.season_id && filters.sport_id && filters.sport_category_id),
     select: (data) => {
-      if (!data.success || !data.data) {
-        throw new Error(data.error || 'Failed to fetch standings data.');
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+      if (!data.data) {
+        throw new Error('Failed to fetch standings data.');
       }
       return data.data;
     },
@@ -67,8 +70,11 @@ export function useStandingsNavigation(
     queryFn: () => getStandingsNavigation(filters),
     enabled: !!(filters.season_id && filters.sport_id && filters.sport_category_id),
     select: (data) => {
-      if (!data.success || !data.data) {
-        throw new Error(data.error || 'Failed to fetch standings navigation.');
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+      if (!data.data) {
+        throw new Error('Failed to fetch standings navigation.');
       }
       return data.data;
     },
@@ -89,8 +95,11 @@ export function useGroupStageStandings(
     queryFn: () => getGroupStageStandings(stageId),
     enabled: !!stageId,
     select: (data) => {
-      if (!data.success || !data.data) {
-        throw new Error(data.error || 'Failed to fetch group stage standings.');
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+      if (!data.data) {
+        throw new Error('Failed to fetch group stage standings.');
       }
       return data.data;
     },
@@ -111,8 +120,11 @@ export function useBracketStandings(
     queryFn: () => getBracketStandings(stageId),
     enabled: !!stageId,
     select: (data) => {
-      if (!data.success || !data.data) {
-        throw new Error(data.error || 'Failed to fetch bracket standings.');
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+      if (!data.data) {
+        throw new Error('Failed to fetch bracket standings.');
       }
       return data.data;
     },
@@ -135,8 +147,11 @@ export function useAvailableSeasons(
     queryKey: standingsKeys.seasons(),
     queryFn: getAvailableSeasons,
     select: (data) => {
-      if (!data.success || !data.data) {
-        throw new Error(data.error || 'Failed to fetch available seasons.');
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+      if (!data.data) {
+        throw new Error('Failed to fetch available seasons.');
       }
       return data.data;
     },
@@ -161,8 +176,11 @@ export function useAvailableSports(
     queryFn: () => getAvailableSports(seasonId),
     enabled: !!seasonId,
     select: (data) => {
-      if (!data.success || !data.data) {
-        throw new Error(data.error || 'Failed to fetch available sports.');
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+      if (!data.data) {
+        throw new Error('Failed to fetch available sports.');
       }
       return data.data;
     },
@@ -188,8 +206,11 @@ export function useAvailableCategories(
     queryFn: () => getAvailableCategories(seasonId, sportId),
     enabled: !!(seasonId && sportId),
     select: (data) => {
-      if (!data.success || !data.data) {
-        throw new Error(data.error || 'Failed to fetch available categories.');
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+      if (!data.data) {
+        throw new Error('Failed to fetch available categories.');
       }
       return data.data;
     },
