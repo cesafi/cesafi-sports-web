@@ -141,7 +141,7 @@ export function useCreateArticle(
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: articleKeys.all });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to create article:', error);
@@ -164,7 +164,7 @@ export function useUpdateArticle(
           queryClient.invalidateQueries({ queryKey: articleKeys.details(variables.id) });
         }
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update article:', error);
@@ -185,7 +185,7 @@ export function useDeleteArticle(
         queryClient.invalidateQueries({ queryKey: articleKeys.all });
         queryClient.invalidateQueries({ queryKey: articleKeys.details(id) });
       }
-      mutationOptions?.onSuccess?.(result, id, context);
+      (mutationOptions?.onSuccess as any)?.(result, id, context);
     },
     onError: (error, id, context) => {
       console.error('Failed to delete article:', error);

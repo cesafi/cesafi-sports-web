@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
 interface ModalLayoutProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
+  title: ReactNode | string;
   children: ReactNode;
   footer?: ReactNode;
   maxWidth?: string;

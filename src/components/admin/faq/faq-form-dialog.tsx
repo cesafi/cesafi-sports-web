@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ModalLayout } from '@/components/ui/modal-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -100,16 +100,34 @@ export function FaqFormDialog({ faq, open, onOpenChange }: FaqFormDialogProps) {
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? 'Edit FAQ Item' : 'Create FAQ Item'}
-          </DialogTitle>
-        </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+  return (
+    <ModalLayout
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEditing ? 'Edit FAQ Item' : 'Create FAQ Item'}
+      footer={
+        <div className="flex justify-end space-x-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting} form="faq-form">
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isEditing ? 'Update' : 'Create'} FAQ Item
+          </Button>
+        </div>
+      }
+    >
+      <form
+        id="faq-form"
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-6"
+      >
           <div className="space-y-4">
             {/* Question */}
             <div className="space-y-2">
@@ -199,24 +217,7 @@ export function FaqFormDialog({ faq, open, onOpenChange }: FaqFormDialogProps) {
               </div>
             </div>
           </div>
-
-          {/* Form Actions */}
-          <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditing ? 'Update' : 'Create'} FAQ Item
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      </form>
+    </ModalLayout>
   );
 }

@@ -165,29 +165,32 @@ export default function PhotoGallery() {
                 priority={index === currentIndex}
               />
 
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+              {/* Gradient Overlay - Stronger for better text contrast */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
-              {/* Image Info */}
-              <div className="absolute right-0 bottom-0 left-0 p-8 lg:p-12">
+              {/* Image Info - Positioned above thumbnails */}
+              <div className="absolute right-0 bottom-36 left-0 p-8 lg:p-12">
                 <div className="mx-auto max-w-4xl">
-                  <div className="mb-4">
-                    <span
-                      className={`${roboto.className} bg-primary/90 text-primary-foreground rounded-full px-4 py-2 text-sm font-semibold tracking-wide uppercase`}
+                  {/* Info Container with backdrop for guaranteed readability */}
+                  <div className="inline-block rounded-xl px-6 py-4">
+                    <div className="mb-3">
+                      <span
+                        className={`${roboto.className} bg-primary text-primary-foreground rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide uppercase`}
+                      >
+                        {image.category}
+                      </span>
+                    </div>
+                    <h3
+                      className={`${roboto.className} mb-2 text-2xl leading-tight font-bold text-white lg:text-3xl xl:text-4xl`}
                     >
-                      {image.category}
-                    </span>
+                      {image.alt}
+                    </h3>
+                    <p
+                      className={`${roboto.className} text-base leading-relaxed text-white/90 lg:text-lg`}
+                    >
+                      {image.caption}
+                    </p>
                   </div>
-                  <h3
-                    className={`${roboto.className} mb-4 text-3xl leading-tight font-bold text-white lg:text-4xl xl:text-5xl`}
-                  >
-                    {image.alt}
-                  </h3>
-                  <p
-                    className={`${roboto.className} text-lg leading-relaxed text-white/90 lg:text-xl`}
-                  >
-                    {image.caption}
-                  </p>
                 </div>
               </div>
             </motion.div>
@@ -223,17 +226,17 @@ export default function PhotoGallery() {
           </button>
         </div>
 
-        {/* Thumbnail Navigation */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 transform">
-          <div className="flex gap-4">
+        {/* Thumbnail Navigation - with background container */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 transform">
+          <div className="flex gap-3 rounded-xl bg-black/40 p-2 backdrop-blur-sm">
             {displayImages.map((image, index) => (
               <button
                 key={image.id}
                 onClick={() => setCurrentIndex(index)}
-                className={`relative h-20 w-20 overflow-hidden rounded-lg transition-all duration-300 ${
+                className={`relative h-16 w-16 overflow-hidden rounded-lg transition-all duration-300 lg:h-20 lg:w-20 ${
                   index === currentIndex
-                    ? 'ring-primary scale-110 ring-4'
-                    : 'opacity-60 hover:scale-105 hover:opacity-100'
+                    ? 'ring-primary scale-105 ring-2'
+                    : 'opacity-70 hover:scale-105 hover:opacity-100'
                 }`}
               >
                 <Image src={image.src} alt={image.alt} fill className="object-cover" />
