@@ -10,10 +10,10 @@ export default function Footer() {
   return (
     <footer className="bg-card text-card-foreground border-border border-t">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {/* About Column */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 md:grid-cols-4">
+          {/* About Column - Full width on mobile */}
+          <div className="col-span-2 md:col-span-1 space-y-4 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start space-x-3">
               <Image
                 src="/img/cesafi-logo.webp"
                 alt="CESAFI Logo"
@@ -32,7 +32,7 @@ export default function Footer() {
 
           {/* Quick Links Column */}
             {/* Navigation */}
-            <div>
+            <div className="text-center md:text-left">
               <h3 className={`${moderniz.className} text-lg font-bold mb-4`}>Navigation</h3>
               <ul className="space-y-2">
                 {navItems.flatMap((item) => item.children ? item.children : [item as { name: string; href: string }]).map((item) => (
@@ -48,47 +48,50 @@ export default function Footer() {
               </ul>
             </div>
 
-          {/* Contact Column */}
-          <div className="space-y-4">
-            <h3 className={`${moderniz.className} text-lg font-semibold`}>Contact</h3>
-            <div className={`${roboto.className} text-muted-foreground space-y-2 text-sm`}>
-              <p>Email: info@cesafi.org</p>
-              <p>Phone: +63 32 123 4567</p>
-              <p>Address: Cebu City, Philippines</p>
+          {/* Contact + Follow Us Column (merged on mobile) */}
+          <div className="space-y-6 text-center md:text-left">
+            {/* Contact Section */}
+            <div className="space-y-2">
+              <h3 className={`${moderniz.className} text-lg font-semibold`}>Contact</h3>
+              <div className={`${roboto.className} text-muted-foreground space-y-2 text-sm`}>
+                <p>Email: info@cesafi.org</p>
+                <p>Phone: +63 32 123 4567</p>
+                <p>Address: Cebu City, Philippines</p>
+              </div>
             </div>
-          </div>
 
-          {/* Follow Us Column */}
-          <div className="space-y-4">
-            <h3 className={`${moderniz.className} text-lg font-semibold`}>Follow Us</h3>
-            <div className="flex space-x-3">
-              <a
-                href="https://www.youtube.com/@CESAFIOfficial"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 rounded-lg bg-muted/50 text-muted-foreground hover:text-red-500 hover:bg-muted transition-all duration-200"
-                aria-label="CESAFI YouTube Channel"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
-                  <path d="m10 15 5-3-5-3z"/>
-                </svg>
-              </a>
-              <a
-                href="https://www.facebook.com/thecesafi"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3 rounded-lg bg-muted/50 text-muted-foreground hover:text-blue-500 hover:bg-muted transition-all duration-200"
-                aria-label="CESAFI Facebook Page"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-                </svg>
-              </a>
+            {/* Follow Us Section */}
+            <div className="space-y-3">
+              <h3 className={`${moderniz.className} text-lg font-semibold`}>Follow Us</h3>
+              <div className="flex justify-center md:justify-start space-x-3">
+                <a
+                  href="https://www.youtube.com/@CESAFIOfficial"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 rounded-lg bg-muted/50 text-muted-foreground hover:text-red-500 hover:bg-muted transition-all duration-200"
+                  aria-label="CESAFI YouTube Channel"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+                    <path d="m10 15 5-3-5-3z"/>
+                  </svg>
+                </a>
+                <a
+                  href="https://www.facebook.com/thecesafi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 rounded-lg bg-muted/50 text-muted-foreground hover:text-blue-500 hover:bg-muted transition-all duration-200"
+                  aria-label="CESAFI Facebook Page"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                  </svg>
+                </a>
+              </div>
+              <p className={`${roboto.className} text-muted-foreground text-sm text-center md:text-left`}>
+                Stay connected with the latest updates, live streams, and highlights.
+              </p>
             </div>
-            <p className={`${roboto.className} text-muted-foreground text-sm`}>
-              Stay connected with the latest updates, live streams, and highlights.
-            </p>
           </div>
         </div>
 

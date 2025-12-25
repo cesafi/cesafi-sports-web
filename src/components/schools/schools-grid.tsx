@@ -94,7 +94,7 @@ export default function SchoolsGrid({ initialSchools }: SchoolsGridProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
           {filteredSchools.map((school, index) => (
             <motion.div
               key={school.id}
@@ -105,16 +105,16 @@ export default function SchoolsGrid({ initialSchools }: SchoolsGridProps) {
             >
                        <Link href={`/schools/${school.abbreviation.toLowerCase()}`} className="block">
                 <div className="bg-background/40 backdrop-blur-lg rounded-lg shadow-lg border border-border/30 overflow-hidden group-hover:shadow-xl group-hover:bg-background/50 group-hover:backdrop-blur-xl transition-all duration-300">
-                  <div className="p-8 text-center h-80 flex flex-col justify-between">
-                    {/* School Logo - Much Bigger */}
+                  <div className="p-4 md:p-8 text-center h-56 md:h-80 flex flex-col justify-between">
+                    {/* School Logo - Responsive size */}
                     <div className="flex justify-center">
-                      <div className="relative h-32 w-32 rounded-lg overflow-hidden bg-white/20 group-hover:bg-white/30 transition-colors duration-300">
+                      <div className="relative h-20 w-20 md:h-32 md:w-32 rounded-lg overflow-hidden bg-white/20 group-hover:bg-white/30 transition-colors duration-300">
                         {school.logo_url ? (
                           <Image
                             src={school.logo_url}
                             alt={school.name}
                             fill
-                            className="object-contain p-4"
+                            className="object-contain p-2 md:p-4"
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center">
@@ -131,8 +131,8 @@ export default function SchoolsGrid({ initialSchools }: SchoolsGridProps) {
                     </div>
 
                     {/* School Info */}
-                    <div className="space-y-2">
-                      <h2 className={`${roboto.className} text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight`} style={{
+                    <div className="space-y-1 md:space-y-2">
+                      <h2 className={`${roboto.className} text-sm md:text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight`} style={{
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
@@ -140,15 +140,15 @@ export default function SchoolsGrid({ initialSchools }: SchoolsGridProps) {
                       }}>
                         {school.name}
                       </h2>
-                      <p className={`${roboto.className} text-sm text-muted-foreground`}>
+                      <p className={`${roboto.className} text-xs md:text-sm text-muted-foreground`}>
                         {school.abbreviation}
                       </p>
                     </div>
 
                     {/* View Profile Indicator */}
-                    <div className="bg-white/20 rounded-full px-4 py-2 inline-flex items-center gap-2 group-hover:bg-primary/20 transition-colors duration-300">
-                      <Plus className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
-                      <span className={`${roboto.className} text-xs text-muted-foreground group-hover:text-primary transition-colors duration-300`}>
+                    <div className="bg-white/20 rounded-full px-3 py-1.5 md:px-4 md:py-2 inline-flex items-center justify-center gap-1.5 md:gap-2 group-hover:bg-primary/20 transition-colors duration-300">
+                      <Plus className="h-2.5 w-2.5 md:h-3 md:w-3 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+                      <span className={`${roboto.className} text-[10px] md:text-xs text-muted-foreground group-hover:text-primary transition-colors duration-300`}>
                         VIEW PROFILE
                       </span>
                     </div>

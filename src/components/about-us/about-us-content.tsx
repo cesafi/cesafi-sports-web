@@ -155,7 +155,7 @@ export default function AboutUsContent() {
           className="from-primary/10 via-primary/5 to-secondary/10 border-primary/20 rounded-3xl border bg-gradient-to-r p-8 lg:p-12"
         >
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-            <div>
+            <div className="text-center lg:text-left">
               <h3
                 className={`${moderniz.className} text-foreground mb-6 text-3xl font-bold lg:text-4xl`}
               >

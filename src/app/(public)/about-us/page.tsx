@@ -41,7 +41,7 @@ export default async function AboutUsPage() {
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             {/* Left Section - Text Content */}
-            <div className="space-y-8">
+            <div className="space-y-8 text-center md:text-left">
               <div>
                 <h1
                   className={`${moderniz.className} text-foreground mb-6 text-5xl leading-tight font-bold lg:text-6xl xl:text-7xl`}

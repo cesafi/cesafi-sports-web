@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import ContactForm from '@/components/contact/contact-form';
+import { moderniz, roboto } from '@/lib/fonts';
 
 export const metadata: Metadata = {
   title: 'Contact Us | CESAFI Sports',
@@ -13,10 +14,12 @@ export default function ContactPage() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Contact Us
+            <h1 className={`${moderniz.className} text-4xl md:text-5xl lg:text-6xl font-bold mb-4`}>
+              CONTACT
+              <br />
+              <span className="text-primary">US</span>
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className={`${roboto.className} text-lg text-muted-foreground max-w-2xl mx-auto`}>
               Have questions about CESAFI Sports? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
             </p>
           </div>
