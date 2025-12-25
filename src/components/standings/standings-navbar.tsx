@@ -54,24 +54,24 @@ export default function StandingsNavbar({
 
   return (
     <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-b backdrop-blur">
-      <div className="container flex h-16 items-center justify-between px-6">
+      <div className="container flex flex-col lg:flex-row lg:h-16 lg:items-center lg:justify-between px-4 lg:px-6 py-3 lg:py-0 gap-3 lg:gap-4">
         {/* Left side - Stages */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-4 overflow-x-auto pb-2 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0">
           {navigation?.stages && (
             <>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <Target className="text-muted-foreground h-4 w-4" />
                 <span className="text-sm font-medium">Stages</span>
                 <ChevronRight className="text-muted-foreground h-4 w-4" />
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-shrink-0">
                 {navigation.stages.map((stage, index) => (
                   <div key={stage.id} className="flex items-center">
                     {index > 0 && <Separator orientation="vertical" className="mx-2 h-4" />}
                     <button
                       onClick={() => onStageChange(stage.id)}
-                      className={`hover:bg-muted/50 relative px-3 py-1 text-sm transition-all duration-200 ${
+                      className={`hover:bg-muted/50 relative px-3 py-1 text-sm transition-all duration-200 whitespace-nowrap ${
                         currentStage === stage.id
                           ? 'text-foreground font-medium'
                           : 'text-muted-foreground hover:text-foreground'
@@ -91,17 +91,17 @@ export default function StandingsNavbar({
         </div>
 
         {/* Right side - Sports & Categories */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 lg:gap-4">
           {/* Sport Selector */}
           <div className="flex items-center gap-2">
-            <Trophy className="text-muted-foreground h-4 w-4" />
+            <Trophy className="text-muted-foreground h-4 w-4 hidden sm:block" />
             <span className="text-sm font-medium">Sport:</span>
             <Select
               value={currentFilters.sport_id?.toString() ?? ''}
               onValueChange={(value) => onSportChange(Number(value))}
               disabled={!currentFilters.season_id || !availableSports}
             >
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-32 lg:w-40">
                 <SelectValue placeholder="Select sport" />
               </SelectTrigger>
               <SelectContent>
@@ -114,7 +114,7 @@ export default function StandingsNavbar({
             </Select>
           </div>
 
-          <Separator orientation="vertical" className="h-4" />
+          <Separator orientation="vertical" className="h-4 hidden lg:block" />
 
           {/* Category Selector */}
           <div className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export default function StandingsNavbar({
               onValueChange={(value) => onCategoryChange(Number(value))}
               disabled={!currentFilters.sport_id || !availableCategories}
             >
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-32 lg:w-40">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
@@ -140,8 +140,8 @@ export default function StandingsNavbar({
       </div>
 
       {/* Current Selection Display */}
-      <div className="border-t px-6 py-2">
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+      <div className="border-t px-4 lg:px-6 py-2">
+        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
           <span>Current selection:</span>
 
           {/* Season */}

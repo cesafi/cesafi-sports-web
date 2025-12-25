@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ModalLayout } from '@/components/ui/modal-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -99,17 +99,33 @@ export function TeamSelectionModal({
     }
   }, [open]);
 
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Users className="h-5 w-5" />
-            <span>Add Teams to Match</span>
-          </DialogTitle>
-        </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col space-y-6">
+  return (
+    <ModalLayout
+      open={open}
+      onOpenChange={handleClose}
+      title={
+        <div className="flex items-center space-x-2">
+          <Users className="h-5 w-5" />
+          <span>Add Teams to Match</span>
+        </div>
+      }
+      footer={
+        <div className="flex justify-end space-x-3 pt-4">
+          <Button type="button" variant="outline" onClick={handleClose}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={selectedTeams.length === 0 || createParticipantMutation.isPending}
+          >
+            {createParticipantMutation.isPending ? 'Adding...' : `Add ${selectedTeams.length} Team(s)`}
+          </Button>
+        </div>
+      }
+      maxWidth="max-w-2xl"
+    >
+        <div className="flex flex-col space-y-6">
           {/* Search */}
           <Card>
             <CardHeader>
@@ -153,7 +169,7 @@ export function TeamSelectionModal({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex-1 overflow-y-auto">
+              <div>
                 {isLoading ? (
                   <div className="flex items-center justify-center h-32">
                     <div className="text-center">
@@ -199,20 +215,6 @@ export function TeamSelectionModal({
             </CardContent>
           </Card>
         </div>
-
-        {/* Actions */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={selectedTeams.length === 0 || createParticipantMutation.isPending}
-          >
-            {createParticipantMutation.isPending ? 'Adding...' : `Add ${selectedTeams.length} Team(s)`}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    </ModalLayout>
   );
 }

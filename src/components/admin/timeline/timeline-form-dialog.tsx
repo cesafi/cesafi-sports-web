@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ModalLayout } from '@/components/ui/modal-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -140,16 +140,34 @@ export function TimelineFormDialog({ open, onOpenChange, timeline, onClose }: Ti
 
   const isLoading = isSubmitting || createMutation.isPending || updateMutation.isPending;
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {isEditing ? 'Edit Timeline Event' : 'Create Timeline Event'}
-          </DialogTitle>
-        </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+  return (
+    <ModalLayout
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEditing ? 'Edit Timeline Event' : 'Create Timeline Event'}
+      footer={
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isLoading} form="timeline-form">
+            {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {isEditing ? 'Update Event' : 'Create Event'}
+          </Button>
+        </div>
+      }
+    >
+      <form
+        id="timeline-form"
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-6"
+      >
           {/* Image Upload */}
           <div className="space-y-2">
             <Label>Event Image</Label>
@@ -282,24 +300,7 @@ export function TimelineFormDialog({ open, onOpenChange, timeline, onClose }: Ti
             />
             <Label htmlFor="is_highlight">Mark as highlight event</Label>
           </div>
-
-          {/* Form Actions */}
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {isEditing ? 'Update Event' : 'Create Event'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      </form>
+    </ModalLayout>
   );
 }

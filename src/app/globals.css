@@ -311,6 +311,23 @@
   animation: float-gentle 8s ease-in-out infinite;
 }
 
+/* Wave animation for hero overlay */
+@keyframes wave-flow {
+  0% {
+    transform: translateX(0) scaleY(1);
+  }
+  50% {
+    transform: translateX(-25px) scaleY(1.05);
+  }
+  100% {
+    transform: translateX(0) scaleY(1);
+  }
+}
+
+.animate-wave {
+  animation: wave-flow 4s ease-in-out infinite;
+}
+
 /* Smooth scroll indicator */
 @keyframes scroll-bounce {
   0%, 20%, 50%, 80%, 100% {

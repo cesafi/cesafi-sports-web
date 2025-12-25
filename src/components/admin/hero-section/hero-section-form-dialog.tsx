@@ -7,7 +7,7 @@ import { createHeroSectionLiveSchema, updateHeroSectionLiveSchema, CreateHeroSec
 import { HeroSectionLive } from '@/lib/types/hero-section';
 import { useCreateHeroSectionLive } from '@/hooks/use-hero-section';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ModalLayout } from '@/components/ui/modal-layout';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { DateTimeInput } from '@/components/ui/datetime-input';
@@ -74,95 +74,101 @@ export function HeroSectionFormDialog({ open, onOpenChange, hero, onSubmit }: He
   const isLoading = createMutation.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Video className="w-5 h-5" />
-            <span>{isEditing ? 'Edit Hero Section' : 'Add New Hero Section'}</span>
-          </DialogTitle>
-        </DialogHeader>
+    <ModalLayout
+      open={open}
+      onOpenChange={onOpenChange}
+      title={
+        <div className="flex items-center space-x-2">
+          <Video className="w-5 h-5" />
+          <span>{isEditing ? 'Edit Hero Section' : 'Add New Hero Section'}</span>
+        </div>
+      }
+      footer={
+        <div className="flex justify-end space-x-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="primary"
+            disabled={isLoading}
+            form="hero-section-form"
+          >
+            {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isEditing ? 'Update Hero Section' : 'Add Hero Section'}
+          </Button>
+        </div>
+      }
+    >
+      <form
+        id="hero-section-form"
+        onSubmit={handleSubmit(onSubmitForm)}
+        className="space-y-6"
+      >
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="video_link">Video URL *</Label>
+              <div className="relative">
+                <Video className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="video_link"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  className="pl-10"
+                  {...register('video_link')}
+                />
+              </div>
+              {errors.video_link && (
+                <p className="text-sm text-red-600">{errors.video_link.message}</p>
+              )}
+              <p className="text-sm text-gray-500">
+                Enter a YouTube video URL. The video will be embedded on the homepage.
+              </p>
+            </div>
 
-        <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="video_link">Video URL *</Label>
-                <div className="relative">
-                  <Video className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    id="video_link"
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="pl-10"
-                    {...register('video_link')}
-                  />
-                </div>
-                {errors.video_link && (
-                  <p className="text-sm text-red-600">{errors.video_link.message}</p>
-                )}
-                <p className="text-sm text-gray-500">
-                  Enter a YouTube video URL. The video will be embedded on the homepage.
+            <DateTimeInput
+              id="end_at"
+              label="End Date & Time"
+              value={watch('end_at') || null}
+              onChange={(utcIsoString) => {
+                // Update the form value with the UTC ISO string
+                reset({
+                  ...watch(),
+                  end_at: utcIsoString || ''
+                });
+              }}
+              error={errors.end_at?.message}
+              helpText="When the hero section should stop being displayed"
+              required={true}
+            />
+          </div>
+
+          {/* Preview Section */}
+          {watch('video_link') && (
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900">Preview</h4>
+              <div className="bg-gray-100 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-2">
+                  Video URL: <code className="bg-white px-2 py-1 rounded text-xs">{watch('video_link')}</code>
                 </p>
+                {watch('end_at') && (
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">
+                      Local Time: <code className="bg-white px-2 py-1 rounded text-xs">{new Date(watch('end_at')!).toLocaleString()}</code>
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      UTC Time: <code className="bg-white px-2 py-1 rounded text-xs">{new Date(watch('end_at')!).toISOString()}</code>
+                    </p>
+                  </div>
+                )}
               </div>
-
-              <DateTimeInput
-                id="end_at"
-                label="End Date & Time"
-                value={watch('end_at') || null}
-                onChange={(utcIsoString) => {
-                  // Update the form value with the UTC ISO string
-                  reset({
-                    ...watch(),
-                    end_at: utcIsoString || ''
-                  });
-                }}
-                error={errors.end_at?.message}
-                helpText="When the hero section should stop being displayed"
-                required={true}
-              />
             </div>
-
-            {/* Preview Section */}
-            {watch('video_link') && (
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-900">Preview</h4>
-                <div className="bg-gray-100 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-2">
-                    Video URL: <code className="bg-white px-2 py-1 rounded text-xs">{watch('video_link')}</code>
-                  </p>
-                  {watch('end_at') && (
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-600">
-                        Local Time: <code className="bg-white px-2 py-1 rounded text-xs">{new Date(watch('end_at')!).toLocaleString()}</code>
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        UTC Time: <code className="bg-white px-2 py-1 rounded text-xs">{new Date(watch('end_at')!).toISOString()}</code>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end space-x-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                variant="primary"
-                disabled={isLoading}
-              >
-                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {isEditing ? 'Update Hero Section' : 'Add Hero Section'}
-              </Button>
-            </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+          )}
+      </form>
+    </ModalLayout>
   );
 }
