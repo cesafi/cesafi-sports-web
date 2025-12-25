@@ -145,7 +145,7 @@ export function useCreateArticle(
     },
     onError: (error, variables, context) => {
       console.error('Failed to create article:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -168,7 +168,7 @@ export function useUpdateArticle(
     },
     onError: (error, variables, context) => {
       console.error('Failed to update article:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -189,7 +189,7 @@ export function useDeleteArticle(
     },
     onError: (error, id, context) => {
       console.error('Failed to delete article:', error);
-      mutationOptions?.onError?.(error, id, context);
+      (mutationOptions?.onError as any)?.(error, id, context);
     },
     ...mutationOptions
   });
