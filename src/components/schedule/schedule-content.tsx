@@ -83,7 +83,7 @@ export default function ScheduleContent({ initialMatches, availableCategories }:
   const displayMatches = matches.length > 0 ? matches : initialMatches;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full w-full min-w-0 flex-col">
       {/* Fixed Header */}
       <div className="flex-shrink-0">
         <InfiniteSchedule

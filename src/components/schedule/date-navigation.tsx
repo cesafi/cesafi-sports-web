@@ -86,7 +86,7 @@ export default function DateNavigation({
   return (
     <Card className="border-border bg-card sticky top-24 z-10 mt-6 shadow-sm">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Left side: Current date display */}
           <div className="flex items-center">
             <div className="flex flex-col">
@@ -100,7 +100,7 @@ export default function DateNavigation({
           </div>
 
           {/* Right side: Date navigation and filters */}
-          <div className="flex items-center gap-4">
+          <div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:items-center">
             {/* Date Navigation - Unified button style */}
             <div className="flex items-center">
               <Button

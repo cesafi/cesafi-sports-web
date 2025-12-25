@@ -153,7 +153,7 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
         </div>
 
         {/* Teams and Scores */}
-        <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+        <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-6">
           {/* Team 1 */}
           <div className="flex items-center justify-end gap-2">
             <div className="min-w-0 text-right">
@@ -229,7 +229,7 @@ export default function MatchCard({ match, onMatchClick }: MatchCardProps) {
 
       {/* Match Details Footer */}
       <div className="bg-muted/50 px-6 py-4">
-        <div className="text-muted-foreground font-roboto flex items-center justify-between text-base font-medium">
+        <div className="text-muted-foreground font-roboto flex flex-wrap items-center justify-between gap-y-2 text-base font-medium">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
             <span>{match.displayTime}</span>

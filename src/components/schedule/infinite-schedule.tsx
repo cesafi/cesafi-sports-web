@@ -226,7 +226,7 @@ export default function InfiniteSchedule({
   }, [dateGroups]);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full space-y-6">
       {/* Date Navigation */}
       <DateNavigation
         currentDate={displayedDate}
