@@ -191,11 +191,11 @@ export function useCreateMatchParticipant(
           queryKey: matchParticipantKeys.byTeam(variables.team_id)
         });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to create match participant:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -214,11 +214,11 @@ export function useUpdateMatchParticipant(
         queryClient.invalidateQueries({ queryKey: matchParticipantKeys.details(variables.id) });
         queryClient.invalidateQueries({ queryKey: matchParticipantKeys.all });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update match participant:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -238,11 +238,11 @@ export function useDeleteMatchParticipant(
         // Also invalidate match details to update participant count
         queryClient.invalidateQueries({ queryKey: ['match-details'] });
       }
-      mutationOptions?.onSuccess?.(result, id, context);
+      (mutationOptions?.onSuccess as any)?.(result, id, context);
     },
     onError: (error, id, context) => {
       console.error('Failed to delete match participant:', error);
-      mutationOptions?.onError?.(error, id, context);
+      (mutationOptions?.onError as any)?.(error, id, context);
     },
     ...mutationOptions
   });
@@ -280,11 +280,11 @@ export function useUpdateMatchScores(
           });
         }
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update match scores:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });

@@ -203,11 +203,11 @@ export function useCreateMatch(
           });
         }
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to create match:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -235,11 +235,11 @@ export function useUpdateMatch(
         queryClient.invalidateQueries({ queryKey: ['games'] });
         queryClient.invalidateQueries({ queryKey: ['match_participants'] });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update match:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -260,11 +260,11 @@ export function useDeleteMatch(
         queryClient.invalidateQueries({ queryKey: ['match_participants'] });
         queryClient.invalidateQueries({ queryKey: ['game_scores'] });
       }
-      mutationOptions?.onSuccess?.(result, id, context);
+      (mutationOptions?.onSuccess as any)?.(result, id, context);
     },
     onError: (error, id, context) => {
       console.error('Failed to delete match:', error);
-      mutationOptions?.onError?.(error, id, context);
+      (mutationOptions?.onError as any)?.(error, id, context);
     },
     ...mutationOptions
   });
@@ -307,12 +307,12 @@ export function useDeleteMatchWithCascade(
       } else {
         toast.error(result.error || 'Failed to delete match');
       }
-      mutationOptions?.onSuccess?.(result, id, context);
+      (mutationOptions?.onSuccess as any)?.(result, id, context);
     },
     onError: (error, id, context) => {
       toast.error('Failed to delete match');
       console.error('Failed to delete match:', error);
-      mutationOptions?.onError?.(error, id, context);
+      (mutationOptions?.onError as any)?.(error, id, context);
     },
     ...mutationOptions
   });

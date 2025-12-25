@@ -152,11 +152,11 @@ export function useCreateSport(
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: sportKeys.all });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to create sport:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -175,11 +175,11 @@ export function useUpdateSport(
           queryClient.invalidateQueries({ queryKey: sportKeys.details(variables.id) });
         }
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update sport:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -202,11 +202,11 @@ export function useDeleteSport(
         queryClient.invalidateQueries({ queryKey: ['matches'] });
         queryClient.invalidateQueries({ queryKey: ['match_participants'] });
       }
-      mutationOptions?.onSuccess?.(result, id, context);
+      (mutationOptions?.onSuccess as any)?.(result, id, context);
     },
     onError: (error, id, context) => {
       console.error('Failed to delete sport:', error);
-      mutationOptions?.onError?.(error, id, context);
+      (mutationOptions?.onError as any)?.(error, id, context);
     },
     ...mutationOptions
   });
@@ -363,11 +363,11 @@ export function useCreateSportCategory(
         queryClient.invalidateQueries({ queryKey: sportCategoryKeys.all });
         queryClient.invalidateQueries({ queryKey: sportCategoryKeys.bySport(variables.sport_id) });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to create sport category:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -386,11 +386,11 @@ export function useUpdateSportCategory(
           queryClient.invalidateQueries({ queryKey: sportCategoryKeys.details(variables.id) });
         }
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update sport category:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -412,11 +412,11 @@ export function useDeleteSportCategory(
         queryClient.invalidateQueries({ queryKey: ['matches'] });
         queryClient.invalidateQueries({ queryKey: ['match_participants'] });
       }
-      mutationOptions?.onSuccess?.(result, id, context);
+      (mutationOptions?.onSuccess as any)?.(result, id, context);
     },
     onError: (error, id, context) => {
       console.error('Failed to delete sport category:', error);
-      mutationOptions?.onError?.(error, id, context);
+      (mutationOptions?.onError as any)?.(error, id, context);
     },
     ...mutationOptions
   });

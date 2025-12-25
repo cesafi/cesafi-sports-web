@@ -141,11 +141,11 @@ export function useCreateTimeline(
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: timelineKeys.all });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to create timeline:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -164,11 +164,11 @@ export function useUpdateTimeline(
           queryClient.invalidateQueries({ queryKey: timelineKeys.details(variables.id) });
         }
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update timeline:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -185,11 +185,11 @@ export function useDeleteTimeline(
         queryClient.invalidateQueries({ queryKey: timelineKeys.all });
         queryClient.invalidateQueries({ queryKey: timelineKeys.details(id) });
       }
-      mutationOptions?.onSuccess?.(result, id, context);
+      (mutationOptions?.onSuccess as any)?.(result, id, context);
     },
     onError: (error, id, context) => {
       console.error('Failed to delete timeline:', error);
-      mutationOptions?.onError?.(error, id, context);
+      (mutationOptions?.onError as any)?.(error, id, context);
     },
     ...mutationOptions
   });
@@ -205,11 +205,11 @@ export function useReorderTimeline(
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: timelineKeys.all });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to reorder timeline:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });

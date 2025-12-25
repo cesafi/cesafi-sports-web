@@ -43,7 +43,7 @@ yarn-error.log*
 .env.local
 .env
 .env.*.local      
-package-lock.json
+
 
 # vercel
 .vercel

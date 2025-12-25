@@ -107,11 +107,11 @@ export function useCreateSportsSeasonsStage(
         queryClient.invalidateQueries({ queryKey: ['sports'] });
         queryClient.invalidateQueries({ queryKey: ['seasons'] });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to create sports seasons stage:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -133,11 +133,11 @@ export function useUpdateSportsSeasonsStage(
         queryClient.invalidateQueries({ queryKey: ['sports'] });
         queryClient.invalidateQueries({ queryKey: ['seasons'] });
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       console.error('Failed to update sports seasons stage:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -157,11 +157,11 @@ export function useDeleteSportsSeasonsStage(
         queryClient.invalidateQueries({ queryKey: ['sports'] });
         queryClient.invalidateQueries({ queryKey: ['seasons'] });
       }
-      mutationOptions?.onSuccess?.(result, id, context);
+      (mutationOptions?.onSuccess as any)?.(result, id, context);
     },
     onError: (error, id, context) => {
       console.error('Failed to delete sports seasons stage:', error);
-      mutationOptions?.onError?.(error, id, context);
+      (mutationOptions?.onError as any)?.(error, id, context);
     },
     ...mutationOptions
   });

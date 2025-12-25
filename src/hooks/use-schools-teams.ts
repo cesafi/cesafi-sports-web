@@ -221,12 +221,12 @@ export function useCreateSchoolsTeam(
       } else {
         toast.error(result.error || 'Failed to create team');
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       toast.error('Failed to create team');
       console.error('Failed to create schools team:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -277,12 +277,12 @@ export function useUpdateSchoolsTeam(
       } else {
         toast.error(result.error || 'Failed to update team');
       }
-      mutationOptions?.onSuccess?.(result, variables, context);
+      (mutationOptions?.onSuccess as any)?.(result, variables, context);
     },
     onError: (error, variables, context) => {
       toast.error('Failed to update team');
       console.error('Failed to update schools team:', error);
-      mutationOptions?.onError?.(error, variables, context);
+      (mutationOptions?.onError as any)?.(error, variables, context);
     },
     ...mutationOptions
   });
@@ -322,12 +322,12 @@ export function useDeleteSchoolsTeam(
       } else {
         toast.error(result.error || 'Failed to delete team');
       }
-      mutationOptions?.onSuccess?.(result, id, context);
+      (mutationOptions?.onSuccess as any)?.(result, id, context);
     },
     onError: (error, id, context) => {
       toast.error('Failed to delete team');
       console.error('Failed to delete schools team:', error);
-      mutationOptions?.onError?.(error, id, context);
+      (mutationOptions?.onError as any)?.(error, id, context);
     },
     ...mutationOptions
   });
