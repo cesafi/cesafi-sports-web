@@ -58,18 +58,37 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Partners Column */}
+          {/* Follow Us Column */}
           <div className="space-y-4">
-            <h3 className={`${moderniz.className} text-lg font-semibold`}>Partners</h3>
-            <div className={`${roboto.className} text-muted-foreground text-sm`}>
-              <p>Interested in partnering with CESAFI?</p>
-              <Link
-                href="/contact"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 mt-2 inline-block rounded-lg px-4 py-2 transition-colors"
+            <h3 className={`${moderniz.className} text-lg font-semibold`}>Follow Us</h3>
+            <div className="flex space-x-3">
+              <a
+                href="https://www.youtube.com/@CESAFIOfficial"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-lg bg-muted/50 text-muted-foreground hover:text-red-500 hover:bg-muted transition-all duration-200"
+                aria-label="CESAFI YouTube Channel"
               >
-                Get in Touch
-              </Link>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/>
+                  <path d="m10 15 5-3-5-3z"/>
+                </svg>
+              </a>
+              <a
+                href="https://www.facebook.com/thecesafi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-lg bg-muted/50 text-muted-foreground hover:text-blue-500 hover:bg-muted transition-all duration-200"
+                aria-label="CESAFI Facebook Page"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                </svg>
+              </a>
             </div>
+            <p className={`${roboto.className} text-muted-foreground text-sm`}>
+              Stay connected with the latest updates, live streams, and highlights.
+            </p>
           </div>
         </div>
 

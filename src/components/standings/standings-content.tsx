@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, CalendarDays, ChevronDown } from 'lucide-react';
 import { moderniz } from '@/lib/fonts';
 import SeasonSidebar from './season-sidebar';
 import StandingsNavbar from './standings-navbar';
@@ -215,9 +215,29 @@ export default function StandingsContent({ searchParams: _ }: StandingsContentPr
       </section>
 
       {/* Main Content */}
-      <div className="mt-8 mb-8 flex min-h-[calc(100vh-20rem)]">
-        {/* Season Sidebar */}
-        <div className="w-64 flex-shrink-0 border-r">
+      <div className="mt-8 mb-8 flex flex-col lg:flex-row min-h-[calc(100vh-20rem)]">
+        {/* Mobile Season Selector */}
+        <div className="lg:hidden px-4 mb-4">
+          <div className="relative">
+            <select
+              value={filters.season_id ?? ''}
+              onChange={(e) => handleSeasonChange(Number(e.target.value))}
+              className="w-full appearance-none bg-card border border-border rounded-lg px-4 py-3 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {seasons?.map((season) => (
+                <option key={season.id} value={season.id}>
+                  Season {season.id} - {season.name}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+        </div>
+
+        {/* Season Sidebar - Desktop Only */}
+        <div className="hidden lg:block w-64 flex-shrink-0 border-r">
           <div className="sticky top-6 p-4">
             <SeasonSidebar
               currentSeasonId={filters.season_id}
@@ -241,7 +261,7 @@ export default function StandingsContent({ searchParams: _ }: StandingsContentPr
           />
 
           {/* Content Area */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-4 lg:p-6 overflow-x-auto">
             <div className="mx-auto max-w-7xl">
               {(() => {
                 if (isGroupStage) {

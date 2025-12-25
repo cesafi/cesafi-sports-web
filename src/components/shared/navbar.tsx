@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, Youtube, Facebook } from 'lucide-react';
 import Link from 'next/link';
 import { roboto } from '@/lib/fonts';
 import ThemeSwitcher from '@/components/theme-switcher';
@@ -103,6 +103,26 @@ export default function Navbar() {
               timeRemaining={heroData?.data?.time_remaining}
               variant="navbar"
             />
+            <div className="flex items-center space-x-1">
+              <a
+                href="https://www.youtube.com/@CESAFIOfficial"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-muted/50 transition-colors duration-200"
+                aria-label="CESAFI YouTube Channel"
+              >
+                <Youtube size={18} />
+              </a>
+              <a
+                href="https://www.facebook.com/thecesafi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-lg text-muted-foreground hover:text-blue-500 hover:bg-muted/50 transition-colors duration-200"
+                aria-label="CESAFI Facebook Page"
+              >
+                <Facebook size={18} />
+              </a>
+            </div>
             <ThemeSwitcher />
           </div>
 
@@ -116,6 +136,24 @@ export default function Navbar() {
               timeRemaining={heroData?.data?.time_remaining}
               variant="compact"
             />
+            <a
+              href="https://www.youtube.com/@CESAFIOfficial"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 transition-colors"
+              aria-label="CESAFI YouTube"
+            >
+              <Youtube size={18} />
+            </a>
+            <a
+              href="https://www.facebook.com/cesikilig"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-500 transition-colors"
+              aria-label="CESAFI Facebook"
+            >
+              <Facebook size={18} />
+            </a>
             <ThemeSwitcher />
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -136,7 +174,7 @@ export default function Navbar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              className="lg:hidden fixed top-0 left-0 w-screen h-screen bg-black/50 backdrop-blur-sm z-[60]"
               onClick={() => setIsMenuOpen(false)}
             />
 
@@ -146,7 +184,7 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="lg:hidden fixed top-0 right-0 h-screen w-80 bg-background border-l border-border shadow-2xl z-50"
+              className="lg:hidden fixed top-0 right-0 h-screen w-80 bg-background border-l border-border shadow-2xl z-[70]"
             >
               <div className="flex flex-col h-full bg-background">
                 {/* Header */}
