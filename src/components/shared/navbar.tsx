@@ -70,8 +70,8 @@ export default function Navbar() {
             <Image src='/img/cesafi-logo.webp' alt="CESAFI Logo" width={40} height={80} className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 object-contain" />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
+          {/* Desktop Navigation - Centered */}
+          <div className="hidden lg:flex items-center justify-center absolute left-1/2 transform -translate-x-1/2 space-x-1">
             {navItems.map((item) => (
               item.children ? (
                 <NavDropdown key={item.name} item={item} />
