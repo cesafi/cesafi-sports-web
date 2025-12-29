@@ -125,17 +125,17 @@ export default function PhotoGallery() {
   return (
     <section ref={ref} className="bg-background relative min-h-screen overflow-hidden">
       {/* Header */}
-      <motion.div style={{ y, opacity }} className="absolute top-0 right-0 left-0 z-20 pt-20 pb-8">
+      <motion.div style={{ y, opacity }} className="absolute top-0 right-0 left-0 z-20 pt-16 md:pt-20 pb-4 md:pb-8">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           <h2
-            className={`${moderniz.className} mb-4 text-4xl leading-tight font-bold text-white drop-shadow-2xl lg:text-5xl xl:text-6xl`}
+            className={`${moderniz.className} mb-2 md:mb-4 text-3xl md:text-4xl leading-tight font-bold text-white drop-shadow-2xl lg:text-5xl xl:text-6xl`}
           >
             PHOTO
             <br />
             <span className="text-primary">GALLERY</span>
           </h2>
           <p
-            className={`${roboto.className} mx-auto max-w-4xl text-xl leading-relaxed text-white/90 drop-shadow-lg lg:text-2xl`}
+            className={`${roboto.className} mx-auto max-w-4xl text-sm md:text-xl leading-relaxed text-white/90 drop-shadow-lg lg:text-2xl`}
           >
             Capturing the spirit, passion, and excellence of CESAFI.
           </p>
@@ -169,24 +169,24 @@ export default function PhotoGallery() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
               {/* Image Info - Positioned above thumbnails */}
-              <div className="absolute right-0 bottom-36 left-0 p-8 lg:p-12">
+              <div className="absolute right-0 bottom-28 md:bottom-36 left-0 p-4 md:p-8 lg:p-12">
                 <div className="mx-auto max-w-4xl">
                   {/* Info Container with backdrop for guaranteed readability */}
-                  <div className="inline-block rounded-xl px-6 py-4">
-                    <div className="mb-3">
+                  <div className="inline-block rounded-xl px-4 md:px-6 py-3 md:py-4">
+                    <div className="mb-2 md:mb-3">
                       <span
-                        className={`${roboto.className} bg-primary text-primary-foreground rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide uppercase`}
+                        className={`${roboto.className} bg-primary text-primary-foreground rounded-full px-3 md:px-4 py-1 md:py-1.5 text-[10px] md:text-xs font-semibold tracking-wide uppercase`}
                       >
                         {image.category}
                       </span>
                     </div>
                     <h3
-                      className={`${roboto.className} mb-2 text-2xl leading-tight font-bold text-white lg:text-3xl xl:text-4xl`}
+                      className={`${roboto.className} mb-1 md:mb-2 text-lg md:text-2xl leading-tight font-bold text-white lg:text-3xl xl:text-4xl`}
                     >
                       {image.alt}
                     </h3>
                     <p
-                      className={`${roboto.className} text-base leading-relaxed text-white/90 lg:text-lg`}
+                      className={`${roboto.className} text-sm md:text-base leading-relaxed text-white/90 lg:text-lg`}
                     >
                       {image.caption}
                     </p>
@@ -198,21 +198,21 @@ export default function PhotoGallery() {
         </div>
 
         {/* Navigation Controls */}
-        <div className="absolute inset-0 flex items-center justify-between p-8 lg:p-12">
+        <div className="absolute inset-0 flex items-center justify-between p-4 md:p-8 lg:p-12 pointer-events-none">
           {/* Previous Button */}
           <button
             onClick={prevSlide}
-            className="rounded-full bg-black/30 p-4 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-black/50"
+            className="rounded-full bg-black/30 p-2 md:p-4 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-black/50 pointer-events-auto"
           >
-            <ChevronLeft className="h-8 w-8" />
+            <ChevronLeft className="h-5 w-5 md:h-8 md:w-8" />
           </button>
 
           {/* Next Button */}
           <button
             onClick={nextSlide}
-            className="rounded-full bg-black/30 p-4 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-black/50"
+            className="rounded-full bg-black/30 p-2 md:p-4 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-black/50 pointer-events-auto"
           >
-            <ChevronRight className="h-8 w-8" />
+            <ChevronRight className="h-5 w-5 md:h-8 md:w-8" />
           </button>
         </div>
 
@@ -220,20 +220,20 @@ export default function PhotoGallery() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform">
           <button
             onClick={togglePlay}
-            className="rounded-full bg-black/30 p-6 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-black/50"
+            className="rounded-full bg-black/30 p-4 md:p-6 text-white backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-black/50"
           >
-            {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8" />}
+            {isPlaying ? <Pause className="h-6 w-6 md:h-8 md:w-8" /> : <Play className="h-6 w-6 md:h-8 md:w-8" />}
           </button>
         </div>
 
         {/* Thumbnail Navigation - with background container */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 transform">
-          <div className="flex gap-3 rounded-xl bg-black/40 p-2 backdrop-blur-sm">
+        <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 transform">
+          <div className="flex gap-2 md:gap-3 rounded-xl bg-black/40 p-1.5 md:p-2 backdrop-blur-sm">
             {displayImages.map((image, index) => (
               <button
                 key={image.id}
                 onClick={() => setCurrentIndex(index)}
-                className={`relative h-16 w-16 overflow-hidden rounded-lg transition-all duration-300 lg:h-20 lg:w-20 ${
+                className={`relative h-10 w-10 md:h-16 md:w-16 lg:h-20 lg:w-20 overflow-hidden rounded-lg transition-all duration-300 ${
                   index === currentIndex
                     ? 'ring-primary scale-105 ring-2'
                     : 'opacity-70 hover:scale-105 hover:opacity-100'
@@ -254,8 +254,8 @@ export default function PhotoGallery() {
           </div>
         </div>
 
-        {/* Click to View Full Size */}
-        <div className="absolute right-8 bottom-8">
+        {/* Click to View Full Size - hidden on mobile */}
+        <div className="hidden md:block absolute right-8 bottom-8">
           <button
             onClick={() => openLightbox(displayImages[currentIndex])}
             className="flex items-center gap-2 rounded-full bg-black/30 px-6 py-3 text-white backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:bg-black/50"
