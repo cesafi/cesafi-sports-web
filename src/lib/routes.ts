@@ -20,17 +20,22 @@ export const PUBLIC_ROUTES = [
 
   // Public content pages
   '/about-us',
-  '/articles',
   '/contact',
   '/faq',
+  '/matches',
+  '/matches/[matchId]',
   '/news',
   '/news/[slug]', // Dynamic route pattern
+  '/players',
+  '/players/[playerSlug]',
   '/schedule',
   '/standings',
+  '/standings/[[...slug]]',
   '/schools',
   '/schools/[slug]', // Dynamic route pattern
+  '/sponsors',
+  '/statistics',
   '/volunteers',
-  '/partners',
 
   // Error pages
   '/not-found',
@@ -52,13 +57,17 @@ export const PROTECTED_ROUTES = [
   '/admin/matches',
   '/admin/matches/[id]',
   '/admin/photo-gallery',
+  '/admin/players',
   '/admin/school-teams',
   '/admin/schools',
   '/admin/seasons',
   '/admin/sponsors',
   '/admin/sports',
+  '/admin/sports/[slug]/categories',
+  '/admin/sports/[slug]/stats',
   '/admin/timeline',
   '/admin/volunteers',
+  '/admin/production',
 
   // Head Writer routes
   '/head-writer',
@@ -67,11 +76,15 @@ export const PROTECTED_ROUTES = [
   '/head-writer/articles/new',
   '/head-writer/faq',
   '/head-writer/timeline',
+  '/head-writer/production',
 
   // League Operator routes
   '/league-operator',
   '/league-operator/matches',
   '/league-operator/matches/[id]',
+  '/league-operator/sports/[slug]/categories',
+  '/league-operator/sports/[slug]/stats',
+  '/league-operator/production',
 
   // Writer routes
   '/writer',
@@ -97,17 +110,21 @@ export const ROUTE_PATTERNS = {
     /^\/terms-of-service$/,
     /^\/login$/,
     /^\/about-us$/,
-    /^\/articles$/,
     /^\/contact$/,
     /^\/faq$/,
+    /^\/matches$/,
+    /^\/matches\/[^\/]+$/, // /matches/[matchId]
     /^\/news$/,
     /^\/news\/[^\/]+$/, // /news/[slug]
+    /^\/players$/,
+    /^\/players\/[^\/]+$/, // /players/[playerSlug]
     /^\/schedule$/,
-    /^\/standings$/,
+    /^\/standings(?:\/.*)?$/, // /standings and /standings/[...slug]
     /^\/schools$/,
     /^\/schools\/[^\/]+$/, // /schools/[slug]
+    /^\/sponsors$/,
+    /^\/statistics$/,
     /^\/volunteers$/,
-    /^\/partners$/,
     /^\/not-found$/,
     /^\/no-access$/
   ],
@@ -127,13 +144,17 @@ export const ROUTE_PATTERNS = {
     /^\/admin\/matches$/,
     /^\/admin\/matches\/[^\/]+$/, // /admin/matches/[id]
     /^\/admin\/photo-gallery$/,
+    /^\/admin\/players$/,
     /^\/admin\/school-teams$/,
     /^\/admin\/schools$/,
     /^\/admin\/seasons$/,
     /^\/admin\/sponsors$/,
     /^\/admin\/sports$/,
+    /^\/admin\/sports\/[^\/]+\/categories$/, // /admin/sports/[slug]/categories
+    /^\/admin\/sports\/[^\/]+\/stats$/, // /admin/sports/[slug]/stats
     /^\/admin\/timeline$/,
     /^\/admin\/volunteers$/,
+    /^\/admin\/production$/,
 
     // Head Writer routes
     /^\/head-writer$/,
@@ -142,11 +163,15 @@ export const ROUTE_PATTERNS = {
     /^\/head-writer\/articles\/new$/,
     /^\/head-writer\/faq$/,
     /^\/head-writer\/timeline$/,
+    /^\/head-writer\/production$/,
 
     // League Operator routes
     /^\/league-operator$/,
     /^\/league-operator\/matches$/,
     /^\/league-operator\/matches\/[^\/]+$/, // /league-operator/matches/[id]
+    /^\/league-operator\/sports\/[^\/]+\/categories$/, // /league-operator/sports/[slug]/categories
+    /^\/league-operator\/sports\/[^\/]+\/stats$/, // /league-operator/sports/[slug]/stats
+    /^\/league-operator\/production$/,
 
     // Writer routes
     /^\/writer$/,
