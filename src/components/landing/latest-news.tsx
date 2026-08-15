@@ -7,6 +7,7 @@ import { Article } from '@/lib/types/articles';
 import { extractPlainText } from '@/lib/utils/content-renderer';
 import { calculateSportsReadTime } from '@/lib/utils/read-time';
 import { ArticleCard } from '@/components/shared';
+import { ArrowRight } from 'lucide-react';
 
 interface LatestNewsProps {
   initialArticles: Article[];
@@ -19,13 +20,15 @@ export default function LatestNews({ initialArticles }: LatestNewsProps) {
       id: article.id.toString(),
       title: article.title,
       slug: article.slug,
-      excerpt: (article.content as { excerpt?: string })?.excerpt || extractPlainText(article.content, 150),
+      excerpt: (article as any).excerpt || (article.content as { excerpt?: string })?.excerpt || extractPlainText(article.content, 150),
       author: article.authored_by || 'CESAFI Media Team',
       publishedAt: article.published_at || article.created_at,
       category: (article.content as { category?: string })?.category || 'General',
       readTime: readTimeResult.formattedTime,
       image: article.cover_image_url || '/img/cesafi-banner.jpg',
-      featured: (article.content as { featured?: boolean })?.featured || index === 0
+      coverPosition: (article as any).cover_image_position as { x: number; y: number; scale: number } | null,
+      featured: (article.content as { featured?: boolean })?.featured || index === 0,
+      viewCount: (article as any).view_count
     };
   });
 
@@ -35,18 +38,15 @@ export default function LatestNews({ initialArticles }: LatestNewsProps) {
   const regularArticles = newsArticles.filter(article => !article.featured);
 
   return (
-    <section className="py-32 bg-background relative overflow-hidden">
+    <section className="py-32 bg-background relative overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-20">
-          <h2 className={`${moderniz.className} text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-8 leading-tight`}>
-            LATEST
-            <br />
-            <span className="text-primary">NEWS</span>
+        <div className="text-center mb-16 md:mb-20">
+          <h2 className={`${moderniz.className} text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6`}>
+            Latest <span className="text-primary">News</span>
           </h2>
-          <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>
-            Stay updated with the latest happenings in CESAFI. 
-            From championship victories to groundbreaking partnerships.
+          <p className={`${roboto.className} text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-light`}>
+            Stay updated with the latest happenings in CESAFI
           </p>
         </div>
 
@@ -77,11 +77,17 @@ export default function LatestNews({ initialArticles }: LatestNewsProps) {
           viewport={{ once: true }}
           className="text-center mt-16"
         >
+          <div className="text-center mt-10 md:mt-12 flex flex-col gap-3 sm:gap-4 justify-center">
           <Link href="/news">
-            <button className={`${roboto.className} bg-foreground hover:bg-foreground/90 text-background px-10 py-5 rounded-2xl font-semibold text-xl uppercase tracking-wide transition-all duration-300 hover:scale-105 shadow-lg`}>
-              View All News
-            </button>
-          </Link>
+              <button className={`${roboto.className} bg-foreground hover:bg-foreground/90 text-background px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 hover:scale-105 shadow-lg inline-flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center`}>
+                View All News
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </Link>
+            <p className={`${roboto.className} text-sm text-muted-foreground`}>
+            Read the latest updates, announcements, and match recaps
+          </p>
+        </div>
         </motion.div>
       </div>
     </section>

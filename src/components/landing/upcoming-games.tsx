@@ -2,296 +2,413 @@
 
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { Calendar, MapPin, Trophy, Clock } from 'lucide-react';
+import { Calendar, MapPin, Flame, Gamepad2, ArrowRight } from 'lucide-react';
 import { moderniz, roboto } from '@/lib/fonts';
 import { MatchWithFullDetails } from '@/lib/types/matches';
+import Image from 'next/image';
+import Link from 'next/link';
+import { format } from 'date-fns';
 
 interface UpcomingGamesProps {
   initialMatches: MatchWithFullDetails[];
 }
 
+function CountdownTimer({ scheduledAt }: { scheduledAt: string }) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const targetDate = new Date(scheduledAt).getTime();
+
+    const tick = () => {
+      const now = Date.now();
+      const diff = Math.max(0, targetDate - now);
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60)
+      });
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [scheduledAt]);
+
+  const units = [
+    { label: 'Days', value: timeLeft.days },
+    { label: 'Hrs', value: timeLeft.hours },
+    { label: 'Min', value: timeLeft.minutes },
+    { label: 'Sec', value: timeLeft.seconds }
+  ];
+
+  return (
+    <div className="flex items-center gap-2">
+      {units.map((unit, i) => (
+        <div key={unit.label} className="flex items-center gap-2">
+          <div className="flex flex-col items-center">
+            <span className={`${moderniz.className} text-2xl sm:text-3xl font-black text-foreground tabular-nums leading-none`}>
+              {String(unit.value).padStart(2, '0')}
+            </span>
+            <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-medium">
+              {unit.label}
+            </span>
+          </div>
+          {i < units.length - 1 && (
+            <span className="text-primary/40 text-lg font-light self-start mt-0.5">:</span>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TeamDisplay({
+  name,
+  abbreviation,
+  logoUrl,
+  align = 'center',
+  size = 'default'
+}: {
+  name: string;
+  abbreviation: string;
+  logoUrl: string | null;
+  align?: 'left' | 'right' | 'center';
+  size?: 'default' | 'large';
+}) {
+  const imgSize = size === 'large' ? 80 : 56;
+  const imgClass = size === 'large'
+    ? 'h-14 w-14 sm:h-20 sm:w-20'
+    : 'h-10 w-10 sm:h-14 sm:w-14';
+
+  return (
+    <div className={`flex flex-col items-center gap-3 ${align === 'right' ? 'lg:items-end' : align === 'left' ? 'lg:items-start' : 'items-center'}`}>
+      <div className="relative group/logo">
+        {/* Glow ring */}
+        <div className="absolute inset-0 rounded-full bg-primary/20 blur-md scale-110 opacity-0 group-hover/logo:opacity-100 transition-opacity duration-500" />
+        <Image
+          src={logoUrl ?? '/img/cesafi-logo.webp'}
+          alt={abbreviation}
+          width={imgSize}
+          height={imgSize}
+          className={`${imgClass} rounded-full object-cover border-2 border-border/50 relative z-10 transition-transform duration-300 group-hover/logo:scale-105`}
+        />
+      </div>
+      <div className={`text-center ${align === 'right' ? 'lg:text-right' : align === 'left' ? 'lg:text-left' : ''}`}>
+        <div className={`${moderniz.className} text-xl sm:text-2xl ${size === 'large' ? 'lg:text-3xl' : ''} font-bold text-foreground leading-tight tracking-wide`}>
+          {abbreviation}
+        </div>
+        <div className={`${roboto.className} text-[10px] hidden lg:block text-muted-foreground/60 leading-tight mt-0.5 truncate`}>
+          {name}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UpcomingGames({ initialMatches }: UpcomingGamesProps) {
   const [isMounted, setIsMounted] = useState(false);
-  
+
+  useEffect(() => { setIsMounted(true); }, []);
+
   const upcomingGames = initialMatches.map((match) => {
-    // Handle multiple participants (for sports like Track and Field)
     const participants = match.match_participants || [];
-    
-    // For most sports, we expect 2 participants (home and away)
-    // For sports with more participants, we'll show the first two
-    const homeTeam = participants[0]?.schools_teams?.schools?.name || 'Team A';
-    const awayTeam = participants[1]?.schools_teams?.schools?.name || 'Team B';
-    
     return {
       id: match.id,
-      homeTeam,
-      awayTeam,
-      sport: match.sports_seasons_stages?.sports_categories?.sports?.name || 'Basketball',
+      teamA: {
+        name: participants[0]?.schools_teams?.school?.name || 'TBD',
+        abbreviation: participants[0]?.schools_teams?.school?.abbreviation || 'TBD',
+        logo: participants[0]?.schools_teams?.school?.logo_url || null
+      },
+      teamB: {
+        name: participants[1]?.schools_teams?.school?.name || 'TBD',
+        abbreviation: participants[1]?.schools_teams?.school?.abbreviation || 'TBD',
+        logo: participants[1]?.schools_teams?.school?.logo_url || null
+      },
+      esport: (match.esports_seasons_stages as any)?.esports_categories?.esports,
+      category: (match.esports_seasons_stages as any)?.esports_categories?.division || "Men's",
+      stage: (match.esports_seasons_stages as any)?.competition_stage || 'Groupstage',
       date: match.scheduled_at || new Date().toISOString(),
-      time: match.scheduled_at ? new Date(match.scheduled_at).toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: false 
-      }) : '18:00',
-      venue: match.venue || 'Cebu Coliseum',
-      status: 'upcoming',
-      category: `${match.sports_seasons_stages?.sports_categories?.division || 'Men'}'s Division`,
-      // Additional info for multi-participant sports
-      totalParticipants: participants.length,
-      allParticipants: participants.map(p => p.schools_teams?.schools?.name).filter(Boolean)
+      venue: match.venue || 'TBD',
+      bestOf: match.best_of || 2,
+      status: match.status
     };
   });
 
-  // Handle hydration
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const [featured, ...rest] = upcomingGames;
 
-  // Don't render scroll-based animations until mounted
-  if (!isMounted) {
+  if (!isMounted || upcomingGames.length === 0) {
     return (
-      <section className="py-32 bg-background relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
-            <h2 className={`${moderniz.className} text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-8 leading-tight`}>
-              UPCOMING
-              <br />
-              <span className="text-primary">GAMES</span>
-            </h2>
-            <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>
-              Witness the most thrilling athletic competitions in Cebu. 
-              Mark your calendars for these epic showdowns.
-            </p>
-          </div>
-          {/* Static content without animations */}
-          {upcomingGames.length > 0 ? (
-            <div className="space-y-8">
-              {/* Featured Game */}
-              <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-3xl p-8 lg:p-12 border border-primary/20">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-                  <div className="text-center lg:text-right">
-                    <div className={`${roboto.className} text-2xl lg:text-3xl font-bold text-foreground mb-4`}>
-                      {upcomingGames[0].homeTeam}
-                    </div>
-                    <div className={`${roboto.className} text-lg text-muted-foreground`}>
-                      Home Team
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-                        <Trophy className="w-8 h-8 text-primary-foreground" />
-                      </div>
-                    </div>
-                    <div className={`${roboto.className} text-2xl font-bold text-primary mb-2`}>
-                      VS
-                    </div>
-                    <div className={`${roboto.className} text-sm text-muted-foreground mb-4`}>
-                      {upcomingGames[0].sport} • {upcomingGames[0].category}
-                    </div>
-                  </div>
-                  <div className="text-center lg:text-left">
-                    <div className={`${roboto.className} text-2xl lg:text-3xl font-bold text-foreground mb-4`}>
-                      {upcomingGames[0].awayTeam}
-                    </div>
-                    <div className={`${roboto.className} text-lg text-muted-foreground`}>
-                      Away Team
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>
-                No upcoming games scheduled at the moment. Check back soon for exciting matchups!
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-    );
-  }
-
-  // Handle case when there are no upcoming games
-  if (upcomingGames.length === 0) {
-    return (
-      <section className="py-32 bg-background relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className={`${moderniz.className} text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-8 leading-tight`}>
-              UPCOMING
-              <br />
-              <span className="text-primary">GAMES</span>
-            </h2>
-            <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>
-              No upcoming games scheduled at the moment. Check back soon for exciting matchups!
-            </p>
-          </div>
+      <section className="py-24 md:py-32 bg-background relative overflow-hidden">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className={`${moderniz.className} text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6`}>
+            Upcoming <span className="text-primary">Games</span>
+          </h2>
+          <p className={`${roboto.className} text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto`}>
+            {upcomingGames.length === 0
+              ? 'No upcoming games scheduled. Check back soon for exciting matchups!'
+              : 'Loading schedule...'}
+          </p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-32 bg-background relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-20">
-          <h2 className={`${moderniz.className} text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-8 leading-tight`}>
-            UPCOMING
-            <br />
-            <span className="text-primary">GAMES</span>
-          </h2>
-          <p className={`${roboto.className} text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed`}>
-            Witness the most thrilling athletic competitions in Cebu. 
-            Mark your calendars for these epic showdowns.
-          </p>
-        </div>
+    <section className="py-24 md:py-32 bg-background relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[150px] -z-10" />
+      <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] -z-10" />
 
-        {/* Featured Game - Large Display */}
-        {upcomingGames.length > 0 && (
+      <div className="container relative mx-auto px-4 z-10">
+        {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-20"
+          transition={{ duration: 0.8 }}
+          className="text-center mb-14 md:mb-20"
         >
-          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-3xl p-8 lg:p-12 border border-primary/20">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-              
-              {/* Team 1 */}
-              <div className="text-center lg:text-right">
-                <div className={`${roboto.className} text-2xl lg:text-3xl font-bold text-foreground mb-4`}>
-                  {upcomingGames[0].homeTeam}
-                </div>
-                <div className={`${roboto.className} text-lg text-muted-foreground`}>
-                  Home Team
-                </div>
-              </div>
-
-              {/* VS Section */}
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-4">
-                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-                    <Trophy className="w-8 h-8 text-primary-foreground" />
-                  </div>
-                </div>
-                <div className={`${roboto.className} text-2xl font-bold text-primary mb-2`}>
-                  VS
-                </div>
-                <div className={`${roboto.className} text-sm text-muted-foreground mb-4`}>
-                  {upcomingGames[0].sport} • {upcomingGames[0].category}
-                </div>
-                <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(upcomingGames[0].date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span>{upcomingGames[0].time}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-center gap-2 mt-2 text-sm text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <span>{upcomingGames[0].venue}</span>
-                </div>
-              </div>
-
-              {/* Team 2 */}
-              <div className="text-center lg:text-left">
-                <div className={`${roboto.className} text-2xl lg:text-3xl font-bold text-foreground mb-4`}>
-                  {upcomingGames[0].awayTeam}
-                </div>
-                <div className={`${roboto.className} text-lg text-muted-foreground`}>
-                  Away Team
-                </div>
-              </div>
-            </div>
-          </div>
+          <h2 className={`${moderniz.className} text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6`}>
+            Upcoming <span className="text-primary">Games</span>
+          </h2>
+          <p className={`${roboto.className} text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-light`}>
+            Mark your calendars for the next epic showdowns in CESAFI esports
+          </p>
         </motion.div>
+
+        {/* Featured Match - Hero Card */}
+        {featured && (
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.97 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.15, type: 'spring', stiffness: 100 }}
+            className="mb-10 md:mb-14"
+          >
+            <Link href={`/matches/${featured.id}`} prefetch={false} className="block group">
+              <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden border border-border/40 bg-card/60 hover:bg-card transition-all duration-500 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5">
+                {/* Diagonal accent strip */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-transparent" />
+
+                {/* Esport watermark */}
+                {featured.esport?.logo_url && (
+                  <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none hidden lg:block">
+                    <Image
+                      src={featured.esport.logo_url}
+                      alt=""
+                      width={200}
+                      height={200}
+                      className="h-52 w-52 object-contain"
+                    />
+                  </div>
+                )}
+
+                <div className="relative p-6 sm:p-8 lg:p-10">
+                  {/* Top bar: meta info */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
+                    <div className="flex items-center gap-3">
+                      {featured.esport?.logo_url && (
+                        <Image
+                          src={featured.esport.logo_url}
+                          alt={featured.esport.name || ''}
+                          width={24}
+                          height={24}
+                          className="h-5 w-5 sm:h-6 sm:w-6 object-contain"
+                        />
+                      )}
+                      <span className={`${roboto.className} text-sm text-muted-foreground`}>
+                        {featured.esport?.name || 'Esports'} • {featured.category} • {featured.stage}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{format(new Date(featured.date), 'MMM d, yyyy')}</span>
+                      </div>
+                      {featured.venue && featured.venue !== 'TBD' && (
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span>{featured.venue}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Main matchup display */}
+                  <div className="grid grid-cols-3 items-center gap-4 lg:gap-8">
+                    <TeamDisplay
+                      name={featured.teamA.name}
+                      abbreviation={featured.teamA.abbreviation}
+                      logoUrl={featured.teamA.logo}
+                      align="right"
+                      size="large"
+                    />
+
+                    {/* Center: VS + Countdown */}
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-primary/20 rounded-full blur-lg animate-pulse" />
+                        <div className={`${moderniz.className} relative z-10 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground text-xl sm:text-2xl font-black shadow-lg shadow-primary/25`}>
+                          VS
+                        </div>
+                      </div>
+                      <div className="hidden sm:block">
+                        <CountdownTimer scheduledAt={featured.date} />
+                      </div>
+                      <span className={`text-[10px] uppercase tracking-widest text-muted-foreground/50 font-medium`}>
+                        Best of {featured.bestOf}
+                      </span>
+                    </div>
+
+                    <TeamDisplay
+                      name={featured.teamB.name}
+                      abbreviation={featured.teamB.abbreviation}
+                      logoUrl={featured.teamB.logo}
+                      align="left"
+                      size="large"
+                    />
+                  </div>
+
+                  {/* Countdown on mobile */}
+                  <div className="sm:hidden mt-6 flex justify-center">
+                    <CountdownTimer scheduledAt={featured.date} />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </motion.div>
         )}
 
-        {/* Other Games - Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {upcomingGames.slice(1, 4).map((game, index) => (
-            <motion.div
-              key={game.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="bg-muted/30 rounded-2xl p-6 border border-border/50 hover:border-primary/30 transition-all duration-300 group hover:shadow-lg"
-            >
-              {/* Sport Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-primary" />
-                  <span className={`${roboto.className} text-sm font-medium text-primary`}>
-                    {game.sport}
-                  </span>
-                </div>
-                <span className={`${roboto.className} text-xs px-3 py-1 bg-primary/10 text-primary rounded-full`}>
-                  {game.category}
-                </span>
-              </div>
+        {/* Other Matches - Horizontal Cards */}
+        {rest.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {rest.slice(0, 3).map((game, index) => (
+              <motion.div
+                key={game.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+              >
+                <Link href={`/matches/${game.id}`} prefetch={false} className="block group h-full">
+                  <div className="relative h-full rounded-xl overflow-hidden border border-border/40 bg-card/60 hover:bg-card transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+                    {/* Accent strip */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary to-primary/40" />
 
-              {/* Teams */}
-              <div className="text-center mb-6">
-                <div className={`${roboto.className} text-lg font-bold text-foreground mb-2`}>
-                  {game.homeTeam}
-                </div>
-                <div className={`${roboto.className} text-xl font-bold text-primary mb-2`}>
-                  VS
-                </div>
-                <div className={`${roboto.className} text-lg font-bold text-foreground`}>
-                  {game.awayTeam}
-                </div>
-              </div>
+                    <div className="p-5 pl-5">
+                      {/* Top meta-badge */}
+                      <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-2">
+                          {game.esport?.logo_url && (
+                            <Image
+                              src={game.esport.logo_url}
+                              alt={game.esport.name || ''}
+                              width={18}
+                              height={18}
+                              className="h-4 w-4 object-contain"
+                            />
+                          )}
+                          <span className={`${roboto.className} text-xs text-muted-foreground sm:hidden lg:inline`}>
+                            {game.esport?.name || 'Esports'} • {game.stage}
+                          </span>
+                        </div>
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground/50 font-medium bg-muted/50 px-2 py-0.5 rounded">
+                          BO{game.bestOf}
+                        </span>
+                      </div>
 
-              {/* Game Details */}
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span className={`${roboto.className} text-sm`}>
-                    {new Date(game.date).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span className={`${roboto.className} text-sm`}>
-                    {game.time}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <span className={`${roboto.className} text-sm`}>
-                    {game.venue}
-                  </span>
-                </div>
-              </div>
+                      {/* Match display - compact row */}
+                      <div className="flex items-center justify-center gap-4 mb-5">
+                        {/* Team A */}
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1 justify-end">
+                          <div className="text-right min-w-0">
+                            <div className={`${moderniz.className} text-lg lg:text-xl font-bold text-foreground leading-tight tracking-wide truncate sm:hidden lg:block`}>
+                              {game.teamA.abbreviation}
+                            </div>
+                            <div className={`${roboto.className} text-[10px] text-muted-foreground/50 truncate max-w-[100px] ml-auto hidden lg:block`}>
+                              {game.teamA.name}
+                            </div>
+                          </div>
+                          <Image
+                            src={game.teamA.logo ?? '/img/cesafi-logo.webp'}
+                            alt={game.teamA.abbreviation}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 rounded-full object-cover border border-border/50 flex-shrink-0"
+                          />
+                        </div>
 
-              {/* CTA Button */}
-              <button className={`${roboto.className} w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-xl font-semibold text-sm uppercase tracking-wide transition-all duration-200 hover:scale-105 shadow-lg`}>
-                View Details
-              </button>
-            </motion.div>
-          ))}
-        </div>
+                        {/* VS */}
+                        <div className={`${moderniz.className} text-base font-black text-muted-foreground/30 flex-shrink-0`}>
+                          VS
+                        </div>
 
-        {/* View All Button */}
+                        {/* Team B */}
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <Image
+                            src={game.teamB.logo ?? '/img/cesafi-logo.webp'}
+                            alt={game.teamB.abbreviation}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 rounded-full object-cover border border-border/50 flex-shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <div className={`${moderniz.className} text-lg lg:text-xl font-bold text-foreground leading-tight tracking-wide truncate sm:hidden lg:block`}>
+                              {game.teamB.abbreviation}
+                            </div>
+                            <div className={`${roboto.className} text-[10px] text-muted-foreground/50 truncate max-w-[100px] hidden lg:block`}>
+                              {game.teamB.name}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom: date + venue */}
+                      <div className="flex items-center justify-between pt-4 border-t border-border/20">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
+                            <Calendar className="w-3 h-3" />
+                            <span>{format(new Date(game.date), 'MMM d')}</span>
+                          </div>
+                          {game.venue && game.venue !== 'TBD' && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
+                              <MapPin className="w-3 h-3" />
+                              <span className="truncate max-w-[80px] lg:max-w-[120px]">{game.venue}</span>
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground/40">
+                          {format(new Date(game.date), 'h:mm a')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* View All CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
           viewport={{ once: true }}
-          className="text-center mt-16"
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="text-center mt-10 md:mt-14"
         >
-          <button className={`${roboto.className} bg-foreground hover:bg-foreground/90 text-background px-10 py-5 rounded-2xl font-semibold text-xl uppercase tracking-wide transition-all duration-300 hover:scale-105 shadow-lg`}>
-            View All Games
-          </button>
+          <div className="text-center mt-10 md:mt-12 flex flex-col gap-3 sm:gap-4 justify-center">
+          <Link href="/schedule">
+              <button className={`${roboto.className} bg-foreground hover:bg-foreground/90 text-background px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 hover:scale-105 shadow-lg inline-flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center`}>
+                View Full Schedule
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </Link>
+            <p className={`${roboto.className} text-sm text-muted-foreground`}>
+            Check out the complete season matches and tournament brackets
+          </p>
+        </div>
         </motion.div>
       </div>
     </section>

@@ -36,6 +36,18 @@ export const getSponsorsTableColumns = (): TableColumn<Sponsor>[] => [
     )
   },
   {
+    key: 'type',
+    header: 'Type',
+    sortable: true,
+    width: '15%',
+    render: (sponsor: Sponsor) => {
+      if (!sponsor.type) return <span className="text-sm text-gray-400">—</span>;
+      const labels: Record<string, string> = { title: 'Title', venue: 'Venue', event: 'Event' };
+      const variants: Record<string, 'default' | 'outline' | 'secondary'> = { title: 'default', venue: 'outline', event: 'secondary' };
+      return <Badge variant={variants[sponsor.type] || 'secondary'}>{labels[sponsor.type] || sponsor.type}</Badge>;
+    }
+  },
+  {
     key: 'status',
     header: 'Status',
     sortable: true,

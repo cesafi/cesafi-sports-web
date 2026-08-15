@@ -7,7 +7,7 @@ import { format, parseISO } from 'date-fns';
 
 type SeasonWithDates = {
   id: number;
-  name: string;
+  name?: string | null;
   start_at: string;
   end_at: string;
 };
@@ -15,9 +15,10 @@ type SeasonWithDates = {
 interface SeasonSidebarProps {
   currentSeasonId?: number;
   onSeasonChange: (seasonId: number) => void;
+  disabled?: boolean;
 }
 
-export default function SeasonSidebar({ currentSeasonId, onSeasonChange }: SeasonSidebarProps) {
+export default function SeasonSidebar({ currentSeasonId, onSeasonChange, disabled = false }: SeasonSidebarProps) {
   const { data: seasons, isLoading } = useAvailableSeasons();
 
   const formatSeasonDates = (startDate: string, endDate: string) => {
@@ -70,13 +71,14 @@ export default function SeasonSidebar({ currentSeasonId, onSeasonChange }: Seaso
             <button
               key={season.id}
               onClick={() => onSeasonChange(season.id)}
-              className={`hover:bg-muted/50 focus:ring-primary relative w-full border-b p-4 text-left transition-all duration-200 last:border-b-0 focus:ring-2 focus:outline-none focus:ring-inset ${isSelected ? 'bg-muted/30' : ''} `}
+              className={`hover:bg-muted/50 focus:ring-primary relative w-full border-b p-4 text-left transition-all duration-200 last:border-b-0 focus:ring-2 focus:outline-none focus:ring-inset disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent ${isSelected ? 'bg-muted/30' : ''} `}
+              disabled={disabled}
             >
               {/* Right accent line for selected season */}
               {isSelected && <div className="bg-primary absolute top-0 right-0 bottom-0 w-1" />}
 
               <div className="space-y-1">
-                <div className="text-sm font-medium">Season {season.id}</div>
+                <div className="text-sm font-medium">{season.name || `Season ${season.id}`}</div>
                 <div className="text-muted-foreground text-xs">
                   {(season as SeasonWithDates).start_at && (season as SeasonWithDates).end_at
                     ? formatSeasonDates(

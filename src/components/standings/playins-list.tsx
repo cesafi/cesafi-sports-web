@@ -149,7 +149,7 @@ export default function PlayinsList({ standings, loading }: PlayinsListProps) {
                             </div>
                           );
                         }
-                        if (match.match_status === 'ongoing') {
+                        if (match.match_status === 'live') {
                           return <div className="text-muted-foreground text-center">TBD</div>;
                         }
                         return <div className="text-muted-foreground text-center">-</div>;
@@ -191,7 +191,7 @@ export default function PlayinsList({ standings, loading }: PlayinsListProps) {
                           </div>
                         );
                       }
-                      if (match.match_status === 'ongoing') {
+                      if (match.match_status === 'live') {
                         return <div className="text-muted-foreground">TBD</div>;
                       }
                       return <div className="text-muted-foreground">-</div>;

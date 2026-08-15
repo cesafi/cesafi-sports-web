@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import ArticlePlaceholderCover from '@/components/shared/article-placeholder-cover';
 import { moderniz, roboto } from '@/lib/fonts';
 import { Article } from '@/lib/types/articles';
-import { extractPlainText } from '@/lib/utils/content-renderer';
+import { extractSmartExcerpt } from '@/lib/utils/content-renderer';
 import { formatSmartDate } from '@/lib/utils/date';
 import { calculateSportsReadTime } from '@/lib/utils/read-time';
 
@@ -25,7 +26,7 @@ export default function NewsCard({ article, index, className = '' }: NewsCardPro
     id: article.id.toString(),
     title: article.title,
     slug: article.slug,
-    excerpt: (article.content as { excerpt?: string })?.excerpt || extractPlainText(article.content, 150),
+    excerpt: (article.content as { excerpt?: string })?.excerpt || extractSmartExcerpt(article.content, 150),
     image: article.cover_image_url || '/img/cesafi-banner.jpg',
     publishedAt: article.published_at || article.created_at,
     author: article.authored_by || 'CESAFI Media Team',
@@ -44,12 +45,21 @@ export default function NewsCard({ article, index, className = '' }: NewsCardPro
     >
       <Card className="h-full overflow-hidden bg-background/60 backdrop-blur-sm border-border/30 hover:border-primary/30 transition-all duration-300">
         <div className="relative h-48">
-          <Image
-            src={newsArticle.image}
-            alt={newsArticle.title}
-            fill
-            className="object-cover"
-          />
+          {!newsArticle.image || newsArticle.image === '/img/cesafi-banner.jpg' ? (
+            <ArticlePlaceholderCover
+              title={newsArticle.title}
+              category={newsArticle.category}
+              variant="card"
+              className="h-full"
+            />
+          ) : (
+            <Image
+              src={newsArticle.image}
+              alt={newsArticle.title}
+              fill
+              className="object-cover"
+            />
+          )}
         </div>
         <CardContent className="p-6 flex flex-col h-[calc(100%-12rem)]">
           <div className="flex-1 space-y-4">

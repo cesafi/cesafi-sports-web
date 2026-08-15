@@ -11,13 +11,16 @@ export const navItems: NavItem[] = [
     children: [
       { name: 'Schedule', href: '/schedule' },
       { name: 'Standings', href: '/standings' },
+      { name: 'Statistics', href: '/statistics' },
     ]
   },
   { 
     name: 'Community', 
     children: [
       { name: 'Schools', href: '/schools' },
+      { name: 'Players', href: '/players' },
       { name: 'Volunteers', href: '/volunteers' },
+      { name: 'Sponsors', href: '/sponsors' },
     ]
   },
   { name: 'News', href: '/news' },
@@ -30,3 +33,4 @@ export const navItems: NavItem[] = [
     ]
   },
 ];
+

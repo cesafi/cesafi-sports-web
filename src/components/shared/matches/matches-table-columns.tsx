@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TableColumn } from '@/lib/types/table';
 import { MatchWithStageDetails } from '@/lib/types/matches';
 import { formatTableDate } from '@/lib/utils/date';

@@ -1,22 +1,22 @@
 import { z } from 'zod';
-import { Database, Json } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createArticleSchema, updateArticleSchema } from '@/lib/validations/articles';
+import { Articles } from '@/db/schema/articles';
+import { articleStatusEnum } from '@/db/schema/enums';
 
-export type Article = Database['public']['Tables']['articles']['Row'];
+export type Article = Articles;
 export type ArticleInsert = z.infer<typeof createArticleSchema>;
 export type ArticleUpdate = z.infer<typeof updateArticleSchema>;
 
-export type ArticleStatus = Database['public']['Enums']['article_status'];
+export type ArticleStatus = typeof articleStatusEnum.enumValues[number];
 
 // Re-export Json type for convenience
-export type { Json };
+export type Json = unknown;
 
 export interface ArticleSearchFilters {
   title?: string;
-  author_id?: string;
+  authored_by?: string;
   status?: ArticleStatus;
-  is_published?: boolean;
   created_at?: {
     gte?: string;
     lte?: string;

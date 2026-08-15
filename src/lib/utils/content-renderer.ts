@@ -552,8 +552,16 @@ export function renderArticleContent(content: unknown): string {
     return '';
   }
 
-  // If content is already a string (HTML), return it directly
+  // If content is already a string, check if it's JSON before assuming HTML
   if (typeof content === 'string') {
+    try {
+      const parsed = JSON.parse(content);
+      if (parsed && typeof parsed === 'object') {
+        return renderArticleContent(parsed);
+      }
+    } catch {
+      // Not JSON, assume it's HTML or plain text
+    }
     return content;
   }
 

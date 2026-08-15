@@ -4,10 +4,9 @@ import { useState } from 'react';
 import { DataTable } from '@/components/table';
 import { useSeasonsTable } from '@/hooks/use-seasons';
 import { getSeasonsTableColumns, getSeasonsTableActions } from '@/components/admin/seasons';
-import { Season } from '@/lib/types/seasons';
+import { Season, SeasonInsert, SeasonUpdate } from '@/lib/types/seasons';
 import { SeasonModal } from '@/components/admin/seasons';
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { SeasonInsert, SeasonUpdate } from '@/lib/validations/seasons';
 
 export default function SeasonsManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,8 +107,8 @@ export default function SeasonsManagementPage() {
         }}
         className=""
         emptyMessage="No seasons found"
-        initialSortBy="id"
-        initialSortOrder="asc"
+        initialSortBy="start_at"
+        initialSortOrder="desc"
         refetch={refetch}
       />
 

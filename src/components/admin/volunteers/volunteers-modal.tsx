@@ -49,6 +49,7 @@ export function VolunteersModal({
   const [formData, setFormData] = useState<VolunteerInsert | VolunteerUpdate>({
     full_name: '',
     image_url: '',
+    title: '',
     is_active: true,
     department_id: null,
     season_id: currentSeason?.id || null
@@ -66,6 +67,7 @@ export function VolunteersModal({
           id: volunteer.id,
           full_name: volunteer.full_name,
           image_url: volunteer.image_url || '',
+          title: volunteer.title || '',
           is_active: volunteer.is_active || true,
           department_id: volunteer.department_id,
           season_id: volunteer.season_id || currentSeason?.id || null
@@ -74,6 +76,7 @@ export function VolunteersModal({
         setFormData({
           full_name: '',
           image_url: '',
+          title: '',
           is_active: true,
           department_id: null,
           season_id: currentSeason?.id || null
@@ -185,6 +188,19 @@ export function VolunteersModal({
               {errors.full_name && <p className="text-sm text-red-500">{errors.full_name}</p>}
             </div>
 
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={formData.title || ''}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                placeholder="Enter volunteer's title (optional)"
+                className={errors.title ? 'border-red-500' : ''}
+              />
+              {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
+            </div>
+
             {/* Department */}
             <div className="space-y-2">
               <Label htmlFor="department_id">Department</Label>
@@ -227,7 +243,7 @@ export function VolunteersModal({
               onUpload={(url) => handleInputChange('image_url', url)}
               onRemove={() => handleInputChange('image_url', '')}
               preset="VOLUNTEER"
-              currentImageUrl={formData.image_url}
+              currentImageUrl={formData.image_url || undefined}
               placeholder="Upload volunteer photo"
               description="Photo will be automatically optimized and stored in the cloud. Required for all volunteers."
               required={true}

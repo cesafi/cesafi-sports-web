@@ -40,8 +40,9 @@ export class AuthService extends BaseService {
       const userRole = data.user.app_metadata?.role as UserRole | undefined;
 
       return { success: true, userRole };
-    } catch (_) {
-      return { success: false, error: 'Failed to login' };
+    } catch (err: any) {
+      console.error('Login error details:', err);
+      return { success: false, error: err?.message || 'Failed to login' };
     }
   }
 

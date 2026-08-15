@@ -21,12 +21,12 @@ export const useAllHeroSectionLive = () => {
   });
 };
 
-export const useCurrentActiveHeroSection = () => {
+export const useCurrentActiveHeroSection = (initialData?: any) => {
   return useQuery({
     queryKey: [HERO_SECTION_QUERY_KEY, 'current-active'],
     queryFn: () => getCurrentActiveHeroSection(),
     refetchInterval: 60000, // Refetch every minute to check if expired
-    placeholderData: (previousData) => previousData,
+    initialData,
   });
 };
 

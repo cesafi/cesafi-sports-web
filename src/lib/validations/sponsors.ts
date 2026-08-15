@@ -5,7 +5,10 @@ export const createSponsorSchema = z
     title: z.string().min(1, { message: 'Sponsor title is required.' }),
     tagline: z.string().min(1, { message: 'Sponsor tagline is required.' }),
     logo_url: z.string().url({ message: 'Logo URL must be a valid URL.' }).optional().nullable(),
-    is_active: z.boolean().default(true)
+    dark_logo_url: z.string().url({ message: 'Dark logo URL must be a valid URL.' }).optional().nullable(),
+    is_active: z.boolean().default(true),
+    type: z.enum(['title', 'venue', 'event']).nullable().optional(),
+    display_order: z.number().nullable().optional()
   })
   .refine(
     (data) => {

@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { BaseEntity } from './table';
 import { createSchoolTeamSchema, updateSchoolTeamSchema } from '@/lib/validations/schools-teams';
+import { schoolsTeams, SportDivision, SportLevel } from '@/db/schema';
 
-export type SchoolsTeam = Database['public']['Tables']['schools_teams']['Row'];
-export type SchoolsTeamInsert = z.infer<typeof createSchoolTeamSchema>;
-export type SchoolsTeamUpdate = z.infer<typeof updateSchoolTeamSchema>;
+export type SchoolsTeam = typeof schoolsTeams.$inferSelect;
+export type SchoolsTeamInsert = typeof schoolsTeams.$inferInsert;
+export type SchoolsTeamUpdate = Partial<SchoolsTeamInsert>;
 
 export interface SchoolsTeamSearchFilters {
   school_id?: string;
@@ -35,8 +35,8 @@ export interface SchoolsTeamWithSportDetails extends BaseEntity {
   updated_at: string;
   sports_categories: {
     id: number;
-    division: Database['public']['Enums']['sport_divisions'];
-    levels: Database['public']['Enums']['sport_levels'];
+    division: SportDivision;
+    levels: SportLevel;
     sports: {
       name: string;
     };
@@ -70,8 +70,8 @@ export interface SchoolsTeamWithFullDetails {
   updated_at: string;
   sports_categories: {
     id: number;
-    division: Database['public']['Enums']['sport_divisions'];
-    levels: Database['public']['Enums']['sport_levels'];
+    division: SportDivision;
+    levels: SportLevel;
     sports: {
       name: string;
     };

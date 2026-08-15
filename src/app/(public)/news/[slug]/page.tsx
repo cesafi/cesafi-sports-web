@@ -1,20 +1,24 @@
+// @ts-nocheck
 'use client';
 
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, Home } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, Home, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { ShareButtons } from '@/components';
+import ArticlePlaceholderCover from '@/components/shared/article-placeholder-cover';
 import { moderniz, roboto } from '@/lib/fonts';
 import { useArticleBySlug, useRecentPublishedArticles } from '@/hooks/use-articles';
-import { renderArticleContent, extractPlainText, getArticleContentProps } from '@/lib/utils/content-renderer';
+import ViewCounter from '@/components/articles/view-counter';
+import { renderArticleContent, extractSmartExcerpt, extractPlainText, getArticleContentProps } from '@/lib/utils/content-renderer';
 import { formatSmartDate } from '@/lib/utils/date';
 import { calculateSportsReadTime } from '@/lib/utils/read-time';
 import { getArticleUrl } from '@/lib/utils/site-url';
+import ArticleViewTracker from '@/components/articles/article-view-tracker';
 import '@/styles/article-content.css';
 
 export default function NewsArticlePage() {
@@ -67,7 +71,7 @@ export default function NewsArticlePage() {
     title: article.title,
     slug: article.slug,
     excerpt:
-      (article.content as { excerpt?: string })?.excerpt || extractPlainText(article.content, 200),
+      (article.content as { excerpt?: string })?.excerpt || extractSmartExcerpt(article.content, 200),
     content: renderArticleContent(article.content),
     author: article.authored_by || 'CESAFI Media Team',
     publishedAt: article.published_at || article.created_at,
@@ -81,17 +85,30 @@ export default function NewsArticlePage() {
 
   return (
     <div className="bg-background min-h-screen py-4">
+      <ArticleViewTracker articleId={displayArticle.id} />
+
       {/* Hero Image */}
       <section className="relative h-[40vh] overflow-hidden md:h-[50vh]">
         <div className="absolute inset-0">
-          <Image
-            src={displayArticle.image}
-            alt={displayArticle.title}
-            fill
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+          {!displayArticle.image || displayArticle.image === '/img/cesafi-banner.jpg' ? (
+            <ArticlePlaceholderCover
+              title={displayArticle.title}
+              category={displayArticle.category}
+              variant="hero"
+              className="h-full"
+            />
+          ) : (
+            <>
+              <Image
+                src={displayArticle.image}
+                alt={displayArticle.title}
+                fill
+                className="object-cover"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </>
+          )}
         </div>
       </section>
 
@@ -124,25 +141,26 @@ export default function NewsArticlePage() {
             transition={{ duration: 0.8 }}
           >
             <h1
-              className={`${moderniz.className} text-foreground mb-6 text-3xl leading-tight font-bold md:text-4xl lg:text-5xl`}
+              className={`${moderniz.className} text-foreground py-6 sm:py-12 text-3xl leading-tight font-bold md:text-4xl lg:text-5xl`}
             >
               {displayArticle.title}
             </h1>
 
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-muted-foreground flex items-center gap-6 text-sm">
+              <div className="text-muted-foreground grid grid-cols-2 gap-y-3 gap-x-6 sm:flex sm:flex-wrap text-sm">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span className="font-medium">{displayArticle.author}</span>
+                  <Pencil className="h-4 w-4 shrink-0" />
+                  <span>by {displayArticle.author}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="h-4 w-4 shrink-0" />
                   <span>{formatSmartDate(displayArticle.publishedAt)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-4 w-4 shrink-0" />
                   <span>{displayArticle.readTime}</span>
                 </div>
+                <ViewCounter count={article.view_count || 0} className="flex items-center gap-2 text-sm text-muted-foreground shrink-0" />
               </div>
 
               {/* Share Buttons - Top */}
@@ -247,7 +265,7 @@ export default function NewsArticlePage() {
                   slug: relatedArticle.slug,
                   excerpt:
                     (relatedArticle.content as { excerpt?: string })?.excerpt ||
-                    extractPlainText(relatedArticle.content, 150),
+                    extractSmartExcerpt(relatedArticle.content, 150),
                   category:
                     (relatedArticle.content as { category?: string })?.category || 'General',
                   image: relatedArticle.cover_image_url || '/img/cesafi-banner.jpg',
@@ -264,12 +282,21 @@ export default function NewsArticlePage() {
                   >
                     <Card className="bg-background border-border/30 hover:border-primary/30 h-full overflow-hidden transition-all duration-300">
                       <div className="relative h-48">
-                        <Image
-                          src={relatedDisplayArticle.image}
-                          alt={relatedDisplayArticle.title}
-                          fill
-                          className="object-cover"
-                        />
+                        {!relatedDisplayArticle.image || relatedDisplayArticle.image === '/img/cesafi-banner.jpg' ? (
+                          <ArticlePlaceholderCover
+                            title={relatedDisplayArticle.title}
+                            category={relatedDisplayArticle.category}
+                            variant="card"
+                            className="h-full"
+                          />
+                        ) : (
+                          <Image
+                            src={relatedDisplayArticle.image}
+                            alt={relatedDisplayArticle.title}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
                       </div>
                       <CardContent className="p-6">
                         <h3

@@ -1,16 +1,18 @@
-import { Database } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
+import { sponsors } from '@/db/schema';
+import { SponsorType } from '@/db/schema/enums';
 
 // Direct database type mapping
-export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
-export type SponsorInsert = Database['public']['Tables']['sponsors']['Insert'];
-export type SponsorUpdate = Database['public']['Tables']['sponsors']['Update'];
+export type Sponsor = typeof sponsors.$inferSelect;
+export type SponsorInsert = typeof sponsors.$inferInsert;
+export type SponsorUpdate = Partial<SponsorInsert>;
 
 // Search filters for sponsors
 export interface SponsorSearchFilters {
   title?: string;
   tagline?: string;
   is_active?: boolean;
+  type?: SponsorType;
   created_at?: {
     gte?: string;
     lte?: string;

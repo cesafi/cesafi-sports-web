@@ -270,5 +270,40 @@ class CloudinaryService {
   }
 }
 
+export function extractCloudinaryPublicId(url: string): string | null {
+  try {
+    if (!url) return null;
+    
+    // Cloudinary URLs typically look like:
+    // https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/image_name.ext
+    
+    const parts = url.split('/');
+    const uploadIndex = parts.findIndex(p => p === 'upload');
+    
+    if (uploadIndex === -1) return null;
+    
+    // Get everything after 'upload/' (potentially skipping the version string like v1234)
+    const afterUpload = parts.slice(uploadIndex + 1);
+    
+    // If the first part after upload starts with 'v' followed by numbers, it's a version tag
+    if (afterUpload.length > 0 && /^v\d+$/.test(afterUpload[0])) {
+      afterUpload.shift();
+    }
+    
+    // Join the remaining parts to get the full public ID (including folders)
+    const fullPath = afterUpload.join('/');
+    
+    // Remove the file extension
+    const lastDotIndex = fullPath.lastIndexOf('.');
+    if (lastDotIndex !== -1) {
+      return fullPath.substring(0, lastDotIndex);
+    }
+    
+    return fullPath;
+  } catch (error) {
+    console.error('Error extracting Cloudinary public ID:', error);
+    return null;
+  }
+}
 
 export default CloudinaryService;

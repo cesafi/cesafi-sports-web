@@ -1,9 +1,9 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { Database } from '@/../database.types';
+import { userRolesEnum } from '@/db/schema';
 import { type NextRequest, NextResponse } from 'next/server';
 import { isProtectedRoute, isKnownRoute, getRedirectUrl, hasAccessToRoute } from '@/lib/routes';
 
-type UserRole = Database['public']['Enums']['user_roles'];
+type UserRole = (typeof userRolesEnum.enumValues)[number];
 
 export const updateSession = async (request: NextRequest) => {
   let response = NextResponse.next({
@@ -20,7 +20,7 @@ export const updateSession = async (request: NextRequest) => {
       path: '/'
     };
 
-    const supabase = createServerClient<Database>(
+    const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {

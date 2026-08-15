@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { 
   createSportSchema, 
@@ -7,17 +6,18 @@ import {
   createSportCategorySchema, 
   updateSportCategorySchema 
 } from '@/lib/validations/sports';
+import { sports, sportsCategories } from '@/db/schema';
 
-export type Sport = Database['public']['Tables']['sports']['Row'];
-export type SportInsert = z.infer<typeof createSportSchema>;
-export type SportUpdate = z.infer<typeof updateSportSchema>;
+export type Sport = typeof sports.$inferSelect;
+export type SportInsert = typeof sports.$inferInsert;
+export type SportUpdate = Partial<SportInsert>;
 
-export type SportCategory = Database['public']['Tables']['sports_categories']['Row'];
-export type SportCategoryInsert = z.infer<typeof createSportCategorySchema>;
-export type SportCategoryUpdate = z.infer<typeof updateSportCategorySchema>;
+export type SportCategory = typeof sportsCategories.$inferSelect;
+export type SportCategoryInsert = typeof sportsCategories.$inferInsert;
+export type SportCategoryUpdate = Partial<SportCategoryInsert>;
 
-export type SportDivision = Database['public']['Enums']['sport_divisions'];
-export type SportLevel = Database['public']['Enums']['sport_levels'];
+import { SportDivision, SportLevel } from '@/db/schema';
+export type { SportDivision, SportLevel };
 
 // Type for category form data (used in forms and API calls)
 export type SportCategoryFormData = {

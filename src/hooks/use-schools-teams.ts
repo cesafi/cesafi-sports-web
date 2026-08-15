@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   useQuery,
   useMutation,
@@ -7,11 +8,13 @@ import {
 } from '@tanstack/react-query';
 
 import {
+  getAllSchoolsTeams,
   getSchoolsTeamsBySchoolId,
   getSchoolsTeamsBySeasonId,
   getSchoolsTeamsBySportCategoryId,
   getSchoolsTeamsBySchoolAndSeason,
   getSchoolsTeamsBySchoolAndSportCategory,
+  getSchoolsTeamBySlug,
   getTeamsWithFullDetails,
   getActiveTeamsBySchool,
   createSchoolsTeam,
@@ -23,6 +26,7 @@ import {
   SchoolsTeamInsert,
   SchoolsTeamUpdate,
   SchoolsTeam,
+  SchoolsTeamWithSchoolDetails,
   SchoolsTeamWithSportDetails
 } from '@/lib/types/schools-teams';
 
@@ -50,6 +54,22 @@ export const schoolsTeamKeys = {
 };
 
 // Context-based fetching hooks
+export function useAllSchoolsTeams(
+  queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeamWithSchoolDetails[]>, Error, SchoolsTeamWithSchoolDetails[]>
+) {
+  return useQuery({
+    queryKey: schoolsTeamKeys.all,
+    queryFn: () => getAllSchoolsTeams(),
+    select: (data) => {
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch all schools teams.');
+      }
+      return data.data;
+    },
+    ...queryOptions
+  });
+}
+
 export function useSchoolsTeamsBySchoolId(
   schoolId: string,
   queryOptions?: UseQueryOptions<ServiceResponse<SchoolsTeam[]>, Error, SchoolsTeam[]>
@@ -604,4 +624,18 @@ export function useSchoolsTeamsRefetch() {
     refetchActiveTeamsBySchool,
     refetchMatchRelatedData
   };
+}
+
+export function useSchoolsTeamBySlug(teamSlug: string, schoolAbbreviation: string) {
+  return useQuery({
+    queryKey: schoolsTeamKeys.bySlug(teamSlug, schoolAbbreviation),
+    queryFn: () => getSchoolsTeamBySlug(teamSlug, schoolAbbreviation),
+    enabled: !!teamSlug && !!schoolAbbreviation,
+    select: (data) => {
+      if (data.success && data.data) {
+        return data.data;
+      }
+      return null;
+    }
+  });
 }

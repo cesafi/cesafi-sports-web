@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createSeasonSchema, updateSeasonSchema } from '@/lib/validations/seasons';
+import { seasons } from '@/db/schema';
 
-export type Season = Database['public']['Tables']['seasons']['Row'];
-export type SeasonInsert = z.infer<typeof createSeasonSchema>;
-export type SeasonUpdate = z.infer<typeof updateSeasonSchema>;
+export type Season = typeof seasons.$inferSelect;
+export type SeasonInsert = typeof seasons.$inferInsert;
+export type SeasonUpdate = Partial<SeasonInsert>;
 
 export interface SeasonSearchFilters {
   start_at?: {

@@ -1,9 +1,10 @@
 import { TableColumn } from '@/lib/types/table';
 import { Sport } from '@/lib/types/sports';
 import { formatTableDate } from '@/lib/utils/date';
-import { Pencil, Trash2, Trophy } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { getCategoryCountBySportId } from '@/actions/sport-categories';
 import { useEffect, useState } from 'react';
+import { SportIcon } from '@/components/ui/sport-icon';
 
 const CategoryCount = ({ sportId }: { sportId: number }) => {
   const [count, setCount] = useState<number | null>(null);
@@ -36,7 +37,7 @@ export const getSportsTableColumns = (): TableColumn<Sport>[] => [
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-            <Trophy className="text-primary h-5 w-5" />
+            <SportIcon sportName={sport.name} className="h-5 w-5" iconClassName="text-primary" />
           </div>
         </div>
         <div className="min-w-0 flex-1">

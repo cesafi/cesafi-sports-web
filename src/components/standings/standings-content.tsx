@@ -1,15 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, CalendarDays, ChevronDown } from 'lucide-react';
-import { moderniz } from '@/lib/fonts';
+import { AlertCircle, ChevronDown } from 'lucide-react';
+import { moderniz, roboto } from '@/lib/fonts';
 import SeasonSidebar from './season-sidebar';
 import StandingsNavbar from './standings-navbar';
 import GroupStageTable from './group-stage-table';
 import BracketVisualization from './bracket-visualization';
-import PlayinsList from './playins-list';
 import StandingsLoading from './standings-loading';
 import {
   useStandings,
@@ -18,7 +17,7 @@ import {
   useAvailableSports,
   useAvailableCategories
 } from '@/hooks/use-standings';
-import { GroupStageStandings, BracketStandings, PlayinsStandings } from '@/lib/types/standings';
+import { GroupStageStandings, BracketStandings, PlayinsStandings, StandingsFilters } from '@/lib/types/standings';
 
 interface StandingsContentProps {
   readonly searchParams: {
@@ -27,17 +26,26 @@ interface StandingsContentProps {
     readonly category?: string;
     readonly stage?: string;
   };
+  readonly initialFilters?: StandingsFilters;
 }
 
-export default function StandingsContent({ searchParams: _ }: StandingsContentProps) {
+import { toSlug, normalizeStageSlug } from '@/lib/slug-utils';
+
+export default function StandingsContent({ searchParams: _, initialFilters }: StandingsContentProps) {
   const router = useRouter();
   const urlSearchParams = useSearchParams();
-  const filters = useStandingsFilters(urlSearchParams);
+  const [isPending, startTransition] = useTransition();
+  // Use initialFilters if available (server-side resolve), otherwise fall back to searchParams
+  const queryFilters = useStandingsFilters(urlSearchParams);
+  const filters = initialFilters || queryFilters;
 
   const [selectedStage, setSelectedStage] = useState<number | undefined>(filters.stage_id);
 
+  // Track last selected category name for preservation across sport changes
+  const lastCategoryNameRef = useRef<string | undefined>(undefined);
+
   // Fetch data for default selection
-  const { data: seasons } = useAvailableSeasons();
+  const { data: seasons, isLoading: seasonsLoading } = useAvailableSeasons();
   const { data: sports } = useAvailableSports(filters.season_id ?? 0);
   const { data: categories } = useAvailableCategories(
     filters.season_id ?? 0,
@@ -45,11 +53,29 @@ export default function StandingsContent({ searchParams: _ }: StandingsContentPr
   );
 
   // Fetch standings data
-  const { data: standingsData, isLoading, error, refetch } = useStandings(filters);
+  const { data: standingsData, isLoading, error, refetch, isFetching } = useStandings(filters);
+
+  // Track if we've ever had data (to distinguish initial load from filter transitions)
+  const hasEverHadData = useRef(false);
+  if (standingsData) hasEverHadData.current = true;
+
+  // Detect if we're in the initial loading phase (never had data, no filters yet)
+  const isInitialLoading = useMemo(() => {
+    if (hasEverHadData.current) return false;
+    const hasNoFilters = !filters.season_id && !filters.sport_id && !filters.esport_category_id;
+    const isResolvingDefaults = hasNoFilters && seasonsLoading;
+    const filtersIncomplete = !filters.season_id || !filters.sport_id || !filters.esport_category_id;
+    return isResolvingDefaults || (filtersIncomplete && !standingsData && !error && (seasons?.length ?? 0) > 0);
+  }, [filters, seasons, seasonsLoading, standingsData, error]);
+
+  // Is transitioning between filter states (have had data before, now fetching new)
+  const isTransitioning = useMemo(() => {
+    return isPending || isFetching;
+  }, [isPending, isFetching]);
 
   // Auto-select defaults when no filters are present
   useEffect(() => {
-    const hasNoFilters = !filters.season_id && !filters.sport_id && !filters.sport_category_id;
+    const hasNoFilters = !filters.season_id && !filters.sport_id && !filters.esport_category_id;
 
     if (hasNoFilters && seasons?.length) {
       // Just select the default season first, then let subsequent effects handle sport/category
@@ -64,231 +90,355 @@ export default function StandingsContent({ searchParams: _ }: StandingsContentPr
     }
   }, [seasons, filters, router]);
 
-  // Update selected stage when filters change
+
+
+  // Update selected stage when filters change or data loads
   useEffect(() => {
     if (standingsData?.navigation.stages.length && !selectedStage) {
+      // If we have stages but none selected (and no stage in URL filter), select the first one.
       const firstStage = standingsData.navigation.stages[0];
+      
+      // We only auto-select locally for UI state. 
+      // If we want to reflect in URL, we would push. But for "viewing", local state is fine.
+      // However, if the user navigates deep, the URL includes stage. 
+      // If they don't, we show first stage but maybe don't force URL change to avoid redirect loops?
+      // Let's set local only.
       setSelectedStage(firstStage.id);
-
-      // Update URL with first stage
-      const newParams = new URLSearchParams(urlSearchParams);
-      newParams.set('stage', firstStage.id.toString());
-      router.replace(`/standings?${newParams.toString()}`);
+    } else if (filters.stage_id) {
+       // If filter has stage, sync local state
+       setSelectedStage(filters.stage_id);
     }
-  }, [standingsData, selectedStage, router, urlSearchParams]);
+  }, [standingsData, selectedStage, filters.stage_id]);
+
+  // Auto-select SPORT when season changes or current sport is invalid
+  useEffect(() => {
+    if (filters.season_id && sports && sports.length > 0) {
+      const currentSportValid = sports.some(s => s.id === filters.sport_id);
+      
+      if (!filters.sport_id || !currentSportValid) {
+         const first = sports[0];
+         // Construct path with new sport
+         const season = seasons?.find(s => s.id === filters.season_id);
+         if (season) {
+             router.replace(`/standings/${toSlug(season.name || '')}/${toSlug(first.abbreviation || first.name)}`);
+         }
+      }
+    }
+  }, [sports, filters.season_id, filters.sport_id, seasons, router]);
+
+  // Auto-select category when sport changes or current category is invalid
+  useEffect(() => {
+    if (filters.sport_id && categories && categories.length > 0) {
+      const currentCategoryValid = categories.some(c => c.id === filters.esport_category_id);
+      
+      if (!filters.esport_category_id || !currentCategoryValid) {
+         // Try to preserve category by matching the previously selected name
+         let targetCategory = undefined;
+         const prevName = lastCategoryNameRef.current;
+         if (prevName) {
+           targetCategory = categories.find(c => c.display_name?.toLowerCase() === prevName.toLowerCase());
+         }
+         
+         // If no matching name found, pick the first one
+         if (!targetCategory) {
+           targetCategory = categories[0];
+         }
+         
+         // Construct path with new category
+         const season = seasons?.find(s => s.id === filters.season_id);
+         const sport = sports?.find(s => s.id === filters.sport_id);
+         
+         if (season && sport && targetCategory) {
+             router.replace(`/standings/${toSlug(season.name || '')}/${toSlug(sport.abbreviation || sport.name)}/${toSlug(targetCategory.display_name || '')}`);
+         }
+      } else {
+         // Category is valid — update the ref with its name
+         const currentCategory = categories.find(c => c.id === filters.esport_category_id);
+         if (currentCategory?.display_name) {
+           lastCategoryNameRef.current = currentCategory.display_name;
+         }
+      }
+    }
+  }, [categories, filters.sport_id, filters.esport_category_id, filters.season_id, seasons, sports, router]);
+
+  // constructSlugPath helper
+  const constructSlugPath = (
+    seasonId?: number, 
+    sportId?: number, 
+    categoryId?: number, 
+    stageId?: number
+  ) => {
+    // Helper to find item by ID
+    const season = seasons?.find(s => s.id === (seasonId || filters.season_id));
+    const sport = sports?.find(s => s.id === (sportId || filters.sport_id));
+    const category = categories?.find(c => c.id === (categoryId || filters.esport_category_id));
+    const stage = standingsData?.navigation.stages.find(s => s.id === (stageId || selectedStage || filters.stage_id));
+    
+    if (!season) return '/standings';
+    
+    let path = `/standings/${toSlug(season.name || '')}`;
+    
+    if (sport) {
+        path += `/${toSlug(sport.abbreviation || sport.name)}`;
+        
+        if (category) {
+            path += `/${toSlug(category.display_name || '')}`;
+            
+            if (stage) {
+                // Special handling for stage names which might be "Groupstage" in DB but "group-stage" in URL
+                const stageName = stage.competition_stage === 'group_stage' ? 'group-stage' : stage.competition_stage;
+                path += `/${toSlug(stageName)}`;
+            }
+        }
+    }
+    
+    return path;
+  };
 
   // Handle stage change
   const handleStageChange = (stageId: number) => {
     setSelectedStage(stageId);
-
-    // Update URL
-    const newParams = new URLSearchParams(urlSearchParams);
-    newParams.set('stage', stageId.toString());
-    router.push(`/standings?${newParams.toString()}`);
+    
+    startTransition(() => {
+        const path = constructSlugPath(undefined, undefined, undefined, stageId);
+        router.push(path, { scroll: false });
+    });
   };
 
   // Handle season change
   const handleSeasonChange = (seasonId: number) => {
-    const newParams = new URLSearchParams();
-    newParams.set('season', seasonId.toString());
-    newParams.set('sport', '1'); // Default to Basketball
-    newParams.set('category', '1'); // Default to Men's College
-
-    // Reset stage when season changes
-    setSelectedStage(undefined);
-
-    router.push(`/standings?${newParams.toString()}`);
+     // Find the new season to construct path base
+     const season = seasons?.find(s => s.id === seasonId);
+     if (season) {
+         // Just navigate to the season root, let defaults handle the rest via auto-select if we want, 
+         // OR we can try to be smart. For now, cascading login in useEffect will mostly handle "missing" parts if we land on defaults.
+         // BUT, we want to clear the downstream.
+         router.push(`/standings/${toSlug(season.name || '')}`);
+     }
   };
 
-  // Handle sport change
+  // Handle sport change - PRESERVE category and stage
   const handleSportChange = (sportId: number) => {
-    const newParams = new URLSearchParams(urlSearchParams);
-    newParams.set('sport', sportId.toString());
-    newParams.set('category', '1'); // Reset to first category
-
-    // Reset stage when sport changes
+    const season = seasons?.find(s => s.id === filters.season_id);
+    const sport = sports?.find(s => s.id === sportId);
+    
+    if (!season || !sport) return;
+    
+    // Build path with sport, but also try to preserve current category
+    // Categories are loaded for the NEW sport, so we can't check them here.
+    // Instead, navigate to just the sport level and let the auto-select effect
+    // try to match the current category name in the new sport's categories.
+    // The auto-select effect already handles name-matching now.
+    router.push(`/standings/${toSlug(season.name || '')}/${toSlug(sport.abbreviation || sport.name)}`);
+    
     setSelectedStage(undefined);
-
-    router.push(`/standings?${newParams.toString()}`);
   };
 
-  // Handle category change
+  // Handle category change - PRESERVE stage if possible
   const handleCategoryChange = (categoryId: number) => {
-    const newParams = new URLSearchParams(urlSearchParams);
-    newParams.set('category', categoryId.toString());
-
-    // Reset stage when category changes
+    const season = seasons?.find(s => s.id === filters.season_id);
+    const sport = sports?.find(s => s.id === filters.sport_id);
+    const category = categories?.find(c => c.id === categoryId);
+    
+    if (season && sport && category) {
+        // Remember this category name for future sport switches
+        if (category.display_name) {
+          lastCategoryNameRef.current = category.display_name;
+        }
+        router.push(`/standings/${toSlug(season.name || '')}/${toSlug(sport.abbreviation || sport.name)}/${toSlug(category.display_name || '')}`);
+    }
+    
+    // Reset stage so the new category's first stage is auto-selected
     setSelectedStage(undefined);
-
-    router.push(`/standings?${newParams.toString()}`);
   };
 
-  // Show loading state
-  if (isLoading) {
-    return <StandingsLoading />;
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Failed to load standings data. Please try again.
-          <button onClick={() => refetch()} className="ml-2 underline hover:no-underline">
-            Retry
-          </button>
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Show layout even without complete data
-  if (!standingsData) {
-    return (
-      <div className="flex h-[calc(100vh-8rem)]">
-        {/* Season Sidebar */}
-        <div className="w-64 flex-shrink-0 border-r">
-          <div className="sticky top-6 p-4">
-            <SeasonSidebar
-              currentSeasonId={filters.season_id}
-              onSeasonChange={handleSeasonChange}
-            />
-          </div>
+  // Content loading skeleton
+  const ContentSkeleton = () => (
+    <div className="flex-1 pt-6 space-y-6 animate-pulse">
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-1 bg-muted rounded-full" />
+          <div className="h-7 w-48 bg-muted rounded" />
         </div>
-
-        {/* Main Content with Top Navbar */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {/* Top Navbar */}
-          <StandingsNavbar
-            currentFilters={filters}
-            onSportChange={handleSportChange}
-            onCategoryChange={handleCategoryChange}
-            onStageChange={handleStageChange}
-            availableSports={sports}
-            availableCategories={categories}
-          />
-
-          {/* Content Area */}
-          <div className="flex-1 p-6">
-            {filters.season_id && filters.sport_id && filters.sport_category_id ? (
-              <div className="py-8 text-center">
-                <p className="text-muted-foreground">Loading standings data...</p>
-              </div>
-            ) : (
-              <div className="py-8 text-center">
-                <p className="text-muted-foreground">Select filters to view standings</p>
-              </div>
-            )}
-          </div>
-        </div>
+        <div className="h-6 w-24 bg-muted rounded-full" />
       </div>
-    );
-  }
+      {/* Table skeleton */}
+      <div className="space-y-3 px-2">
+        <div className="h-10 w-full bg-muted/60 rounded" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={`skel-row-${i}`} className="h-16 w-full bg-muted/40 rounded" />
+        ))}
+      </div>
+    </div>
+  );
 
-  // Find current stage data
-  const currentStage = standingsData.navigation.stages.find((s) => s.id === selectedStage);
-  const isGroupStage = currentStage?.competition_stage === 'group_stage';
-  const isPlayins = currentStage?.competition_stage === 'playins';
+  // Determine content to render
+  const renderContent = () => {
+    if (error) {
+       return (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load standings data. Please try again.
+            <button onClick={() => refetch()} className="ml-2 underline hover:no-underline">
+              Retry
+            </button>
+          </AlertDescription>
+        </Alert>
+       );
+    }
+
+    // Show skeleton when loading and no data
+    if ((isLoading || isTransitioning) && !standingsData) {
+        return <ContentSkeleton />;
+    }
+
+    if (!standingsData) {
+        return (
+          <div className="py-8 text-center min-h-[500px] flex flex-col items-center justify-center">
+             {isFetching || isInitialLoading ? (
+                <ContentSkeleton />
+             ) : (
+                <div className="flex flex-col items-center justify-center space-y-4 max-w-md w-full px-4 text-center mt-8">
+                  <div className="rounded-full bg-muted/30 p-4">
+                    <AlertCircle className="h-10 w-10 text-muted-foreground/50" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-semibold text-foreground">No Data Available</h3>
+                    <p className="text-base text-muted-foreground/80">
+                      We couldn't find any standings data for the selected filters.
+                    </p>
+                  </div>
+                </div>
+             )}
+          </div>
+        );
+    }
+
+    // Find current stage data for rendering (only if we have data)
+    const currentStage = standingsData.navigation.stages.find((s) => s.id === selectedStage);
+    const isGroupStage = currentStage?.stage_type === 'round_robin';
+    
+    // Calculate loading state for transitions
+    const isDataStale = selectedStage !== filters.stage_id && filters.stage_id !== undefined;
+    const isLoadingState = isPending || isFetching || isDataStale;
+
+    // Detect play-ins by competition_stage
+    const currentStageData = standingsData.standings;
+    const isPlayins = currentStageData.competition_stage === 'playins';
+
+    return (
+        <div className="flex-1 pt-6 overflow-hidden relative">
+             {/* Loading Overlay for Transitions */}
+             {isLoadingState && (
+                <div className="absolute inset-0 z-50 bg-background/50 backdrop-blur-[1px] flex items-center justify-center transition-all duration-300">
+                    <div className="bg-background/80 p-4 rounded-full shadow-lg border">
+                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                </div>
+             )}
+
+            {(isPlayins || isGroupStage) ? (
+               <GroupStageTable
+                  standings={standingsData.standings as GroupStageStandings}
+                  loading={isLoadingState}
+               />
+            ) : (
+               <BracketVisualization 
+                  standings={standingsData.standings as BracketStandings}
+                  loading={isLoadingState}
+               />
+            )}
+        </div>
+    );
+  };
 
   return (
-    <div className="bg-background min-h-screen">
-      {/* Hero Section */}
-      <section className="from-primary/10 via-background to-secondary/10 relative bg-gradient-to-br pt-20 pb-12 sm:pt-24 sm:pb-16">
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM2YzYxIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] bg-repeat" />
+    <div className="bg-background min-h-screen relative">
+      {/* Initial Loading Overlay — only when we've NEVER had data and filters are resolving */}
+      {isInitialLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
+          <StandingsLoading />
         </div>
+      )}
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1
-              className={`${moderniz.className} text-foreground mb-4 text-3xl font-bold sm:mb-6 sm:text-4xl md:text-6xl lg:text-7xl`}
-            >
-              Tournament <span className="text-primary">Standings</span>
-            </h1>
-            <p className="text-muted-foreground mx-auto mb-6 max-w-3xl text-base sm:mb-8 sm:text-lg md:text-xl">
-              Follow the latest standings, scores, and tournament progress for all CESAFI sports
-              events and competitions.
-            </p>
+      {/* Hero Section - Always Visible */}
+      <section className="from-primary/10 via-background to-secondary/10 relative bg-gradient-to-br pt-20 pb-8 sm:pt-24 sm:pb-16">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM2YzYxIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] bg-repeat" />
           </div>
-        </div>
+
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              {/* Main Heading */}
+              <h1
+                className={`${moderniz.className} text-foreground mb-4 text-3xl font-bold sm:mb-6 sm:text-4xl md:text-6xl lg:text-7xl`}
+              >
+                League <span className="text-gradient-cel">Standings</span>
+              </h1>
+
+              {/* Subtitle */}
+              <p
+                className={`${roboto.className} text-muted-foreground mx-auto mb-8 max-w-3xl text-base leading-relaxed sm:mb-12 sm:text-lg md:text-xl`}
+              >
+                Stay updated with the latest rankings, team performance, and tournament progress across all CESAFI sports.
+              </p>
+            </div>
+          </div>
       </section>
 
-      {/* Main Content */}
-      <div className="mt-8 mb-8 flex flex-col lg:flex-row min-h-[calc(100vh-20rem)]">
+      {/* Main Content Layout */}
+       <div className="mt-4 sm:mt-8 mb-8 flex flex-col lg:flex-row min-h-[calc(100vh-20rem)] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Mobile Season Selector */}
-        <div className="lg:hidden px-4 mb-4">
+        <div className="lg:hidden mb-4">
           <div className="relative">
             <select
-              value={filters.season_id ?? ''}
+              className="w-full appearance-none rounded-md border border-input bg-background px-3 py-2 h-9 text-xs font-medium shadow-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50 disabled:pointer-events-none"
+              value={filters.season_id || ''}
               onChange={(e) => handleSeasonChange(Number(e.target.value))}
-              className="w-full appearance-none bg-card border border-border rounded-lg px-4 py-3 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+              disabled={isTransitioning}
             >
+              <option value="" disabled>Select Season</option>
               {seasons?.map((season) => (
                 <option key={season.id} value={season.id}>
-                  Season {season.id} - {season.name}
+                  {season.name || `Season ${season.id}`}
                 </option>
               ))}
             </select>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </div>
+            <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           </div>
         </div>
 
         {/* Season Sidebar - Desktop Only */}
-        <div className="hidden lg:block w-64 flex-shrink-0 border-r">
-          <div className="sticky top-6 p-4">
+        <div className="hidden lg:block w-64 flex-shrink-0 border-r pr-6">
+          <div className="sticky top-6">
             <SeasonSidebar
               currentSeasonId={filters.season_id}
               onSeasonChange={handleSeasonChange}
+              disabled={isTransitioning}
             />
           </div>
         </div>
 
         {/* Main Content with Top Navbar */}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col pl-0 lg:pl-6">
           {/* Top Navbar */}
           <StandingsNavbar
             currentFilters={filters}
             onSportChange={handleSportChange}
             onCategoryChange={handleCategoryChange}
             onStageChange={handleStageChange}
-            navigation={standingsData.navigation}
+            navigation={standingsData?.navigation}
             currentStage={selectedStage}
-            availableSports={sports}
+            availablsports={sports}
             availableCategories={categories}
+            disabled={isTransitioning}
           />
 
-          {/* Content Area */}
-          <div className="flex-1 p-4 lg:p-6 overflow-x-auto">
-            <div className="mx-auto max-w-7xl">
-              {(() => {
-                if (isGroupStage) {
-                  return (
-                    <GroupStageTable
-                      standings={standingsData.standings as GroupStageStandings}
-                      loading={isLoading}
-                    />
-                  );
-                }
-                if (isPlayins) {
-                  return (
-                    <PlayinsList
-                      standings={standingsData.standings as PlayinsStandings}
-                      loading={isLoading}
-                    />
-                  );
-                }
-                return (
-                  <BracketVisualization
-                    standings={standingsData.standings as BracketStandings}
-                    loading={isLoading}
-                  />
-                );
-              })()}
-            </div>
-          </div>
+          {/* Visualization Area */}
+          {renderContent()}
         </div>
       </div>
     </div>

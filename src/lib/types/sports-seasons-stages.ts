@@ -1,19 +1,18 @@
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
+import { sportsSeasonsStages, CompetitionStage, SportDivision, SportLevel } from '@/db/schema';
 
-export type SportsSeasonsStage = Database['public']['Tables']['sports_seasons_stages']['Row'];
-export type SportsSeasonsStageInsert =
-  Database['public']['Tables']['sports_seasons_stages']['Insert'];
-export type SportsSeasonsStageUpdate =
-  Database['public']['Tables']['sports_seasons_stages']['Update'];
+export type SportsSeasonsStage = typeof sportsSeasonsStages.$inferSelect;
+export type SportsSeasonsStageInsert = typeof sportsSeasonsStages.$inferInsert;
+export type SportsSeasonsStageUpdate = Partial<SportsSeasonsStageInsert>;
 
-export type CompetitionStage = Database['public']['Enums']['competition_stage'];
+// Re-export types that other files expect to find here
+export type { CompetitionStage, SportDivision, SportLevel } from '@/db/schema';
 
 export interface SportsSeasonsStageWithDetails extends SportsSeasonsStage {
   sports_categories: {
     id: number;
-    division: Database['public']['Enums']['sport_divisions'];
-    levels: Database['public']['Enums']['sport_levels'];
+    division: SportDivision;
+    levels: SportLevel;
     sports: {
       id: number;
       name: string;

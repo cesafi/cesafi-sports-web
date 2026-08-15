@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createVolunteerSchema, updateVolunteerSchema } from '@/lib/validations/volunteers';
+import { volunteers } from '@/db/schema';
 
-export type Volunteer = Database['public']['Tables']['volunteers']['Row'];
-export type VolunteerInsert = z.infer<typeof createVolunteerSchema>;
-export type VolunteerUpdate = z.infer<typeof updateVolunteerSchema>;
+export type Volunteer = typeof volunteers.$inferSelect;
+export type VolunteerInsert = typeof volunteers.$inferInsert;
+export type VolunteerUpdate = Partial<VolunteerInsert>;
 
 export interface VolunteersSearchFilters {
   full_name?: string;

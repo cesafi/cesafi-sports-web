@@ -211,7 +211,7 @@ export function useUpdateMatchParticipant(
     onSuccess: (result, variables, context) => {
       if (result.success) {
         // Invalidate related queries
-        queryClient.invalidateQueries({ queryKey: matchParticipantKeys.details(variables.id) });
+        if (variables.id) queryClient.invalidateQueries({ queryKey: matchParticipantKeys.details(variables.id) });
         queryClient.invalidateQueries({ queryKey: matchParticipantKeys.all });
       }
       (mutationOptions?.onSuccess as any)?.(result, variables, context);
@@ -259,9 +259,9 @@ export function useUpdateMatchScores(
   
   return useMutation({
     mutationFn: async (scoreUpdates) => {
-      // Import the service function
-      const { MatchParticipantService } = await import('@/services/match-participants');
-      return MatchParticipantService.updateMatchScores(scoreUpdates);
+      // Use the server action
+      const { updateMatchScores } = await import('@/actions/match-participants');
+      return updateMatchScores(scoreUpdates);
     },
     onSuccess: (result, variables, context) => {
       if (result.success) {

@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { Match } from './matches';
 import { createGameSchema, updateGameSchema } from '@/lib/validations/games';
+import { games } from '@/db/schema';
 
-export type Game = Database['public']['Tables']['games']['Row'];
-export type GameInsert = z.infer<typeof createGameSchema>;
-export type GameUpdate = z.infer<typeof updateGameSchema>;
+export type Game = typeof games.$inferSelect;
+export type GameInsert = typeof games.$inferInsert;
+export type GameUpdate = Partial<GameInsert>;
 
 export interface GameWithDetails extends Game {
   matches?: Match;

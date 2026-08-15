@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { Constants } from '@/../database.types';
+import { competitionStageEnum } from '@/db/schema';
 
-const COMPETITION_STAGES = Constants.public.Enums.competition_stage;
+const COMPETITION_STAGES = competitionStageEnum.enumValues;
 
 export const createSportsSeasonsStageSchema = z.object({
   sport_category_id: z.number({ message: 'Sport category ID is required.' }),

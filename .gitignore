@@ -53,4 +53,5 @@ yarn-error.log*
 next-env.d.ts
 
 # build/cache artifacts
-.cache/           
+.cache/
+.hidden        

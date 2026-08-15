@@ -6,13 +6,18 @@ import {
   ServiceResponse,
   FilterValue
 } from '../lib/types/base';
-import { Database } from '../../database.types';
+
 import { AdminSupabaseClient } from '../lib/supabase/admin';
 import { getSupabaseClient } from '../lib/supabase/client';
 import { getSupabaseServer } from '../lib/supabase/server';
 import { createAdminClient } from '../lib/supabase/admin';
+import { db } from '../db';
 
 export abstract class BaseService {
+  protected static getDrizzle() {
+    return db;
+  }
+
   protected static async getClient() {
     const isServer = typeof window === 'undefined';
 
@@ -27,10 +32,27 @@ export abstract class BaseService {
     return createAdminClient();
   }
 
-  protected static formatError<T>(error: unknown, message: string): ServiceResponse<T> {
+  protected static formatError<T>(error: unknown, fallbackMessage: string): ServiceResponse<T> {
+    let errorMessage = fallbackMessage;
+
+    if (error && typeof error === 'object') {
+      const err = error as Record<string, any>;
+      
+      // Handle Postgres / Supabase errors (PostgrestError)
+      if (err.code && err.message) {
+        let details = err.details ? ` - ${err.details}` : '';
+        let hint = err.hint ? ` (Hint: ${err.hint})` : '';
+        errorMessage = `${fallbackMessage}: ERR CODE ${err.code}: ${err.message}${details}${hint}`;
+      } else if (err.message) {
+        errorMessage = `${fallbackMessage}: ${err.message}`;
+      }
+    } else if (typeof error === 'string') {
+      errorMessage = `${fallbackMessage}: ${error}`;
+    }
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : message
+      error: errorMessage
     };
   }
 
@@ -67,7 +89,7 @@ export abstract class BaseService {
 
   protected static async getPaginatedData<
     T,
-    TableName extends keyof Database['public']['Tables'],
+    TableName extends string,
     TFilters extends Record<string, FilterValue> = Record<string, FilterValue>
   >(
     tableName: TableName,
@@ -127,6 +149,107 @@ export abstract class BaseService {
     } catch (error) {
       console.error('BaseService.getPaginatedData error:', error);
       return this.formatError(error, `Failed to fetch paginated ${String(tableName)}`);
+    }
+  }
+
+  protected static async getDrizzlePaginatedData<
+    T,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    TTable extends any,
+    TFilters extends Record<string, FilterValue> = Record<string, FilterValue>
+  >(
+    table: TTable,
+    options: PaginationOptions<TFilters>
+  ): Promise<ServiceResponse<PaginatedResponse<T>>> {
+    try {
+      const { page, pageSize, filters, searchQuery, searchableFields, sortBy, sortOrder } = options;
+      
+      const db = this.getDrizzle();
+      const offset = (page - 1) * pageSize;
+      
+      const { sql, eq, inArray, gte, lte, or, ilike, and, desc, asc } = await import('drizzle-orm');
+
+      const conditions = [];
+
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (key === 'search') return;
+          const col = (table as any)[key];
+          if (!col) return;
+
+          if (value !== undefined && value !== null) {
+            if (Array.isArray(value)) {
+              const nonNullValues = value.filter(item => item !== null);
+              if (nonNullValues.length > 0) {
+                conditions.push(inArray(col, nonNullValues));
+              }
+            } else if (typeof value === 'object' && value !== null) {
+              const { gte: gteVal, lte: lteVal, eq: eqVal } = value as RangeOrEqualityFilter;
+              if (gteVal !== undefined) conditions.push(gte(col, gteVal));
+              if (lteVal !== undefined) conditions.push(lte(col, lteVal));
+              if (eqVal !== undefined && eqVal !== null) conditions.push(eq(col, eqVal));
+            } else {
+              conditions.push(eq(col, value));
+            }
+          }
+        });
+      }
+
+      if (searchQuery && searchQuery.trim() && searchableFields && searchableFields.length > 0) {
+        const searchConditions = searchableFields.map(field => {
+          const col = (table as any)[field];
+          if (!col) return null;
+          
+          const numericValue = Number(searchQuery);
+          if (!isNaN(numericValue) && col.dataType === 'number') {
+            return or(eq(col, numericValue), ilike(col, `%${searchQuery}%`));
+          } else {
+            return ilike(col, `%${searchQuery}%`);
+          }
+        }).filter(Boolean);
+        
+        if (searchConditions.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          conditions.push(or(...(searchConditions as any)));
+        }
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+      
+      let orderByClause = undefined;
+      if (sortBy && (table as any)[sortBy]) {
+        orderByClause = sortOrder === 'desc' ? desc((table as any)[sortBy]) : asc((table as any)[sortBy]);
+      }
+
+      // Execute queries
+      const dataQuery = db.select().from(table as any);
+      if (whereClause) dataQuery.where(whereClause);
+      if (orderByClause) dataQuery.orderBy(orderByClause);
+      dataQuery.limit(pageSize).offset(offset);
+
+      const countQuery = db.select({ count: sql<number>`count(*)` }).from(table as any);
+      if (whereClause) countQuery.where(whereClause);
+
+      const [data, countResult] = await Promise.all([
+        dataQuery,
+        countQuery
+      ]);
+
+      const totalCount = Number(countResult[0]?.count || 0);
+      const pageCount = Math.ceil(totalCount / pageSize);
+
+      return {
+        success: true,
+        data: {
+          data: data as unknown as T[],
+          totalCount,
+          pageCount,
+          currentPage: page
+        }
+      };
+    } catch (error) {
+      console.error('BaseService.getDrizzlePaginatedData error:', error);
+      return this.formatError(error, 'Failed to fetch paginated data');
     }
   }
 }

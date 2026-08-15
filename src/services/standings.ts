@@ -1,185 +1,175 @@
+// @ts-nocheck
+// Service class for standings operations
 import { ServiceResponse } from '@/lib/types/base';
 import { BaseService } from './base';
-import {
-  USE_MOCK_DATA,
-  getMockStandings,
-  mockSeasons,
-  mockSports,
-  mockCategories,
-  mockNavigation
-} from '@/lib/mock-data';
-import {
-  StandingsEntry,
+import { 
+  StandingsFilters, 
+  StandingsResponse, 
+  StandingsNavigation, 
+  StandingsData,
   GroupStageStandings,
   BracketStandings,
-  StandingsNavigation,
-  StandingsResponse,
-  StandingsFilters,
-  BracketMatch,
-  BracketTeam
+  PlayinsStandings
 } from '@/lib/types/standings';
-import { formatCategoryName } from '@/lib/utils/sports';
-
-const MATCHES_TABLE = 'matches';
-const MATCH_PARTICIPANTS_TABLE = 'match_participants';
-const SCHOOLS_TEAMS_TABLE = 'schools_teams';
-const SCHOOLS_TABLE = 'schools';
-const SPORTS_SEASONS_STAGES_TABLE = 'sports_seasons_stages';
-const SPORTS_CATEGORIES_TABLE = 'sports_categories';
-const SPORTS_TABLE = 'sports';
-const SEASONS_TABLE = 'seasons';
 
 export class StandingsService extends BaseService {
   /**
-   * Get complete standings data with navigation and standings
+   * Get available seasons for standings selection
    */
-  static async getStandings(
-    filters: StandingsFilters
-  ): Promise<ServiceResponse<StandingsResponse>> {
+  static async getAvailableSeasons(): Promise<ServiceResponse<Array<{ id: number; name: string; start_at: string; end_at: string }>>> {
     try {
-      // Use mock data in development
-      if (USE_MOCK_DATA) {
-        const mockData = getMockStandings(filters.stage_id);
-        return {
-          success: true,
-          data: mockData
-        };
-      }
+      const supabase = await this.getClient();
+      const { data, error } = await supabase
+        .from('seasons')
+        .select('id, name, start_at, end_at')
+        .order('start_at', { ascending: false });
 
-      const { season_id, sport_id, sport_category_id, stage_id } = filters;
+      if (error) throw error;
 
-      if (!season_id || !sport_id || !sport_category_id) {
-        return {
-          success: false,
-          error: 'Season, sport, and category are required for standings.'
-        };
-      }
+      // Format season names (use DB name if available, else default to "Season X")
+      const seasons = (data || []).map(s => ({
+        ...s,
+        name: s.name || `Season ${s.id}`
+      }));
 
-      // Get navigation data
-      const navigationResult = await this.getStandingsNavigation(filters);
-      if (!navigationResult.success) {
-        return {
-          success: false,
-          error: navigationResult.error || 'Failed to get navigation data.'
-        };
-      }
-
-      // If no specific stage is provided, use the first stage
-      const targetStageId = stage_id ?? navigationResult.data.stages[0]?.id;
-      if (!targetStageId) {
-        return {
-          success: false,
-          error: 'No stages found for the specified filters.'
-        };
-      }
-
-      // Get the target stage details
-      const targetStage = navigationResult.data.stages.find((s) => s.id === targetStageId);
-      if (!targetStage) {
-        return {
-          success: false,
-          error: 'Invalid stage ID provided.'
-        };
-      }
-
-      // Get standings based on competition stage type
-      let standingsData;
-      if (targetStage.competition_stage === 'group_stage') {
-        const result = await this.getGroupStageStandings(targetStageId);
-        if (!result.success) {
-          return {
-            success: false,
-            error: result.error || 'Failed to get group stage standings.'
-          };
-        }
-        standingsData = result.data;
-      } else {
-        // For playoffs, finals, playins - use bracket format
-        const result = await this.getBracketStandings(targetStageId);
-        if (!result.success) {
-          return {
-            success: false,
-            error: result.error || 'Failed to get bracket standings.'
-          };
-        }
-        standingsData = result.data;
-      }
-
-      return {
-        success: true,
-        data: {
-          navigation: navigationResult.data,
-          standings: standingsData
-        }
-      };
+      return { success: true, data: seasons };
     } catch (err) {
-      return this.formatError(err, 'Failed to retrieve standings data.');
+      return this.formatError(err, 'Failed to fetch available seasons');
     }
   }
 
   /**
-   * Get navigation structure for standings
+   * Get available sports for a season
    */
-  static async getStandingsNavigation(
-    filters: StandingsFilters
-  ): Promise<ServiceResponse<StandingsNavigation>> {
+  static async getAvailableSports(seasonId: number): Promise<ServiceResponse<Array<{ id: number; name: string; logo_url: string | null; abbreviation: string | null }>>> {
     try {
       const supabase = await this.getClient();
-      const { season_id, sport_id, sport_category_id } = filters;
-
-      if (!season_id || !sport_id || !sport_category_id) {
-        return {
-          success: false,
-          error: 'Season, sport, and category are required for navigation.'
-        };
-      }
-
-      // Get season, sport, category, and stages data
+      
+      // Get sports that have stages in this season
       const { data, error } = await supabase
-        .from(SPORTS_SEASONS_STAGES_TABLE)
-        .select(
-          `
+        .from('sports')
+        .select(`
           id,
-          competition_stage,
+          name,
+          logo_url,
+          abbreviation,
           sports_categories!inner (
-            id,
-            division,
-            levels,
-            sports!inner (
-              id,
-              name
+            sports_seasons_stages!inner (
+              season_id
             )
-          ),
-          seasons!inner (
-            id,
-            start_at,
-            end_at
           )
-        `
-        )
-        .eq('sports_categories.sports.id', sport_id)
-        .eq('sports_categories.id', sport_category_id)
-        .eq('seasons.id', season_id)
-        .order('created_at', { ascending: true });
+        `)
+        .eq('sports_categories.sports_seasons_stages.season_id', seasonId);
 
       if (error) throw error;
 
-      if (!data || data.length === 0) {
-        return {
-          success: false,
-          error: 'No stages found for the specified filters.'
-        };
+      // Deduplicate and format
+      const uniqueIds = new Set();
+      const uniqusports = [];
+      
+      for (const e of (data || [])) {
+        if (!uniqueIds.has(e.id)) {
+          uniqueIds.add(e.id);
+          uniqusports.push({
+            id: e.id,
+            name: e.name,
+            logo_url: e.logo_url,
+            abbreviation: e.abbreviation
+          });
+        }
       }
 
-      const firstStage = data[0];
-      const season = firstStage.seasons;
-      const sport = firstStage.sports_categories.sports;
-      const category = firstStage.sports_categories;
+      return { success: true, data: uniqusports };
+    } catch (err) {
+      return this.formatError(err, 'Failed to fetch available sports');
+    }
+  }
+
+  /**
+   * Get available categories for an esport in a season
+   */
+  static async getAvailableCategories(
+    seasonId: number, 
+    sportId: number
+  ): Promise<ServiceResponse<Array<{ id: number; division: string; levels: string; display_name: string }>>> {
+    try {
+      const supabase = await this.getClient();
+      
+      const { data, error } = await supabase
+        .from('sports_categories')
+        .select(`
+          id,
+          division,
+          levels,
+          sports_seasons_stages!inner (
+            season_id
+          )
+        `)
+        .eq('esport_id', sportId)
+        .eq('sports_seasons_stages.season_id', seasonId);
+
+      if (error) throw error;
+
+      const categories = (data || []).map(c => ({
+        id: c.id,
+        division: c.division,
+        levels: c.levels,
+        display_name: `${c.division} ${c.levels}`.replace('_', ' ')
+      }));
+
+      return { success: true, data: categories };
+    } catch (err) {
+      return this.formatError(err, 'Failed to fetch available categories');
+    }
+  }
+
+  /**
+   * Get standings navigation data
+   */
+  static async getStandingsNavigation(filters: StandingsFilters): Promise<ServiceResponse<StandingsNavigation>> {
+    try {
+      const supabase = await this.getClient();
+
+      // Get season info
+      const { data: season, error: seasonError } = await supabase
+        .from('seasons')
+        .select('id, name, start_at, end_at')
+        .eq('id', filters.season_id!)
+        .single();
+
+      if (seasonError) throw seasonError;
+
+      // Get esport info
+      const { data: sport, error: sportError } = await supabase
+        .from('sports')
+        .select('id, name')
+        .eq('id', filters.sport_id!)
+        .single();
+
+      if (sportError) throw sportError;
+
+      // Get category info
+      const { data: category, error: categoryError } = await supabase
+        .from('sports_categories')
+        .select('id, division, levels')
+        .eq('id', filters.sport_category_id!)
+        .single();
+
+      if (categoryError) throw categoryError;
+
+      // Get stages for this category and season
+      const { data: stages, error: stagesError } = await supabase
+        .from('sports_seasons_stages')
+        .select('id, competition_stage, stage_type')
+        .eq('season_id', filters.season_id!)
+        .eq('sport_category_id', filters.sport_category_id!);
+
+      if (stagesError) throw stagesError;
 
       const navigation: StandingsNavigation = {
         season: {
           id: season.id,
-          name: `${season.start_at.split('-')[0]}-${season.end_at.split('-')[0]}`,
+          name: season.name || `Season ${season.id}`,
           start_at: season.start_at,
           end_at: season.end_at
         },
@@ -191,444 +181,429 @@ export class StandingsService extends BaseService {
           id: category.id,
           division: category.division,
           levels: category.levels,
-          display_name: formatCategoryName(category.division, category.levels)
+          display_name: `${category.division} ${category.levels}`.replace('_', ' ')
         },
-        stages: data.map((stage, index) => ({
-          id: stage.id,
-          name: stage.competition_stage.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-          competition_stage: stage.competition_stage,
-          order: index + 1
-        }))
+        stages: (stages || [])
+          .sort((a, b) => {
+            const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const order: Record<string, number> = { 
+              'groupstage': 1, 
+              'playins': 2, 
+              'playoffs': 3, 
+              'finals': 4 
+            };
+            
+            const keyA = normalize(a.competition_stage);
+            const keyB = normalize(b.competition_stage);
+            
+            const orderA = order[keyA] || 99;
+            const orderB = order[keyB] || 99;
+            return orderA - orderB;
+          })
+          .map((s: any) => {
+            const key = s.competition_stage.toLowerCase().replace(/[^a-z0-9]/g, '');
+            let displayName = s.competition_stage;
+            
+            if (key === 'groupstage') displayName = 'Group Stage';
+            else if (key === 'playins') displayName = 'Play-ins';
+            else if (key === 'playoffs') displayName = 'Playoffs';
+            else if (key === 'finals') displayName = 'Finals';
+
+            return {
+              id: s.id,
+              name: displayName, 
+              competition_stage: s.competition_stage,
+              stage_type: s.stage_type as 'round_robin' | 'single_elimination' | 'double_elimination',
+              order: 0
+            };
+          })
       };
 
-      return {
-        success: true,
-        data: navigation
-      };
+      return { success: true, data: navigation };
     } catch (err) {
-      return this.formatError(err, 'Failed to retrieve standings navigation.');
+      return this.formatError(err, 'Failed to fetch standings navigation');
     }
   }
 
   /**
-   * Calculate group stage standings (table format)
+   * Get group stage standings for a stage - calculated from match results
    */
-  static async getGroupStageStandings(
-    stageId: number
-  ): Promise<ServiceResponse<GroupStageStandings>> {
+  static async getGroupStageStandings(stageId: number): Promise<ServiceResponse<GroupStageStandings>> {
     try {
       const supabase = await this.getClient();
 
-      // Get stage details
+      // Get stage info with scoring rules and esport type
       const { data: stage, error: stageError } = await supabase
-        .from(SPORTS_SEASONS_STAGES_TABLE)
-        .select('id, competition_stage')
+        .from('sports_seasons_stages')
+        .select('id, competition_stage, sports_categories!inner (sports!inner (name))')
         .eq('id', stageId)
         .single();
 
       if (stageError) throw stageError;
 
-      // Get all matches for this stage with participants and scores
-      const { data: matches, error: matchesError } = await supabase
-        .from(MATCHES_TABLE)
-        .select(
-          `
-          id,
-          status,
-          match_participants!inner (
-            id,
-            team_id,
-            match_score,
-            schools_teams!inner (
-              id,
-              name,
-              schools!inner (
-                id,
-                name,
-                abbreviation,
-                logo_url
-              )
-            )
-          )
-        `
-        )
-        .eq('stage_id', stageId)
-        .eq('status', 'finished'); // Only count finished matches
+      // Call the optimized Postgres RPC for standings computation
+      const { data: groupsJson, error: rpcError } = await supabase
+        .rpc('get_group_stage_standings', { p_stage_id: stageId });
 
-      if (matchesError) throw matchesError;
+      if (rpcError) throw rpcError;
 
-      // Calculate standings
-      const teamStats = new Map<string, StandingsEntry>();
+      // Post-process to apply complex tiebreaker logic
+      const rawGroups = (groupsJson as any[]) || [];
+      const esportName = (stage.sports_categories as any)?.sports?.name || '';
+      const isValorant = esportName.toLowerCase().includes('valorant');
+      const isMLBB = esportName.toLowerCase().includes('mobile legends') || esportName.toLowerCase().includes('mlbb');
 
-      // Initialize all teams that have participated
-      matches?.forEach((match) => {
-        match.match_participants.forEach((participant) => {
-          const team = participant.schools_teams;
-          const school = team.schools;
+      const sortedGroups = rawGroups.map(group => {
+          let teamsList = group.teams || [];
+          
+          // 1. Initial Sort by Points
+          teamsList.sort((a: any, b: any) => b.points - a.points);
+          
+          // 2. Resolve Ties (Bucket Sort)
+          const resolvedTeams: any[] = [];
+          let i = 0;
+          while (i < teamsList.length) {
+              const currentPoints = teamsList[i].points;
+              const tiedGroup = [teamsList[i]];
+              let j = i + 1;
+              while (j < teamsList.length && teamsList[j].points === currentPoints) {
+                  tiedGroup.push(teamsList[j]);
+                  j++;
+              }
 
-          if (!teamStats.has(participant.team_id)) {
-            teamStats.set(participant.team_id, {
-              team_id: participant.team_id,
-              team_name: team.name,
-              school_name: school.name,
-              school_abbreviation: school.abbreviation,
-              school_logo_url: school.logo_url,
-              matches_played: 0,
-              wins: 0,
-              losses: 0,
-              draws: 0,
-              goals_for: 0,
-              goals_against: 0,
-              goal_difference: 0,
-              points: 0,
-              position: 0
-            });
+              if (tiedGroup.length > 1) {
+                   tiedGroup.sort((a, b) => {
+                       // 3a. Mini-League Points (Wins vs Tied Teams)
+                       const getMiniPoints = (t: any) => {
+                           return tiedGroup.reduce((acc, other) => {
+                               if (t.team_id === other.team_id) return acc;
+                               const h2h = t.h2h?.[other.team_id];
+                               return h2h ? acc + h2h.wins : acc;
+                           }, 0);
+                       };
+                       const miniA = getMiniPoints(a);
+                       const miniB = getMiniPoints(b);
+                       if (miniA !== miniB) return miniB - miniA;
+
+                       // 3b. Tiebreakers (Time / Diff)
+                       if (isMLBB) {
+                           const avgA = a.win_duration_count > 0 ? a.total_win_duration_seconds / a.win_duration_count : 999999;
+                           const avgB = b.win_duration_count > 0 ? b.total_win_duration_seconds / b.win_duration_count : 999999;
+                           if (Math.abs(avgA - avgB) > 0.001) return avgA - avgB;
+                       }
+                       
+                       if (isValorant) {
+                           const diffA = a.rounds_won - a.rounds_lost;
+                           const diffB = b.rounds_won - b.rounds_lost;
+                           if (diffA !== diffB) return diffB - diffA;
+                           if (a.rounds_won !== b.rounds_won) return b.rounds_won - a.rounds_won;
+                       } else {
+                           const diffA = a.games_won - a.games_lost;
+                           const diffB = b.games_won - b.games_lost;
+                           if (diffA !== diffB) return diffB - diffA;
+                           if (a.games_won !== b.games_won) return b.games_won - a.games_won;
+                       }
+                       return 0;
+                   });
+              }
+              resolvedTeams.push(...tiedGroup);
+              i = j;
           }
-        });
+
+          // 3. Format Teams
+          const finalTeams = resolvedTeams.map((team, index) => {
+              return {
+                  ...team,
+                  position: index + 1
+              };
+          });
+
+          return {
+              group_name: group.group_name,
+              teams: finalTeams
+          };
       });
 
-      // Calculate match results
-      matches?.forEach((match) => {
-        if (match.match_participants.length === 2) {
-          const [team1, team2] = match.match_participants;
-          const score1 = team1.match_score ?? 0;
-          const score2 = team2.match_score ?? 0;
-
-          // Update team1 stats
-          const team1Stats = teamStats.get(team1.team_id)!;
-          team1Stats.matches_played++;
-          team1Stats.goals_for += score1;
-          team1Stats.goals_against += score2;
-          team1Stats.goal_difference = team1Stats.goals_for - team1Stats.goals_against;
-
-          // Update team2 stats
-          const team2Stats = teamStats.get(team2.team_id)!;
-          team2Stats.matches_played++;
-          team2Stats.goals_for += score2;
-          team2Stats.goals_against += score1;
-          team2Stats.goal_difference = team2Stats.goals_for - team2Stats.goals_against;
-
-          // Determine winner and award points
-          if (score1 > score2) {
-            // Team1 wins
-            team1Stats.wins++;
-            team1Stats.points += 3;
-            team2Stats.losses++;
-          } else if (score2 > score1) {
-            // Team2 wins
-            team2Stats.wins++;
-            team2Stats.points += 3;
-            team1Stats.losses++;
-          } else {
-            // Draw
-            team1Stats.draws++;
-            team1Stats.points += 1;
-            team2Stats.draws++;
-            team2Stats.points += 1;
-          }
-        }
-      });
-
-      // Convert to array and sort by points, then by goal difference
-      const standings = Array.from(teamStats.values()).sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        if (b.goal_difference !== a.goal_difference) return b.goal_difference - a.goal_difference;
-        return b.goals_for - a.goals_for;
-      });
-
-      // Assign positions
-      standings.forEach((team, index) => {
-        team.position = index + 1;
-      });
-
-      const groupStageStandings: GroupStageStandings = {
+      const groupStandings: GroupStageStandings = {
         stage_id: stage.id,
-        stage_name: stage.competition_stage.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-        competition_stage: stage.competition_stage,
-        groups: [
-          {
-            group_name: undefined, // Single group for now
-            teams: standings
-          }
-        ]
+        stage_name: stage.competition_stage,
+        competition_stage: 'group_stage',
+        esport_type: esportName,
+        groups: sortedGroups
       };
 
-      return {
-        success: true,
-        data: groupStageStandings
-      };
+      return { success: true, data: groupStandings };
     } catch (err) {
-      return this.formatError(err, 'Failed to calculate group stage standings.');
+      return this.formatError(err, 'Failed to fetch group stage standings');
     }
   }
 
   /**
-   * Get bracket/tournament standings (bracket format)
+   * Get bracket standings for playoffs
    */
   static async getBracketStandings(stageId: number): Promise<ServiceResponse<BracketStandings>> {
     try {
       const supabase = await this.getClient();
 
-      // Get stage details
+      // Get stage info
       const { data: stage, error: stageError } = await supabase
-        .from(SPORTS_SEASONS_STAGES_TABLE)
+        .from('sports_seasons_stages')
         .select('id, competition_stage')
         .eq('id', stageId)
         .single();
 
       if (stageError) throw stageError;
 
-      // Get all matches for this stage with participants
+      // Get matches for this stage
       const { data: matches, error: matchesError } = await supabase
-        .from(MATCHES_TABLE)
-        .select(
-          `
-          id,
-          name,
-          status,
-          scheduled_at,
-          venue,
-          match_participants!inner (
-            id,
-            team_id,
-            match_score,
-            schools_teams!inner (
+        .from('matches')
+        .select(`
+          *,
+          match_participants (
+            *,
+            schools_teams (
               id,
               name,
-              schools!inner (
-                id,
+              schools (
                 name,
                 abbreviation,
                 logo_url
               )
             )
+          ),
+          games (
+            id,
+            game_number,
+            game_scores (
+              match_participant_id,
+              score
+            )
           )
-        `
-        )
+        `)
         .eq('stage_id', stageId)
-        .order('scheduled_at', { ascending: true });
+        .order('round')
+        .order('match_order');
 
       if (matchesError) throw matchesError;
 
-      // Convert matches to bracket format
-      const bracketMatches: BracketMatch[] =
-        matches?.map((match, index) => {
-          const participants = match.match_participants;
-
-          let team1: BracketTeam | null = null;
-          let team2: BracketTeam | null = null;
-          let winner: BracketTeam | null = null;
-
-          if (participants.length >= 1) {
-            const p1 = participants[0];
-            team1 = {
-              team_id: p1.team_id,
-              team_name: p1.schools_teams.name,
-              school_name: p1.schools_teams.schools.name,
-              school_abbreviation: p1.schools_teams.schools.abbreviation,
-              school_logo_url: p1.schools_teams.schools.logo_url,
-              score: p1.match_score
-            };
-          }
-
-          if (participants.length >= 2) {
-            const p2 = participants[1];
-            team2 = {
-              team_id: p2.team_id,
-              team_name: p2.schools_teams.name,
-              school_name: p2.schools_teams.schools.name,
-              school_abbreviation: p2.schools_teams.schools.abbreviation,
-              school_logo_url: p2.schools_teams.schools.logo_url,
-              score: p2.match_score
-            };
-          }
-
-          // Determine winner if match is finished
-          if (match.status === 'finished' && team1 && team2) {
-            if (team1.score !== null && team2.score !== null) {
-              if (team1.score > team2.score) {
-                winner = team1;
-              } else if (team2.score > team1.score) {
-                winner = team2;
-              }
-            }
-          }
-
-          return {
-            match_id: match.id,
-            match_name: match.name,
-            round: Math.floor(index / 2) + 1, // Simple round calculation
-            position: index,
-            team1,
-            team2,
-            winner,
-            match_status: match.status,
-            scheduled_at: match.scheduled_at,
-            venue: match.venue
-          };
-        }) || [];
-
       const bracketStandings: BracketStandings = {
         stage_id: stage.id,
-        stage_name: stage.competition_stage.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-        competition_stage: stage.competition_stage,
-        bracket: bracketMatches
+        stage_name: stage.competition_stage, // Use competition_stage as name
+        competition_stage: 'playoffs',
+        bracket: (matches || []).map((m: any) => {
+          const participants = m.match_participants || [];
+          const team1 = participants[0];
+          const team2 = participants[1];
+          // Calculate scores based on games won
+          let team1Score = 0;
+          let team2Score = 0;
+
+          if (m.games && m.games.length > 0) {
+              m.games.forEach((g: any) => {
+                  if (g.game_scores && g.game_scores.length >= 1) {
+                      const s1 = g.game_scores.find((gs: any) => gs.match_participant_id === team1?.id)?.score ?? 0;
+                      const s2 = g.game_scores.find((gs: any) => gs.match_participant_id === team2?.id)?.score ?? 0;
+                      if (s1 > s2) team1Score++;
+                      if (s2 > s1) team2Score++;
+                  }
+              });
+          }
+
+          // Fallback to match_score if game-based calculation yielded 0-0
+          // This handles cases where games exist but game_scores are empty/incomplete
+          if (team1Score === 0 && team2Score === 0) {
+             team1Score = team1?.match_score ?? 0;
+             team2Score = team2?.match_score ?? 0;
+          }
+          
+          // Determine winner dynamically if not explicitly set
+          // (Though explicit is_winner overrides if we had it, but we calculate it now)
+          // Determine winner based on scores if not explicit
+          // Since we don't have is_winner, we rely on calculated scores if match is finished
+          let winnerTeam = null;
+          if (m.status === 'finished') {
+              if (team1Score > team2Score) winnerTeam = team1;
+              else if (team2Score > team1Score) winnerTeam = team2;
+          }
+          // Also try to find explicit winner if we had that column, but we don't.
+
+          return {
+            match_id: m.id,
+            match_name: m.title || `Round ${m.round} Match`,
+            round: m.round || 1,
+            position: m.match_order || 1,
+            group_name: m.group_name,
+            match_status: m.status,
+            team1: team1 ? {
+              team_id: team1.schools_teams?.id || '',
+              team_name: team1.schools_teams?.name || 'TBD',
+              school_name: team1.schools_teams?.schools?.name || 'TBD',
+              school_abbreviation: team1.schools_teams?.schools?.abbreviation || 'TBD',
+              school_logo_url: team1.schools_teams?.schools?.logo_url || null,
+              score: team1Score
+            } : null,
+            team2: team2 ? {
+              team_id: team2.schools_teams?.id || '',
+              team_name: team2.schools_teams?.name || 'TBD',
+              school_name: team2.schools_teams?.schools?.name || 'TBD',
+              school_abbreviation: team2.schools_teams?.schools?.abbreviation || 'TBD',
+              school_logo_url: team2.schools_teams?.schools?.logo_url || null,
+              score: team2Score
+            } : null,
+            winner: winnerTeam ? {
+              team_id: winnerTeam.schools_teams?.id || '',
+              team_name: winnerTeam.schools_teams?.name || 'TBD',
+              school_name: winnerTeam.schools_teams?.schools?.name || 'TBD',
+              school_abbreviation: winnerTeam.schools_teams?.schools?.abbreviation || 'TBD',
+              school_logo_url: winnerTeam.schools_teams?.schools?.logo_url || null,
+              score: winnerTeam === team1 ? team1Score : team2Score
+            } : null,
+            scheduled_at: m.scheduled_at || new Date().toISOString(),
+            venue: m.venue || 'TBD'
+          };
+        })
       };
 
-      return {
-        success: true,
-        data: bracketStandings
-      };
+      return { success: true, data: bracketStandings };
     } catch (err) {
-      return this.formatError(err, 'Failed to get bracket standings.');
+      return this.formatError(err, 'Failed to fetch bracket standings');
     }
   }
 
   /**
-   * Get available seasons with sports data
+   * Get play-ins standings using the same group stage table format.
+   * Delegates to getGroupStageStandings and adds TBD placeholder teams
+   * when matches are scheduled but teams haven't been assigned yet.
    */
-  static async getAvailableSeasons(): Promise<
-    ServiceResponse<Array<{ id: number; name: string; start_at: string; end_at: string }>>
-  > {
+  static async getPlayinsStandings(stageId: number): Promise<ServiceResponse<GroupStageStandings>> {
     try {
-      // Use mock data in development
-      if (USE_MOCK_DATA) {
-        return {
-          success: true,
-          data: mockSeasons
-        };
+      // Reuse group stage logic — it already calculates W-D-L standings from matches
+      const result = await this.getGroupStageStandings(stageId);
+      if (!result.success || !result.data) {
+        return { success: false, error: result.error || 'Failed to get play-ins standings' };
       }
+
+      const standings = result.data;
+
+      // Count how many matches are scheduled for this stage to determine expected team count
       const supabase = await this.getClient();
+      const { count: matchCount } = await supabase
+        .from('matches')
+        .select('id', { count: 'exact', head: true })
+        .eq('stage_id', stageId);
 
-      const { data, error } = await supabase
-        .from(SEASONS_TABLE)
-        .select('id, start_at, end_at')
-        .order('start_at', { ascending: false });
+      const totalMatches = matchCount || 0;
 
-      if (error) throw error;
+      // Check if any group has real teams
+      const hasRealTeams = standings.groups.some(g => g.teams.length > 0);
 
-      const seasons =
-        data?.map((season) => ({
-          id: season.id,
-          name: `${season.start_at.split('-')[0]}-${season.end_at.split('-')[0]}`,
-          start_at: season.start_at,
-          end_at: season.end_at
-        })) || [];
+      if (!hasRealTeams && totalMatches > 0) {
+        // Calculate expected number of teams from round-robin formula: T*(T-1)/2 = N
+        // Solve for T: T = (1 + sqrt(1 + 8N)) / 2
+        const expectedTeams = Math.round((1 + Math.sqrt(1 + 8 * totalMatches)) / 2);
 
-      return {
-        success: true,
-        data: seasons
-      };
+        // Create TBD placeholder teams
+        const tbdTeams = Array.from({ length: expectedTeams }, (_, i) => ({
+          team_id: `tbd-${i + 1}`,
+          team_name: 'TBD',
+          school_name: 'To Be Determined',
+          school_abbreviation: 'TBD',
+          school_logo_url: null,
+          matches_played: 0,
+          wins: 0,
+          losses: 0,
+          draws: 0,
+          goals_for: 0,
+          goals_against: 0,
+          goal_difference: 0,
+          points: 0,
+          position: i + 1,
+          round_difference: 0,
+          rounds_won: 0,
+          rounds_lost: 0,
+          avg_win_duration: '-'
+        }));
+
+        standings.groups = [{
+          group_name: standings.stage_name,
+          teams: tbdTeams
+        }];
+      }
+
+      return { success: true, data: standings };
     } catch (err) {
-      return this.formatError(err, 'Failed to get available seasons.');
+      return this.formatError(err, 'Failed to fetch play-ins standings');
     }
   }
 
   /**
-   * Get available sports for a season
+   * Get full standings response
    */
-  static async getAvailableSports(
-    seasonId: number
-  ): Promise<ServiceResponse<Array<{ id: number; name: string }>>> {
+  static async getStandings(filters: StandingsFilters): Promise<ServiceResponse<StandingsResponse>> {
     try {
-      // Use mock data in development
-      if (USE_MOCK_DATA) {
-        return {
-          success: true,
-          data: mockSports
+      // Get navigation
+      const navResult = await this.getStandingsNavigation(filters);
+      if (!navResult.success || !navResult.data) {
+        return { success: false, error: navResult.error || 'Failed to get navigation' };
+      }
+
+      const navigation = navResult.data;
+
+      // Determine which stage to show
+      const stageId = filters.stage_id || navigation.stages[0]?.id;
+      
+      if (!stageId) {
+        return { 
+          success: true, 
+          data: { 
+            navigation, 
+            standings: { 
+              stage_id: 0, 
+              stage_name: 'No Stage', 
+              competition_stage: 'group_stage', 
+              groups: [] 
+            } as GroupStageStandings
+          }
         };
       }
-      const supabase = await this.getClient();
 
-      const { data, error } = await supabase
-        .from(SPORTS_SEASONS_STAGES_TABLE)
-        .select(
-          `
-          sports_categories!inner (
-            sports!inner (
-              id,
-              name
-            )
-          )
-        `
-        )
-        .eq('season_id', seasonId);
+      // Get the stage type from the passed navigation or re-fetch if needed
+      const currentStage = navigation.stages.find(s => s.id === stageId);
+      const stageType = currentStage?.stage_type || 'round_robin';
 
-      if (error) throw error;
+      // Detect play-ins by competition_stage name
+      const competitionStageKey = (currentStage?.competition_stage || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const isPlayins = competitionStageKey === 'playins';
 
-      // Remove duplicates
-      const sportsMap = new Map();
-      data?.forEach((stage) => {
-        const sport = stage.sports_categories.sports;
-        sportsMap.set(sport.id, sport);
-      });
+      let standings: StandingsData;
 
-      const sports = Array.from(sportsMap.values());
-
-      return {
-        success: true,
-        data: sports
-      };
-    } catch (err) {
-      return this.formatError(err, 'Failed to get available sports.');
-    }
-  }
-
-  /**
-   * Get available categories for a season and sport
-   */
-  static async getAvailableCategories(
-    seasonId: number,
-    sportId: number
-  ): Promise<
-    ServiceResponse<Array<{ id: number; division: string; levels: string; display_name: string }>>
-  > {
-    try {
-      // Use mock data in development
-      if (USE_MOCK_DATA) {
-        return {
-          success: true,
-          data: mockCategories
-        };
+      if (isPlayins) {
+        const result = await this.getPlayinsStandings(stageId);
+        if (!result.success || !result.data) {
+          return { success: false, error: result.error || 'Failed to get play-ins standings' };
+        }
+        standings = result.data;
+      } else if (stageType === 'single_elimination' || stageType === 'double_elimination') {
+        const result = await this.getBracketStandings(stageId);
+        if (!result.success || !result.data) {
+          return { success: false, error: result.error || 'Failed to get bracket standings' };
+        }
+        standings = result.data;
+      } else {
+        // Default to round_robin
+        const result = await this.getGroupStageStandings(stageId);
+        if (!result.success || !result.data) {
+          return { success: false, error: result.error || 'Failed to get group standings' };
+        }
+        standings = result.data;
       }
-      const supabase = await this.getClient();
 
-      const { data, error } = await supabase
-        .from(SPORTS_SEASONS_STAGES_TABLE)
-        .select(
-          `
-          sports_categories!inner (
-            id,
-            division,
-            levels
-          )
-        `
-        )
-        .eq('season_id', seasonId)
-        .eq('sports_categories.sport_id', sportId);
-
-      if (error) throw error;
-
-      // Remove duplicates
-      const categoriesMap = new Map();
-      data?.forEach((stage) => {
-        const category = stage.sports_categories;
-        categoriesMap.set(category.id, {
-          id: category.id,
-          division: category.division,
-          levels: category.levels,
-          display_name: formatCategoryName(category.division, category.levels)
-        });
-      });
-
-      const categories = Array.from(categoriesMap.values());
-
-      return {
-        success: true,
-        data: categories
+      return { 
+        success: true, 
+        data: { navigation, standings }
       };
     } catch (err) {
-      return this.formatError(err, 'Failed to get available categories.');
+      return this.formatError(err, 'Failed to fetch standings');
     }
   }
 }

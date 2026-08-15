@@ -3,6 +3,15 @@ import { getAllFaq } from '@/actions/faq';
 import { Faq } from '@/lib/types/faq';
 import FaqContent from '@/components/faq/faq-content';
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'FAQ | CESAFI Sports',
+  description: 'Find answers to frequently asked questions about CESAFI Sports programs, and member schools.',
+};
+
+export const revalidate = 3600; // Revalidate every 1 hour
+
 export default async function FaqPage() {
   // Fetch FAQ items server-side
   let faqItems: Faq[] = [];

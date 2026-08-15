@@ -1,6 +1,8 @@
 
 import { getActiveSponsors } from '@/actions/sponsors';
 import { Sponsor } from '@/lib/types/sponsors';
+import SponsorLogoList from './sponsor-logo-list';
+import { moderniz, roboto } from '@/lib/fonts';
 
 export default async function SponsorsGrid() {
   const sponsorsResponse = await getActiveSponsors();
@@ -18,31 +20,19 @@ export default async function SponsorsGrid() {
 
   const sponsors = sponsorsResponse.data;
 
-  const logos = sponsors.map((sponsor: Sponsor) => ({
-    src: sponsor.logo_url || '/img/cesafi-logo.webp',
-    alt: sponsor.logo_url ? sponsor.title : `${sponsor.title} - CESAFI Logo`
-  }));
-
   return (
-    <section className="bg-muted/30 py-12 overflow-hidden transition-colors duration-300">
+    <section className="bg-background py-12 overflow-hidden transition-colors duration-300">
       <div className="container mx-auto px-4">
-        <h2 className="text-center text-3xl md:text-4xl font-bold mb-12 font-moderniz uppercase tracking-wider">
-          <span className="text-emerald">Our</span> <span className="text-teal">Partners</span>
-        </h2>
-        
-        <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 lg:gap-16">
-          {logos.map((sponsor, index) => (
-            <div key={`${sponsor.src}-${index}`} className="group relative">
-               <div className="w-24 h-16 md:w-32 md:h-20 lg:w-40 lg:h-24 relative transition-all duration-300 transform hover:scale-105">
-                  <img
-                    src={sponsor.src}
-                    alt={sponsor.alt}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-            </div>
-          ))}
+        <div className="text-center mb-16 md:mb-20">
+          <h2 className={`${moderniz.className} text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6`}>
+            Our <span className="text-primary">Partners</span>
+          </h2>
+          <p className={`${roboto.className} text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto font-light`}>
+            Proudly supported by our valued sponsors and partners
+          </p>
         </div>
+
+        <SponsorLogoList sponsors={sponsors} />
       </div>
     </section>
   );

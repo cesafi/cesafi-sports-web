@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createGameScoreSchema, updateGameScoreSchema } from '@/lib/validations/game-scores';
+import { gameScores } from '@/db/schema';
 
-export type GameScore = Database['public']['Tables']['game_scores']['Row'];
-export type GameScoreInsert = z.infer<typeof createGameScoreSchema>;
-export type GameScoreUpdate = z.infer<typeof updateGameScoreSchema>;
+export type GameScore = typeof gameScores.$inferSelect;
+export type GameScoreInsert = typeof gameScores.$inferInsert;
+export type GameScoreUpdate = Partial<GameScoreInsert>;
 
 export interface GameScoreDetailedView extends GameScore {
   [key: string]: unknown;

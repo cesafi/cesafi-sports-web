@@ -1,11 +1,12 @@
 import { z } from 'zod';
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createMatchParticipantSchema, updateMatchParticipantSchema } from '@/lib/validations/match-participants';
+import { matchParticipants } from '@/db/schema';
+import { CompetitionStage, SportDivision, SportLevel } from '@/db/schema';
 
-export type MatchParticipant = Database['public']['Tables']['match_participants']['Row'];
-export type MatchParticipantInsert = z.infer<typeof createMatchParticipantSchema>;
-export type MatchParticipantUpdate = z.infer<typeof updateMatchParticipantSchema>;
+export type MatchParticipant = typeof matchParticipants.$inferSelect;
+export type MatchParticipantInsert = typeof matchParticipants.$inferInsert;
+export type MatchParticipantUpdate = Partial<MatchParticipantInsert>;
 
 export interface MatchParticipantSearchFilters {
   match_id?: number;
@@ -107,10 +108,10 @@ export interface MatchParticipantWithMatchHistory {
     scheduled_at: string | null;
     venue: string;
     sports_seasons_stages: {
-      competition_stage: Database['public']['Enums']['competition_stage'];
+      competition_stage: CompetitionStage;
       sports_categories: {
-        division: Database['public']['Enums']['sport_divisions'];
-        levels: Database['public']['Enums']['sport_levels'];
+        division: SportDivision;
+        levels: SportLevel;
         sports: {
           name: string;
         };

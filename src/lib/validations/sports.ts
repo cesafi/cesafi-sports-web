@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { Constants } from '@/../database.types';
+import { sportDivisionsEnum, sportLevelsEnum } from '@/db/schema';
 
-const SPORT_DIVISIONS = Constants.public.Enums.sport_divisions;
-const SPORT_LEVELS = Constants.public.Enums.sport_levels;
+const SPORT_DIVISIONS = sportDivisionsEnum.enumValues;
+const SPORT_LEVELS = sportLevelsEnum.enumValues;
 
 export const createSportSchema = z.object({
   name: z

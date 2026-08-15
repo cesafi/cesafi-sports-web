@@ -1,4 +1,12 @@
-import { Database } from '@/../database.types';
+
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
 
 // Date Utilities
 export interface DateFormatOptions {
@@ -131,7 +139,6 @@ export interface RangeOrEqualityFilter {
   lt?: unknown;
 }
 
-export type TableIdType<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Row']['id'];
+export type TableIdType<T> = any; // Fallback for Drizzle migration
 
 export type NonNullPrimitive = string | number | boolean;

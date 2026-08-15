@@ -1,15 +1,8 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Trophy, Target, ChevronRight } from 'lucide-react';
+import { useMemo } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CompactGameSelector, GameOption } from '@/components/shared/filters/compact-game-selector';
 //
 import {
   StandingsNavigation as StandingsNavigationType,
@@ -23,8 +16,9 @@ interface StandingsNavbarProps {
   onStageChange: (stageId: number) => void;
   navigation?: StandingsNavigationType;
   currentStage?: number;
-  availableSports?: Array<{ id: number; name: string }>;
+  availablsports?: Array<{ id: number; name: string; logo_url: string | null; abbreviation: string | null }>;
   availableCategories?: Array<{ id: number; display_name: string }>;
+  disabled?: boolean;
 }
 
 export default function StandingsNavbar({
@@ -34,8 +28,9 @@ export default function StandingsNavbar({
   onStageChange,
   navigation,
   currentStage,
-  availableSports,
-  availableCategories
+  availablsports,
+  availableCategories,
+  disabled = false
 }: StandingsNavbarProps) {
   const formatCompetitionStage = (stage: string) => {
     switch (stage) {
@@ -52,145 +47,92 @@ export default function StandingsNavbar({
     }
   };
 
+  const gameOptions: GameOption[] = useMemo(() => {
+    if (!availablsports) return [];
+    return availablsports.map(sport => ({
+      id: sport.id.toString(),
+      name: sport.name,
+      shortName: sport.abbreviation || sport.name.substring(0, 3).toUpperCase(),
+      logoUrl: sport.logo_url
+    }));
+  }, [availablsports]);
+
   return (
-    <div className="bg-background/95 supports-[backdrop-filter]:bg-background/60 border-b backdrop-blur">
-      <div className="container flex flex-col lg:flex-row lg:h-16 lg:items-center lg:justify-between px-4 lg:px-6 py-3 lg:py-0 gap-3 lg:gap-4">
-        {/* Left side - Stages */}
-        <div className="flex items-center gap-2 lg:gap-4 overflow-x-auto pb-2 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0">
-          {navigation?.stages && (
-            <>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Target className="text-muted-foreground h-4 w-4" />
-                <span className="text-sm font-medium">Stages</span>
-                <ChevronRight className="text-muted-foreground h-4 w-4" />
-              </div>
+    <div className={`bg-background border-b z-10 sticky top-0 transition-opacity duration-200 ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
+      <div className="flex flex-col">
+        {/* Row 1: Filters & Context */}
+         <div className="container px-3 sm:px-4 py-2 sm:py-3 border-b border-border/40">
+           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+             {/* Left: Game Selector Desktop */}
+             <div className="hidden sm:flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-full">
+                <CompactGameSelector 
+                  options={gameOptions}
+                  value={currentFilters.sport_id?.toString() || ''}
+                  onChange={(val) => onSportChange(Number(val))}
+                  variant="buttons"
+                  disabled={disabled}
+                />
+             </div>
 
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {navigation.stages.map((stage, index) => (
-                  <div key={stage.id} className="flex items-center">
-                    {index > 0 && <Separator orientation="vertical" className="mx-2 h-4" />}
-                    <button
-                      onClick={() => onStageChange(stage.id)}
-                      className={`hover:bg-muted/50 relative px-3 py-1 text-sm transition-all duration-200 whitespace-nowrap ${
-                        currentStage === stage.id
-                          ? 'text-foreground font-medium'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {/* Bottom accent line for selected stage */}
-                      {currentStage === stage.id && (
-                        <div className="bg-primary absolute right-0 bottom-0 left-0 h-0.5" />
-                      )}
-                      {formatCompetitionStage(stage.competition_stage)}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+             {/* Right: Category Dropdown & Mobile Game Selector */}
+             <div className="grid grid-cols-2 sm:flex sm:flex-row items-center gap-2 self-start sm:self-auto w-full sm:w-auto">
+               <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground mr-1 hidden sm:inline-block">Filter:</span>
+               
+               <div className="sm:hidden w-full">
+                 <CompactGameSelector 
+                   options={gameOptions}
+                   value={currentFilters.sport_id?.toString() || ''}
+                   onChange={(val) => onSportChange(Number(val))}
+                   variant="dropdown"
+                   disabled={disabled}
+                 />
+               </div>
+
+               <Select 
+                 value={currentFilters.esport_category_id?.toString() || ''} 
+                 onValueChange={(val) => onCategoryChange(Number(val))}
+                 disabled={disabled}
+               >
+                 <SelectTrigger className="h-9 w-full sm:w-[200px] bg-background shadow-sm font-medium text-xs">
+                   <SelectValue placeholder="Select Category" />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {availableCategories?.map((category) => (
+                     <SelectItem key={category.id} value={category.id.toString()}>
+                       {category.display_name}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
+               </Select>
+             </div>
+           </div>
         </div>
 
-        {/* Right side - Sports & Categories */}
-        <div className="flex flex-wrap items-center gap-2 lg:gap-4">
-          {/* Sport Selector */}
-          <div className="flex items-center gap-2">
-            <Trophy className="text-muted-foreground h-4 w-4 hidden sm:block" />
-            <span className="text-sm font-medium">Sport:</span>
-            <Select
-              value={currentFilters.sport_id?.toString() ?? ''}
-              onValueChange={(value) => onSportChange(Number(value))}
-              disabled={!currentFilters.season_id || !availableSports}
-            >
-              <SelectTrigger className="w-32 lg:w-40">
-                <SelectValue placeholder="Select sport" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableSports?.map((sport) => (
-                  <SelectItem key={sport.id} value={sport.id.toString()}>
-                    {sport.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Row 2: Stage Tabs */}
+        {navigation?.stages && navigation.stages.length > 0 && (
+            <div className="container px-3 sm:px-4">
+              <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar">
+               {navigation.stages.map((stage) => {
+                 const isActive = currentStage === stage.id;
+                 return (
+                   <button
+                     key={stage.id}
+                     onClick={() => onStageChange(stage.id)}
+                     disabled={disabled}
+                     className={`relative py-3 text-sm font-medium transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed ${
+                       isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                     }`}
+                   >
+                     {stage.name || formatCompetitionStage(stage.competition_stage)}
+                     {isActive && (
+                       <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
+                     )}
+                   </button>
+                 );
+               })}
+            </div>
           </div>
-
-          <Separator orientation="vertical" className="h-4 hidden lg:block" />
-
-          {/* Category Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Category:</span>
-            <Select
-              value={currentFilters.sport_category_id?.toString() ?? ''}
-              onValueChange={(value) => onCategoryChange(Number(value))}
-              disabled={!currentFilters.sport_id || !availableCategories}
-            >
-              <SelectTrigger className="w-32 lg:w-40">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableCategories?.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* Current Selection Display */}
-      <div className="border-t px-4 lg:px-6 py-2">
-        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-          <span>Current selection:</span>
-
-          {/* Season */}
-          {currentFilters.season_id && (
-            <>
-              <Badge variant="outline">Season {currentFilters.season_id}</Badge>
-              <span>•</span>
-            </>
-          )}
-
-          {/* Sport */}
-          {currentFilters.sport_id && availableSports && (
-            <>
-              <Badge variant="outline">
-                {availableSports.find((s) => s.id === currentFilters.sport_id)?.name ??
-                  'Unknown Sport'}
-              </Badge>
-              <span>•</span>
-            </>
-          )}
-
-          {/* Category */}
-          {currentFilters.sport_category_id && availableCategories && (
-            <>
-              <Badge variant="outline">
-                {availableCategories.find((c) => c.id === currentFilters.sport_category_id)
-                  ?.display_name ?? 'Unknown Category'}
-              </Badge>
-              {currentStage && <span>•</span>}
-            </>
-          )}
-
-          {/* Stage */}
-          {currentStage && navigation && (
-            <Badge variant="default">
-              {formatCompetitionStage(
-                navigation.stages.find((s) => s.id === currentStage)?.competition_stage ?? ''
-              )}
-            </Badge>
-          )}
-
-          {/* Show message if no selections */}
-          {!currentFilters.season_id &&
-            !currentFilters.sport_id &&
-            !currentFilters.sport_category_id &&
-            !currentStage && (
-              <span className="text-muted-foreground italic">No selections made</span>
-            )}
-        </div>
+        )}
       </div>
     </div>
   );

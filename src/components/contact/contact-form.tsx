@@ -105,7 +105,7 @@ export default function ContactForm() {
           <Label htmlFor="subject">Subject *</Label>
           <Select
             value={selectedSubject}
-            onValueChange={(value) => setValue('subject', value as ContactFormData['subject'])}
+            onValueChange={(value) => setValue('subject', value as ContactFormData['subject'], { shouldValidate: true })}
           >
             <SelectTrigger className={errors.subject ? 'border-destructive' : ''}>
               <SelectValue placeholder="Select a subject" />

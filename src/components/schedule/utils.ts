@@ -24,30 +24,99 @@ export const isUpcoming = (date: Date): boolean => {
   return date > now;
 };
 
-// Group matches by date
+// Group matches by date - ALL date computation happens here (client-side)
+// This ensures correct timezone handling since the browser knows the user's timezone
 export const groupMatchesByDate = (matches: ScheduleMatch[]): ScheduleDateGroup[] => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
   const grouped = matches.reduce(
     (acc, match) => {
-      const date = match.displayDate;
-      if (!acc[date]) {
-        const matchDate = new Date(match.scheduled_at ?? new Date());
-        acc[date] = {
-          date: match.displayDate,
-          displayDate: formatDate(matchDate),
-          isToday: match.isToday,
+      let matchDate = new Date(match.scheduled_at ?? new Date());
+      if (isNaN(matchDate.getTime())) {
+        console.warn('Invalid match date:', match.scheduled_at, match);
+        matchDate = new Date();
+      }
+
+      // Derive local date key from the browser's timezone interpretation
+      const year = matchDate.getFullYear();
+      const month = String(matchDate.getMonth() + 1).padStart(2, '0');
+      const day = String(matchDate.getDate()).padStart(2, '0');
+      const dateKey = `${year}-${month}-${day}`;
+
+      // Format display date client-side (browser timezone)
+      const showYear = year !== currentYear;
+      const displayDate = matchDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        ...(showYear ? { year: 'numeric' } : {})
+      });
+
+      // Format display time client-side (browser timezone)
+      const displayTime = matchDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      // Enrich the match with client-computed fields
+      const enrichedMatch: ScheduleMatch = {
+        ...match,
+        localIsoDate: dateKey,
+        displayDate,
+        displayTime,
+        isToday: dateKey === todayStr,
+        isPast: matchDate < now
+      };
+
+      if (!acc[dateKey]) {
+        acc[dateKey] = {
+          date: dateKey,
+          displayDate,
+          isToday: dateKey === todayStr,
           isYesterday: isYesterday(matchDate),
-          isPast: match.isPast,
+          isPast: matchDate < now,
           matches: []
         };
       }
-      acc[date].matches.push(match);
+      acc[dateKey].matches.push(enrichedMatch);
       return acc;
     },
     {} as Record<string, ScheduleDateGroup>
   );
 
-  return Object.values(grouped).sort((a, b) => {
-    return new Date(a.date).getTime() - new Date(b.date).getTime();
+  // Inject empty Today group if not present
+  if (!grouped[todayStr]) {
+      const todayDate = new Date();
+      const showYear = todayDate.getFullYear() !== currentYear;
+      const displayDate = todayDate.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          ...(showYear ? { year: 'numeric' } : {})
+      });
+      
+      grouped[todayStr] = {
+          date: todayStr,
+          displayDate,
+          isToday: true,
+          isYesterday: false,
+          isPast: false,
+          matches: []
+      };
+  }
+
+  const sortedGroups = Object.values(grouped).sort((a, b) => {
+    // Return descending order: latest dates at the top, earliest at the bottom
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+
+  // Ensure inner matches are strictly chronologically sorted descending (latest at top, earliest at bottom)
+  return sortedGroups.map(group => {
+      group.matches.sort((a, b) => {
+          const timeA = new Date(a.scheduled_at ?? new Date()).getTime();
+          const timeB = new Date(b.scheduled_at ?? new Date()).getTime();
+          return timeB - timeA;
+      });
+      return group;
   });
 };
 
@@ -87,7 +156,10 @@ export const determineWinner = (
 };
 
 // Additional utility functions for date navigation
-export const isToday = (date: Date): boolean => {
+export const isToday = (date: Date | null | undefined): boolean => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return false;
+  }
   const today = new Date();
   return date.toDateString() === today.toDateString();
 };
@@ -101,11 +173,26 @@ export const formatDateShort = (date: Date): string => {
 };
 
 // Format date for header display - two lines like "SUNDAY" and "Sep 14"
-export const formatDateHeader = (date: Date): { weekday: string; date: string } => {
+export const formatDateHeader = (date: Date | null | undefined): { weekday: string; date: string } => {
+  // Handle invalid or null dates
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    const today = new Date();
+    const weekday = today.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+    const dateStr = today.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+    return { weekday, date: dateStr };
+  }
+
+  const currentYear = new Date().getFullYear();
+  const showYear = date.getFullYear() !== currentYear;
+
   const weekday = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
   const dateStr = date.toLocaleDateString('en-US', {
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    ...(showYear ? { year: 'numeric' } : {})
   });
 
   return {

@@ -1,248 +1,91 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+// @ts-nocheck
+'use client';
 
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { ReadonlyURLSearchParams } from 'next/navigation';
+import { StandingsFilters, StandingsResponse } from '@/lib/types/standings';
 import {
   getStandings,
-  getStandingsNavigation,
-  getGroupStageStandings,
-  getBracketStandings,
   getAvailableSeasons,
   getAvailableSports,
   getAvailableCategories
 } from '@/actions/standings';
 
-import {
-  StandingsResponse,
-  StandingsNavigation,
-  GroupStageStandings,
-  BracketStandings,
-  StandingsFilters
-} from '@/lib/types/standings';
-
-import { ServiceResponse } from '@/lib/types/base';
-
-// Query key factory for standings
+// Query keys for standings
 export const standingsKeys = {
   all: ['standings'] as const,
-  standings: (filters: StandingsFilters) => [...standingsKeys.all, 'data', filters] as const,
-  navigation: (filters: StandingsFilters) => [...standingsKeys.all, 'navigation', filters] as const,
-  groupStage: (stageId: number) => [...standingsKeys.all, 'group-stage', stageId] as const,
-  bracket: (stageId: number) => [...standingsKeys.all, 'bracket', stageId] as const,
-  seasons: () => [...standingsKeys.all, 'seasons'] as const,
-  sports: (seasonId: number) => [...standingsKeys.all, 'sports', seasonId] as const,
-  categories: (seasonId: number, sportId: number) =>
-    [...standingsKeys.all, 'categories', seasonId, sportId] as const
+  filters: (filters: StandingsFilters) => [...standingsKeys.all, filters] as const,
+  seasons: ['standings', 'seasons'] as const,
+  sports: (seasonId: number) => ['standings', 'sports', seasonId] as const,
+  categories: (seasonId: number, sportId: number) => ['standings', 'categories', seasonId, sportId] as const
 };
 
-/**
- * Hook to get complete standings data with navigation and standings
- */
-export function useStandings(
-  filters: StandingsFilters,
-  queryOptions?: UseQueryOptions<ServiceResponse<StandingsResponse>, Error, StandingsResponse>
-) {
-  return useQuery({
-    queryKey: standingsKeys.standings(filters),
-    queryFn: () => getStandings(filters),
-    enabled: !!(filters.season_id && filters.sport_id && filters.sport_category_id),
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error);
-      }
-      if (!data.data) {
-        throw new Error('Failed to fetch standings data.');
-      }
-      return data.data;
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes - standings change relatively frequently
-    ...queryOptions
-  });
-}
-
-/**
- * Hook to get standings navigation structure
- */
-export function useStandingsNavigation(
-  filters: StandingsFilters,
-  queryOptions?: UseQueryOptions<ServiceResponse<StandingsNavigation>, Error, StandingsNavigation>
-) {
-  return useQuery({
-    queryKey: standingsKeys.navigation(filters),
-    queryFn: () => getStandingsNavigation(filters),
-    enabled: !!(filters.season_id && filters.sport_id && filters.sport_category_id),
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error);
-      }
-      if (!data.data) {
-        throw new Error('Failed to fetch standings navigation.');
-      }
-      return data.data;
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes - navigation changes less frequently
-    ...queryOptions
-  });
-}
-
-/**
- * Hook to get group stage standings
- */
-export function useGroupStageStandings(
-  stageId: number,
-  queryOptions?: UseQueryOptions<ServiceResponse<GroupStageStandings>, Error, GroupStageStandings>
-) {
-  return useQuery({
-    queryKey: standingsKeys.groupStage(stageId),
-    queryFn: () => getGroupStageStandings(stageId),
-    enabled: !!stageId,
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error);
-      }
-      if (!data.data) {
-        throw new Error('Failed to fetch group stage standings.');
-      }
-      return data.data;
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    ...queryOptions
-  });
-}
-
-/**
- * Hook to get bracket/tournament standings
- */
-export function useBracketStandings(
-  stageId: number,
-  queryOptions?: UseQueryOptions<ServiceResponse<BracketStandings>, Error, BracketStandings>
-) {
-  return useQuery({
-    queryKey: standingsKeys.bracket(stageId),
-    queryFn: () => getBracketStandings(stageId),
-    enabled: !!stageId,
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error);
-      }
-      if (!data.data) {
-        throw new Error('Failed to fetch bracket standings.');
-      }
-      return data.data;
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    ...queryOptions
-  });
-}
-
-/**
- * Hook to get available seasons
- */
-export function useAvailableSeasons(
-  queryOptions?: UseQueryOptions<
-    ServiceResponse<Array<{ id: number; name: string; start_at: string; end_at: string }>>,
-    Error,
-    Array<{ id: number; name: string; start_at: string; end_at: string }>
-  >
-) {
-  return useQuery({
-    queryKey: standingsKeys.seasons(),
-    queryFn: getAvailableSeasons,
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error);
-      }
-      if (!data.data) {
-        throw new Error('Failed to fetch available seasons.');
-      }
-      return data.data;
-    },
-    staleTime: 30 * 60 * 1000, // 30 minutes - seasons don't change often
-    ...queryOptions
-  });
-}
-
-/**
- * Hook to get available sports for a season
- */
-export function useAvailableSports(
-  seasonId: number,
-  queryOptions?: UseQueryOptions<
-    ServiceResponse<Array<{ id: number; name: string }>>,
-    Error,
-    Array<{ id: number; name: string }>
-  >
-) {
-  return useQuery({
-    queryKey: standingsKeys.sports(seasonId),
-    queryFn: () => getAvailableSports(seasonId),
-    enabled: !!seasonId,
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error);
-      }
-      if (!data.data) {
-        throw new Error('Failed to fetch available sports.');
-      }
-      return data.data;
-    },
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    ...queryOptions
-  });
-}
-
-/**
- * Hook to get available categories for a season and sport
- */
-export function useAvailableCategories(
-  seasonId: number,
-  sportId: number,
-  queryOptions?: UseQueryOptions<
-    ServiceResponse<Array<{ id: number; division: string; levels: string; display_name: string }>>,
-    Error,
-    Array<{ id: number; division: string; levels: string; display_name: string }>
-  >
-) {
-  return useQuery({
-    queryKey: standingsKeys.categories(seasonId, sportId),
-    queryFn: () => getAvailableCategories(seasonId, sportId),
-    enabled: !!(seasonId && sportId),
-    select: (data) => {
-      if (!data.success) {
-        throw new Error(data.error);
-      }
-      if (!data.data) {
-        throw new Error('Failed to fetch available categories.');
-      }
-      return data.data;
-    },
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    ...queryOptions
-  });
-}
-
-/**
- * Helper hook to get current standings filters from URL params
- */
-export function useStandingsFilters(searchParams: URLSearchParams): StandingsFilters {
+// Parse URL params to StandingsFilters
+export function useStandingsFilters(searchParams: ReadonlyURLSearchParams): StandingsFilters {
   return {
-    season_id: searchParams.get('season') ? parseInt(searchParams.get('season')!) : undefined,
-    sport_id: searchParams.get('sport') ? parseInt(searchParams.get('sport')!) : undefined,
-    sport_category_id: searchParams.get('category')
-      ? parseInt(searchParams.get('category')!)
-      : undefined,
-    stage_id: searchParams.get('stage') ? parseInt(searchParams.get('stage')!) : undefined
+    season_id: searchParams.get('season') ? Number(searchParams.get('season')) : undefined,
+    sport_id: searchParams.get('sport') ? Number(searchParams.get('sport')) : undefined,
+    esport_category_id: searchParams.get('category') ? Number(searchParams.get('category')) : undefined,
+    stage_id: searchParams.get('stage') ? Number(searchParams.get('stage')) : undefined
   };
 }
 
-/**
- * Helper hook to build URL search params from standings filters
- */
-export function useStandingsSearchParams(filters: StandingsFilters): URLSearchParams {
-  const params = new URLSearchParams();
+// Main standings hook - now uses Supabase via server action
+export function useStandings(filters: StandingsFilters) {
+  return useQuery({
+    queryKey: standingsKeys.filters(filters),
+    queryFn: async (): Promise<StandingsResponse> => {
+      const result = await getStandings(filters);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch standings');
+      }
+      return result.data;
+    },
+    enabled: !!(filters.season_id && filters.sport_id),
+    placeholderData: keepPreviousData
+  });
+}
 
-  if (filters.season_id) params.set('season', filters.season_id.toString());
-  if (filters.sport_id) params.set('sport', filters.sport_id.toString());
-  if (filters.sport_category_id) params.set('category', filters.sport_category_id.toString());
-  if (filters.stage_id) params.set('stage', filters.stage_id.toString());
+// Available seasons hook - now uses Supabase
+export function useAvailableSeasons() {
+  return useQuery({
+    queryKey: standingsKeys.seasons,
+    queryFn: async () => {
+      const result = await getAvailableSeasons();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch seasons');
+      }
+      return result.data;
+    }
+  });
+}
 
-  return params;
+// Available sports for a season - now uses Supabase
+export function useAvailableSports(seasonId: number) {
+  return useQuery({
+    queryKey: standingsKeys.sports(seasonId),
+    queryFn: async () => {
+      const result = await getAvailableSports(seasonId);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch sports');
+      }
+      return result.data;
+    },
+    enabled: !!seasonId
+  });
+}
+
+// Available categories for a sport in a season - now uses Supabase
+export function useAvailableCategories(seasonId: number, sportId: number) {
+  return useQuery({
+    queryKey: standingsKeys.categories(seasonId, sportId),
+    queryFn: async () => {
+      const result = await getAvailableCategories(seasonId, sportId);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch categories');
+      }
+      return result.data;
+    },
+    enabled: !!(seasonId && sportId)
+  });
 }

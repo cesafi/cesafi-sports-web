@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '@/../../database.types';
 
-export type TypedSupabaseClient = SupabaseClient<Database, 'public'>;
+// We fall back to generic SupabaseClient since we migrated to Drizzle ORM
+export type TypedSupabaseClient = SupabaseClient<any, 'public', any>;
 
 export type NonNullPrimitive = string | number | boolean;
 

@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { Database } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createPhotoGallerySchema, updatePhotoGallerySchema } from '@/lib/validations/photo-gallery';
+import { photoGallery } from '@/db/schema';
 
 // Base photo gallery types from database
-export type PhotoGallery = Database['public']['Tables']['photo_gallery']['Row'];
-export type PhotoGalleryInsert = z.infer<typeof createPhotoGallerySchema>;
-export type PhotoGalleryUpdate = z.infer<typeof updatePhotoGallerySchema>;
+export type PhotoGallery = typeof photoGallery.$inferSelect;
+export type PhotoGalleryInsert = typeof photoGallery.$inferInsert;
+export type PhotoGalleryUpdate = Partial<PhotoGalleryInsert>;
 
 // Search filters for photo gallery
 export interface PhotoGallerySearchFilters {

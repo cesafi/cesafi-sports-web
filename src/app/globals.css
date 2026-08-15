@@ -44,8 +44,11 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
   
-  /* CESAFI Brand Colors */
+  /* CESAFI Sports Brand Colors */
   --color-teal: #336c61;
   --color-emerald: #19b33e;
   --color-gold: #f4b248;
@@ -351,6 +354,7 @@
   }
 }
 
+
 @keyframes marquee {
   0% {
     transform: translateX(0%);
@@ -358,4 +362,31 @@
   100% {
     transform: translateX(-25%); /* Match the 4x duplication */
   }
+}
+
+/* Gradient text utilities for CESAFI Sports branding */
+.text-gradient-cesafi {
+  background: linear-gradient(to right, var(--color-teal) 40%, var(--color-emerald) 60%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-cesafi-reverse {
+  background: linear-gradient(to right, var(--color-emerald) 40%, var(--color-teal) 60%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hide number input spinners globally */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }

@@ -20,8 +20,11 @@ import { ZodError } from 'zod';
 import { LexicalEditor } from '@/components/shared/articles/lexical-editor';
 import { DateTimeInput } from '@/components/ui/datetime-input';
 import { ImageUpload } from '@/components/shared/image-upload';
+import { CoverImageAdjuster, CoverImagePosition } from '@/components/shared/articles/cover-image-adjuster';
+import { ArrowLeft, Save, Sparkles } from 'lucide-react';
+import { extractSmartExcerpt } from '@/lib/utils/content-renderer';
+import { Textarea } from '@/components/ui/textarea';
 import slugify from 'slugify';
-import { ArrowLeft, Save } from 'lucide-react';
 
 interface ArticleFormProps {
   mode: 'create' | 'edit';
@@ -41,13 +44,15 @@ export function ArticleForm({
   backUrl
 }: ArticleFormProps) {
   const router = useRouter();
-  const [formData, setFormData] = useState<ArticleInsert | ArticleUpdate>(() => {
+  const [formData, setFormData] = useState<any>(() => {
     if (mode === 'edit' && article) {
       return {
         id: article.id,
         title: article.title,
-        content: article.content,
+        content: (article.content as any),
+        excerpt: (article as any).excerpt || '',
         cover_image_url: article.cover_image_url,
+        cover_image_position: (article as any).cover_image_position as CoverImagePosition | null,
         authored_by: article.authored_by,
         slug: article.slug,
         status: article.status,
@@ -56,8 +61,10 @@ export function ArticleForm({
     } else {
       return {
         title: '',
+        excerpt: '',
         content: {},
         cover_image_url: '',
+        cover_image_position: null,
         authored_by: '',
         slug: '',
         status: 'review',
@@ -74,8 +81,10 @@ export function ArticleForm({
       setFormData({
         id: article.id,
         title: article.title,
-        content: article.content || {},
+        content: (article.content as any) || null,
+        excerpt: (article as any).excerpt || '',
         cover_image_url: article.cover_image_url,
+        cover_image_position: (article as any).cover_image_position as CoverImagePosition | null,
         authored_by: article.authored_by,
         status: article.status,
         published_at: article.published_at || null
@@ -84,8 +93,10 @@ export function ArticleForm({
     } else {
       setFormData({
         title: '',
+        excerpt: '',
         content: {},
         cover_image_url: '',
+        cover_image_position: null,
         authored_by: '',
         slug: '',
         status: 'review',
@@ -215,10 +226,10 @@ export function ArticleForm({
       </div>
 
       {/* Writer-specific message */}
-      {isWriter && article?.status !== 'revise' && (
+      {isWriter && article?.status !== 'draft' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
           <p className="text-sm text-yellow-800">
-            You can only edit articles with &quot;Revise&quot; status. This article is currently in
+            You can only edit articles with "Draft" status. This article is currently in
             &quot;{getStatusLabel(article?.status || '')}&quot; status.
           </p>
         </div>
@@ -237,11 +248,57 @@ export function ArticleForm({
                 <div className="space-y-2">
                   <Input
                     value={formData.title}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) => setFormData((prev: any) => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter article title"
                     className={errors.title ? 'border-red-500' : ''}
                   />
                   {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Excerpt */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle>Excerpt</CardTitle>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    if (!editorContent) {
+                      toast.error('No content to extract from');
+                      return;
+                    }
+                    try {
+                      const parsed = JSON.parse(editorContent);
+                      const generated = extractSmartExcerpt(parsed, 150);
+                      setFormData((prev: any) => ({ ...prev, excerpt: generated }));
+                      toast.success('Excerpt generated');
+                    } catch {
+                       toast.error('Could not parse content');
+                    }
+                  }}
+                  className="h-8 gap-1"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Auto-Generate
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-sm text-muted-foreground mb-3 flex justify-between items-end">
+                  <span>A short summary of the article used for cards and previews. Defaults to auto-generation if left blank.</span>
+                  <span className="text-xs">{formData.excerpt?.length || 0}/250</span>
+                </div>
+                <div className="space-y-2">
+                  <Textarea
+                    value={formData.excerpt || ''}
+                    onChange={(e) => setFormData((prev: any) => ({ ...prev, excerpt: e.target.value.substring(0, 250) }))}
+                    placeholder="Enter a brief excerpt..."
+                    maxLength={250}
+                    className={errors.excerpt ? 'border-red-500 min-h-[100px]' : 'min-h-[100px]'}
+                  />
+                  {errors.excerpt && <p className="text-sm text-red-500">{errors.excerpt}</p>}
                 </div>
               </CardContent>
             </Card>
@@ -259,7 +316,7 @@ export function ArticleForm({
                       setEditorContent(
                         typeof content === 'string' ? content : JSON.stringify(content)
                       );
-                      setFormData((prev) => ({ ...prev, content }));
+                      setFormData((prev: any) => ({ ...prev, content }));
                     }}
                     className="min-h-[500px]"
                     articleId={article?.id}
@@ -287,7 +344,7 @@ export function ArticleForm({
                     id="authored_by"
                     value={formData.authored_by}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, authored_by: e.target.value }))
+                      setFormData((prev: any) => ({ ...prev, authored_by: e.target.value }))
                     }
                     placeholder="Enter author name"
                     disabled={!canEditAuthor}
@@ -306,7 +363,7 @@ export function ArticleForm({
                       value={formData.status}
                       onValueChange={(value) => {
                         const newStatus = value as ArticleStatus;
-                        setFormData((prev) => {
+                        setFormData((prev: any) => {
                           const newData = { ...prev, status: newStatus };
                           
                           // If changing to published and no published_at is set, set it to now
@@ -322,11 +379,11 @@ export function ArticleForm({
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
                         <SelectItem value="review">Review</SelectItem>
-                        <SelectItem value="revise">Revise</SelectItem>
-                        <SelectItem value="approved">Approve</SelectItem>
-                        <SelectItem value="cancelled">Cancel</SelectItem>
                         <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                        <SelectItem value="featured">Featured</SelectItem>
                       </SelectContent>
                     </Select>
                     {errors.status && <p className="text-sm text-red-500">{errors.status}</p>}
@@ -334,13 +391,13 @@ export function ArticleForm({
                 )}
 
                 {/* Published Date */}
-                {canEditStatus && formData.status && ['approved', 'published'].includes(formData.status) && (
+                {canEditStatus && formData.status && ['featured', 'published'].includes(formData.status) && (
                   <DateTimeInput
                     id="published_at"
                     label="Publish Date & Time"
                     value={formData.published_at}
                     onChange={(utcIsoString) =>
-                      setFormData((prev) => ({
+                      setFormData((prev: any) => ({
                         ...prev,
                         published_at: utcIsoString
                       }))
@@ -364,15 +421,22 @@ export function ArticleForm({
               </CardHeader>
               <CardContent className="space-y-4">
                 <ImageUpload
-                  onUpload={(url) => setFormData((prev) => ({ ...prev, cover_image_url: url }))}
-                  onRemove={() => setFormData((prev) => ({ ...prev, cover_image_url: '' }))}
+                  onUpload={(url) => setFormData((prev: any) => ({ ...prev, cover_image_url: url }))}
+                  onRemove={() => setFormData((prev: any) => ({ ...prev, cover_image_url: '', cover_image_position: null }))}
                   preset="ARTICLE_COVER"
-                  currentImageUrl={formData.cover_image_url}
+                  currentImageUrl={formData.cover_image_url || ''}
                   placeholder="Upload article cover image"
                   description="Upload a cover image for your article (16:9 aspect ratio recommended)"
                   required={false}
                   error={errors.cover_image_url}
                 />
+                {formData.cover_image_url && (
+                  <CoverImageAdjuster
+                    imageUrl={formData.cover_image_url}
+                    position={(formData as Record<string, unknown>).cover_image_position as CoverImagePosition | null}
+                    onChange={(position) => setFormData((prev: any) => ({ ...prev, cover_image_position: position }))}
+                  />
+                )}
               </CardContent>
             </Card>
 
@@ -407,16 +471,16 @@ export function ArticleForm({
 
 function getStatusLabel(status: string) {
   switch (status) {
+    case 'draft':
+      return 'Draft';
     case 'review':
       return 'Review';
-    case 'approved':
-      return 'Approved';
-    case 'revise':
-      return 'Revise';
-    case 'cancelled':
-      return 'Cancelled';
     case 'published':
       return 'Published';
+    case 'archived':
+      return 'Archived';
+    case 'featured':
+      return 'Featured';
     default:
       return status;
   }

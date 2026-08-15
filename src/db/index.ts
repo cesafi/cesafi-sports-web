@@ -10,15 +10,11 @@ import * as schema from './schema';
  */
 
 function createDrizzleClient() {
-  const databaseUrl = process.env.DATABASE_URL;
-
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is not set. Add it to .env.local');
-  }
+  const databaseUrl = process.env.DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:5432/postgres';
 
   const client = postgres(databaseUrl, {
-    // Supabase requires SSL
-    ssl: 'require',
+    // Supabase requires SSL when connecting to remote DB
+    ssl: process.env.DATABASE_URL ? 'require' : false,
     // Connection pool settings for Next.js server environment
     max: 10,
     idle_timeout: 20,

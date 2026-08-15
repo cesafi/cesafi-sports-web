@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Season } from '@/lib/types/seasons';
-import { SeasonService } from '@/services/seasons';
+import { getAllSeasons } from '@/actions/seasons';
 
 interface SeasonContextType {
   currentSeason: Season | null;
@@ -30,7 +30,7 @@ export function SeasonProvider({ children }: SeasonProviderProps) {
     const fetchSeasons = async () => {
       try {
         setIsLoading(true);
-        const result = await SeasonService.getAll();
+        const result = await getAllSeasons();
         
         if (result.success && result.data) {
           const seasons = result.data;

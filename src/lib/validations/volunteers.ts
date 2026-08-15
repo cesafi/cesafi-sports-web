@@ -6,6 +6,7 @@ export const createVolunteerSchema = z.object({
     .string()
     .min(1, { message: 'Volunteer photo is required.' })
     .url({ message: 'Please upload a valid photo.' }),
+  title: z.string().nullable().optional(),
   is_active: z.boolean().default(true),
   department_id: z.number().nullable().optional(),
   season_id: z.number().nullable().optional()
@@ -15,6 +16,7 @@ export const updateVolunteerSchema = z.object({
   id: z.uuid({ message: 'ID is required for updating.' }),
   full_name: z.string().min(1, { message: 'Full name cannot be empty.' }).optional(),
   image_url: z.url().optional().or(z.literal('')),
+  title: z.string().nullable().optional(),
   is_active: z.boolean().optional(),
   department_id: z.number().nullable().optional(),
   season_id: z.number().nullable().optional()

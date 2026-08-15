@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { Database } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createFaqSchema, updateFaqSchema } from '@/lib/validations/faq';
+import { faq } from '@/db/schema';
 
 // Base FAQ types from database
-export type Faq = Database['public']['Tables']['faq']['Row'];
-export type FaqInsert = z.infer<typeof createFaqSchema>;
-export type FaqUpdate = z.infer<typeof updateFaqSchema>;
+export type Faq = typeof faq.$inferSelect;
+export type FaqInsert = typeof faq.$inferInsert;
+export type FaqUpdate = Partial<FaqInsert>;
 
 // Search filters for FAQ
 export interface FaqSearchFilters {

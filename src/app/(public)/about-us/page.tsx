@@ -7,11 +7,19 @@ import { Faq } from '@/lib/types/faq';
 import { moderniz, roboto } from '@/lib/fonts';
 import Image from 'next/image';
 import { Suspense } from 'react';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'About Us | CESAFI Sports',
+  description: 'Learn about CESAFI Sports - the official sports league of the Cebu Schools Athletic Foundation, Inc.',
+};
+
+export const revalidate = 3600; // Revalidate every 1 hour
 
 export default async function AboutUsPage() {
   // Fetch About Us FAQs server-side
   let aboutUsFaqs: Faq[] = [];
-  
+
   try {
     const faqResult = await getAboutUsFaq();
     if (faqResult.success && 'data' in faqResult && Array.isArray(faqResult.data)) {
@@ -25,7 +33,7 @@ export default async function AboutUsPage() {
   return (
     <>
       {/* Hero Section */}
-      <section className="bg-background relative flex min-h-screen items-center overflow-hidden pt-20">
+      <section className="bg-background relative flex min-h-[60vh] sm:min-h-screen items-center overflow-hidden pt-20 pb-12 sm:pb-0">
         {/* Background with dynamic light streaks */}
         <div className="absolute inset-0">
           <div className="from-background via-muted/20 to-background h-full w-full bg-gradient-to-br" />
@@ -39,12 +47,12 @@ export default async function AboutUsPage() {
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+          <div className="grid grid-cols-1 items-center gap-8 sm:gap-12 lg:grid-cols-2">
             {/* Left Section - Text Content */}
-            <div className="space-y-8 text-center md:text-left">
+            <div className="space-y-4 sm:space-y-8 text-center md:text-left">
               <div>
                 <h1
-                  className={`${moderniz.className} text-foreground mb-6 text-5xl leading-tight font-bold lg:text-6xl xl:text-7xl`}
+                  className={`${moderniz.className} text-foreground mb-3 sm:mb-6 text-3xl sm:text-5xl leading-tight font-bold lg:text-6xl xl:text-7xl`}
                 >
                   CESAFI
                   <br />
@@ -54,7 +62,7 @@ export default async function AboutUsPage() {
 
               <div>
                 <p
-                  className={`${roboto.className} text-muted-foreground text-xl leading-relaxed lg:text-2xl`}
+                  className={`${roboto.className} text-muted-foreground text-base sm:text-xl leading-relaxed lg:text-2xl`}
                 >
                   Honoring the athletes, coaches, and institutions who define the future of
                   competitive sports in Cebu.
@@ -62,7 +70,7 @@ export default async function AboutUsPage() {
               </div>
 
               <div>
-                <p className={`${roboto.className} text-muted-foreground text-lg leading-relaxed`}>
+                <p className={`${roboto.className} text-muted-foreground text-sm sm:text-lg leading-relaxed`}>
                   CESAFI is dedicated to showcasing top-class performance and innovation from the
                   players, teams, schools, events, and personalities within the Cebu sports scene.
                 </p>
@@ -73,8 +81,8 @@ export default async function AboutUsPage() {
             <div className="relative">
               {/* Main Image Container */}
               <div className="relative">
-                <div className="from-primary/20 via-primary/10 to-secondary/20 border-primary/20 rounded-3xl border bg-gradient-to-br p-8">
-                  <div className="bg-muted/30 relative h-96 overflow-hidden rounded-2xl">
+                <div className="from-primary/20 via-primary/10 to-secondary/20 border-primary/20 rounded-2xl sm:rounded-3xl border bg-gradient-to-br p-3 sm:p-8">
+                  <div className="bg-muted/30 relative h-48 sm:h-96 overflow-hidden rounded-xl sm:rounded-2xl">
                     <Image
                       src="/img/cesafi-banner.jpg"
                       alt="CESAFI Sports Excellence"
@@ -85,19 +93,19 @@ export default async function AboutUsPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                     {/* Overlay Text */}
-                    <div className="absolute right-6 bottom-6 left-6">
-                      <h3 className={`${moderniz.className} mb-2 text-2xl font-bold text-white`}>
+                    <div className="absolute right-4 bottom-4 left-4 sm:right-6 sm:bottom-6 sm:left-6">
+                      <h3 className={`${moderniz.className} mb-1 sm:mb-2 text-lg sm:text-2xl font-bold text-white`}>
                         Athletic Excellence
                       </h3>
-                      <p className={`${roboto.className} text-white/90`}>
+                      <p className={`${roboto.className} text-white/90 text-xs sm:text-base`}>
                         Celebrating the best in Cebu sports
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Floating Award/Trophy Element */}
-                <div className="bg-accent absolute -top-4 -right-4 flex h-20 w-20 items-center justify-center rounded-full shadow-lg">
+                {/* Floating Award/Trophy Element - Hidden on mobile */}
+                <div className="bg-accent absolute -top-4 -right-4 hidden sm:flex h-20 w-20 items-center justify-center rounded-full shadow-lg">
                   <div className="bg-accent-foreground flex h-12 w-12 items-center justify-center rounded-full">
                     <span className={`${moderniz.className} text-accent text-lg font-bold`}>
                       🏆

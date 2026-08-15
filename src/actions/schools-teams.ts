@@ -6,6 +6,10 @@ import { RevalidationHelper } from '@/lib/utils/revalidation';
 import { ServiceResponse } from '@/lib/types/base';
 
 // Context-based fetching methods
+export async function getAllSchoolsTeams() {
+  return await SchoolsTeamService.getAll();
+}
+
 export async function getSchoolsTeamsBySchoolId(schoolId: string) {
   return await SchoolsTeamService.getBySchoolId(schoolId);
 }
@@ -91,4 +95,8 @@ export async function deleteSchoolsTeamById(id: string) {
   }
 
   return result;
+}
+
+export async function getSchoolsTeamBySlug(teamSlug: string, schoolAbbreviation: string) {
+  return SchoolsTeamService.getBySlugAndSchool(teamSlug, schoolAbbreviation);
 }

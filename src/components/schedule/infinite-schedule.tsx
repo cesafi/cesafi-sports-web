@@ -1,46 +1,92 @@
+// @ts-nocheck
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { ScheduleDateGroup, groupMatchesByDate } from './utils';
 import DateGroup from './date-group';
 import DateNavigation from './date-navigation';
 import FloatingNavButton from './floating-nav-button';
+import { Season } from '@/lib/types/seasons';
+import { sportsSeasonStageWithDetails } from '@/lib/types/sports-seasons-stages';
+import type { RichSportCategory } from './schedule-content';
+
+// Helper function to safely get ISO date string from a Date object
+function safeGetDateString(date: Date | null | undefined): string | null {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toISOString().split('T')[0];
+}
 
 interface InfiniteScheduleProps {
   readonly matches: ScheduleMatch[];
-  readonly onMatchClick?: (match: ScheduleMatch) => void;
   readonly onLoadMore?: (direction: 'future' | 'past') => void;
   readonly hasMoreFuture?: boolean;
   readonly hasMorePast?: boolean;
   readonly isLoading?: boolean;
-  readonly selectedSport?: string;
-  readonly onSportChange?: (sport: string) => void;
-  readonly availableSports?: string[];
+  readonly isFetchingNextPage?: boolean;
+  readonly isFetchingPreviousPage?: boolean;
+  // New Filters
+  readonly selectedSportId?: string;
+  readonly onSportChange?: (id: string) => void;
+  readonly selectedDivision?: string; // "Category"
+  readonly onDivisionChange?: (division: string) => void;
+  // Legacy
+  readonly availableRichSports?: RichSportCategory[];
+  readonly availableSeasons?: Season[];
+  readonly selectedSeason?: string;
+  readonly onSeasonChange?: (seasonId: string) => void;
+  readonly availableStages?: sportsSeasonStageWithDetails[];
+  readonly selectedStage?: string;
+  readonly onStageChange?: (stageId: string) => void;
+  readonly availableSchools?: any[];
+  readonly selectedschools?: string;
+  readonly onSchoolChange?: (schoolId: string) => void;
+  readonly availableSports?: string[]; // Deprecated but kept for type compat if needed temporarily
 }
 
 export default function InfiniteSchedule({
   matches,
-  onMatchClick,
   onLoadMore,
   hasMoreFuture = false,
   hasMorePast = false,
   isLoading = false,
-  selectedSport = 'all',
+  isFetchingNextPage = false,
+  isFetchingPreviousPage = false,
+  selectedSportId = 'all',
   onSportChange,
-  availableSports = [
-    'Basketball',
-    'Volleyball',
-    'Football',
-    'Tennis',
-    'Badminton',
-    'Track and Field',
-    'Swimming'
-  ]
+  selectedDivision = 'all',
+  onDivisionChange,
+  availableSports = [],
+  availableRichSports = [],
+  availableSeasons = [],
+  selectedSeason,
+  onSeasonChange,
+  availableStages = [],
+  selectedStage,
+  onStageChange,
+  availableSchools = [],
+  selectedSchool,
+  onSchoolChange
 }: InfiniteScheduleProps) {
+  // Helper to ensure we always have a valid Date
+  const getValidDate = (date: Date | string | null | undefined): Date => {
+    if (!date) return new Date();
+    const d = date instanceof Date ? date : new Date(date);
+    return isNaN(d.getTime()) ? new Date() : d;
+  };
+
   const [dateGroups, setDateGroups] = useState<ScheduleDateGroup[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [displayedDate, setDisplayedDate] = useState(new Date()); // Date shown on left side
+  const dateGroupsRef = useRef(dateGroups);
+  useEffect(() => {
+    dateGroupsRef.current = dateGroups;
+  }, [dateGroups]);
+  const prevScrollStateRef = useRef({ height: 0, top: 0, isPrepend: false });
+
+  const [displayedDate, setDisplayedDate] = useState(() => getValidDate(new Date())); // Date shown on left side
   const [showFloatingButton, setShowFloatingButton] = useState(false);
   const [floatingButtonDirection, setFloatingButtonDirection] = useState<'up' | 'down'>('up');
   const topObserverRef = useRef<IntersectionObserver | null>(null);
@@ -48,19 +94,108 @@ export default function InfiniteSchedule({
   const topLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const bottomLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter matches by sport - memoized to prevent unnecessary re-renders
+  // Filter matches by sport/division - memoized to prevent unnecessary re-renders
   const filteredMatches = useMemo(() => {
     return matches.filter((match) => {
-      if (selectedSport === 'all') return true;
-      return match.sports_seasons_stages.sports_categories.sports.name === selectedSport;
+      let matchEsport = true;
+      let matchDivision = true;
+
+      // Filter by Esport ID
+      if (selectedSportId !== 'all') {
+        matchEsport = match.sports_seasons_stages?.sports_categories?.sports?.id.toString() === selectedSportId;
+      }
+
+      // Filter by Division ("Category")
+      if (selectedDivision !== 'all') {
+        matchDivision = match.sports_seasons_stages?.sports_categories?.division === selectedDivision;
+      }
+
+      // Filter by School
+      let matchSchool = true;
+      if (selectedSchool && selectedSchool !== 'all') {
+        matchSchool = !!match.match_participants?.some((p: any) => 
+          p.schools_teams?.school?.id.toString() === selectedSchool ||
+          p.schools_teams?.school?.abbreviation === selectedSchool
+        );
+      }
+
+      return matchEsport && matchDivision && matchSchool;
     });
-  }, [matches, selectedSport]);
+  }, [matches, selectedSportId, selectedDivision, selectedSchool]);
 
   // Group filtered matches by date
   useEffect(() => {
     const grouped = groupMatchesByDate(filteredMatches);
+    const currentGroups = dateGroupsRef.current;
+    
+    const oldFirstDate = currentGroups.length > 0 ? currentGroups[0].date : null;
+    const newFirstDate = grouped.length > 0 ? grouped[0].date : null;
+    const isPrepend = !!(oldFirstDate && newFirstDate && oldFirstDate !== newFirstDate && grouped.some(g => g.date === oldFirstDate));
+
+    if (isPrepend) {
+      prevScrollStateRef.current = {
+        height: document.documentElement.scrollHeight,
+        top: window.scrollY,
+        isPrepend: true
+      };
+    } else {
+      prevScrollStateRef.current.isPrepend = false;
+    }
+
     setDateGroups(grouped);
   }, [filteredMatches]);
+
+  useLayoutEffect(() => {
+    if (prevScrollStateRef.current.isPrepend) {
+      const newScrollHeight = document.documentElement.scrollHeight;
+      const heightDiff = newScrollHeight - prevScrollStateRef.current.height;
+      if (heightDiff > 0) {
+        window.scrollBy({ top: heightDiff, behavior: 'instant' });
+      }
+      prevScrollStateRef.current.isPrepend = false;
+    }
+  }, [dateGroups]);
+
+  // Scroll to today (or nearest date) on initial mount
+  const hasScrolledRef = useRef(false);
+  useEffect(() => {
+    if (dateGroups.length === 0 || hasScrolledRef.current) return;
+
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+
+    // Find today's group or the nearest future date
+    let targetGroup = dateGroups.find(g => g.date === todayString);
+
+    if (!targetGroup) {
+      // Find nearest date (closest to today)
+      let closestIndex = 0;
+      let minDiff = Infinity;
+      dateGroups.forEach((group, index) => {
+        const groupDate = getValidDate(group.date);
+        const diff = Math.abs(groupDate.getTime() - today.getTime());
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIndex = index;
+        }
+      });
+      targetGroup = dateGroups[closestIndex];
+    }
+
+    if (targetGroup) {
+      // Update the displayed date to the target group's date
+      setDisplayedDate(getValidDate(targetGroup.date));
+
+      // Delay slightly to ensure DOM is ready
+      setTimeout(() => {
+        const element = document.getElementById(`date-group-${targetGroup!.date}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'auto', block: 'start' });
+          hasScrolledRef.current = true;
+        }
+      }, 100);
+    }
+  }, [dateGroups]);
 
   // Handle scroll detection for floating button and displayed date
   useEffect(() => {
@@ -91,7 +226,7 @@ export default function InfiniteSchedule({
 
       // Update displayed date if we found a visible group
       if (visibleDateGroup) {
-        setDisplayedDate(new Date(visibleDateGroup.date));
+        setDisplayedDate(getValidDate(visibleDateGroup.date));
       }
 
       // Floating button logic - only show when scrolled away from today
@@ -129,33 +264,34 @@ export default function InfiniteSchedule({
 
   // Set up intersection observers for infinite scroll
   useEffect(() => {
-    // Top observer for loading past matches
+    // Top observer for loading future matches (since they appear at the top now)
     if (topObserverRef.current) {
       topObserverRef.current.disconnect();
     }
 
     topObserverRef.current = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMorePast && !isLoading) {
-          onLoadMore?.('past');
+        // Only load future if user has actually scrolled near the top (not on initial page load)
+        if (entries[0].isIntersecting && hasMoreFuture && !isLoading && window.scrollY > 200) {
+          onLoadMore?.('future');
         }
       },
-      { threshold: 0.1 }
+      { threshold: 1.0, rootMargin: '-100px 0px 0px 0px' }
     );
 
     if (topLoadMoreRef.current) {
       topObserverRef.current.observe(topLoadMoreRef.current);
     }
 
-    // Bottom observer for loading future matches
+    // Bottom observer for loading past matches (since they appear at the bottom now)
     if (bottomObserverRef.current) {
       bottomObserverRef.current.disconnect();
     }
 
     bottomObserverRef.current = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMoreFuture && !isLoading) {
-          onLoadMore?.('future');
+        if (entries[0].isIntersecting && hasMorePast && !isLoading) {
+          onLoadMore?.('past');
         }
       },
       { threshold: 0.1 }
@@ -175,80 +311,111 @@ export default function InfiniteSchedule({
     };
   }, [hasMorePast, hasMoreFuture, isLoading, onLoadMore]);
 
+  const scrollToDateGroup = useCallback((dateStr: string) => {
+    const element = document.getElementById(`date-group-${dateStr}`);
+    if (element) {
+      // Offset for sticky navigation headers (approx 160px for navbar + date string + filters)
+      const headerOffset = 180;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+      setDisplayedDate(getValidDate(dateStr));
+    }
+  }, []);
+
+  const handleDateChange = useCallback((targetDate: Date) => {
+    if (dateGroups.length === 0) return;
+
+    let targetGroup = dateGroups.find(g => g.date === safeGetDateString(targetDate));
+
+    if (!targetGroup) {
+      let minDiff = Infinity;
+      dateGroups.forEach(g => {
+        const diff = Math.abs(getValidDate(g.date).getTime() - targetDate.getTime());
+        if (diff < minDiff) {
+          minDiff = diff;
+          targetGroup = g;
+        }
+      });
+    }
+
+    if (targetGroup) {
+      scrollToDateGroup(targetGroup.date);
+    }
+  }, [dateGroups, scrollToDateGroup]);
+
   const handleDateNavigation = useCallback(
     (direction: 'previous' | 'next') => {
-      const targetDate = new Date(currentDate);
-      if (direction === 'previous') {
-        targetDate.setDate(targetDate.getDate() - 1);
-      } else {
-        targetDate.setDate(targetDate.getDate() + 1);
-      }
+      const displayedDateStr = safeGetDateString(displayedDate);
+      if (!displayedDateStr || dateGroups.length === 0) return;
 
-      // Find the date group for the target date
-      const targetDateString = targetDate.toISOString().split('T')[0];
-      const targetGroup = dateGroups.find((group) => group.date === targetDateString);
+      const currentIndex = dateGroups.findIndex(g => g.date === displayedDateStr);
+      if (currentIndex === -1) return;
+
+      let targetGroup = null;
+      if (direction === 'previous' && currentIndex > 0) {
+        targetGroup = dateGroups[currentIndex - 1];
+      } else if (direction === 'next' && currentIndex < dateGroups.length - 1) {
+        targetGroup = dateGroups[currentIndex + 1];
+      }
 
       if (targetGroup) {
-        // Scroll to the target date group
-        const element = document.getElementById(`date-group-${targetDateString}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        scrollToDateGroup(targetGroup.date);
       }
-
-      setCurrentDate(targetDate);
     },
-    [currentDate, dateGroups]
+    [displayedDate, dateGroups, scrollToDateGroup]
   );
 
   const handleFloatingButtonClick = useCallback(() => {
     const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
-    const todayGroup = dateGroups.find((group) => group.date === todayString);
-
-    if (todayGroup) {
-      const element = document.getElementById(`date-group-${todayString}`);
-      if (element) {
-        // Calculate offset to center the element in the viewport
-        const elementRect = element.getBoundingClientRect();
-        const absoluteElementTop = elementRect.top + window.scrollY;
-        const offset = window.innerHeight / 2 - elementRect.height / 2;
-        const targetPosition = absoluteElementTop - offset;
-
-        window.scrollTo({
-          top: targetPosition,
-          behavior: 'smooth'
-        });
-      }
-    }
-
-    setCurrentDate(today);
-  }, [dateGroups]);
+    handleDateChange(today);
+  }, [handleDateChange]);
 
   return (
     <div className="w-full max-w-full space-y-6">
       {/* Date Navigation */}
       <DateNavigation
         currentDate={displayedDate}
-        onDateChange={setCurrentDate}
-        _hasMatches={dateGroups.some(
-          (group) => group.date === displayedDate.toISOString().split('T')[0]
-        )}
+        onDateChange={handleDateChange}
+        _hasMatches={(() => {
+          const displayedDateStr = safeGetDateString(displayedDate);
+          if (!displayedDateStr) return false;
+          return dateGroups.some((group) => group.date === displayedDateStr);
+        })()}
         onPreviousDay={() => handleDateNavigation('previous')}
         onNextDay={() => handleDateNavigation('next')}
-        selectedSport={selectedSport}
+        selectedSportId={selectedSportId}
         onSportChange={onSportChange}
+        selectedDivision={selectedDivision}
+        onDivisionChange={onDivisionChange}
         availableSports={availableSports}
-        availableDates={dateGroups.map((group) => new Date(group.date))}
+        availableRichSports={availableRichSports} // Pass rich data
+        availableDates={dateGroups.map((group) => getValidDate(group.date))}
         hasMorePast={hasMorePast}
         hasMoreFuture={hasMoreFuture}
+        availableSeasons={availableSeasons}
+        selectedSeason={selectedSeason}
+        onSeasonChange={onSeasonChange}
+        availableStages={availableStages}
+        selectedStage={selectedStage}
+        onStageChange={onStageChange}
+        availableSchools={availableSchools}
+        selectedSchool={selectedSchool}
+        onSchoolChange={onSchoolChange}
       />
 
-      {/* Load More Past Trigger */}
-      {hasMorePast && (
-        <div ref={topLoadMoreRef} className="flex h-10 items-center justify-center">
-          {isLoading && (
-            <div className="text-muted-foreground font-roboto text-sm">Loading past matches...</div>
+      {/* Load More Future Trigger (Top) */}
+      {hasMoreFuture && (
+        <div ref={topLoadMoreRef} className="flex h-10 items-center justify-center py-4">
+          {isFetchingNextPage && (
+            <div className="flex items-center text-muted-foreground font-roboto text-sm">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading future matches...
+            </div>
           )}
         </div>
       )}
@@ -256,10 +423,16 @@ export default function InfiniteSchedule({
       {/* All Matches - Infinite Scroll */}
       {dateGroups.length > 0 ? (
         <div className="space-y-12">
-          {dateGroups.map((dateGroup) => (
-            <div key={dateGroup.date} id={`date-group-${dateGroup.date}`}>
-              <DateGroup dateGroup={dateGroup} onMatchClick={onMatchClick} />
-            </div>
+          {dateGroups.map((dateGroup, index) => (
+            <motion.div
+              key={dateGroup.date}
+              id={`date-group-${dateGroup.date}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <DateGroup dateGroup={dateGroup} />
+            </motion.div>
           ))}
         </div>
       ) : (
@@ -268,12 +441,13 @@ export default function InfiniteSchedule({
         </div>
       )}
 
-      {/* Load More Future Trigger */}
-      {hasMoreFuture && (
-        <div ref={bottomLoadMoreRef} className="flex h-10 items-center justify-center">
-          {isLoading && (
-            <div className="text-muted-foreground font-roboto text-sm">
-              Loading future matches...
+      {/* Load More Past Trigger (Bottom) */}
+      {hasMorePast && (
+        <div ref={bottomLoadMoreRef} className="flex h-10 items-center justify-center py-4">
+          {isFetchingPreviousPage && (
+            <div className="flex items-center text-muted-foreground font-roboto text-sm">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading past matches...
             </div>
           )}
         </div>

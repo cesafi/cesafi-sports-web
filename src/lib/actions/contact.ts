@@ -22,78 +22,226 @@ const subjectLabels = {
 
 type ContactFormData = z.infer<typeof contactSchema>;
 
+const LOGO_URL = 'https://cesafi.org/img/cesafi-logo.webp';
+const WEBSITE_URL = 'https://cesafi.org';
+
+// Brand colors
+const PRIMARY_GREEN = '#336C61';
+const ACCENT_GOLD = '#F2A900';
+
+function buildTeamEmailHtml(name: string, email: string, subjectLabel: string, message: string): string {
+    return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>[${subjectLabel}] Contact Form</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          
+          <tr>
+            <td style="height:4px;background:linear-gradient(90deg, ${PRIMARY_GREEN} 0%, ${ACCENT_GOLD} 100%);font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+          
+          <tr>
+            <td style="padding:32px 40px 24px 40px;text-align:center;">
+              <img src="${LOGO_URL}" alt="CESAFI" width="48" height="48" style="display:inline-block;height:48px;width:auto;margin-bottom:16px;" />
+              <h1 style="margin:0;font-size:22px;font-weight:700;color:#0f172a;letter-spacing:-0.3px;">New Contact Submission</h1>
+              <p style="margin:8px 0 0 0;font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:2px;font-weight:600;">${subjectLabel}</p>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding:0 40px;">
+              <div style="height:1px;background-color:#e2e8f0;"></div>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding:28px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f1f5f9;border-radius:12px;border:1px solid #e2e8f0;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding-bottom:12px;">
+                          <span style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#64748b;font-weight:600;">From</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom:4px;">
+                          <span style="font-size:17px;font-weight:600;color:#0f172a;">${name}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <a href="mailto:${email}" style="font-size:14px;color:${PRIMARY_GREEN};text-decoration:none;font-weight:500;">${email}</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding:0 40px 32px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding-bottom:12px;">
+                    <span style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#64748b;font-weight:600;">Message</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background-color:#f1f5f9;border-radius:12px;border:1px solid #e2e8f0;border-left:3px solid ${PRIMARY_GREEN};padding:20px 24px;">
+                    <p style="margin:0;font-size:15px;line-height:1.7;color:#334155;white-space:pre-wrap;">${message}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background-color:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:12px;color:#64748b;line-height:1.5;">Sent via the <a href="${WEBSITE_URL}" style="color:${PRIMARY_GREEN};text-decoration:none;font-weight:600;">CESAFI Sports</a> contact form</p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function buildUserConfirmationHtml(name: string, subjectLabel: string, message: string): string {
+    return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Message Received - CESAFI Sports</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          
+          <tr>
+            <td style="background-color:#ffffff;padding:48px 40px 40px 40px;text-align:center;border-bottom:1px solid #e2e8f0;">
+              <img src="${LOGO_URL}" alt="CESAFI Sports" width="72" height="72" style="display:inline-block;height:72px;width:auto;margin-bottom:20px;" />
+              <h1 style="margin:0 0 8px 0;font-size:26px;font-weight:800;color:#0f172a;letter-spacing:-0.5px;">Message Received!</h1>
+              <p style="margin:0;font-size:14px;color:#64748b;font-weight:400;">We appreciate you reaching out</p>
+              <div style="width:60px;height:3px;background:linear-gradient(90deg, ${PRIMARY_GREEN}, ${ACCENT_GOLD});margin:20px auto 0 auto;border-radius:2px;"></div>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding:40px;">
+              <p style="margin:0 0 24px 0;font-size:18px;font-weight:600;color:#0f172a;">Hi ${name},</p>
+              
+              <p style="margin:0 0 32px 0;font-size:15px;color:#475569;line-height:1.7;">Thank you for contacting <strong style="color:#0f172a;">CESAFI Sports</strong>. We have received your message and our team will review it within <strong style="color:#0f172a;">24&ndash;48 hours</strong>.</p>
+              
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:32px;">
+                <tr>
+                  <td style="padding:20px 24px 16px 24px;border-bottom:1px solid #e2e8f0;">
+                    <span style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:${PRIMARY_GREEN};font-weight:700;">Your Submission</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 24px 8px 24px;">
+                    <span style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:600;">Subject</span>
+                    <p style="margin:4px 0 0 0;font-size:15px;font-weight:600;color:#0f172a;">${subjectLabel}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 24px 20px 24px;">
+                    <span style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:600;">Message</span>
+                    <p style="margin:8px 0 0 0;font-size:14px;color:#475569;line-height:1.6;font-style:italic;white-space:pre-wrap;border-left:3px solid #e2e8f0;padding-left:16px;">${message}</p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="margin:0 0 32px 0;font-size:15px;color:#475569;line-height:1.7;">If you have any urgent matters, feel free to reply directly to this email.</p>
+              
+              <p style="margin:0;font-size:15px;color:#475569;line-height:1.7;">Best regards,</p>
+              <p style="margin:4px 0 0 0;font-size:15px;font-weight:700;color:#0f172a;">The CESAFI Sports Team</p>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding:0 40px 36px 40px;text-align:center;">
+              <a href="${WEBSITE_URL}" style="display:inline-block;background-color:${PRIMARY_GREEN};color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:14px;letter-spacing:0.3px;">Visit Our Website</a>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="background-color:#f8fafc;padding:28px 40px;text-align:center;border-top:1px solid #e2e8f0;">
+              <p style="margin:0 0 4px 0;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;">Cebu Schools Athletic Foundation, Inc.</p>
+              <p style="margin:0 0 16px 0;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;">Sports</p>
+              <p style="margin:0;font-size:11px;color:#94a3b8;">
+                <a href="${WEBSITE_URL}" style="color:#64748b;text-decoration:none;">cesafi.org</a>
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 export async function sendContactEmail(formData: ContactFormData) {
     try {
-        // Validate the form data
         const validatedData = contactSchema.parse(formData);
         const { name, email, subject, message } = validatedData;
         const subjectLabel = subjectLabels[subject];
 
-        // Send email to your team
-        await resend.emails.send({
-            from: 'CESAFI Contact Form <noreply@yourdomain.com>', // Replace with your domain
-            to: ['contact@yourdomain.com'], // Replace with your contact email
+        // Send email to team
+        const responseTeam = await resend.emails.send({
+            from: 'CESAFI Sports <noreply@cesafi.org>',
+            to: ['contact@cesafi.org'],
             subject: `[${subjectLabel}] New Contact Form Submission`,
-            html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #336C61;">New Contact Form Submission</h2>
-          
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Subject:</strong> ${subjectLabel}</p>
-          </div>
-          
-          <div style="background-color: #ffffff; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-            <h3>Message:</h3>
-            <p style="white-space: pre-wrap;">${message}</p>
-          </div>
-          
-          <div style="margin-top: 20px; padding: 15px; background-color: #e8f4f1; border-radius: 8px;">
-            <p style="margin: 0; font-size: 14px; color: #666;">
-              This message was sent from the CESAFI Sports contact form.
-            </p>
-          </div>
-        </div>
-      `,
+            html: buildTeamEmailHtml(name, email, subjectLabel, message),
         });
 
         // Send confirmation email to the user
-        await resend.emails.send({
-            from: 'CESAFI Sports <noreply@yourdomain.com>', // Replace with your domain
+        const responseUser = await resend.emails.send({
+            from: 'CESAFI Sports <noreply@cesafi.org>',
             to: [email],
             subject: 'Thank you for contacting CESAFI Sports',
-            html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #336C61;">Thank you for your message!</h2>
-          
-          <p>Hi ${name},</p>
-          
-          <p>Thank you for reaching out to CESAFI Sports. We've received your message and will get back to you within 24-48 hours.</p>
-          
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3>Your Message Summary:</h3>
-            <p><strong>Subject:</strong> ${subjectLabel}</p>
-            <p><strong>Message:</strong></p>
-            <p style="white-space: pre-wrap; font-style: italic;">${message}</p>
-          </div>
-          
-          <p>If you have any urgent matters, please don't hesitate to reach out to us directly.</p>
-          
-          <p>Best regards,<br>The CESAFI Sports Team</p>
-          
-          <div style="margin-top: 30px; padding: 15px; background-color: #e8f4f1; border-radius: 8px; text-align: center;">
-            <p style="margin: 0; font-size: 14px; color: #666;">
-              Visit us at <a href="https://yourdomain.com" style="color: #336C61;">CESAFI Sports</a>
-            </p>
-          </div>
-        </div>
-      `,
+            html: buildUserConfirmationHtml(name, subjectLabel, message),
         });
 
+        if (responseTeam.error) {
+            console.error('Resend API error (team):', responseTeam.error);
+            return {
+                success: false,
+                error: `Resend Error: ${responseTeam.error.message}`
+            };
+        }
+
+        if (responseUser.error) {
+            console.error('Resend API error (user):', responseUser.error);
+            return {
+                success: false,
+                error: `Resend Error: ${responseUser.error.message}`
+            };
+        }
+
+        console.log('Successfully sent contact emails!');
         return { success: true };
     } catch (error) {
-        console.error('Contact form error:', error);
+        console.error('Contact form action caught exception:', error);
 
         if (error instanceof z.ZodError) {
             return {

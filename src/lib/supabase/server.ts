@@ -1,7 +1,7 @@
 'use server';
 
 import { createServerClient } from '@supabase/ssr';
-import { Database } from '@/../database.types';
+
 import { cookies } from 'next/headers';
 
 import { TypedSupabaseClient } from '../types/base';
@@ -9,7 +9,7 @@ import { TypedSupabaseClient } from '../types/base';
 export async function getSupabaseServer(): Promise<TypedSupabaseClient> {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

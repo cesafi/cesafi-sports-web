@@ -3,7 +3,9 @@
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { moderniz, roboto } from '@/lib/fonts';
+import { ArrowRight } from 'lucide-react';
 
 export default function AboutCesafi() {
   const ref = useRef(null);
@@ -22,7 +24,7 @@ export default function AboutCesafi() {
   const opacity2 = useTransform(scrollYProgress, [0.2, 0.6], [0, 1]);
 
   return (
-    <section ref={ref} className="bg-muted/30 relative min-h-screen overflow-hidden">
+    <section ref={ref} className="bg-background relative min-h-screen overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 py-32 sm:px-6 lg:px-8">
         <div className="grid min-h-[90vh] grid-cols-1 items-center gap-20 lg:grid-cols-3">
           {/* Left Side - CESAFI Logo */}
@@ -48,9 +50,9 @@ export default function AboutCesafi() {
                 animate={
                   isInView
                     ? {
-                        scale: [1, 1.1, 1],
-                        opacity: [0.3, 0.6, 0.3]
-                      }
+                      scale: [1, 1.1, 1],
+                      opacity: [0.3, 0.6, 0.3]
+                    }
                     : { scale: 1, opacity: 0.3 }
                 }
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
@@ -62,9 +64,9 @@ export default function AboutCesafi() {
                 animate={
                   isInView
                     ? {
-                        y: [0, -20, 0],
-                        rotate: [0, 180, 360]
-                      }
+                      y: [0, -20, 0],
+                      rotate: [0, 180, 360]
+                    }
                     : { y: 0, rotate: 0 }
                 }
                 transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -74,9 +76,9 @@ export default function AboutCesafi() {
                 animate={
                   isInView
                     ? {
-                        y: [0, 15, 0],
-                        rotate: [0, -180, -360]
-                      }
+                      y: [0, 15, 0],
+                      rotate: [0, -180, -360]
+                    }
                     : { y: 0, rotate: 0 }
                 }
                 transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
@@ -86,9 +88,9 @@ export default function AboutCesafi() {
                 animate={
                   isInView
                     ? {
-                        y: [0, -10, 0],
-                        x: [0, 10, 0]
-                      }
+                      y: [0, -10, 0],
+                      x: [0, 10, 0]
+                    }
                     : { y: 0, x: 0 }
                 }
                 transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
@@ -100,10 +102,10 @@ export default function AboutCesafi() {
                 animate={
                   isInView
                     ? {
-                        rotate: [0, 5, -5, 0],
-                        scale: [1, 1.02, 1],
-                        y: [0, -5, 0]
-                      }
+                      rotate: [0, 5, -5, 0],
+                      scale: [1, 1.02, 1],
+                      y: [0, -5, 0]
+                    }
                     : { rotate: 0, scale: 1, y: 0 }
                 }
                 transition={{
@@ -129,9 +131,9 @@ export default function AboutCesafi() {
                 animate={
                   isInView
                     ? {
-                        scale: [1, 1.3, 1],
-                        opacity: [0.4, 0, 0.4]
-                      }
+                      scale: [1, 1.3, 1],
+                      opacity: [0.4, 0, 0.4]
+                    }
                     : { scale: 1, opacity: 0.4 }
                 }
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
@@ -141,9 +143,9 @@ export default function AboutCesafi() {
                 animate={
                   isInView
                     ? {
-                        scale: [1, 1.5, 1],
-                        opacity: [0.2, 0, 0.2]
-                      }
+                      scale: [1, 1.5, 1],
+                      opacity: [0.2, 0, 0.2]
+                    }
                     : { scale: 1, opacity: 0.2 }
                 }
                 transition={{ duration: 2.5, repeat: Infinity, ease: 'easeOut', delay: 0.5 }}
@@ -160,11 +162,11 @@ export default function AboutCesafi() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                 transition={{ duration: 1, delay: 0.5 }}
-                className={`${moderniz.className} text-foreground text-4xl leading-[1.2] font-bold tracking-tight xl:text-5xl 2xl:text-6xl`}
+                className={`${moderniz.className} text-foreground leading-[1.2] font-bold tracking-tight text-3xl md:text-4xl xl:text-5xl 2xl:text-6xl`}
               >
                 Showcasing
-                <span className="text-accent"> top-class performance</span> and
-                <span className="text-secondary"> innovation</span> from the best of the best.
+                <span className="text-primary"> top-class performance</span> and
+                <span className="text-primary"> innovation</span> from the best of the best.
               </motion.p>
             </motion.div>
 
@@ -174,33 +176,36 @@ export default function AboutCesafi() {
                 initial={{ opacity: 0, y: 40 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
                 transition={{ duration: 1.2, delay: 0.8 }}
-                className={`${roboto.className} text-muted-foreground max-w-4xl text-xl leading-relaxed lg:text-2xl xl:text-3xl`}
+                className={`${roboto.className} text-muted-foreground max-w-4xl text-base leading-relaxed sm:text-lg md:text-xl lg:text-2xl xl:text-3xl`}
               >
                 Honoring the athletes, coaches, and institutions who define the future of
                 competitive sports in Cebu.
               </motion.p>
 
-              <motion.button
-                initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                animate={
-                  isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.9 }
-                }
-                transition={{
-                  duration: 0.8,
-                  delay: 1.2,
-                  type: 'spring',
-                  stiffness: 200,
-                  damping: 20
-                }}
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-                }}
-                whileTap={{ scale: 0.95 }}
-                className={`${moderniz.className} bg-foreground hover:bg-foreground/90 text-background rounded-2xl px-10 py-5 text-xl font-semibold tracking-wide uppercase shadow-lg transition-all duration-300`}
-              >
-                Learn More
-              </motion.button>
+              <Link href="/about-us">
+                <motion.button
+                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                  animate={
+                    isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 30, scale: 0.9 }
+                  }
+                  transition={{
+                    duration: 0.8,
+                    delay: 1.2,
+                    type: 'spring',
+                    stiffness: 200,
+                    damping: 20
+                  }}
+                  whileHover={{
+                    scale: 1.05,
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`${roboto.className} bg-foreground hover:bg-foreground/90 text-background px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 shadow-lg inline-flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center`}
+                >
+                  Learn More
+                  <ArrowRight className="w-4 h-4" />
+                </motion.button>
+              </Link>
             </motion.div>
           </div>
         </div>

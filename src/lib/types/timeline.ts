@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { Database } from '../../../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createTimelineSchema, updateTimelineSchema } from '@/lib/validations/timeline';
+import { cesafiTimeline } from '@/db/schema';
 
 // Direct database type mapping
-export type Timeline = Database['public']['Tables']['cesafi_timeline']['Row'];
-export type TimelineInsert = z.infer<typeof createTimelineSchema>;
-export type TimelineUpdate = z.infer<typeof updateTimelineSchema>;
+export type Timeline = typeof cesafiTimeline.$inferSelect;
+export type TimelineInsert = typeof cesafiTimeline.$inferInsert;
+export type TimelineUpdate = Partial<TimelineInsert>;
 
 // Timeline category enum
 export type TimelineCategory = 'founding' | 'milestone' | 'award' | 'expansion' | 'achievement';

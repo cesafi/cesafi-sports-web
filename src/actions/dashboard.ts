@@ -64,28 +64,3 @@ export async function getDashboardStats() {
   }
 }
 
-export async function getQuickActionsData() {
-  try {
-    // Get counts for quick actions display
-    const [schoolsCount, seasonsCount, articlesCount] = await Promise.all([
-      SchoolService.getCount(),
-      SeasonService.getCount(),
-      ArticleService.getCount()
-    ]);
-
-    return {
-      success: true,
-      data: {
-        schools: schoolsCount.success ? schoolsCount.data || 0 : 0,
-        seasons: seasonsCount.success ? seasonsCount.data || 0 : 0,
-        articles: articlesCount.success ? articlesCount.data || 0 : 0
-      }
-    };
-  } catch (error) {
-    console.error('Error fetching quick actions data:', error);
-    return {
-      success: false,
-      error: 'Failed to fetch quick actions data'
-    };
-  }
-}

@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { Database } from '../../../database.types';
-import { FilterValue, PaginationOptions } from './base';
+import { FilterValue, PaginationOptions, ServiceResponse } from './base';
 import { createHeroSectionLiveSchema, updateHeroSectionLiveSchema } from '@/lib/validations/hero-section';
+import { heroSectionLive } from '@/db/schema';
 
 // Base hero section live types from database
-export type HeroSectionLive = Database['public']['Tables']['hero_section_live']['Row'];
-export type HeroSectionLiveInsert = z.infer<typeof createHeroSectionLiveSchema>;
-export type HeroSectionLiveUpdate = z.infer<typeof updateHeroSectionLiveSchema>;
+export type HeroSectionLive = typeof heroSectionLive.$inferSelect;
+export type HeroSectionLiveInsert = typeof heroSectionLive.$inferInsert;
+export type HeroSectionLiveUpdate = Partial<HeroSectionLiveInsert>;
 
 // Search filters for hero section live
 export interface HeroSectionLiveSearchFilters {
@@ -28,8 +28,4 @@ export interface HeroSectionLiveWithDetails extends HeroSectionLive {
 }
 
 // Service response for getting current active hero section
-export interface CurrentHeroSectionResponse {
-  success: boolean;
-  data?: HeroSectionLiveWithDetails | null;
-  error?: string;
-}
+export type CurrentHeroSectionResponse = ServiceResponse<HeroSectionLiveWithDetails | null>;

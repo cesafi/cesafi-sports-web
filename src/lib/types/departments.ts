@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createDepartmentSchema, updateDepartmentSchema } from '@/lib/validations/departments';
+import { departments } from '@/db/schema';
 
-export type Department = Database['public']['Tables']['departments']['Row'];
-export type DepartmentInsert = z.infer<typeof createDepartmentSchema>;
-export type DepartmentUpdate = z.infer<typeof updateDepartmentSchema>;
+export type Department = typeof departments.$inferSelect;
+export type DepartmentInsert = typeof departments.$inferInsert;
+export type DepartmentUpdate = Partial<DepartmentInsert>;
 
 export interface DepartmentSearchFilters {
   name?: string;

@@ -31,7 +31,7 @@ export const getVolunteersTableColumns = (departments?: Department[]): TableColu
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium text-foreground truncate">{volunteer.full_name}</div>
-          <div className="text-xs text-muted-foreground">Volunteer</div>
+          <div className="text-xs text-muted-foreground">{volunteer.title || 'Volunteer'}</div>
         </div>
       </div>
     )

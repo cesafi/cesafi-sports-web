@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { Constants, Json } from '@/../database.types';
+import { articleStatusEnum } from '@/db/schema';
+import { Json } from '@/lib/types/utils';
 
 const ArticleContentSchema = z.union([
   z.string().min(1, { message: 'Content cannot be empty.' }),
@@ -53,7 +54,7 @@ export const createArticleSchema = z.object({
   authored_by: z.string().min(1, { message: 'Author is required.' }),
   slug: z.string().min(1, { message: 'Slug is required.' }),
   status: z
-    .enum(Constants.public.Enums.article_status, {
+    .enum(articleStatusEnum.enumValues, {
       message: 'Status must be one of: draft, review, approved, revise, cancelled'
     })
     .default('review'),
@@ -81,7 +82,7 @@ export const updateArticleSchema = z.object({
   authored_by: z.string().min(1, { message: 'Author cannot be empty.' }).optional(),
   slug: z.string().min(1, { message: 'Slug cannot be empty.' }).optional(),
   status: z
-    .enum(Constants.public.Enums.article_status, {
+    .enum(articleStatusEnum.enumValues, {
       message: 'Status must be one of: draft, review, approved, revise, cancelled'
     })
     .optional(),

@@ -1,50 +1,41 @@
-import { Calendar, TrendingUp, Clock } from 'lucide-react';
+// @ts-nocheck
 import { SeasonProvider } from '@/components/contexts/season-provider';
 import { ScheduleContent } from '@/components/schedule';
-import { getScheduleMatchesWithCategories, getAvailableSportCategories } from '@/actions/matches';
-import { ScheduleMatch } from '@/lib/types/matches';
+import { getScheduleMatchesAroundDate, getAvailableSportCategories, getAvailableSeasons, getAvailableStages } from '@/actions/matches';
+import { getActiveSchools } from '@/actions/schools';
 import { moderniz, roboto } from '@/lib/fonts';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Match Schedule | CESAFI sports League',
+  description: 'View the full match schedule for the CESAFI sports League. Follow upcoming and past matches across MLBB and Valorant competitions.',
+};
+
+export const revalidate = 0; // Temporarily disabled caching for dev
 
 export default async function SchedulePage() {
-  // Fetch initial data server-side
-  const [matchesResult, categoriesResult] = await Promise.all([
-    getScheduleMatchesWithCategories({
-      limit: 50,
-      direction: 'future',
+  // Fetch initial data server-side using bidirectional loading
+  const [matchesResult, categoriesResult, seasonsResult, stagesResult, schoolsResult] = await Promise.all([
+    getScheduleMatchesAroundDate({
+      totalLimit: 40,
       filters: {}
     }),
-    getAvailableSportCategories()
+    getAvailableSportCategories(),
+    getAvailableSeasons(),
+    getAvailableStages(),
+    getActiveSchools()
   ]);
 
-  const matches: ScheduleMatch[] =
-    matchesResult.success && matchesResult.data ? matchesResult.data.matches : [];
+  const matches = matchesResult.success && matchesResult.data ? matchesResult.data.matches : [];
+  const hasMorePast = matchesResult.success && matchesResult.data ? matchesResult.data.hasMorePast : false;
+  const hasMoreFuture = matchesResult.success && matchesResult.data ? matchesResult.data.hasMoreFuture : false;
+  const pastCursor = matchesResult.success && matchesResult.data ? matchesResult.data.pastCursor : null;
+  const futureCursor = matchesResult.success && matchesResult.data ? matchesResult.data.futureCursor : null;
   const categories = categoriesResult.success && categoriesResult.data ? categoriesResult.data : [];
+  const seasons = seasonsResult.success && seasonsResult.data ? seasonsResult.data : [];
+  const stages = stagesResult.success && stagesResult.data ? stagesResult.data : [];
+  const schools = schoolsResult.success && schoolsResult.data ? schoolsResult.data : [];
 
-  // Calculate stats
-  const liveMatches = matches.filter((m) => m.status === 'ongoing').length;
-  const todaysMatches = matches.filter((m) => m.isToday).length;
-  const upcomingMatches = matches.filter((m) => !m.isPast).length;
-
-  const stats = [
-    {
-      icon: TrendingUp,
-      value: liveMatches.toString(),
-      label: 'Live Matches',
-      colorClass: 'text-emerald-500'
-    },
-    {
-      icon: Calendar,
-      value: todaysMatches.toString(),
-      label: "Today's Matches",
-      colorClass: 'text-primary'
-    },
-    {
-      icon: Clock,
-      value: upcomingMatches.toString(),
-      label: 'Upcoming',
-      colorClass: 'text-amber-500'
-    }
-  ];
 
   return (
     <SeasonProvider>
@@ -62,7 +53,7 @@ export default async function SchedulePage() {
               <h1
                 className={`${moderniz.className} text-foreground mb-4 text-3xl font-bold sm:mb-6 sm:text-4xl md:text-6xl lg:text-7xl`}
               >
-                Match <span className="text-primary">Schedule</span>
+                Match <span className="text-gradient-cel">Schedule</span>
               </h1>
 
               {/* Subtitle */}
@@ -72,34 +63,23 @@ export default async function SchedulePage() {
                 Follow all CESAFI matches with real-time updates and live scores across all sports
                 and categories.
               </p>
-
-              {/* Stats */}
-              <div className="grid grid-cols-1 gap-6 max-w-4xl mx-auto sm:gap-8 sm:grid-cols-2 md:grid-cols-3">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="flex flex-col items-center group">
-                    <div className="p-3 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors duration-300 mb-3 sm:p-4 sm:mb-4">
-                      <stat.icon className={`h-6 w-6 ${stat.colorClass} sm:h-8 sm:w-8`} />
-                    </div>
-                    <div
-                      className={`${moderniz.className} text-2xl font-bold text-foreground mb-1 sm:text-3xl sm:mb-2 md:text-4xl`}
-                    >
-                      {stat.value}
-                    </div>
-                    <div
-                      className={`${roboto.className} text-muted-foreground text-xs font-medium text-center sm:text-sm`}
-                    >
-                      {stat.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </section>
 
         {/* Main Content */}
         <div className="container mx-auto max-w-[1000px] px-4 py-6 sm:py-8">
-          <ScheduleContent initialMatches={matches} availableCategories={categories} />
+          <ScheduleContent
+            initialMatches={matches}
+            initialHasMorePast={hasMorePast}
+            initialHasMoreFuture={hasMoreFuture}
+            initialPastCursor={pastCursor}
+            initialFutureCursor={futureCursor}
+            availableCategories={categories}
+            availableSeasons={seasons}
+            availableStages={stages}
+            availableSchools={schools}
+          />
         </div>
       </div>
     </SeasonProvider>

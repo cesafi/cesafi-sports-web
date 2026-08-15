@@ -69,6 +69,16 @@ export const UPLOAD_PRESETS = {
     format: 'auto',
     maxFileSize: 10 * 1024 * 1024, // 10MB
     acceptedTypes: ['image/jpeg', 'image/png', 'image/webp']
+  },
+  PLAYER_PHOTO: {
+    folder: 'players/photos',
+    maxWidth: 800,
+    maxHeight: 800,
+    aspectRatio: 1,
+    quality: 'auto',
+    format: 'auto',
+    maxFileSize: 5 * 1024 * 1024, // 5MB
+    acceptedTypes: ['image/jpeg', 'image/png', 'image/webp']
   }
 } as const;
 

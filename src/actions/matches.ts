@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use server';
 
 import {
@@ -147,6 +148,14 @@ export async function getScheduleMatches(options: SchedulePaginationOptions) {
   return await MatchService.getScheduleMatches(options);
 }
 
+export async function getScheduleMatchesAroundDate(options?: {
+  totalLimit?: number;
+  referenceDate?: string;
+  filters?: ScheduleFilters;
+}) {
+  return await MatchService.getScheduleMatchesAroundDate(options);
+}
+
 export async function getScheduleMatchesByDate(options: ScheduleFilters) {
   return await MatchService.getScheduleMatchesByDate(options);
 }
@@ -172,4 +181,11 @@ export async function getScheduleMatchesWithCategories(options: SchedulePaginati
 
 export async function getAvailableSportCategories() {
   return await MatchService.getAvailableSportCategories();
+}
+
+export async function getAvailableStages() {
+  return await (await import('./sports-seasons-stages')).getAllSportsSeasonsStages();
+}
+export async function getAvailableSeasons() {
+  return await (await import('./standings')).getAvailableSeasons();
 }

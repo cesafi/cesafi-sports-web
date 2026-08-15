@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { Database } from '@/../database.types';
 import { FilterValue, PaginationOptions } from './base';
 import { createSchoolSchema, updateSchoolSchema } from '@/lib/validations/schools';
+import { schools } from '@/db/schema';
 
-export type School = Database['public']['Tables']['schools']['Row'];
-export type SchoolInsert = z.infer<typeof createSchoolSchema>;
-export type SchoolUpdate = z.infer<typeof updateSchoolSchema>;
+export type School = typeof schools.$inferSelect;
+export type SchoolInsert = typeof schools.$inferInsert;
+export type SchoolUpdate = Partial<SchoolInsert>;
 
 export interface SchoolSearchFilters {
   name?: string;
