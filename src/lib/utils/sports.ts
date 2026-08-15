@@ -90,6 +90,7 @@ export const getSportIcon = (sportName: string): string => {
 
     // Other Sports
     Chess: 'Chess',
+    Scrabble: 'Grid3X3',
     Cheerdance: 'Sparkles',
     'Dance Sport': 'Music',
     'Sepak Takraw': 'Circle',
@@ -150,3 +151,4 @@ export const getSportIcon = (sportName: string): string => {
   // Return default icon if no match found
   return sportIconMap.default;
 };
+
