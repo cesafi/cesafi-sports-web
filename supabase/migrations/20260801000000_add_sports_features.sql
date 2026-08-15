@@ -180,3 +180,27 @@ CREATE POLICY "Admins and league operators can manage game stats"
   ON public.game_stats FOR ALL
   TO authenticated
   USING (true);
+
+-- ============================================================
+-- 5. sport_stat_mappings — dynamic statistics configuration
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.sport_stat_mappings (
+  id SERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  sport_id INTEGER NOT NULL REFERENCES public.sports(id) ON DELETE CASCADE,
+  stat_column VARCHAR(20) NOT NULL,
+  label VARCHAR(50) NOT NULL
+);
+
+ALTER TABLE public.sport_stat_mappings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can view sport stat mappings"
+  ON public.sport_stat_mappings FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "Admins and league operators can manage sport stat mappings"
+  ON public.sport_stat_mappings FOR ALL
+  TO authenticated
+  USING (true);
