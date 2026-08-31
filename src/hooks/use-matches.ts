@@ -197,6 +197,12 @@ export function useCreateMatch(
     onSuccess: (result, variables, context) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: matchKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['overview'] });
+        queryClient.invalidateQueries({ queryKey: ['recent'] });
+        queryClient.invalidateQueries({ queryKey: ['upcoming'] });
         // Invalidate stage-specific queries if stage_id is provided
         if (variables.stage_id) {
           queryClient.invalidateQueries({
@@ -223,6 +229,12 @@ export function useUpdateMatch(
     onSuccess: (result, variables, context) => {
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: matchKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['overview'] });
+        queryClient.invalidateQueries({ queryKey: ['recent'] });
+        queryClient.invalidateQueries({ queryKey: ['upcoming'] });
         if (variables.id) {
           queryClient.invalidateQueries({ queryKey: matchKeys.details(variables.id) });
         }
@@ -394,9 +406,17 @@ export function useMatchesTable(selectedStageId: number | null) {
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Match created successfully');
+        queryClient.invalidateQueries({ queryKey: matchKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['overview'] });
+        queryClient.invalidateQueries({ queryKey: ['recent'] });
+        queryClient.invalidateQueries({ queryKey: ['upcoming'] });
         if (selectedStageId) {
           queryClient.invalidateQueries({ queryKey: matchKeys.byStage(selectedStageId) });
         }
+        refetch();
       } else {
         toast.error(result.error || 'Failed to create match');
       }
@@ -412,9 +432,19 @@ export function useMatchesTable(selectedStageId: number | null) {
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Match updated successfully');
+        queryClient.invalidateQueries({ queryKey: matchKeys.all });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'schedule'] });
+        queryClient.invalidateQueries({ queryKey: ['matches', 'scheduleByDate'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['overview'] });
+        queryClient.invalidateQueries({ queryKey: ['recent'] });
+        queryClient.invalidateQueries({ queryKey: ['upcoming'] });
+        queryClient.invalidateQueries({ queryKey: ['games'] });
+        queryClient.invalidateQueries({ queryKey: ['match_participants'] });
         if (selectedStageId) {
           queryClient.invalidateQueries({ queryKey: matchKeys.byStage(selectedStageId) });
         }
+        refetch();
       } else {
         toast.error(result.error || 'Failed to update match');
       }
