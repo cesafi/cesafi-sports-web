@@ -710,6 +710,7 @@ export class MatchService extends BaseService {
           nextCursor,
           prevCursor,
           hasMore,
+          direction: options.direction || 'future',
           totalCount: count ?? 0
         }
       };

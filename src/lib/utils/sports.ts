@@ -24,6 +24,19 @@ export const formatCategoryName = (division: string, levels: string): string => 
 };
 
 /**
+ * Formats a competition stage into a human-readable string
+ * @param stage - The stage string (e.g. group_stage)
+ * @returns Formatted string like "Group Stage"
+ */
+export const formatStage = (stage: string): string => {
+  if (!stage) return '';
+  return stage
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+/**
  * Formats a sport division into a human-readable string
  * @param division - The division (men, women, mixed)
  * @returns Formatted string like "Men's" or "Mixed"

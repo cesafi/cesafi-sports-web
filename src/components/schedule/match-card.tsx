@@ -4,6 +4,7 @@
 import { Flame, MapPin, Play, Trophy, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { ScheduleMatch } from '@/lib/types/matches';
+import { formatCategoryName, formatStage } from '@/lib/utils/sports';
 import { determineWinner } from './utils';
 import Link from 'next/link';
 
@@ -280,7 +281,10 @@ export default function MatchCard({ match }: MatchCardProps) {
           <span className="text-[10px] sm:text-xs text-muted-foreground truncate">
             <span className="sm:hidden">{sport?.abbreviation ?? sport?.name ?? '?'} • </span>
             <span className="hidden sm:inline">{sport?.name ?? 'Unknown'} • </span>
-            {category?.division ?? 'Open'} • {stage}
+            {category?.division && category?.levels 
+              ? formatCategoryName(category.division, category.levels) 
+              : (category?.division ? formatCategoryName(category.division, '') : 'Open')} 
+            {' '}• {formatStage(stage)}
           </span>
         </div>
 
