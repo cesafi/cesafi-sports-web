@@ -53,7 +53,7 @@ export class StandingsService extends BaseService {
           name,
           logo_url,
           abbreviation,
-          sports_categories!inner (
+          sports_categories!sport_category_id!inner(
             sports_seasons_stages!inner (
               season_id
             )
@@ -235,7 +235,7 @@ export class StandingsService extends BaseService {
       // Get stage info with scoring rules and esport type
       const { data: stage, error: stageError } = await supabase
         .from('sports_seasons_stages')
-        .select('id, competition_stage, sports_categories!inner (sports!inner (name))')
+        .select('id, competition_stage, sports_categories!sport_category_id!inner(sports!inner (name))')
         .eq('id', stageId)
         .single();
 

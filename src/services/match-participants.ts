@@ -394,7 +394,7 @@ export class MatchParticipantService extends BaseService {
             venue,
             sports_seasons_stages!inner(
               competition_stage,
-              sports_categories!inner(
+              sports_categories!sport_category_id!inner(
                 division,
                 levels,
                 sports!inner(name)

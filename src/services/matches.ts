@@ -32,7 +32,7 @@ export class MatchService extends BaseService {
       id,
       competition_stage,
       season_id,
-      sports_categories (
+      sports_categories!sport_category_id (
         id,
         division,
         levels,
@@ -75,7 +75,7 @@ export class MatchService extends BaseService {
       id,
       competition_stage,
       season_id,
-      sports_categories (
+      sports_categories!sport_category_id (
         id,
         division,
         levels,
@@ -267,8 +267,8 @@ export class MatchService extends BaseService {
             id,
             competition_stage,
             season_id,
-            category_id,
-            sports_categories!inner(
+            sport_category_id,
+            sports_categories!sport_category_id!inner(
               id,
               division,
               levels,
@@ -342,8 +342,8 @@ export class MatchService extends BaseService {
             id,
             competition_stage,
             season_id,
-            category_id,
-            sports_categories!inner(
+            sport_category_id,
+            sports_categories!sport_category_id!inner(
               id,
               division,
               levels,
@@ -400,8 +400,8 @@ export class MatchService extends BaseService {
             id,
             competition_stage,
             season_id,
-            category_id,
-            sports_categories!inner(
+            sport_category_id,
+            sports_categories!sport_category_id!inner(
               id,
               division,
               levels,
@@ -444,8 +444,8 @@ export class MatchService extends BaseService {
             id,
             competition_stage,
             season_id,
-            category_id,
-            sports_categories!inner(
+            sport_category_id,
+            sports_categories!sport_category_id!inner(
               id,
               division,
               levels,
@@ -462,7 +462,7 @@ export class MatchService extends BaseService {
           )
         `
         )
-        .eq('sports_seasons_stages.category_id', sportCategoryId)
+        .eq('sports_seasons_stages.sport_category_id', sportCategoryId)
         .order('scheduled_at', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
@@ -491,8 +491,8 @@ export class MatchService extends BaseService {
             id,
             competition_stage,
             season_id,
-            category_id,
-            sports_categories!inner(
+            sport_category_id,
+            sports_categories!sport_category_id!inner(
               id,
               division,
               levels,
@@ -535,8 +535,8 @@ export class MatchService extends BaseService {
             id,
             competition_stage,
             season_id,
-            category_id,
-            sports_categories!inner(
+            sport_category_id,
+            sports_categories!sport_category_id!inner(
               id,
               division,
               levels,
@@ -580,7 +580,7 @@ export class MatchService extends BaseService {
       }
       if (options.filters?.category_id) {
         query = query.eq(
-          'sports_seasons_stages.category_id',
+          'sports_seasons_stages.sport_category_id',
           options.filters.category_id
         );
       }
@@ -681,7 +681,7 @@ export class MatchService extends BaseService {
         countQuery.eq('sports_seasons_stages.sports_categories.sport_id', options.filters.sport_id);
       }
       if (options.filters?.category_id) {
-        countQuery.eq('sports_seasons_stages.category_id', options.filters.category_id);
+        countQuery.eq('sports_seasons_stages.sport_category_id', options.filters.category_id);
       }
       if (options.filters?.stage_id) {
         countQuery.eq('stage_id', options.filters.stage_id);
@@ -790,8 +790,8 @@ export class MatchService extends BaseService {
             id,
             competition_stage,
             season_id,
-            category_id,
-            sports_categories!inner(
+            sport_category_id,
+            sports_categories!sport_category_id!inner(
               id,
               division,
               levels,
@@ -831,7 +831,7 @@ export class MatchService extends BaseService {
         query = query.eq('sports_seasons_stages.sports_categories.sport_id', options.sport_id);
       }
       if (options.category_id) {
-        query = query.eq('sports_seasons_stages.category_id', options.category_id);
+        query = query.eq('sports_seasons_stages.sport_category_id', options.category_id);
       }
       if (options.stage_id) {
         query = query.eq('stage_id', options.stage_id);
@@ -1484,8 +1484,8 @@ export class MatchService extends BaseService {
             id,
             competition_stage,
             season_id,
-            category_id,
-            sports_categories!inner(
+            sport_category_id,
+            sports_categories!sport_category_id!inner(
               id,
               division,
               levels,

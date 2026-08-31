@@ -58,7 +58,7 @@ export class SportsSeasonsStageService extends BaseService {
         .select(
           `
           *,
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,
@@ -128,7 +128,7 @@ export class SportsSeasonsStageService extends BaseService {
         .select(
           `
           *,
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,

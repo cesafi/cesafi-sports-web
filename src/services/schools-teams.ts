@@ -26,7 +26,7 @@ export class SchoolsTeamService extends BaseService {
         .select(`
           *,
           schools!inner(name, abbreviation, logo_url),
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,
@@ -55,7 +55,7 @@ export class SchoolsTeamService extends BaseService {
         .select(
           `
           *,
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,
@@ -87,7 +87,7 @@ export class SchoolsTeamService extends BaseService {
           `
           *,
           schools!inner(name, abbreviation, logo_url),
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,
@@ -145,7 +145,7 @@ export class SchoolsTeamService extends BaseService {
         .select(
           `
           *,
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,
@@ -181,7 +181,7 @@ export class SchoolsTeamService extends BaseService {
         .select(
           `
           *,
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,
@@ -423,7 +423,7 @@ export class SchoolsTeamService extends BaseService {
         .select(
           `
           *,
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,
@@ -462,7 +462,7 @@ export class SchoolsTeamService extends BaseService {
         .select(
           `
           *,
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,
@@ -512,7 +512,7 @@ export class SchoolsTeamService extends BaseService {
           `
           *,
           schools!inner(name, abbreviation, logo_url),
-          sports_categories!inner(
+          sports_categories!sport_category_id!inner(
             id,
             division,
             levels,
@@ -556,7 +556,7 @@ export class SchoolsTeamService extends BaseService {
         .from('schools_teams')
         .select(`
           *,
-          sports_categories (
+          sports_categories!sport_category_id (
             id,
             division,
             levels,
