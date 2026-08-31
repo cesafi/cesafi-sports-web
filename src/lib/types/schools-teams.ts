@@ -52,7 +52,7 @@ export interface SchoolsTeamWithSchoolDetails {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  schools: {
+  school: {
     name: string;
     abbreviation: string;
     logo_url: string | null;

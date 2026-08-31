@@ -33,7 +33,7 @@ export interface MatchParticipantWithTeamDetails {
   schools_teams: {
     id: string;
     name: string;
-    schools: {
+    school: {
       name: string;
       abbreviation: string;
     };
@@ -64,7 +64,7 @@ export interface MatchParticipantWithFullDetails {
   schools_teams: {
     id: string;
     name: string;
-    schools: {
+    school: {
       name: string;
       abbreviation: string;
       logo_url: string | null;
@@ -87,7 +87,7 @@ export interface MatchParticipantWithTeamDetailsOnly {
   schools_teams: {
     id: string;
     name: string;
-    schools: {
+    school: {
       name: string;
       abbreviation: string;
       logo_url: string | null;

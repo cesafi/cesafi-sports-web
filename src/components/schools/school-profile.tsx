@@ -305,7 +305,7 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
                   ) : typedTeams && typedTeams.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {typedTeams.map((team, index) => {
-                        const esportName = team.esports_categories?.esports?.name;
+                        const esportName = team.sports_categories?.sports?.name;
                         const accent = getEsportAccent(esportName);
                         return (
                           <motion.div
@@ -317,8 +317,8 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
                             <Link
                               href={`/schools/${schoolAbbreviation.toLowerCase()}/teams/${toTeamSlug({
                                 seasonName: (team as any).seasons?.name || '',
-                                esportName: team.esports_categories?.esports?.name || '',
-                                division: team.esports_categories?.division || '',
+                                esportName: team.sports_categories?.sports?.name || '',
+                                division: team.sports_categories?.division || '',
                                 teamName: team.name,
                               })}`}
                               className="group block"
@@ -342,7 +342,7 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
 
                                     {/* Division / Category */}
                                     <p className="text-xs text-muted-foreground/60">
-                                      {team.esports_categories ? formatCategoryName(team.esports_categories.division, team.esports_categories.levels) : 'Category'}
+                                      {team.sports_categories ? formatCategoryName(team.sports_categories.division, team.sports_categories.levels) : 'Category'}
                                     </p>
                                   </div>
 
@@ -405,8 +405,8 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
                       const t1Win = isFinished && t1Score > t2Score;
                       const t2Win = isFinished && t2Score > t1Score;
                       const status = getMatchStatus(match.status);
-                      const esportName = match.esports_seasons_stages?.esports_categories?.esports?.name;
-                      const esportLogo = match.esports_seasons_stages?.esports_categories?.esports?.logo_url;
+                      const esportName = match.sports_seasons_stages?.sports_categories?.sports?.name;
+                      const esportLogo = match.sports_seasons_stages?.sports_categories?.sports?.logo_url;
 
                       return (
                         <Link key={match.id} href={`/matches/${match.id}`} className="group block">

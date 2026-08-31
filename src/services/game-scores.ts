@@ -244,7 +244,7 @@ export class GameScoreService extends BaseService {
           *,
           match_participants!inner(
             id,
-            schools_teams!inner(name, schools!inner(name))
+            schools_teams!inner(name, school:schools!inner(name))
           )
         `
         )

@@ -291,7 +291,7 @@ export class MatchService extends BaseService {
             schools_teams!inner(
               id,
               name,
-              schools!inner(
+              school:schools!inner(
                 name,
                 abbreviation,
                 logo_url
@@ -366,7 +366,7 @@ export class MatchService extends BaseService {
             schools_teams!inner(
               id,
               name,
-              schools!inner(
+              school:schools!inner(
                 name,
                 abbreviation,
                 logo_url
@@ -559,7 +559,7 @@ export class MatchService extends BaseService {
             schools_teams!inner(
               id,
               name,
-              schools!inner(
+              school:schools!inner(
                 name,
                 abbreviation,
                 logo_url
@@ -814,7 +814,7 @@ export class MatchService extends BaseService {
             schools_teams!inner(
               id,
               name,
-              schools!inner(
+              school:schools!inner(
                 name,
                 abbreviation,
                 logo_url
@@ -1508,7 +1508,7 @@ export class MatchService extends BaseService {
             schools_teams!inner(
               id,
               name,
-              schools!inner(
+              school:schools!inner(
                 id,
                 name,
                 abbreviation,

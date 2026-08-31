@@ -54,7 +54,7 @@ export const getPlayersTableColumns = (): TableColumn<PlayerWithTeam>[] => [
         {player.schools_teams ? (
           <div>
             <div className="font-medium">{player.schools_teams.name}</div>
-            {player.schools_teams.schools && (
+            {player.schools_teams.school && (
               <div className="text-xs text-muted-foreground">
                 {player.schools_teams.school.abbreviation}
               </div>

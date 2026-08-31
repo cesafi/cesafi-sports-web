@@ -25,7 +25,7 @@ export class SchoolsTeamService extends BaseService {
         .from(TABLE_NAME)
         .select(`
           *,
-          schools!inner(name, abbreviation, logo_url),
+          school:schools!inner(name, abbreviation, logo_url),
           sports_categories!sport_category_id!inner(
             id,
             division,
@@ -86,7 +86,7 @@ export class SchoolsTeamService extends BaseService {
         .select(
           `
           *,
-          schools!inner(name, abbreviation, logo_url),
+          school:schools!inner(name, abbreviation, logo_url),
           sports_categories!sport_category_id!inner(
             id,
             division,
@@ -118,7 +118,7 @@ export class SchoolsTeamService extends BaseService {
         .select(
           `
           *,
-          schools!inner(name, abbreviation, logo_url)
+          school:schools!inner(name, abbreviation, logo_url)
         `
         )
         .eq('sport_category_id', sportCategoryId)
@@ -511,7 +511,7 @@ export class SchoolsTeamService extends BaseService {
         .select(
           `
           *,
-          schools!inner(name, abbreviation, logo_url),
+          school:schools!inner(name, abbreviation, logo_url),
           sports_categories!sport_category_id!inner(
             id,
             division,

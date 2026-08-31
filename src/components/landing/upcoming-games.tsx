@@ -125,9 +125,9 @@ export default function UpcomingGames({ initialMatches }: UpcomingGamesProps) {
         abbreviation: participants[1]?.schools_teams?.school?.abbreviation || 'TBD',
         logo: participants[1]?.schools_teams?.school?.logo_url || null
       },
-      esport: (match.esports_seasons_stages as any)?.esports_categories?.esports,
-      category: (match.esports_seasons_stages as any)?.esports_categories?.division || "Men's",
-      stage: (match.esports_seasons_stages as any)?.competition_stage || 'Groupstage',
+      esport: (match.sports_seasons_stages as any)?.sports_categories?.sports,
+      category: (match.sports_seasons_stages as any)?.sports_categories?.division || "Men's",
+      stage: (match.sports_seasons_stages as any)?.competition_stage || 'Groupstage',
       date: match.scheduled_at || new Date().toISOString(),
       venue: match.venue || 'TBD',
       bestOf: match.best_of || 2,
