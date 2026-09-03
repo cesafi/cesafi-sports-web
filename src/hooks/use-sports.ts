@@ -59,9 +59,9 @@ export const sportCategoryKeys = {
   all: ['sport-categories'] as const,
   bySport: (sportId: number) => [...sportCategoryKeys.all, 'by-sport', sportId] as const,
   byDivision: (division: 'men' | 'women' | 'mixed') => [...sportCategoryKeys.all, 'by-division', division] as const,
-  byLevel: (level: 'elementary' | 'high_school' | 'college') => [...sportCategoryKeys.all, 'by-level', level] as const,
+  byLevel: (level: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under') => [...sportCategoryKeys.all, 'by-level', level] as const,
   bySportAndDivision: (sportId: number, division: 'men' | 'women' | 'mixed') => [...sportCategoryKeys.all, 'by-sport-and-division', sportId, division] as const,
-  bySportAndLevel: (sportId: number, level: 'elementary' | 'high_school' | 'college') => [...sportCategoryKeys.all, 'by-sport-and-level', sportId, level] as const,
+  bySportAndLevel: (sportId: number, level: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under') => [...sportCategoryKeys.all, 'by-sport-and-level', sportId, level] as const,
   withDetails: ['sport-categories', 'with-details'] as const,
   uniqueDivisions: ['sport-categories', 'unique-divisions'] as const,
   uniqueLevels: ['sport-categories', 'unique-levels'] as const,
@@ -249,7 +249,7 @@ export function useSportCategoriesByDivision(
 }
 
 export function useSportCategoriesByLevel(
-  level: 'elementary' | 'high_school' | 'college',
+  level: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under',
   queryOptions?: UseQueryOptions<ServiceResponse<SportCategory[]>, Error, SportCategory[]>
 ) {
   return useQuery({
@@ -286,7 +286,7 @@ export function useSportCategoriesBySportAndDivision(
 
 export function useSportCategoriesBySportAndLevel(
   sportId: number,
-  level: 'elementary' | 'high_school' | 'college',
+  level: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under',
   queryOptions?: UseQueryOptions<ServiceResponse<SportCategory[]>, Error, SportCategory[]>
 ) {
   return useQuery({

@@ -92,7 +92,7 @@ export class SportCategoryService extends BaseService {
   }
 
   static async getByLevel(
-    level: 'elementary' | 'high_school' | 'college'
+    level: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under'
   ): Promise<ServiceResponse<SportCategory[]>> {
     try {
       const supabase = await this.getClient();
@@ -146,7 +146,7 @@ export class SportCategoryService extends BaseService {
 
   static async getBySportAndLevel(
     sportId: number,
-    level: 'elementary' | 'high_school' | 'college'
+    level: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under'
   ): Promise<ServiceResponse<SportCategory[]>> {
     try {
       const supabase = await this.getClient();

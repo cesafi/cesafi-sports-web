@@ -687,7 +687,7 @@ export type Database = {
       competition_stage: "group_stage" | "playins" | "playoffs" | "finals"
       match_status: "upcoming" | "ongoing" | "finished" | "cancelled" | "rescheduled"
       sport_divisions: "men" | "women" | "mixed"
-      sport_levels: "elementary" | "high_school" | "college"
+      sport_levels: "elementary" | "high_school" | "college" | "12_under" | "15_under"
       user_roles: "admin" | "head_writer" | "league_operator" | "writer"
     }
     CompositeTypes: {
@@ -827,7 +827,7 @@ export const Constants = {
       competition_stage: ["group_stage", "playins", "playoffs", "finals"],
       match_status: ["upcoming", "ongoing", "finished", "cancelled", "rescheduled"],
       sport_divisions: ["men", "women", "mixed"],
-      sport_levels: ["elementary", "high_school", "college"],
+      sport_levels: ["elementary", "high_school", "college", "12_under", "15_under"],
       user_roles: ["admin", "head_writer", "league_operator", "writer"],
     },
   },

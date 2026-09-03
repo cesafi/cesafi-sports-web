@@ -14,7 +14,7 @@ export async function getSportCategoriesByDivision(division: 'men' | 'women' | '
   return await SportCategoryService.getByDivision(division);
 }
 
-export async function getSportCategoriesByLevel(level: 'elementary' | 'high_school' | 'college') {
+export async function getSportCategoriesByLevel(level: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under') {
   return await SportCategoryService.getByLevel(level);
 }
 
@@ -22,7 +22,7 @@ export async function getSportCategoriesBySportAndDivision(sportId: number, divi
   return await SportCategoryService.getBySportAndDivision(sportId, division);
 }
 
-export async function getSportCategoriesBySportAndLevel(sportId: number, level: 'elementary' | 'high_school' | 'college') {
+export async function getSportCategoriesBySportAndLevel(sportId: number, level: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under') {
   return await SportCategoryService.getBySportAndLevel(sportId, level);
 }
 

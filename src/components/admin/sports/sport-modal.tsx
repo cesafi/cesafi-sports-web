@@ -234,7 +234,7 @@ export function SportModal({
       const updateData: SportCategoryUpdate = {
         id: categoryId,
         division: category.tempDivision as 'men' | 'women' | 'mixed',
-        levels: category.tempLevels as 'elementary' | 'high_school' | 'college'
+        levels: category.tempLevels as 'elementary' | 'high_school' | 'college' | '12_under' | '15_under'
       };
 
       const result = await updateSportCategoryById(updateData);
@@ -476,6 +476,8 @@ export function SportModal({
                               <SelectItem value="elementary">Elementary</SelectItem>
                               <SelectItem value="high_school">High School</SelectItem>
                               <SelectItem value="college">College</SelectItem>
+                              <SelectItem value="12_under">12 Under</SelectItem>
+                              <SelectItem value="15_under">15 Under</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -574,6 +576,8 @@ export function SportModal({
                           <SelectItem value="elementary">Elementary</SelectItem>
                           <SelectItem value="high_school">High School</SelectItem>
                           <SelectItem value="college">College</SelectItem>
+                          <SelectItem value="12_under">12 Under</SelectItem>
+                          <SelectItem value="15_under">15 Under</SelectItem>
                         </SelectContent>
                       </Select>
                       {categoryErrors[`${index}-levels`] && (
