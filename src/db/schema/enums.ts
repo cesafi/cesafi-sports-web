@@ -9,7 +9,7 @@ export const userRolesEnum = pgEnum('user_roles', ['admin', 'head_writer', 'leag
 export const sponsorTypeEnum = pgEnum('sponsor_type', ['title', 'venue', 'event']);
 
 export type ArticleStatus = (typeof articleStatusEnum.enumValues)[number];
-export type CompetitionStage = (typeof competitionStageEnum.enumValues)[number];
+export type CompetitionStage = string;
 export type MatchStatus = (typeof matchStatusEnum.enumValues)[number];
 export type SportDivision = (typeof sportDivisionsEnum.enumValues)[number];
 export type SportLevel = (typeof sportLevelsEnum.enumValues)[number];

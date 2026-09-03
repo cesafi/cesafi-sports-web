@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { useMemo } from 'react';
 import {
   useQuery,
   useMutation,
@@ -8,6 +9,8 @@ import {
   useInfiniteQuery
 } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { formatTableDate } from '@/lib/utils/date';
+import { formatCategoryName } from '@/lib/utils/sports';
 
 import {
   getPaginatedMatches,
@@ -363,7 +366,7 @@ export function useMatchesTable(selectedStageId: number | null) {
     isFetching,
     refetch
   } = useQuery({
-    queryKey: ['matches', 'byStageAndSeason', selectedStageId, currentSeason?.id, paginationOptions],
+    queryKey: ['matches', 'byStageAndSeason', selectedStageId, currentSeason?.id],
     queryFn: async () => {
       if (selectedStageId && currentSeason) {
         // First get matches by stage, then filter by season
@@ -515,11 +518,140 @@ export function useMatchesTable(selectedStageId: number | null) {
     setPageSize(pageSize);
   };
 
+  // Comprehensive filtering across teams, dates, venues, and relevant fields
+  const filteredMatches = useMemo(() => {
+    if (!matches || !Array.isArray(matches)) return [];
+
+    const searchQuery = (tableState.filters?.search || paginationOptions?.searchQuery || '').trim().toLowerCase();
+    if (!searchQuery) return matches;
+
+    return matches.filter((match) => {
+      // 1. Teams & Schools
+      if (match.match_participants && Array.isArray(match.match_participants)) {
+        const teamMatch = match.match_participants.some((participant) => {
+          const teamName = participant.schools_teams?.name?.toLowerCase() || '';
+          const schoolName = participant.schools_teams?.school?.name?.toLowerCase() || '';
+          const schoolAbbr = participant.schools_teams?.school?.abbreviation?.toLowerCase() || '';
+          return (
+            teamName.includes(searchQuery) ||
+            schoolName.includes(searchQuery) ||
+            schoolAbbr.includes(searchQuery)
+          );
+        });
+        if (teamMatch) return true;
+
+        // Composite matchup string (e.g. "UV vs UC")
+        const abbreviations = match.match_participants
+          .map((p) => p.schools_teams?.school?.abbreviation || p.schools_teams?.name || '')
+          .filter(Boolean);
+        if (abbreviations.length >= 2) {
+          const matchup = abbreviations.join(' vs ').toLowerCase();
+          const matchupDot = abbreviations.join(' vs. ').toLowerCase();
+          if (matchup.includes(searchQuery) || matchupDot.includes(searchQuery)) return true;
+        }
+      }
+
+      // 2. Dates (raw and formatted)
+      const dateStrings: string[] = [];
+      if (match.scheduled_at) {
+        dateStrings.push(match.scheduled_at.toLowerCase());
+        dateStrings.push(formatTableDate(match.scheduled_at).toLowerCase());
+        try {
+          const d = new Date(match.scheduled_at);
+          dateStrings.push(d.toLocaleString('en-US', { month: 'long' }).toLowerCase());
+          dateStrings.push(d.toLocaleString('en-US', { month: 'short' }).toLowerCase());
+          dateStrings.push(d.toLocaleString('en-US', { weekday: 'long' }).toLowerCase());
+          dateStrings.push(d.toLocaleString('en-US', { weekday: 'short' }).toLowerCase());
+          dateStrings.push(d.getFullYear().toString());
+        } catch {}
+      }
+      if (match.start_at) {
+        dateStrings.push(match.start_at.toLowerCase());
+        dateStrings.push(formatTableDate(match.start_at).toLowerCase());
+      }
+      if (match.end_at) {
+        dateStrings.push(match.end_at.toLowerCase());
+        dateStrings.push(formatTableDate(match.end_at).toLowerCase());
+      }
+      if (dateStrings.some((ds) => ds.includes(searchQuery))) return true;
+
+      // 3. Venue
+      if (match.venue && match.venue.toLowerCase().includes(searchQuery)) {
+        return true;
+      }
+
+      // 4. Match Name & Description
+      if (match.name && match.name.toLowerCase().includes(searchQuery)) {
+        return true;
+      }
+      if (match.description && match.description.toLowerCase().includes(searchQuery)) {
+        return true;
+      }
+
+      // 5. Match Status
+      if (match.status && match.status.toLowerCase().includes(searchQuery)) {
+        return true;
+      }
+
+      // 6. Sport Name & Category Details
+      const sportStage = match.sports_seasons_stages;
+      if (sportStage) {
+        if (sportStage.competition_stage) {
+          const stageFormatted = sportStage.competition_stage.replace(/_/g, ' ').toLowerCase();
+          if (stageFormatted.includes(searchQuery)) return true;
+        }
+
+        const category = sportStage.sports_categories;
+        if (category) {
+          if (category.sports?.name?.toLowerCase().includes(searchQuery)) return true;
+          if (category.division?.toLowerCase().includes(searchQuery)) return true;
+          if (category.levels?.toLowerCase().includes(searchQuery)) return true;
+          const formattedCat = formatCategoryName(category.division, category.levels).toLowerCase();
+          if (formattedCat.includes(searchQuery)) return true;
+        }
+      }
+
+      return false;
+    });
+  }, [matches, tableState.filters?.search, paginationOptions?.searchQuery]);
+
+  // Apply sorting
+  const sortedMatches = useMemo(() => {
+    if (!filteredMatches.length) return [];
+    const sortBy = tableState.sortBy || 'scheduled_at';
+    const sortOrder = tableState.sortOrder || 'asc';
+
+    return [...filteredMatches].sort((a, b) => {
+      let aVal: any = a[sortBy];
+      let bVal: any = b[sortBy];
+
+      if (sortBy === 'scheduled_at' || sortBy === 'start_at' || sortBy === 'created_at') {
+        aVal = aVal ? new Date(aVal).getTime() : (sortOrder === 'asc' ? Infinity : -Infinity);
+        bVal = bVal ? new Date(bVal).getTime() : (sortOrder === 'asc' ? Infinity : -Infinity);
+      } else if (typeof aVal === 'string' && typeof bVal === 'string') {
+        aVal = aVal.toLowerCase();
+        bVal = bVal.toLowerCase();
+      }
+
+      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [filteredMatches, tableState.sortBy, tableState.sortOrder]);
+
+  // Apply pagination slicing
+  const paginatedMatches = useMemo(() => {
+    const page = tableState.page || 1;
+    const pageSize = tableState.pageSize || 10;
+    const startIndex = (page - 1) * pageSize;
+    return sortedMatches.slice(startIndex, startIndex + pageSize);
+  }, [sortedMatches, tableState.page, tableState.pageSize]);
+
   return {
     // Data
-    matches: matches || [],
-    totalCount: matches?.length || 0,
-    pageCount: Math.ceil((matches?.length || 0) / tableState.pageSize),
+    matches: paginatedMatches,
+    totalCount: filteredMatches.length,
+    pageCount: Math.ceil(filteredMatches.length / tableState.pageSize) || 1,
     currentPage: tableState.page,
     pageSize: tableState.pageSize,
     loading: isLoading,

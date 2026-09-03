@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ModalLayout } from '@/components/ui/modal-layout';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -66,14 +67,20 @@ export function LeagueStageModal({
       (category) => !selectedSportId || category.sport_id === selectedSportId
     ) || [];
 
+  const prevOpenRef = useRef(false);
+  const prevStageIdRef = useRef<number | undefined>(undefined);
+
   const handleClose = useCallback(() => {
     setErrors({});
     onOpenChange(false);
   }, [onOpenChange]);
 
-  // Form reset on modal open/close
+  // Form reset only on modal open transition or stage ID change
   useEffect(() => {
-    if (open) {
+    const isOpening = open && !prevOpenRef.current;
+    const isStageChanged = open && mode === 'edit' && stage && stage.id !== prevStageIdRef.current;
+
+    if (isOpening || isStageChanged) {
       if (mode === 'edit' && stage) {
         setFormData({
           id: stage.id,
@@ -81,7 +88,6 @@ export function LeagueStageModal({
           season_id: stage.season_id || undefined,
           competition_stage: stage.competition_stage
         });
-        // Set the selected sport ID based on the sport category
         if (stage.sport_category_id && sportCategories) {
           const category = sportCategories.find((cat) => cat.id === stage.sport_category_id);
           setSelectedSportId(category?.sport_id);
@@ -98,20 +104,22 @@ export function LeagueStageModal({
       hasStartedCreating.current = false;
       hasStartedUpdating.current = false;
     }
+
+    prevOpenRef.current = open;
+    prevStageIdRef.current = stage?.id;
   }, [open, mode, stage, currentSeason, sportCategories]);
 
-  // Handle mutation completion
+  // Delayed sport selection if categories load after modal is already open
   useEffect(() => {
-    if (hasStartedCreating.current && !isSubmitting && mode === 'add') {
-      handleClose();
+    if (open && mode === 'edit' && stage?.sport_category_id && !selectedSportId && sportCategories?.length) {
+      const category = sportCategories.find((cat) => cat.id === stage.sport_category_id);
+      if (category) {
+        setSelectedSportId(category.sport_id);
+      }
     }
-  }, [isSubmitting, mode, handleClose]);
+  }, [open, mode, stage?.sport_category_id, selectedSportId, sportCategories]);
 
-  useEffect(() => {
-    if (hasStartedUpdating.current && !isSubmitting && mode === 'edit') {
-      handleClose();
-    }
-  }, [isSubmitting, mode, handleClose]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,18 +255,37 @@ export function LeagueStageModal({
 
         {/* Competition Stage Selection */}
         <div className="space-y-2">
-          <Label htmlFor="competitionStage">Competition Stage *</Label>
-          <Select value={formData.competition_stage} onValueChange={handleCompetitionStageChange}>
-            <SelectTrigger className={errors.competition_stage ? 'border-red-500' : ''}>
-              <SelectValue placeholder="Select competition stage" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="group_stage">Group Stage</SelectItem>
-              <SelectItem value="playins">Play-ins</SelectItem>
-              <SelectItem value="playoffs">Playoffs</SelectItem>
-              <SelectItem value="finals">Finals</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label htmlFor="competitionStage">Competition Stage Name *</Label>
+          <Input
+            id="competitionStage"
+            value={formData.competition_stage || ''}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                competition_stage: e.target.value
+              }))
+            }
+            placeholder="e.g., Elimination Round, Group Stage, Quarterfinals, Playoffs, Finals"
+            className={errors.competition_stage ? 'border-red-500' : ''}
+          />
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            <span className="text-xs text-muted-foreground mr-1 self-center">Suggestions:</span>
+            {['Elimination Round', 'Group Stage', 'Quarterfinals', 'Semifinals', 'Play-ins', 'Playoffs', 'Finals'].map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    competition_stage: suggestion
+                  }))
+                }
+                className="text-xs px-2 py-0.5 rounded-full border bg-muted/50 hover:bg-primary/10 hover:border-primary/50 text-muted-foreground hover:text-primary transition-colors"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
           {errors.competition_stage && (
             <p className="text-sm text-red-500">{errors.competition_stage}</p>
           )}

@@ -34,7 +34,9 @@ export default function LeagueStageManagementPage() {
     tableBodyLoading,
     error,
     createStage,
+    createStageAsync,
     updateStage,
+    updateStageAsync,
     deleteStage,
     isCreating,
     isUpdating,
@@ -86,10 +88,22 @@ export default function LeagueStageManagementPage() {
   };
 
   const handleSubmit = async (data: SportsSeasonsStageInsert | SportsSeasonsStageUpdate) => {
-    if (modalMode === 'add') {
-      createStage(data as SportsSeasonsStageInsert);
-    } else {
-      updateStage(data as SportsSeasonsStageUpdate);
+    try {
+      if (modalMode === 'add') {
+        const result = await createStageAsync(data as SportsSeasonsStageInsert);
+        if (result.success) {
+          setIsModalOpen(false);
+          setEditingStage(undefined);
+        }
+      } else {
+        const result = await updateStageAsync(data as SportsSeasonsStageUpdate);
+        if (result.success) {
+          setIsModalOpen(false);
+          setEditingStage(undefined);
+        }
+      }
+    } catch {
+      // Error handled by mutation toast
     }
   };
 

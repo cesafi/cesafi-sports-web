@@ -96,6 +96,22 @@ export interface MatchWithStageDetails extends Match {
       } | null;
     } | null;
   } | null;
+  match_participants?: Array<{
+    id: number;
+    team_id: string;
+    match_id: number;
+    match_score: number | null;
+    schools_teams?: {
+      id: string;
+      name: string;
+      school?: {
+        id: number;
+        name: string;
+        abbreviation: string;
+        logo_url: string | null;
+      } | null;
+    } | null;
+  }>;
   [key: string]: unknown;
 }
 

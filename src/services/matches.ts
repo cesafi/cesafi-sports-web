@@ -415,6 +415,22 @@ export class MatchService extends BaseService {
               start_at,
               end_at
             )
+          ),
+          match_participants (
+            id,
+            team_id,
+            match_id,
+            match_score,
+            schools_teams (
+              id,
+              name,
+              school:schools (
+                id,
+                name,
+                abbreviation,
+                logo_url
+              )
+            )
           )
         `
         )

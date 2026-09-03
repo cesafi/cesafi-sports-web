@@ -139,19 +139,7 @@ export function MatchStatusModal({
       }
     }
 
-    // Status-specific validations
-    if (formData.status === 'ongoing' && !formData.start_at) {
-      newErrors.start_at = 'Start time is required for ongoing matches';
-    }
-    
-    if (formData.status === 'finished') {
-      if (!formData.start_at) {
-        newErrors.start_at = 'Start time is required for finished matches';
-      }
-      if (!formData.end_at) {
-        newErrors.end_at = 'End time is required for finished matches';
-      }
-    }
+    // Status-specific validations removed: start_at and end_at are optional
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -316,37 +304,23 @@ export function MatchStatusModal({
             {/* Start Time */}
             <DateTimeInput
               id="start_at"
-              label={
-                <>
-                  Actual Start Time
-                  {(formData.status === 'ongoing' || formData.status === 'finished') && (
-                    <span className="text-red-500 ml-1">*</span>
-                  )}
-                </>
-              }
+              label="Actual Start Time"
               value={formData.start_at ? new Date(formData.start_at).toISOString() : null}
               onChange={(utcIsoString) => handleDateTimeChange('start_at', utcIsoString || '')}
               error={errors.start_at}
-              helpText="When the match actually started"
-              required={formData.status === 'ongoing' || formData.status === 'finished'}
+              helpText="When the match actually started (optional)"
+              required={false}
             />
 
             {/* End Time */}
             <DateTimeInput
               id="end_at"
-              label={
-                <>
-                  End Time
-                  {formData.status === 'finished' && (
-                    <span className="text-red-500 ml-1">*</span>
-                  )}
-                </>
-              }
+              label="End Time"
               value={formData.end_at ? new Date(formData.end_at).toISOString() : null}
               onChange={(utcIsoString) => handleDateTimeChange('end_at', utcIsoString || '')}
               error={errors.end_at}
-              helpText="When the match ended (only for finished matches)"
-              required={formData.status === 'finished'}
+              helpText="When the match ended (optional)"
+              required={false}
               disabled={formData.status === 'upcoming'}
             />
           </CardContent>

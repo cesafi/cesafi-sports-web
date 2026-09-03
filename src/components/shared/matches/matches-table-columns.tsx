@@ -22,6 +22,13 @@ export const getMatchesTableColumns = (): TableColumn<MatchWithStageDetails>[] =
           <div className="text-sm font-medium text-foreground">
             {match.name}
           </div>
+          {match.match_participants && match.match_participants.length > 0 && (
+            <div className="text-xs font-semibold text-primary mt-0.5">
+              {match.match_participants
+                .map((p) => p.schools_teams?.school?.abbreviation || p.schools_teams?.name || 'TBD')
+                .join(' vs ')}
+            </div>
+          )}
           <div className="text-xs text-muted-foreground">
             {match.description}
           </div>

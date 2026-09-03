@@ -82,7 +82,7 @@ export function MatchGameModal({
     }
   }, [open, mode, game, matchId]);
 
-  const handleDateChange = (field: 'start_at', value: string) => {
+  const handleDateChange = (field: 'start_at' | 'end_at', value: string) => {
     const dateValue = value ? new Date(value).toISOString() : null;
     setFormData(prev => ({ ...prev, [field]: dateValue }));
   };
@@ -96,6 +96,13 @@ export function MatchGameModal({
       if (!formData.game_number || formData.game_number < 1) {
         setErrors({ game_number: 'Game number must be at least 1' });
         return;
+      }
+
+      if (formData.start_at && formData.end_at) {
+        if (new Date(formData.start_at) >= new Date(formData.end_at)) {
+          setErrors({ start_at: 'Start time must be before end time' });
+          return;
+        }
       }
 
       if (mode === 'add') {
@@ -214,6 +221,23 @@ export function MatchGameModal({
                 <p className="text-xs text-muted-foreground">
                   When the game actually started (optional)
                 </p>
+                {errors.start_at && (
+                  <p className="text-sm text-red-500">{errors.start_at}</p>
+                )}
+              </div>
+
+              {/* End Time */}
+              <div className="space-y-2">
+                <Label htmlFor="endAt">End Time</Label>
+                <Input
+                  id="endAt"
+                  type="datetime-local"
+                  value={formData.end_at ? new Date(formData.end_at).toISOString().slice(0, 16) : ''}
+                  onChange={(e) => handleDateChange('end_at', e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  When the game actually ended (optional)
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -228,7 +252,7 @@ export function MatchGameModal({
             <CardContent>
               <div className="p-3 bg-muted border rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  <strong>Note:</strong> You can set the start time now or edit it later. End time and duration can be added when editing the game after it&apos;s created.
+                  <strong>Note:</strong> Start time and end time are optional. You can set them now or edit them later.
                 </p>
               </div>
             </CardContent>

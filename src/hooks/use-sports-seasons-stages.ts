@@ -297,7 +297,9 @@ export function useSportsSeasonsStagesTable() {
 
     // Mutations
     createStage: createStageMutation.mutate,
+    createStageAsync: createStageMutation.mutateAsync,
     updateStage: updateStageMutation.mutate,
+    updateStageAsync: updateStageMutation.mutateAsync,
     deleteStage: deleteStageMutation.mutate,
 
     // Loading states

@@ -161,7 +161,7 @@ export class SportsSeasonsStageService extends BaseService {
     data: z.infer<typeof createSportsSeasonsStageSchema>
   ): Promise<ServiceResponse<undefined>> {
     try {
-      const supabase = await this.getClient();
+      const supabase = await this.getAdminClient();
 
       // Check if the combination of sport category, season, and competition stage already exists
       if (!data.sport_category_id || !data.season_id) {
@@ -232,7 +232,7 @@ export class SportsSeasonsStageService extends BaseService {
         return { success: false, error: 'Entity ID is required to update.' };
       }
 
-      const supabase = await this.getClient();
+      const supabase = await this.getAdminClient();
 
       // If updating relationship fields or competition stage, check for duplicates
       if (data.sport_category_id || data.season_id || data.competition_stage) {
@@ -311,10 +311,11 @@ export class SportsSeasonsStageService extends BaseService {
         }
       }
 
+      const { id, ...updatePayload } = data;
       const { error } = await supabase.from(TABLE_NAME).update({
-        ...data,
+        ...updatePayload,
         updated_at: nowUtc()
-      }).eq('id', data.id);
+      }).eq('id', id);
 
       if (error) {
         throw error;
@@ -332,7 +333,7 @@ export class SportsSeasonsStageService extends BaseService {
         return { success: false, error: 'Entity ID is required to delete.' };
       }
 
-      const supabase = await this.getClient();
+      const supabase = await this.getAdminClient();
 
       // Check if this stage is referenced by matches
       const { data: matches, error: checkError } = await supabase

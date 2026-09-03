@@ -6,9 +6,10 @@ const COMPETITION_STAGES = competitionStageEnum.enumValues;
 export const createSportsSeasonsStageSchema = z.object({
   sport_category_id: z.number({ message: 'Sport category ID is required.' }),
   season_id: z.number({ message: 'Season ID is required.' }),
-  competition_stage: z.enum(COMPETITION_STAGES, {
-    message: `Competition stage must be one of: ${COMPETITION_STAGES.join(', ')}.`
-  })
+  competition_stage: z
+    .string({ message: 'Competition stage name is required.' })
+    .min(1, { message: 'Competition stage name cannot be empty.' })
+    .max(100, { message: 'Competition stage name cannot exceed 100 characters.' })
 });
 
 export const updateSportsSeasonsStageSchema = z.object({
@@ -16,8 +17,8 @@ export const updateSportsSeasonsStageSchema = z.object({
   sport_category_id: z.number({ message: 'Sport category ID is required.' }).optional(),
   season_id: z.number({ message: 'Season ID is required.' }).optional(),
   competition_stage: z
-    .enum(COMPETITION_STAGES, {
-      message: `Competition stage must be one of: ${COMPETITION_STAGES.join(', ')}.`
-    })
+    .string()
+    .min(1, { message: 'Competition stage name cannot be empty.' })
+    .max(100, { message: 'Competition stage name cannot exceed 100 characters.' })
     .optional()
 });
