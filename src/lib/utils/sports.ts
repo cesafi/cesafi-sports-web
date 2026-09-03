@@ -1,7 +1,7 @@
 /**
  * Formats a sport category division and level into a human-readable string
  * @param division - The division (men, women, mixed)
- * @param levels - The level (elementary, high_school, college)
+ * @param levels - The level (elementary, high_school, college, 12_under, 15_under)
  * @returns Formatted string like "Men's Elementary" or "Mixed College"
  */
 export const formatCategoryName = (division: string, levels: string): string => {
@@ -14,7 +14,9 @@ export const formatCategoryName = (division: string, levels: string): string => 
   const levelMap: Record<string, string> = {
     elementary: 'Elementary',
     high_school: 'High School',
-    college: 'College'
+    college: 'College',
+    '12_under': '12 Under',
+    '15_under': '15 Under'
   };
 
   const formattedDivision = divisionMap[division] || division;
@@ -53,14 +55,16 @@ export const formatDivision = (division: string): string => {
 
 /**
  * Formats a sport level into a human-readable string
- * @param level - The level (elementary, high_school, college)
+ * @param level - The level (elementary, high_school, college, 12_under, 15_under)
  * @returns Formatted string like "Elementary" or "High School"
  */
 export const formatLevel = (level: string): string => {
   const levelMap: Record<string, string> = {
     elementary: 'Elementary',
     high_school: 'High School',
-    college: 'College'
+    college: 'College',
+    '12_under': '12 Under',
+    '15_under': '15 Under'
   };
 
   return levelMap[level] || level;

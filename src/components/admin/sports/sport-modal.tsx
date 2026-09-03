@@ -476,6 +476,8 @@ export function SportModal({
                               <SelectItem value="elementary">Elementary</SelectItem>
                               <SelectItem value="high_school">High School</SelectItem>
                               <SelectItem value="college">College</SelectItem>
+                              <SelectItem value="college">12 Under</SelectItem>
+                              <SelectItem value="college">15 Under</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -574,6 +576,8 @@ export function SportModal({
                           <SelectItem value="elementary">Elementary</SelectItem>
                           <SelectItem value="high_school">High School</SelectItem>
                           <SelectItem value="college">College</SelectItem>
+                          <SelectItem value="12_under">12 Under</SelectItem>
+                          <SelectItem value="15_under">15 Under</SelectItem>
                         </SelectContent>
                       </Select>
                       {categoryErrors[`${index}-levels`] && (
