@@ -685,7 +685,7 @@ export type Database = {
         | "approved"
         | "draft"
       competition_stage: "group_stage" | "playins" | "playoffs" | "finals"
-      match_status: "upcoming" | "ongoing" | "finished" | "cancelled"
+      match_status: "upcoming" | "ongoing" | "finished" | "cancelled" | "rescheduled"
       sport_divisions: "men" | "women" | "mixed"
       sport_levels: "elementary" | "high_school" | "college"
       user_roles: "admin" | "head_writer" | "league_operator" | "writer"
@@ -825,7 +825,7 @@ export const Constants = {
         "draft",
       ],
       competition_stage: ["group_stage", "playins", "playoffs", "finals"],
-      match_status: ["upcoming", "ongoing", "finished", "cancelled"],
+      match_status: ["upcoming", "ongoing", "finished", "cancelled", "rescheduled"],
       sport_divisions: ["men", "women", "mixed"],
       sport_levels: ["elementary", "high_school", "college"],
       user_roles: ["admin", "head_writer", "league_operator", "writer"],

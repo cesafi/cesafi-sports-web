@@ -63,7 +63,7 @@ export default function LeagueOperatorOverviewPage() {
 
     // Calculate pending actions (matches that need attention)
     const pendingActions = matches.filter(m => 
-      m.status === 'cancelled'
+      m.status === 'cancelled' || m.status === 'rescheduled'
     ).length;
 
     return {

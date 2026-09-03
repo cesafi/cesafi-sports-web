@@ -7,8 +7,8 @@ import { moderniz, roboto } from '@/lib/fonts';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Match Schedule | CESAFI sports League',
-  description: 'View the full match schedule for the CESAFI sports League. Follow upcoming and past matches across MLBB and Valorant competitions.',
+  title: 'Match Schedule | CESAFI Sports League',
+  description: 'View the full match schedule for the CESAFI Sports League. Follow live scores, upcoming matches, and tournament schedules across all sports and divisions.',
 };
 
 export const revalidate = 0; // Temporarily disabled caching for dev
@@ -17,7 +17,7 @@ export default async function SchedulePage() {
   // Fetch initial data server-side using bidirectional loading
   const [matchesResult, categoriesResult, seasonsResult, stagesResult, schoolsResult] = await Promise.all([
     getScheduleMatchesAroundDate({
-      totalLimit: 40,
+      totalLimit: 50,
       filters: {}
     }),
     getAvailableSportCategories(),
@@ -36,39 +36,29 @@ export default async function SchedulePage() {
   const stages = stagesResult.success && stagesResult.data ? stagesResult.data : [];
   const schools = schoolsResult.success && schoolsResult.data ? schoolsResult.data : [];
 
-
   return (
     <SeasonProvider>
       <div className="bg-background min-h-screen">
-        {/* Hero Section */}
-        <section className="from-primary/10 via-background to-secondary/10 relative bg-gradient-to-br pt-20 pb-12 sm:pt-24 sm:pb-16">
-          {/* Background Pattern */}
-          <div className="absolute inset-0 opacity-5">
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzM2YzYxIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] bg-repeat" />
-          </div>
-
+        {/* Hero Section — compact header */}
+        <section className="from-primary/5 via-background to-secondary/5 relative bg-gradient-to-br pt-20 pb-6 sm:pt-24 sm:pb-8">
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              {/* Main Heading */}
               <h1
-                className={`${moderniz.className} text-foreground mb-4 text-3xl font-bold sm:mb-6 sm:text-4xl md:text-6xl lg:text-7xl`}
+                className={`${moderniz.className} text-foreground mb-2 text-2xl font-bold sm:mb-3 sm:text-3xl md:text-4xl lg:text-5xl`}
               >
                 Match <span className="text-gradient-cel">Schedule</span>
               </h1>
-
-              {/* Subtitle */}
               <p
-                className={`${roboto.className} text-muted-foreground mx-auto mb-8 max-w-3xl text-base leading-relaxed sm:mb-12 sm:text-lg md:text-xl`}
+                className={`${roboto.className} text-muted-foreground mx-auto max-w-2xl text-sm leading-relaxed sm:text-base`}
               >
-                Follow all CESAFI matches with real-time updates and live scores across all sports
-                and categories.
+                Follow all CESAFI matches with real-time updates and live scores across all sports and categories.
               </p>
             </div>
           </div>
         </section>
 
         {/* Main Content */}
-        <div className="container mx-auto max-w-[1000px] px-4 py-6 sm:py-8">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <ScheduleContent
             initialMatches={matches}
             initialHasMorePast={hasMorePast}
@@ -85,4 +75,3 @@ export default async function SchedulePage() {
     </SeasonProvider>
   );
 }
-

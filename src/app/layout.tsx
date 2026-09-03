@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${moderniz.variable} ${roboto.variable} antialiased`}>
+      <body className={`${moderniz.variable} ${roboto.variable} antialiased font-roboto`}>
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <NextTopLoader color="#336C61" />

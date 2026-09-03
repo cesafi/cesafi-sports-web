@@ -103,6 +103,7 @@ export function ScheduleFiltersComponent({
                 <SelectItem value="ongoing">Ongoing</SelectItem>
                 <SelectItem value="finished">Finished</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="rescheduled">Rescheduled</SelectItem>
               </SelectContent>
             </Select>
           </div>

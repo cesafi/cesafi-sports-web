@@ -1,10 +1,10 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
 import { ScheduleDateGroup } from './utils';
 import { ScheduleMatch } from '@/lib/types/matches';
 import MatchCard from './match-card';
+import { roboto } from '@/lib/fonts';
 
 interface DateGroupProps {
   readonly dateGroup: ScheduleDateGroup;
@@ -12,38 +12,34 @@ interface DateGroupProps {
 
 export default function DateGroup({ dateGroup }: DateGroupProps) {
   return (
-    <div className="space-y-4">
-      {/* Date Header - Left aligned, above the container */}
-      <div className="flex items-center gap-3 pt-2">
-        <div className="flex items-center gap-2">
-          {/* LoL sports often hides the icon for 'Today', but we'll keep the bold title */}
-          {!dateGroup.isToday && <Calendar className="text-muted-foreground h-5 w-5" />}
-          <h2 className="text-foreground text-xl font-bold tracking-wide">
-            {dateGroup.isToday ? 'Today' : dateGroup.displayDate}
-          </h2>
-        </div>
+    <div className="space-y-3">
+      {/* Date Header */}
+      <div className="flex items-center gap-2.5">
+        {!dateGroup.isToday && <Calendar className="text-muted-foreground/40 h-4 w-4" />}
+        <h2 className="font-mango-grotesque text-foreground text-lg sm:text-xl font-bold tracking-wide">
+          {dateGroup.isToday ? 'Today' : dateGroup.displayDate}
+        </h2>
         {dateGroup.matches.length > 0 && (
-          <div className="text-muted-foreground font-roboto text-sm">
+          <span className={`${roboto.className} text-muted-foreground/50 text-xs`}>
             {dateGroup.matches.length} match{dateGroup.matches.length !== 1 ? 'es' : ''}
-          </div>
+          </span>
         )}
       </div>
 
       {dateGroup.matches.length > 0 ? (
         <div
-          className={`space-y-3 ${dateGroup.isToday ? 'rounded-xl p-4 from-primary/5 to-primary/10 bg-gradient-to-b border border-primary/10' : ''}`}
+          className={`space-y-2 ${dateGroup.isToday ? 'rounded-lg p-3 bg-primary/[0.03] border border-primary/10' : ''}`}
         >
           {dateGroup.matches.map((match) => (
             <MatchCard key={match.id} match={match} />
           ))}
         </div>
       ) : (
-        /* LoL sports Style Empty Box */
-        <div className="bg-card dark:bg-[#1c1c1c] border border-border/40 rounded-xl p-6 shadow-sm">
-           <h3 className="text-foreground text-base font-bold mb-1 tracking-tight">
+        <div className="bg-card/40 border border-border/30 rounded-lg p-5">
+           <h3 className={`${roboto.className} text-foreground/80 text-sm font-medium mb-0.5`}>
                No Matches Scheduled {dateGroup.isToday ? 'Today' : 'on This Date'}
            </h3>
-           <p className="text-muted-foreground text-sm opacity-80">
+           <p className={`${roboto.className} text-muted-foreground/50 text-xs`}>
                Check back soon to find more matches
            </p>
         </div>

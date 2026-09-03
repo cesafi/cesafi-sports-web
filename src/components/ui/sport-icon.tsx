@@ -8,38 +8,43 @@ interface SportIconProps {
   iconClassName?: string;
 }
 
+export const svgSportMap: Record<string, string> = {
+  'athletics': 'athletics.svg',
+  'badminton': 'badminton.svg',
+  'basketball': 'basketball.svg',
+  'beach_volleyball': 'beach_volleyball.svg',
+  'chess': 'chess.svg',
+  'dancesport': 'dancesport.svg',
+  'football': 'football.svg',
+  'futsal': 'futsal.svg',
+  'karate': 'karatedo.svg',
+  'karatedo': 'karatedo.svg',
+  'lawn_tennis': 'tennis.svg',
+  'swimming': 'swimming.svg',
+  'table_tennis': 'table_tennis.svg',
+  'taekwondo': 'taekwondo.svg',
+  'tennis': 'tennis.svg',
+  'volleyball': 'volleyball.svg',
+  'weightlifting': 'weightlifting.svg',
+};
+
+export function getSportSvgPath(sportName?: string): string | null {
+  if (!sportName) return null;
+  const normalizedName = sportName.toLowerCase().replace(/\s+/g, '_');
+  const svgFile = svgSportMap[normalizedName];
+  return svgFile ? `/svg/sports/${svgFile}` : null;
+}
+
 export function SportIcon({ sportName, className = "h-4 w-4", iconClassName = "text-primary" }: SportIconProps) {
   if (!sportName) return <Trophy className={`${className} ${iconClassName}`} />;
   
-  const normalizedName = sportName.toLowerCase().replace(/\s+/g, '_');
-  
-  const svgMap: Record<string, string> = {
-    'athletics': 'athletics.svg',
-    'badminton': 'badminton.svg',
-    'basketball': 'basketball.svg',
-    'beach_volleyball': 'beach_volleyball.svg',
-    'chess': 'chess.svg',
-    'dancesport': 'dancesport.svg',
-    'football': 'football.svg',
-    'futsal': 'futsal.svg',
-    'karate': 'karatedo.svg',
-    'karatedo': 'karatedo.svg',
-    'lawn_tennis': 'tennis.svg',
-    'swimming': 'swimming.svg',
-    'table_tennis': 'table_tennis.svg',
-    'taekwondo': 'taekwondo.svg',
-    'tennis': 'tennis.svg',
-    'volleyball': 'volleyball.svg',
-    'weightlifting': 'weightlifting.svg',
-  };
-
-  const svgFile = svgMap[normalizedName];
+  const svgFile = getSportSvgPath(sportName);
   
   if (svgFile) {
     return (
       <div className={`relative ${className} flex items-center justify-center flex-shrink-0`}>
         <Image 
-          src={`/svg/sports/${svgFile}`} 
+          src={svgFile} 
           alt={sportName}
           fill
           sizes="32px"

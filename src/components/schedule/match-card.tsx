@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { formatCategoryName, formatStage } from '@/lib/utils/sports';
 import { determineWinner } from './utils';
+import { getSportSvgPath } from '@/components/ui/sport-icon';
 import Link from 'next/link';
 
 interface MatchCardProps {
@@ -53,11 +54,14 @@ export default function MatchCard({ match }: MatchCardProps) {
   const sport = match.sports_seasons_stages?.sports_categories?.sports;
   const category = match.sports_seasons_stages?.sports_categories;
   const stage = match.sports_seasons_stages?.competition_stage ?? 'Unknown Stage';
+  const sportLogo = getSportSvgPath(sport?.name) || sport?.logo_url;
 
-  const isLive = match.status === 'live';
-  const isFinished = match.status === 'finished' || match.status === 'completed';
-  const isClickable = isLive || isFinished;
-  const hasScore = team1.score !== null && team2.score !== null;
+  const isCancelled = match.status === 'cancelled' || match.status === 'canceled';
+  const isRescheduled = match.status === 'rescheduled';
+  const isLive = match.status === 'live' || match.status === 'ongoing';
+  const isFinished = (match.status === 'finished' || match.status === 'completed') && !isCancelled && !isRescheduled;
+  const isClickable = (isLive || isFinished) && !isCancelled && !isRescheduled;
+  const hasScore = !isCancelled && !isRescheduled && team1.score !== null && team2.score !== null;
   
   // Calculate games needed to win (for best-of display)
   // For BO2, a team can win up to 2 games, so we show 2 dots per team.
@@ -66,12 +70,15 @@ export default function MatchCard({ match }: MatchCardProps) {
   
   // Get accent color based on status
   const getAccentColor = () => {
+    if (isCancelled) return 'from-destructive/60 to-destructive/30';
+    if (isRescheduled) return 'from-amber-500/80 to-amber-600/40';
     if (isLive) return 'from-red-500 to-red-600';
     if (isFinished) return 'from-zinc-500 to-zinc-600';
     return 'from-primary to-primary/80';
   };
 
   const getAccentGlow = () => {
+    if (isCancelled) return '';
     if (isLive) return 'shadow-[0_0_15px_rgba(239,68,68,0.3)]';
     if (isFinished) return '';
     return '';
@@ -129,31 +136,34 @@ export default function MatchCard({ match }: MatchCardProps) {
   };
 
   const cardContent = (
-    <div className={`relative bg-card/60 ${isClickable ? 'hover:bg-card hover:border-border' : ''} border border-border/40 rounded-lg overflow-hidden transition-all duration-300 ${getAccentGlow()}`}>
+    <div className={`relative ${isCancelled ? 'bg-card/40 opacity-80 border-destructive/25' : isRescheduled ? 'bg-card/50 opacity-90 border-amber-500/30' : 'bg-card/60'} ${isClickable ? 'hover:bg-card hover:border-border cursor-pointer' : ''} border border-border/40 rounded-lg overflow-hidden transition-all duration-300 ${getAccentGlow()}`}>
       {/* Left Accent Strip */}
       <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${getAccentColor()}`} />
       
-      {/* sport Logo Watermark (subtle background) */}
-      {sport?.logo_url && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
+      {/* Sport Logo Watermark (subtle background) */}
+      {sportLogo && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-[0.04] pointer-events-none">
           <Image
-            src={sport.logo_url}
+            src={sportLogo}
             alt=""
             width={80}
             height={80}
-            className="h-20 w-20 object-contain"
+            className="h-20 w-20 object-contain dark:invert"
           />
         </div>
       )}
 
       {/* Main Content */}
-      <div className="relative flex items-center gap-2 sm:gap-4 pl-3 sm:pl-5 pr-3 sm:pr-4 py-3 sm:py-4">
-        {/* Teams Section */}
-        <div className="flex-1 flex items-center justify-center gap-3 sm:gap-6">
-          {/* Team 1 */}
-          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 min-w-0">
-            {/* Abbreviation - shown inline on desktop only */}
-            <span className={`font-mango-grotesque hidden sm:inline text-lg font-bold tracking-wide truncate ${
+      <div className="relative flex items-center pl-3 sm:pl-5 pr-3 sm:pr-4 py-3 sm:py-4">
+        {/* Left Spacer to symmetrically balance the right time/status rail on desktop */}
+        <div className="hidden sm:block w-24 md:w-32 flex-shrink-0 pointer-events-none" />
+
+        {/* Teams Section - Symmetrical Centered Grid */}
+        <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-4 min-w-0">
+          {/* Team 1 (Right-aligned to center) */}
+          <div className="flex items-center justify-end gap-1.5 sm:gap-3 min-w-0">
+            {/* Abbreviation - desktop inline (right-aligned) */}
+            <span className={`font-mango-grotesque hidden sm:inline text-base sm:text-lg font-bold tracking-wide truncate text-right ${
               team1.isWinner && isFinished ? 'text-foreground' : 'text-foreground/70'
             }`}>
               {team1.schoolAbbreviation}
@@ -172,25 +182,25 @@ export default function MatchCard({ match }: MatchCardProps) {
                 </div>
               )}
             </div>
-            {/* Abbreviation - shown below logo on mobile only */}
-            <span className={`font-mango-grotesque sm:hidden text-[10px] font-bold tracking-wide text-center leading-tight ${
+            {/* Abbreviation - mobile */}
+            <span className={`font-mango-grotesque sm:hidden text-[10px] font-bold tracking-wide text-center leading-tight truncate max-w-[50px] ${
               team1.isWinner && isFinished ? 'text-foreground' : 'text-foreground/70'
             }`}>
               {team1.schoolAbbreviation}
             </span>
           </div>
 
-          {/* Score Section */}
-          <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+          {/* Score / VS Center Column (Dead-center across all cards) */}
+          <div className="w-16 sm:w-24 flex flex-col items-center justify-center flex-shrink-0 text-center">
             {hasScore ? (
-              <div className="flex items-center gap-2 sm:gap-3">
-                <span className={`font-mango-grotesque text-xl sm:text-2xl font-black ${
+              <div className="flex items-center justify-center gap-1.5 sm:gap-3 w-full">
+                <span className={`font-mango-grotesque text-xl sm:text-2xl font-black w-6 sm:w-7 text-right tabular-nums ${
                   team1.isWinner && isFinished ? 'text-primary' : 'text-foreground/60'
                 }`}>
                   {team1.score}
                 </span>
-                <span className="text-muted-foreground/30 text-base sm:text-lg font-light">—</span>
-                <span className={`font-mango-grotesque text-xl sm:text-2xl font-black ${
+                <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">—</span>
+                <span className={`font-mango-grotesque text-xl sm:text-2xl font-black w-6 sm:w-7 text-left tabular-nums ${
                   team2.isWinner && isFinished ? 'text-primary' : 'text-foreground/60'
                 }`}>
                   {team2.score}
@@ -205,13 +215,19 @@ export default function MatchCard({ match }: MatchCardProps) {
             )}
             
             {/* Best-of Indicator Dots */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center justify-center gap-1 mt-1">
               {renderBestOfIndicator()}
             </div>
           </div>
 
-          {/* Team 2 */}
-          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 min-w-0">
+          {/* Team 2 (Left-aligned from center) */}
+          <div className="flex items-center justify-start gap-1.5 sm:gap-3 min-w-0">
+            {/* Abbreviation - mobile */}
+            <span className={`font-mango-grotesque sm:hidden text-[10px] font-bold tracking-wide text-center leading-tight truncate max-w-[50px] ${
+              team2.isWinner && isFinished ? 'text-foreground' : 'text-foreground/70'
+            }`}>
+              {team2.schoolAbbreviation}
+            </span>
             <div className="relative flex-shrink-0">
               <Image
                 src={team2.schoolLogo ?? '/img/cesafi-logo.webp'}
@@ -226,13 +242,8 @@ export default function MatchCard({ match }: MatchCardProps) {
                 </div>
               )}
             </div>
-            {/* Abbreviation - below logo on mobile, inline on desktop */}
-            <span className={`font-mango-grotesque sm:hidden text-[10px] font-bold tracking-wide text-center leading-tight ${
-              team2.isWinner && isFinished ? 'text-foreground' : 'text-foreground/70'
-            }`}>
-              {team2.schoolAbbreviation}
-            </span>
-            <span className={`font-mango-grotesque hidden sm:inline text-lg font-bold tracking-wide truncate ${
+            {/* Abbreviation - desktop inline (left-aligned) */}
+            <span className={`font-mango-grotesque hidden sm:inline text-base sm:text-lg font-bold tracking-wide truncate text-left ${
               team2.isWinner && isFinished ? 'text-foreground' : 'text-foreground/70'
             }`}>
               {team2.schoolAbbreviation}
@@ -240,9 +251,31 @@ export default function MatchCard({ match }: MatchCardProps) {
           </div>
         </div>
 
-        {/* Right Side - Time/Status */}
-        <div className="flex-shrink-0 text-right min-w-[50px] sm:min-w-[80px]">
-          {isLive ? (
+        {/* Right Side - Time/Status (Symmetrically balances Left Spacer) */}
+        <div className="w-20 sm:w-24 md:w-32 flex-shrink-0 text-right min-w-0">
+          {isCancelled ? (
+            <div className="flex flex-col items-end">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-destructive/15 text-destructive border border-destructive/30">
+                Cancelled
+              </span>
+              {match.displayTime && (
+                <span className="text-[10px] text-muted-foreground/50 line-through mt-0.5">
+                  {match.displayTime}
+                </span>
+              )}
+            </div>
+          ) : isRescheduled ? (
+            <div className="flex flex-col items-end">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                Rescheduled
+              </span>
+              {match.displayTime && (
+                <span className="text-[10px] text-muted-foreground/50 line-through mt-0.5">
+                  {match.displayTime}
+                </span>
+              )}
+            </div>
+          ) : isLive ? (
             <div className="flex items-center justify-end gap-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
@@ -265,17 +298,17 @@ export default function MatchCard({ match }: MatchCardProps) {
       <div className="relative flex items-center justify-between px-3 sm:px-5 py-1.5 sm:py-2.5 border-t border-border/20 bg-muted/10">
         {/* Game Info */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
-          {sport?.logo_url ? (
+          {sportLogo ? (
             <Image
-              src={sport.logo_url}
-              alt={sport.name}
+              src={sportLogo}
+              alt={sport?.name || 'Sport'}
               width={18}
               height={18}
-              className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5 object-contain flex-shrink-0"
+              className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5 object-contain flex-shrink-0 dark:invert opacity-80"
             />
           ) : (
             <div className="h-3.5 w-3.5 sm:h-4 sm:w-4 rounded bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-[7px] sm:text-[8px] font-bold text-primary">{sport?.abbreviation?.[0] ?? 'E'}</span>
+              <span className="text-[7px] sm:text-[8px] font-bold text-primary">{sport?.abbreviation?.[0] ?? sport?.name?.[0] ?? 'S'}</span>
             </div>
           )}
           <span className="text-[10px] sm:text-xs text-muted-foreground truncate">

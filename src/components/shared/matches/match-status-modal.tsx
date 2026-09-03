@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { DateTimeInput } from '@/components/ui/datetime-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Play, Square, Calendar, AlertTriangle } from 'lucide-react';
+import { Play, Square, Calendar, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { MatchWithFullDetails, MatchUpdate, MatchScoreUpdate } from '@/lib/types/matches';
 import { formatTableDate } from '@/lib/utils/date';
@@ -24,7 +24,7 @@ interface MatchStatusModalProps {
   isSubmitting: boolean;
 }
 
-type MatchStatus = 'upcoming' | 'ongoing' | 'finished' | 'cancelled';
+type MatchStatus = 'upcoming' | 'ongoing' | 'finished' | 'cancelled' | 'rescheduled';
 
 const statusConfig = {
   upcoming: {
@@ -50,6 +50,12 @@ const statusConfig = {
     color: 'bg-red-100 text-red-800',
     icon: AlertTriangle,
     description: 'Match has been cancelled'
+  },
+  rescheduled: {
+    label: 'Rescheduled',
+    color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    icon: Clock,
+    description: 'Match has been rescheduled to a new date/time'
   }
 };
 

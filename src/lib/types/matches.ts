@@ -52,6 +52,8 @@ export interface MatchWithFullDetails extends Match {
 export interface ScheduleMatch extends MatchWithFullDetails {
   isToday?: boolean;
   isPast?: boolean;
+  isCancelled?: boolean;
+  isRescheduled?: boolean;
   displayTime?: string;
   displayDate?: string;
   localIsoDate?: string;

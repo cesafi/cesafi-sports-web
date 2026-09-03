@@ -1,30 +1,15 @@
 // @ts-nocheck
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { InfiniteSchedule } from '@/components/schedule';
+import OngoingUpcomingShowcase from './ongoing-upcoming-showcase';
+import ScheduleCalendarView from './schedule-calendar-view';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { useInfiniteSchedule } from '@/hooks/use-schedule';
 import { Season } from '@/lib/types/seasons';
 import { sportsSeasonStageWithDetails } from '@/lib/types/sports-seasons-stages';
-
-
-// Define the rich category type
-export interface RichSportCategory {
-  id: number;
-  division: string;
-  levels: string;
-  full_name: string;
-  formatted_name?: string; // Optional for backward compatibility if needed
-  sport: {
-    id: number;
-    name: string;
-    logo_url: string | null;
-    abbreviation: string | null;
-  } | null;
-}
+import type { RichSportCategory } from './schedule-filter-bar';
 
 interface ScheduleContentProps {
   initialMatches: ScheduleMatch[];
@@ -54,8 +39,30 @@ export default function ScheduleContent({
   const [selectedSeason, setSelectedSeason] = useState<string>('all');
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [selectedSchool, setSelectedSchool] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
-  // Derive IDs for API
+  // Callback ref for scrolling to a specific date from Calendar / Showcase
+  const scrollToDateRef = useRef<((dateStr: string) => void) | null>(null);
+
+  const handleRegisterScrollToDate = useCallback((fn: (dateStr: string) => void) => {
+    scrollToDateRef.current = fn;
+  }, []);
+
+  const handleScrollToDate = useCallback((dateStr: string) => {
+    if (scrollToDateRef.current) {
+      scrollToDateRef.current(dateStr);
+    } else {
+      const element = document.getElementById(`date-group-${dateStr}`);
+      if (element) {
+        const headerOffset = 180;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.scrollY - headerOffset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      }
+    }
+  }, []);
+
+  // Derive IDs for query
   const sportIdFilter = useMemo(() => {
     return selectedSport === 'all' ? undefined : parseInt(selectedSport);
   }, [selectedSport]);
@@ -76,6 +83,10 @@ export default function ScheduleContent({
     return selectedSchool === 'all' ? undefined : selectedSchool;
   }, [selectedSchool]);
 
+  const statusFilter = useMemo(() => {
+    return selectedStatus === 'all' ? undefined : selectedStatus;
+  }, [selectedStatus]);
+
   // Use the infinite schedule hook for client-side data fetching
   const {
     data,
@@ -88,14 +99,15 @@ export default function ScheduleContent({
     fetchPreviousPage,
     error: _error
   } = useInfiniteSchedule({
-    limit: 5,
+    limit: 10,
     direction: 'future',
     filters: {
       sport_id: sportIdFilter,
       division: divisionFilter,
       season_id: seasonIdFilter,
       stage_name: stageNameFilter,
-      school_id: schoolIdFilter
+      school_id: schoolIdFilter,
+      status: statusFilter
     }
   });
 
@@ -105,8 +117,7 @@ export default function ScheduleContent({
 
   const handleLoadMore = useCallback(async (direction: 'future' | 'past') => {
     setIsWaiting(true);
-    // Add artificial delay for smoother perceived loading
-    await new Promise(resolve => setTimeout(resolve, 400));
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     if (direction === 'future' && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
@@ -127,20 +138,30 @@ export default function ScheduleContent({
     setSelectedStage('all');
   }, []);
 
+  const handleResetFilters = useCallback(() => {
+    setSelectedSport('all');
+    setSelectedDivision('all');
+    setSelectedSeason('all');
+    setSelectedStage('all');
+    setSelectedSchool('all');
+    setSelectedStatus('all');
+  }, []);
+
   // Check if any filters are applied
-  const isFiltersApplied = selectedSport !== 'all' || selectedDivision !== 'all' || selectedSeason !== 'all' || selectedStage !== 'all' || selectedSchool !== 'all';
+  const isFiltersApplied = selectedSport !== 'all' || 
+    selectedDivision !== 'all' || 
+    selectedSeason !== 'all' || 
+    selectedStage !== 'all' || 
+    selectedSchool !== 'all' ||
+    selectedStatus !== 'all';
 
   // Use server-side initial data if client-side data is not ready yet
-  // BUT: Don't fall back to initialMatches if filters are applied (they would be unfiltered)
   const displayMatches = useMemo(() => {
-    // If we have client-side data from the query, use it
     if (matches.length > 0) {
       return matches;
     }
     
-    // If filters are applied but no query data yet, show empty while loading
     if (isFiltersApplied) {
-      // Apply client-side filtering to initial matches as a fallback
       return initialMatches.filter((match) => {
         // Season filter
         if (selectedSeason !== 'all') {
@@ -150,10 +171,10 @@ export default function ScheduleContent({
           }
         }
         
-        // Esport filter
+        // Sport filter
         if (selectedSport !== 'all') {
-          const matchEsportId = match.sports_seasons_stages?.sports_categories?.sports?.id;
-          if (!matchEsportId || matchEsportId.toString() !== selectedSport) {
+          const matchSportId = match.sports_seasons_stages?.sports_categories?.sports?.id;
+          if (!matchSportId || matchSportId.toString() !== selectedSport) {
             return false;
           }
         }
@@ -177,11 +198,27 @@ export default function ScheduleContent({
         // School filter
         if (selectedSchool !== 'all') {
           const matchHasSchool = match.match_participants?.some(p => 
-            p.schools_teams?.school?.id.toString() === selectedSchool ||
+            p.schools_teams?.school?.id?.toString() === selectedSchool ||
             p.schools_teams?.school?.abbreviation === selectedSchool
           );
           if (!matchHasSchool) {
             return false;
+          }
+        }
+
+        // Status filter
+        if (selectedStatus !== 'all') {
+          const status = match.status;
+          if (selectedStatus === 'live') {
+            if (status !== 'live' && status !== 'ongoing') return false;
+          } else if (selectedStatus === 'cancelled') {
+            if (status !== 'cancelled' && status !== 'canceled') return false;
+          } else if (selectedStatus === 'rescheduled') {
+            if (status !== 'rescheduled') return false;
+          } else if (selectedStatus === 'finished') {
+            if (status !== 'finished' && status !== 'completed') return false;
+          } else if (selectedStatus === 'upcoming') {
+            if (status !== 'upcoming') return false;
           }
         }
         
@@ -189,14 +226,25 @@ export default function ScheduleContent({
       });
     }
     
-    // No filters applied, use initial matches
     return initialMatches;
-  }, [matches, initialMatches, isFiltersApplied, selectedSeason, selectedSport, selectedDivision, selectedStage, selectedSchool]);
+  }, [matches, initialMatches, isFiltersApplied, selectedSeason, selectedSport, selectedDivision, selectedStage, selectedSchool, selectedStatus]);
 
   return (
-    <div className="flex h-full w-full min-w-0 flex-col">
-      {/* Fixed Header */}
-      <div className="flex-shrink-0">
+    <div className="flex h-full w-full min-w-0 flex-col space-y-6">
+      {/* Top Section: Immediate Ongoing / Next Match Showcase (Full Width) */}
+      <OngoingUpcomingShowcase
+        matches={displayMatches}
+        onSelectDate={handleScrollToDate}
+      />
+
+      {/* Maximized Monthly Calendar View (Full Width) */}
+      <ScheduleCalendarView
+        matches={displayMatches}
+        onSelectDate={handleScrollToDate}
+      />
+
+      {/* Infinite Match Feed with Sticky Filter Toolbar */}
+      <div className="flex-shrink-0 w-full">
         <InfiniteSchedule
           matches={displayMatches}
           onLoadMore={handleLoadMore}
@@ -219,6 +267,10 @@ export default function ScheduleContent({
           availableSchools={availableSchools}
           selectedSchool={selectedSchool}
           onSchoolChange={setSelectedSchool}
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          onResetFilters={handleResetFilters}
+          onRegisterScrollToDate={handleRegisterScrollToDate}
         />
       </div>
     </div>

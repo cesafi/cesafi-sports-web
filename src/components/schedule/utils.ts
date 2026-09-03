@@ -57,6 +57,9 @@ export const groupMatchesByDate = (matches: ScheduleMatch[]): ScheduleDateGroup[
       // Format display time client-side (browser timezone)
       const displayTime = matchDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+      const isCancelled = (match.status as string) === 'cancelled' || (match.status as string) === 'canceled';
+      const isRescheduled = (match.status as string) === 'rescheduled';
+
       // Enrich the match with client-computed fields
       const enrichedMatch: ScheduleMatch = {
         ...match,
@@ -64,7 +67,9 @@ export const groupMatchesByDate = (matches: ScheduleMatch[]): ScheduleDateGroup[
         displayDate,
         displayTime,
         isToday: dateKey === todayStr,
-        isPast: matchDate < now
+        isPast: matchDate < now,
+        isCancelled,
+        isRescheduled
       };
 
       if (!acc[dateKey]) {
@@ -105,16 +110,16 @@ export const groupMatchesByDate = (matches: ScheduleMatch[]): ScheduleDateGroup[
   }
 
   const sortedGroups = Object.values(grouped).sort((a, b) => {
-    // Return descending order: latest dates at the top, earliest at the bottom
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+    // Return ascending order: earlier dates at top, future dates downwards
+    return new Date(a.date).getTime() - new Date(b.date).getTime();
   });
 
-  // Ensure inner matches are strictly chronologically sorted descending (latest at top, earliest at bottom)
+  // Ensure inner matches are strictly chronologically sorted ascending (earlier at top, later at bottom)
   return sortedGroups.map(group => {
       group.matches.sort((a, b) => {
           const timeA = new Date(a.scheduled_at ?? new Date()).getTime();
           const timeB = new Date(b.scheduled_at ?? new Date()).getTime();
-          return timeB - timeA;
+          return timeA - timeB;
       });
       return group;
   });

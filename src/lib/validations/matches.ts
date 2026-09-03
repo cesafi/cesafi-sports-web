@@ -19,8 +19,8 @@ export const createMatchSchema = z
       .positive({ message: 'Best of must be positive.' })
       .default(1),
     stage_id: z.number({ message: 'Stage ID is required.' }),
-    status: z.enum(['upcoming', 'ongoing', 'finished', 'cancelled'], {
-      message: 'Status must be one of: upcoming, ongoing, finished, cancelled.'
+    status: z.enum(['upcoming', 'ongoing', 'finished', 'cancelled', 'rescheduled'], {
+      message: 'Status must be one of: upcoming, ongoing, finished, cancelled, rescheduled.'
     }).default('upcoming'),
     scheduled_at: z.string()
       .optional()
@@ -102,8 +102,8 @@ export const updateMatchSchema = z
     stage_id: z
       .number({ message: 'Stage ID is required.' })
       .optional(),
-    status: z.enum(['upcoming', 'ongoing', 'finished', 'cancelled'], {
-      message: 'Status must be one of: upcoming, ongoing, finished, cancelled.'
+    status: z.enum(['upcoming', 'ongoing', 'finished', 'cancelled', 'rescheduled'], {
+      message: 'Status must be one of: upcoming, ongoing, finished, cancelled, rescheduled.'
     }).optional(),
     scheduled_at: z.string()
       .optional()

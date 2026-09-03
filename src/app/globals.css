@@ -158,7 +158,8 @@
   font-family: var(--font-moderniz), system-ui, sans-serif;
 }
 
-.font-roboto {
+.font-roboto,
+.font-mango-grotesque {
   font-family: var(--font-roboto), system-ui, sans-serif;
 }
 
