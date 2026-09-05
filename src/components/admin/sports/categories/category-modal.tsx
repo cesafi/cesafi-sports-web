@@ -34,7 +34,7 @@ export function CategoryModal({
     id?: number;
     sport_id: number;
     division: 'men' | 'women' | 'mixed';
-    levels: 'elementary' | 'high_school' | 'college';
+    levels: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under';
   }>(() => ({
     id: category?.id,
     sport_id: sportId,
@@ -116,7 +116,7 @@ export function CategoryModal({
               <Label htmlFor="levels">Level</Label>
               <Select 
                 value={formData.levels} 
-                onValueChange={(value: 'elementary' | 'high_school' | 'college') => {
+                onValueChange={(value: 'elementary' | 'high_school' | 'college' | '12_under' | '15_under') => {
                   setFormData(prev => ({ ...prev, levels: value }));
                   if (errors.levels) setErrors(prev => ({ ...prev, levels: '' }));
                 }}
@@ -128,6 +128,8 @@ export function CategoryModal({
                   <SelectItem value="elementary">Elementary</SelectItem>
                   <SelectItem value="high_school">High School</SelectItem>
                   <SelectItem value="college">College</SelectItem>
+                  <SelectItem value="12_under">12 Under</SelectItem>
+                  <SelectItem value="15_under">15 Under</SelectItem>
                 </SelectContent>
               </Select>
               {errors.levels && <p className="text-xs text-red-500">{errors.levels}</p>}
