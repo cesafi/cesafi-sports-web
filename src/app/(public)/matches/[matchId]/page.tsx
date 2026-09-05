@@ -32,8 +32,8 @@ export async function generateMetadata({ params }: PublicMatchPageProps): Promis
 
   const match = result.data as any;
   const sport = match.sports_seasons_stages?.sports_categories?.sports?.name || 'Sports';
-  const team1 = match.match_participants?.[0]?.schools_teams?.schools?.abbreviation || 'Team 1';
-  const team2 = match.match_participants?.[1]?.schools_teams?.schools?.abbreviation || 'Team 2';
+  const team1 = match.match_participants?.[0]?.schools_teams?.school?.abbreviation || 'Team 1';
+  const team2 = match.match_participants?.[1]?.schools_teams?.school?.abbreviation || 'Team 2';
 
   return {
     title: `${team1} vs ${team2} - ${sport} | CESAFI Sports`,
@@ -159,10 +159,10 @@ export default async function PublicMatchPage({ params }: PublicMatchPageProps) 
             <div className="flex flex-col items-center gap-3 lg:flex-row lg:justify-end lg:gap-6">
               <div className={cn('order-2 lg:order-1 text-center lg:text-right', t1Win && 'text-foreground', !t1Win && isFinished && 'text-muted-foreground/60')}>
                 <h2 className="font-mango-grotesque text-2xl sm:text-3xl lg:text-4xl font-bold tracking-wide leading-none">
-                  {team1.schools?.abbreviation || 'T1'}
+                  {team1.school?.abbreviation || 'T1'}
                 </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground/50 mt-1 hidden sm:block max-w-[180px] truncate lg:ml-auto">
-                  {team1.schools?.name || team1.name}
+                  {team1.name}
                 </p>
               </div>
               <div className="relative order-1 lg:order-2 flex-shrink-0">
@@ -171,8 +171,8 @@ export default async function PublicMatchPage({ params }: PublicMatchPageProps) 
                   t1Win ? 'bg-primary/25' : 'bg-transparent'
                 )} />
                 <Image
-                  src={team1.schools?.logo_url || '/img/cesafi-logo.webp'}
-                  alt={team1.schools?.abbreviation || 'Team 1'}
+                  src={team1.school?.logo_url || '/img/cesafi-logo.webp'}
+                  alt={team1.school?.abbreviation || 'Team 1'}
                   width={80}
                   height={80}
                   className={cn(
@@ -265,8 +265,8 @@ export default async function PublicMatchPage({ params }: PublicMatchPageProps) 
                   t2Win ? 'bg-primary/25' : 'bg-transparent'
                 )} />
                 <Image
-                  src={team2.schools?.logo_url || '/img/cesafi-logo.webp'}
-                  alt={team2.schools?.abbreviation || 'Team 2'}
+                  src={team2.school?.logo_url || '/img/cesafi-logo.webp'}
+                  alt={team2.school?.abbreviation || 'Team 2'}
                   width={80}
                   height={80}
                   className={cn(
@@ -282,10 +282,10 @@ export default async function PublicMatchPage({ params }: PublicMatchPageProps) 
               </div>
               <div className={cn('text-center lg:text-left', t2Win && 'text-foreground', !t2Win && isFinished && 'text-muted-foreground/60')}>
                 <h2 className="font-mango-grotesque text-2xl sm:text-3xl lg:text-4xl font-bold tracking-wide leading-none">
-                  {team2.schools?.abbreviation || 'T2'}
+                  {team2.school?.abbreviation || 'T2'}
                 </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground/50 mt-1 hidden sm:block max-w-[180px] truncate">
-                  {team2.schools?.name || team2.name}
+                  {team2.name}
                 </p>
               </div>
             </div>
@@ -340,14 +340,14 @@ export default async function PublicMatchPage({ params }: PublicMatchPageProps) 
                 team1={{
                   id: team1.id,
                   name: team1.name,
-                  abbreviation: team1.schools?.abbreviation || 'T1',
-                  logoUrl: team1.schools?.logo_url,
+                  abbreviation: team1.school?.abbreviation || 'T1',
+                  logoUrl: team1.school?.logo_url,
                 }}
                 team2={{
                   id: team2.id,
                   name: team2.name,
-                  abbreviation: team2.schools?.abbreviation || 'T2',
-                  logoUrl: team2.schools?.logo_url,
+                  abbreviation: team2.school?.abbreviation || 'T2',
+                  logoUrl: team2.school?.logo_url,
                 }}
                 coinTossWinnerId={match.coin_toss_winner_id}
                 coinTossResult={match.coin_toss_result}
