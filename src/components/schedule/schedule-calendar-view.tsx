@@ -54,10 +54,7 @@ export default function ScheduleCalendarView({
       if (!map.has(key)) {
         map.set(key, []);
       }
-      // Recompute displayTime client-side so it respects the browser's local timezone
-      // (the server-baked displayTime is in UTC, causing an 8-hour offset for PST users)
-      const localDisplayTime = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-      map.get(key)!.push({ ...m, displayTime: localDisplayTime });
+      map.get(key)!.push(m);
     });
 
     return map;
