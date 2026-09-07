@@ -42,9 +42,15 @@ export function DateTimeInput({
     if (value && timezone) {
       try {
         const utcDate = new Date(value);
-        // Convert to local time and format for datetime-local input
-        const localDate = new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
-        const localIsoString = localDate.toISOString().slice(0, 16);
+        // Use Date's native local getters (getFullYear, getHours, etc.) which
+        // return values in the browser's local timezone — avoids wrong-direction
+        // offset arithmetic that caused times to display incorrectly.
+        const year = utcDate.getFullYear();
+        const month = String(utcDate.getMonth() + 1).padStart(2, '0');
+        const day = String(utcDate.getDate()).padStart(2, '0');
+        const hours = String(utcDate.getHours()).padStart(2, '0');
+        const minutes = String(utcDate.getMinutes()).padStart(2, '0');
+        const localIsoString = `${year}-${month}-${day}T${hours}:${minutes}`;
         setLocalValue(localIsoString);
       } catch (error) {
         console.error('Error converting UTC date to local:', error);

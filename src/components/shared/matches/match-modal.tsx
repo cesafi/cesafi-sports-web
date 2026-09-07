@@ -114,9 +114,9 @@ export function MatchModal({
           description: match.description,
           venue: match.venue,
           stage_id: match.stage_id,
-          scheduled_at: match.scheduled_at ? utcToLocal(match.scheduled_at).toISOString().slice(0, 16) : null,
-          start_at: match.start_at ? utcToLocal(match.start_at).toISOString().slice(0, 16) : null,
-          end_at: match.end_at ? utcToLocal(match.end_at).toISOString().slice(0, 16) : null,
+          scheduled_at: match.scheduled_at ?? null,
+          start_at: match.start_at ?? null,
+          end_at: match.end_at ?? null,
           best_of: match.best_of,
           status: 'upcoming'
         });
