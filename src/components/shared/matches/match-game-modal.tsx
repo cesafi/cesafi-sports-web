@@ -87,6 +87,18 @@ export function MatchGameModal({
     setFormData(prev => ({ ...prev, [field]: dateValue }));
   };
 
+  /** Convert a UTC ISO string to a local datetime-local string (YYYY-MM-DDTHH:MM) for native input display */
+  const toLocalDatetimeString = (utcIso: string | null | undefined): string => {
+    if (!utcIso) return '';
+    const d = new Date(utcIso);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -215,7 +227,7 @@ export function MatchGameModal({
                 <Input
                   id="startAt"
                   type="datetime-local"
-                  value={formData.start_at ? new Date(formData.start_at).toISOString().slice(0, 16) : ''}
+                  value={toLocalDatetimeString(formData.start_at)}
                   onChange={(e) => handleDateChange('start_at', e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -232,7 +244,7 @@ export function MatchGameModal({
                 <Input
                   id="endAt"
                   type="datetime-local"
-                  value={formData.end_at ? new Date(formData.end_at).toISOString().slice(0, 16) : ''}
+                  value={toLocalDatetimeString(formData.end_at)}
                   onChange={(e) => handleDateChange('end_at', e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">

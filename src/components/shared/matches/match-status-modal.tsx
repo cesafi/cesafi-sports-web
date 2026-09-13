@@ -68,15 +68,15 @@ export function MatchStatusModal({
 }: MatchStatusModalProps) {
   const [formData, setFormData] = useState<{
     status: MatchStatus;
-    scheduled_at: string;
-    start_at: string;
-    end_at: string;
+    scheduled_at: string | null; // UTC ISO string
+    start_at: string | null; // UTC ISO string
+    end_at: string | null; // UTC ISO string
     scores: { [teamId: string]: number | null };
   }>({
     status: 'upcoming',
-    scheduled_at: '',
-    start_at: '',
-    end_at: '',
+    scheduled_at: null,
+    start_at: null,
+    end_at: null,
     scores: {}
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -92,9 +92,9 @@ export function MatchStatusModal({
 
       setFormData({
         status: (match.status as MatchStatus) || 'upcoming',
-        scheduled_at: match.scheduled_at ? new Date(match.scheduled_at).toISOString().slice(0, 16) : '',
-        start_at: match.start_at ? new Date(match.start_at).toISOString().slice(0, 16) : '',
-        end_at: match.end_at ? new Date(match.end_at).toISOString().slice(0, 16) : '',
+        scheduled_at: match.scheduled_at ?? null,
+        start_at: match.start_at ?? null,
+        end_at: match.end_at ?? null,
         scores: initialScores
       });
       setErrors({});
@@ -105,19 +105,21 @@ export function MatchStatusModal({
     setFormData(prev => ({ ...prev, status }));
     
     // Auto-set timing based on status
-    const now = new Date().toISOString().slice(0, 16);
+    const now = new Date().toISOString();
     
     if (status === 'ongoing' && !formData.start_at) {
-      setFormData(prev => ({ ...prev, start_at: now }));
+      setFormData(prev => ({ ...prev, status, start_at: now }));
     } else if (status === 'finished' && !formData.end_at) {
-      setFormData(prev => ({ ...prev, end_at: now }));
+      setFormData(prev => ({ ...prev, status, end_at: now }));
     } else if (status === 'upcoming') {
       // Clear start and end times for upcoming matches
-      setFormData(prev => ({ ...prev, start_at: '', end_at: '' }));
+      setFormData(prev => ({ ...prev, status, start_at: null, end_at: null }));
+    } else {
+      setFormData(prev => ({ ...prev, status }));
     }
   };
 
-  const handleDateTimeChange = (field: 'scheduled_at' | 'start_at' | 'end_at', value: string) => {
+  const handleDateTimeChange = (field: 'scheduled_at' | 'start_at' | 'end_at', value: string | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -160,9 +162,9 @@ export function MatchStatusModal({
       const updateData: MatchUpdate = {
         id: match.id,
         status: formData.status,
-        scheduled_at: formData.scheduled_at ? new Date(formData.scheduled_at).toISOString() : null,
-        start_at: formData.start_at ? new Date(formData.start_at).toISOString() : null,
-        end_at: formData.end_at ? new Date(formData.end_at).toISOString() : null
+        scheduled_at: formData.scheduled_at || null,
+        start_at: formData.start_at || null,
+        end_at: formData.end_at || null
       };
 
       await onUpdateMatch(updateData);
@@ -302,8 +304,8 @@ export function MatchStatusModal({
             <DateTimeInput
               id="scheduled_at"
               label="Scheduled Time"
-              value={formData.scheduled_at ? new Date(formData.scheduled_at).toISOString() : null}
-              onChange={(utcIsoString) => handleDateTimeChange('scheduled_at', utcIsoString || '')}
+              value={formData.scheduled_at}
+              onChange={(utcIsoString) => handleDateTimeChange('scheduled_at', utcIsoString)}
               helpText="When the match is scheduled to begin"
             />
 
@@ -311,8 +313,8 @@ export function MatchStatusModal({
             <DateTimeInput
               id="start_at"
               label="Actual Start Time"
-              value={formData.start_at ? new Date(formData.start_at).toISOString() : null}
-              onChange={(utcIsoString) => handleDateTimeChange('start_at', utcIsoString || '')}
+              value={formData.start_at}
+              onChange={(utcIsoString) => handleDateTimeChange('start_at', utcIsoString)}
               error={errors.start_at}
               helpText="When the match actually started (optional)"
               required={false}
@@ -322,8 +324,8 @@ export function MatchStatusModal({
             <DateTimeInput
               id="end_at"
               label="End Time"
-              value={formData.end_at ? new Date(formData.end_at).toISOString() : null}
-              onChange={(utcIsoString) => handleDateTimeChange('end_at', utcIsoString || '')}
+              value={formData.end_at}
+              onChange={(utcIsoString) => handleDateTimeChange('end_at', utcIsoString)}
               error={errors.end_at}
               helpText="When the match ended (optional)"
               required={false}
