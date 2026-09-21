@@ -180,7 +180,7 @@ export function usePlayerBySlug(
 }
 
 export function useCreatePlayer(
-  mutationOptions?: UseMutationOptions<ServiceResponse<Player>, Error, { data: PlayerInsert; teamId?: string | null; seasonId?: number }>
+  mutationOptions?: UseMutationOptions<ServiceResponse<{ id: string } | undefined>, Error, { data: PlayerInsert; teamId?: string | null; seasonId?: number }>
 ) {
   const queryClient = useQueryClient();
   return useMutation({

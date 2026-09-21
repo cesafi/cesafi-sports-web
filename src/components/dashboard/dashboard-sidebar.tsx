@@ -71,6 +71,7 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
           { href: '/admin/schools', label: 'Schools', icon: Building2 },
           { href: '/admin/seasons', label: 'Seasons', icon: Trophy },
           { href: '/admin/sports', label: 'Sports', icon: Volleyball },
+          { href: '/admin/players', label: 'Players', icon: Users },
           { href: '/admin/sponsors', label: 'Sponsors', icon: HandHeart },
           { href: '/admin/articles', label: 'Articles', icon: FileText },
           { href: '/admin/departments', label: 'Departments', icon: Users },
