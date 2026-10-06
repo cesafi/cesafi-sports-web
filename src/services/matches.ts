@@ -18,6 +18,12 @@ import {
 } from '@/lib/types/matches';
 import { formatCategoryName } from '@/lib/utils/sports';
 import { nowUtc, ensureUtcIsoString } from '@/lib/utils/utc-time';
+import {
+  ScheduledMatchSlot,
+  findMatchScheduleConflicts,
+  formatMatchScheduleConflicts,
+  getMatchInterval
+} from '@/lib/utils/match-schedule-conflicts';
 
 const TABLE_NAME = 'matches';
 const SPORTS_SEASONS_STAGES_TABLE = 'sports_seasons_stages';
@@ -26,6 +32,44 @@ const MATCH_PARTICIPANTS_TABLE = 'match_participants';
 const GAMES_TABLE = 'games';
 
 export class MatchService extends BaseService {
+  // A match only conflicts with an overlapping match at the same venue or with a shared team record.
+  private static async getScheduleConflictError(target: ScheduledMatchSlot): Promise<string | null> {
+    const interval = getMatchInterval(target);
+    if (!interval) return null;
+
+    const supabase = await this.getClient();
+    const lookbackMs = 24 * 60 * 60000; // catch earlier matches whose end_at runs into this slot
+    let query = supabase
+      .from(TABLE_NAME)
+      .select('id, name, venue, scheduled_at, end_at, match_participants(team_id)')
+      .not('scheduled_at', 'is', null)
+      .gte('scheduled_at', new Date(interval.start - lookbackMs).toISOString())
+      .lt('scheduled_at', new Date(interval.end).toISOString());
+
+    if (target.id !== undefined) {
+      query = query.neq('id', target.id);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      throw error;
+    }
+
+    const conflicts = findMatchScheduleConflicts(
+      target,
+      (data ?? []).map((m) => ({
+        id: m.id,
+        name: m.name,
+        venue: m.venue,
+        scheduled_at: m.scheduled_at,
+        end_at: m.end_at,
+        team_ids: (m.match_participants ?? []).map((p: { team_id: string }) => p.team_id)
+      }))
+    );
+
+    return conflicts.length > 0 ? formatMatchScheduleConflicts(conflicts) : null;
+  }
+
   public static readonly MATCH_SELECT = `
     *,
     sports_seasons_stages (
@@ -960,30 +1004,16 @@ export class MatchService extends BaseService {
         };
       }
 
-      // Check for scheduling conflicts if scheduled_at is provided
-      if (utcMatchData.scheduled_at) {
-        const scheduledDate = new Date(utcMatchData.scheduled_at);
-        const bufferMinutes = 30; // 30-minute buffer between matches
-        const startBuffer = new Date(scheduledDate.getTime() - bufferMinutes * 60000);
-        const endBuffer = new Date(scheduledDate.getTime() + bufferMinutes * 60000);
+      // Check for venue scheduling conflicts (participants are added separately)
+      const conflictError = await this.getScheduleConflictError({
+        venue: utcMatchData.venue,
+        scheduled_at: utcMatchData.scheduled_at,
+        end_at: utcMatchData.end_at,
+        team_ids: []
+      });
 
-        const { data: conflictingMatches, error: conflictError } = await supabase
-          .from(TABLE_NAME)
-          .select('id, name, scheduled_at')
-          .not('scheduled_at', 'is', null)
-          .gte('scheduled_at', startBuffer.toISOString())
-          .lte('scheduled_at', endBuffer.toISOString());
-
-        if (conflictError) {
-          throw conflictError;
-        }
-
-        if (conflictingMatches && conflictingMatches.length > 0) {
-          return {
-            success: false,
-            error: `Match scheduling conflict detected with: ${conflictingMatches.map((m) => m.name).join(', ')}`
-          };
-        }
+      if (conflictError) {
+        return { success: false, error: conflictError };
       }
 
       const { data: newMatch, error } = await supabase.from(TABLE_NAME).insert(utcMatchData).select().single();
@@ -1043,30 +1073,29 @@ export class MatchService extends BaseService {
         }
       }
 
-      // Check for scheduling conflicts if scheduled_at is being updated
-      if (utcMatchData.scheduled_at) {
-        const scheduledDate = new Date(utcMatchData.scheduled_at);
-        const bufferMinutes = 30; // 30-minute buffer between matches
-        const startBuffer = new Date(scheduledDate.getTime() - bufferMinutes * 60000);
-        const endBuffer = new Date(scheduledDate.getTime() + bufferMinutes * 60000);
-
-        const { data: conflictingMatches, error: conflictError } = await supabase
+      // Check for scheduling conflicts if schedule or venue is being updated
+      if (utcMatchData.scheduled_at || utcMatchData.end_at || utcMatchData.venue) {
+        const { data: existingMatch, error: existingError } = await supabase
           .from(TABLE_NAME)
-          .select('id, name, scheduled_at')
-          .neq('id', data.id) // Exclude current match
-          .not('scheduled_at', 'is', null)
-          .gte('scheduled_at', startBuffer.toISOString())
-          .lte('scheduled_at', endBuffer.toISOString());
+          .select('venue, scheduled_at, end_at, match_participants(team_id)')
+          .eq('id', data.id)
+          .single();
 
-        if (conflictError) {
-          throw conflictError;
+        if (existingError) {
+          throw existingError;
         }
 
-        if (conflictingMatches && conflictingMatches.length > 0) {
-          return {
-            success: false,
-            error: `Match scheduling conflict detected with: ${conflictingMatches.map((m) => m.name).join(', ')}`
-          };
+        const conflictError = await this.getScheduleConflictError({
+          id: data.id, // Exclude current match
+          venue: utcMatchData.venue ?? existingMatch.venue,
+          scheduled_at:
+            utcMatchData.scheduled_at !== undefined ? utcMatchData.scheduled_at : existingMatch.scheduled_at,
+          end_at: utcMatchData.end_at !== undefined ? utcMatchData.end_at : existingMatch.end_at,
+          team_ids: (existingMatch.match_participants ?? []).map((p: { team_id: string }) => p.team_id)
+        });
+
+        if (conflictError) {
+          return { success: false, error: conflictError };
         }
       }
 
@@ -1165,30 +1194,16 @@ export class MatchService extends BaseService {
         };
       }
 
-      // Check for scheduling conflicts if scheduled_at is provided
-      if (utcMatchData.scheduled_at) {
-        const scheduledDate = new Date(utcMatchData.scheduled_at);
-        const bufferMinutes = 30; // 30-minute buffer between matches
-        const startBuffer = new Date(scheduledDate.getTime() - bufferMinutes * 60000);
-        const endBuffer = new Date(scheduledDate.getTime() + bufferMinutes * 60000);
+      // Check for scheduling conflicts (same venue or same team record at an overlapping time)
+      const conflictError = await this.getScheduleConflictError({
+        venue: utcMatchData.venue,
+        scheduled_at: utcMatchData.scheduled_at,
+        end_at: utcMatchData.end_at,
+        team_ids: participantTeamIds
+      });
 
-        const { data: conflictingMatches, error: conflictError } = await supabase
-          .from(TABLE_NAME)
-          .select('id, name, scheduled_at')
-          .not('scheduled_at', 'is', null)
-          .gte('scheduled_at', startBuffer.toISOString())
-          .lte('scheduled_at', endBuffer.toISOString());
-
-        if (conflictError) {
-          throw conflictError;
-        }
-
-        if (conflictingMatches && conflictingMatches.length > 0) {
-          return {
-            success: false,
-            error: `Match scheduling conflict detected with: ${conflictingMatches.map((m: { name: string }) => m.name).join(', ')}`
-          };
-        }
+      if (conflictError) {
+        return { success: false, error: conflictError };
       }
 
       // Validate that all team IDs exist
