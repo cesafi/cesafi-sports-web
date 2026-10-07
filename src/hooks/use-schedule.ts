@@ -5,7 +5,7 @@
  */
 
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useSeason } from '@/components/contexts/season-provider';
 import { getScheduleMatches, getScheduleMatchesAroundDate, getScheduleMatchesByDate } from '@/actions/matches';
 import { ScheduleFilters, ScheduleMatch, SchedulePaginationOptions } from '@/lib/types/matches';
@@ -32,12 +32,14 @@ export function useInfiniteSchedule(
   options: {
     limit?: number;
     initialLimit?: number;
-    referenceDate: string;
+    referenceDate?: string;
     filters?: ScheduleFilters;
     initialPage?: SchedulePage;
   }
 ) {
-  const { limit = 20, initialLimit = 50, referenceDate, filters = {}, initialPage } = options;
+  const { limit = 20, initialLimit = 50, filters = {}, initialPage } = options;
+  const [defaultReferenceDate] = useState(() => new Date().toISOString());
+  const referenceDate = options.referenceDate ?? defaultReferenceDate;
 
   return useInfiniteQuery({
     queryKey: scheduleKeys.infinite({ limit, cursor: referenceDate, filters }),

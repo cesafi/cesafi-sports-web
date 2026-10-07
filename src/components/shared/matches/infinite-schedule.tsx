@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 
 interface InfiniteScheduleProps {
   readonly limit?: number;
-  readonly direction?: 'future' | 'past';
   readonly filters?: ScheduleFilters;
   readonly onMatchClick?: (match: ScheduleMatch) => void;
   readonly className?: string;
@@ -19,7 +18,6 @@ interface InfiniteScheduleProps {
 
 export function InfiniteSchedule({
   limit = 20,
-  direction = 'future',
   filters = {},
   onMatchClick,
   className
@@ -36,7 +34,6 @@ export function InfiniteSchedule({
     error
   } = useInfiniteSchedule({
     limit,
-    direction,
     filters
   });
 
