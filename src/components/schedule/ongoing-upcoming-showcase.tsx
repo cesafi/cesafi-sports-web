@@ -79,13 +79,16 @@ export default function OngoingUpcomingShowcase({
   const { liveMatches, upcomingMatches } = useMemo(() => {
     const live: ScheduleMatch[] = [];
     const upcoming: ScheduleMatch[] = [];
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
     matches.forEach((m) => {
       if (m.status === 'cancelled' || m.status === 'canceled' || m.status === 'rescheduled') return;
 
       if (m.status === 'live' || m.status === 'ongoing') {
         live.push(m);
-      } else if (m.status === 'upcoming') {
+      } else if (m.status === 'upcoming' && new Date(m.scheduled_at ?? '').getTime() >= startOfToday) {
+        // Past-dated matches whose status was never updated are not "next"
         upcoming.push(m);
       }
     });

@@ -789,6 +789,7 @@ export class MatchService extends BaseService {
     hasMoreFuture: boolean;
     pastCursor: string | null;
     futureCursor: string | null;
+    referenceDate: string;
   }>> {
     try {
       const limit = options?.totalLimit || 40;
@@ -830,8 +831,10 @@ export class MatchService extends BaseService {
           matches: allMatches,
           hasMorePast: pastResponse.data?.hasMore || false,
           hasMoreFuture: futureResponse.data?.hasMore || false,
-          pastCursor: pastResponse.data?.nextCursor || null,
-          futureCursor: futureResponse.data?.nextCursor || null
+          // Past slice is ordered newest-first, so its prevCursor is the oldest match: the cursor to page further back
+          pastCursor: pastResponse.data?.prevCursor || null,
+          futureCursor: futureResponse.data?.nextCursor || null,
+          referenceDate
         }
       };
     } catch (err) {

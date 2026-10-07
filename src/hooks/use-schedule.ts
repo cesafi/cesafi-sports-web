@@ -7,104 +7,116 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useSeason } from '@/components/contexts/season-provider';
-import { getScheduleMatches, getScheduleMatchesByDate } from '@/actions/matches';
-import { ScheduleFilters, SchedulePaginationOptions, ScheduleResponse } from '@/lib/types/matches';
+import { getScheduleMatches, getScheduleMatchesAroundDate, getScheduleMatchesByDate } from '@/actions/matches';
+import { ScheduleFilters, ScheduleMatch, SchedulePaginationOptions } from '@/lib/types/matches';
+import {
+  getNextSchedulePageParam,
+  getPreviousSchedulePageParam,
+  SchedulePage,
+  SchedulePageParam
+} from '@/lib/utils/schedule-pagination';
 
 export const scheduleKeys = {
   all: ['schedule'] as const,
   infinite: (options: SchedulePaginationOptions) =>
     [...scheduleKeys.all, 'infinite', options] as const,
+  range: (range: { from: string; to: string }) => [...scheduleKeys.all, 'range', range] as const,
   byDate: (filters: ScheduleFilters) => [...scheduleKeys.all, 'byDate', filters] as const
 };
 
 /**
  * Hook for infinite scrolling schedule matches
- * Follows LOL sports pattern: scroll down for future, scroll up for past
+ * Follows LOL sports pattern: the first page straddles today, scroll down for future, scroll up for past
  */
 export function useInfiniteSchedule(
   options: {
     limit?: number;
-    direction?: 'future' | 'past';
+    initialLimit?: number;
+    referenceDate: string;
     filters?: ScheduleFilters;
-  } = {}
+    initialPage?: SchedulePage;
+  }
 ) {
-  const { currentSeason } = useSeason();
-  const { limit = 20, direction = 'future', filters = {} } = options;
-
-  // Merge season filter with provided filters - memoized to prevent unnecessary re-renders
-  const mergedFilters: ScheduleFilters = useMemo(() => ({
-    ...filters,
-    season_id: filters.season_id
-  }), [filters]);
+  const { limit = 20, initialLimit = 50, referenceDate, filters = {}, initialPage } = options;
 
   return useInfiniteQuery({
-    queryKey: scheduleKeys.infinite({ limit, direction, filters: mergedFilters }),
-    queryFn: ({ pageParam, direction: fetchDirection }) =>
-      getScheduleMatches({
-        cursor: pageParam as string | undefined,
+    queryKey: scheduleKeys.infinite({ limit, cursor: referenceDate, filters }),
+    queryFn: async ({ pageParam }): Promise<SchedulePage | undefined> => {
+      if (pageParam.direction === 'around') {
+        const res = await getScheduleMatchesAroundDate({
+          totalLimit: initialLimit,
+          referenceDate: pageParam.cursor,
+          filters
+        });
+        if (!res.success || !res.data) throw new Error(res.error || 'Failed to fetch schedule matches.');
+        return toAroundPage(res.data);
+      }
+
+      const res = await getScheduleMatches({
+        cursor: pageParam.cursor,
         limit,
-        direction: fetchDirection === 'backward' ? 'past' : direction,
-        filters: mergedFilters
-      }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => {
-      if (lastPage.success && lastPage.data) {
-        const pageData = lastPage.data as ScheduleResponse;
-        if (pageData.direction === 'past') {
-          // If the page was fetched going backward, going MORE forward (if we ever do from here)
-          // means taking the newest match from that backward slice as our forward cursor.
-          return pageData.matches.length > 0
-            ? pageData.matches[pageData.matches.length - 1].scheduled_at
-            : new Date().toISOString();
-        }
-        // Normal future scrolling uses the nextCursor directly
-        return pageData.hasMore ? pageData.nextCursor : undefined;
-      }
-      return undefined;
-    },
-    getPreviousPageParam: (firstPage) => {
-      if (firstPage.success && firstPage.data) {
-        const pageData = firstPage.data as ScheduleResponse;
-        if (pageData.direction === 'future') {
-          // If the oldest page we have was fetched going forward, we can go backward
-          // by using the oldest match in that page as our past cursor.
-          return pageData.matches.length > 0
-            ? pageData.matches[0].scheduled_at
-            : new Date().toISOString();
-        }
-        if (pageData.direction === 'past') {
-          // If we fetched going backward, hasMore tells us if there are even older matches.
-          // The nextCursor from a 'past' fetch is actually the cursor to go further into the past.
-          return pageData.hasMore ? pageData.nextCursor : undefined;
-        }
-
-        // Fallback for older API responses without direction
-        return pageData.prevCursor || new Date().toISOString();
-      }
-      return undefined;
-    },
-    select: (data) => {
-      // Deduplicate matches by id — cursor-based pagination with gte/lte can include
-      // boundary matches in both adjacent pages when they share a scheduled_at timestamp
-      const allMatches = data.pages.flatMap((page) => (page.success && page.data ? page.data.matches : []));
-      const seen = new Set<number>();
-      const uniqueMatches = allMatches.filter((match) => {
-        if (seen.has(match.id)) return false;
-        seen.add(match.id);
-        return true;
+        direction: pageParam.direction,
+        filters
       });
+      if (!res.success || !res.data) throw new Error(res.error || 'Failed to fetch schedule matches.');
+      return { ...res.data, direction: pageParam.direction } as SchedulePage;
+    },
+    initialPageParam: { direction: 'around', cursor: referenceDate } as SchedulePageParam,
+    initialData: initialPage
+      ? { pages: [initialPage], pageParams: [{ direction: 'around', cursor: referenceDate } as SchedulePageParam] }
+      : undefined,
+    getNextPageParam: (lastPage) => getNextSchedulePageParam(lastPage),
+    getPreviousPageParam: (firstPage) => getPreviousSchedulePageParam(firstPage),
+    select: (data) => {
+      // Keep chronological order (past pages come back newest-first) and dedupe by id
+      const seen = new Set<number>();
+      const matches = data.pages
+        .flatMap((page) => page?.matches ?? [])
+        .filter((match) => {
+          if (seen.has(match.id)) return false;
+          seen.add(match.id);
+          return true;
+        })
+        .sort((a, b) => new Date(a.scheduled_at ?? 0).getTime() - new Date(b.scheduled_at ?? 0).getTime());
 
-      return {
-        pages: data.pages,
-        pageParams: data.pageParams,
-        matches: uniqueMatches,
-        hasNextPage: data.pages[data.pages.length - 1]?.success
-          ? (data.pages[data.pages.length - 1] as { success: true; data: ScheduleResponse }).data?.hasMore ?? false
-          : false,
-        hasPreviousPage: data.pages[0]?.success ? (data.pages[0] as { success: true; data: ScheduleResponse }).data?.hasMore ?? false : false,
-        totalCount: data.pages[0]?.success ? (data.pages[0] as { success: true; data: ScheduleResponse }).data?.totalCount ?? 0 : 0
-      };
+      return { pages: data.pages, pageParams: data.pageParams, matches };
     }
+  });
+}
+
+export function toAroundPage(data: {
+  matches: ScheduleMatch[];
+  hasMorePast: boolean;
+  hasMoreFuture: boolean;
+  pastCursor: string | null;
+  futureCursor: string | null;
+}): SchedulePage {
+  return {
+    matches: data.matches,
+    direction: 'around',
+    hasMore: data.hasMorePast || data.hasMoreFuture,
+    nextCursor: data.futureCursor,
+    prevCursor: data.pastCursor,
+    hasMorePast: data.hasMorePast,
+    hasMoreFuture: data.hasMoreFuture,
+    pastCursor: data.pastCursor,
+    futureCursor: data.futureCursor
+  };
+}
+
+/**
+ * Hook for every match in a date range (the calendar's visible month or week).
+ * Independent of the infinite feed so the calendar never depends on how far the list has been scrolled.
+ */
+export function useScheduleRange(range: { from: string; to: string }) {
+  return useQuery({
+    queryKey: scheduleKeys.range(range),
+    queryFn: async () => {
+      const res = await getScheduleMatchesByDate({ date_from: range.from, date_to: range.to });
+      if (!res.success || !res.data) throw new Error(res.error || 'Failed to fetch schedule matches.');
+      return res.data.sortedDateKeys.flatMap((key) => res.data.groupedMatches[key]);
+    },
+    placeholderData: (previous) => previous
   });
 }
 

@@ -26,11 +26,7 @@ export default async function SchedulePage() {
     getActiveSchools()
   ]);
 
-  const matches = matchesResult.success && matchesResult.data ? matchesResult.data.matches : [];
-  const hasMorePast = matchesResult.success && matchesResult.data ? matchesResult.data.hasMorePast : false;
-  const hasMoreFuture = matchesResult.success && matchesResult.data ? matchesResult.data.hasMoreFuture : false;
-  const pastCursor = matchesResult.success && matchesResult.data ? matchesResult.data.pastCursor : null;
-  const futureCursor = matchesResult.success && matchesResult.data ? matchesResult.data.futureCursor : null;
+  const initialSchedule = matchesResult.success && matchesResult.data ? matchesResult.data : null;
   const categories = categoriesResult.success && categoriesResult.data ? categoriesResult.data : [];
   const seasons = seasonsResult.success && seasonsResult.data ? seasonsResult.data : [];
   const stages = stagesResult.success && stagesResult.data ? stagesResult.data : [];
@@ -60,11 +56,7 @@ export default async function SchedulePage() {
         {/* Main Content */}
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <ScheduleContent
-            initialMatches={matches}
-            initialHasMorePast={hasMorePast}
-            initialHasMoreFuture={hasMoreFuture}
-            initialPastCursor={pastCursor}
-            initialFutureCursor={futureCursor}
+            initialSchedule={initialSchedule}
             availableCategories={categories}
             availableSeasons={seasons}
             availableStages={stages}

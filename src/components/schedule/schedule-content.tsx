@@ -1,34 +1,34 @@
 // @ts-nocheck
 'use client';
 
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { InfiniteSchedule } from '@/components/schedule';
 import OngoingUpcomingShowcase from './ongoing-upcoming-showcase';
 import ScheduleCalendarView from './schedule-calendar-view';
 import { ScheduleMatch } from '@/lib/types/matches';
-import { useInfiniteSchedule } from '@/hooks/use-schedule';
+import { toAroundPage, useInfiniteSchedule, useScheduleRange } from '@/hooks/use-schedule';
+import { getCalendarRange, matchesScheduleFilters } from '@/lib/utils/schedule-pagination';
 import { Season } from '@/lib/types/seasons';
 import { sportsSeasonStageWithDetails } from '@/lib/types/sports-seasons-stages';
 import type { RichSportCategory } from './schedule-filter-bar';
 
 interface ScheduleContentProps {
-  initialMatches: ScheduleMatch[];
-  initialHasMorePast?: boolean;
-  initialHasMoreFuture?: boolean;
-  initialPastCursor?: string | null;
-  initialFutureCursor?: string | null;
+  initialSchedule: {
+    matches: ScheduleMatch[];
+    hasMorePast: boolean;
+    hasMoreFuture: boolean;
+    pastCursor: string | null;
+    futureCursor: string | null;
+    referenceDate: string;
+  } | null;
   availableCategories: RichSportCategory[];
   availableSeasons: Season[];
   availableStages: sportsSeasonStageWithDetails[];
   availableSchools?: any[];
 }
 
-export default function ScheduleContent({ 
-  initialMatches, 
-  initialHasMorePast = true,
-  initialHasMoreFuture = false,
-  initialPastCursor = null,
-  initialFutureCursor = null,
+export default function ScheduleContent({
+  initialSchedule,
   availableCategories,
   availableSeasons,
   availableStages,
@@ -48,7 +48,7 @@ export default function ScheduleContent({
     scrollToDateRef.current = fn;
   }, []);
 
-  const handleScrollToDate = useCallback((dateStr: string) => {
+  const scrollFeedToDate = useCallback((dateStr: string) => {
     if (scrollToDateRef.current) {
       scrollToDateRef.current(dateStr);
     } else {
@@ -61,6 +61,17 @@ export default function ScheduleContent({
       }
     }
   }, []);
+
+  // A date picked on the calendar may not be loaded in the feed yet; page the feed toward it, then scroll
+  const [pendingScrollDate, setPendingScrollDate] = useState<string | null>(null);
+
+  const handleScrollToDate = useCallback((dateStr: string) => {
+    if (document.getElementById(`date-group-${dateStr}`)) {
+      scrollFeedToDate(dateStr);
+    } else {
+      setPendingScrollDate(dateStr);
+    }
+  }, [scrollFeedToDate]);
 
   // Derive IDs for query
   const sportIdFilter = useMemo(() => {
@@ -87,6 +98,26 @@ export default function ScheduleContent({
     return selectedStatus === 'all' ? undefined : selectedStatus;
   }, [selectedStatus]);
 
+  const isFiltersApplied = selectedSport !== 'all' ||
+    selectedDivision !== 'all' ||
+    selectedSeason !== 'all' ||
+    selectedStage !== 'all' ||
+    selectedSchool !== 'all' ||
+    selectedStatus !== 'all';
+
+  const filterSelection = useMemo(() => ({
+    season: selectedSeason,
+    sport: selectedSport,
+    division: selectedDivision,
+    stage: selectedStage,
+    school: selectedSchool,
+    status: selectedStatus
+  }), [selectedSeason, selectedSport, selectedDivision, selectedStage, selectedSchool, selectedStatus]);
+
+  // Anchor the feed on the same "today" the server used, so its pre-rendered page can seed the query
+  const [referenceDate] = useState(() => initialSchedule?.referenceDate ?? new Date().toISOString());
+  const initialPage = useMemo(() => (initialSchedule ? toAroundPage(initialSchedule) : undefined), [initialSchedule]);
+
   // Use the infinite schedule hook for client-side data fetching
   const {
     data,
@@ -100,7 +131,8 @@ export default function ScheduleContent({
     error: _error
   } = useInfiniteSchedule({
     limit: 10,
-    direction: 'future',
+    referenceDate,
+    initialPage: isFiltersApplied ? undefined : initialPage,
     filters: {
       sport_id: sportIdFilter,
       division: divisionFilter,
@@ -111,7 +143,14 @@ export default function ScheduleContent({
     }
   });
 
-  const matches = data?.matches || [];
+  // Calendar loads every match in its visible month/week on its own, independent of the feed
+  const [calendarRange, setCalendarRange] = useState(() => getCalendarRange(new Date(), 'month'));
+  const { data: rangeMatches, isFetching: isCalendarFetching } = useScheduleRange(calendarRange);
+
+  const calendarMatches = useMemo(
+    () => (rangeMatches ?? []).filter((match) => matchesScheduleFilters(match, filterSelection)),
+    [rangeMatches, filterSelection]
+  );
 
   const [isWaiting, setIsWaiting] = useState(false);
 
@@ -147,87 +186,38 @@ export default function ScheduleContent({
     setSelectedStatus('all');
   }, []);
 
-  // Check if any filters are applied
-  const isFiltersApplied = selectedSport !== 'all' || 
-    selectedDivision !== 'all' || 
-    selectedSeason !== 'all' || 
-    selectedStage !== 'all' || 
-    selectedSchool !== 'all' ||
-    selectedStatus !== 'all';
-
-  // Use server-side initial data if client-side data is not ready yet
+  // While a filtered query is loading, show the server-rendered matches that satisfy the filters
   const displayMatches = useMemo(() => {
-    if (matches.length > 0) {
-      return matches;
-    }
-    
-    if (isFiltersApplied) {
-      return initialMatches.filter((match) => {
-        // Season filter
-        if (selectedSeason !== 'all') {
-          const matchSeasonId = match.sports_seasons_stages?.season_id;
-          if (!matchSeasonId || matchSeasonId.toString() !== selectedSeason) {
-            return false;
-          }
-        }
-        
-        // Sport filter
-        if (selectedSport !== 'all') {
-          const matchSportId = match.sports_seasons_stages?.sports_categories?.sports?.id;
-          if (!matchSportId || matchSportId.toString() !== selectedSport) {
-            return false;
-          }
-        }
-        
-        // Division filter
-        if (selectedDivision !== 'all') {
-          const matchDivision = match.sports_seasons_stages?.sports_categories?.division;
-          if (!matchDivision || matchDivision !== selectedDivision) {
-            return false;
-          }
-        }
-        
-        // Stage filter
-        if (selectedStage !== 'all') {
-          const matchStageName = match.sports_seasons_stages?.competition_stage;
-          if (!matchStageName || matchStageName !== selectedStage) {
-            return false;
-          }
-        }
-        
-        // School filter
-        if (selectedSchool !== 'all') {
-          const matchHasSchool = match.match_participants?.some(p => 
-            p.schools_teams?.school?.id?.toString() === selectedSchool ||
-            p.schools_teams?.school?.abbreviation === selectedSchool
-          );
-          if (!matchHasSchool) {
-            return false;
-          }
-        }
+    if (data) return data.matches;
+    const initialMatches = initialSchedule?.matches ?? [];
+    return isFiltersApplied
+      ? initialMatches.filter((match) => matchesScheduleFilters(match, filterSelection))
+      : initialMatches;
+  }, [data, initialSchedule, isFiltersApplied, filterSelection]);
 
-        // Status filter
-        if (selectedStatus !== 'all') {
-          const status = match.status;
-          if (selectedStatus === 'live') {
-            if (status !== 'live' && status !== 'ongoing') return false;
-          } else if (selectedStatus === 'cancelled') {
-            if (status !== 'cancelled' && status !== 'canceled') return false;
-          } else if (selectedStatus === 'rescheduled') {
-            if (status !== 'rescheduled') return false;
-          } else if (selectedStatus === 'finished') {
-            if (status !== 'finished' && status !== 'completed') return false;
-          } else if (selectedStatus === 'upcoming') {
-            if (status !== 'upcoming') return false;
-          }
-        }
-        
-        return true;
+  useEffect(() => {
+    if (!pendingScrollDate || isFetchingNextPage || isFetchingPreviousPage) return;
+
+    const dateKeys = displayMatches
+      .filter((match) => match.scheduled_at)
+      .map((match) => {
+        const d = new Date(match.scheduled_at);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       });
+    const firstLoaded = dateKeys[0];
+    const lastLoaded = dateKeys[dateKeys.length - 1];
+
+    if (lastLoaded && pendingScrollDate > lastLoaded && hasNextPage) {
+      fetchNextPage();
+    } else if (firstLoaded && pendingScrollDate < firstLoaded && hasPreviousPage) {
+      fetchPreviousPage();
+    } else {
+      // Loaded (or nothing more to load): let the feed render its date groups before scrolling
+      const dateStr = pendingScrollDate;
+      setPendingScrollDate(null);
+      setTimeout(() => scrollFeedToDate(dateStr), 150);
     }
-    
-    return initialMatches;
-  }, [matches, initialMatches, isFiltersApplied, selectedSeason, selectedSport, selectedDivision, selectedStage, selectedSchool, selectedStatus]);
+  }, [pendingScrollDate, displayMatches, hasNextPage, hasPreviousPage, isFetchingNextPage, isFetchingPreviousPage, fetchNextPage, fetchPreviousPage, scrollFeedToDate]);
 
   return (
     <div className="flex h-full w-full min-w-0 flex-col space-y-6">
@@ -239,7 +229,9 @@ export default function ScheduleContent({
 
       {/* Maximized Monthly Calendar View (Full Width) */}
       <ScheduleCalendarView
-        matches={displayMatches}
+        matches={calendarMatches}
+        isLoading={isCalendarFetching}
+        onVisibleRangeChange={setCalendarRange}
         onSelectDate={handleScrollToDate}
       />
 
@@ -248,8 +240,8 @@ export default function ScheduleContent({
         <InfiniteSchedule
           matches={displayMatches}
           onLoadMore={handleLoadMore}
-          hasMoreFuture={data ? hasNextPage : initialHasMoreFuture}
-          hasMorePast={data ? hasPreviousPage : initialHasMorePast}
+          hasMoreFuture={hasNextPage}
+          hasMorePast={hasPreviousPage}
           isLoading={isFetching || isWaiting}
           isFetchingNextPage={isFetchingNextPage || isWaiting}
           isFetchingPreviousPage={isFetchingPreviousPage || isWaiting}

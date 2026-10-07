@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   format, 
   startOfMonth, 
@@ -16,7 +16,7 @@ import {
   addWeeks,
   subWeeks
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -24,11 +24,14 @@ import { ScheduleMatch } from '@/lib/types/matches';
 import { formatCategoryName } from '@/lib/utils/sports';
 import { roboto } from '@/lib/fonts';
 import { getSportSvgPath } from '@/components/ui/sport-icon';
+import { getCalendarRange } from '@/lib/utils/schedule-pagination';
 
 interface ScheduleCalendarViewProps {
   readonly matches: ScheduleMatch[];
   readonly currentDate?: Date;
   readonly onSelectDate?: (dateStr: string) => void;
+  readonly onVisibleRangeChange?: (range: { from: string; to: string }) => void;
+  readonly isLoading?: boolean;
   readonly className?: string;
 }
 
@@ -36,11 +39,19 @@ export default function ScheduleCalendarView({
   matches,
   currentDate = new Date(),
   onSelectDate,
+  onVisibleRangeChange,
+  isLoading = false,
   className = ''
 }: ScheduleCalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState<Date>(() => startOfMonth(currentDate));
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [dialogDate, setDialogDate] = useState<string | null>(null);
+
+  const visibleRange = useMemo(() => getCalendarRange(currentMonth, viewMode), [currentMonth, viewMode]);
+
+  useEffect(() => {
+    onVisibleRangeChange?.(visibleRange);
+  }, [visibleRange, onVisibleRangeChange]);
 
   // Group all provided matches by YYYY-MM-DD dateKey
   const matchesByDate = useMemo(() => {
@@ -140,6 +151,7 @@ export default function ScheduleCalendarView({
           <h2 className="font-mango-grotesque text-sm sm:text-base font-bold uppercase tracking-wider text-foreground">
             {format(currentMonth, 'MMMM yyyy')}
           </h2>
+          {isLoading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground/60" aria-label="Loading matches" />}
         </div>
 
         <div className="flex items-center gap-1 sm:gap-1.5">
@@ -204,7 +216,7 @@ export default function ScheduleCalendarView({
           const isCurrentMonth = isSameMonth(dayDate, currentMonth);
           const isCurrentDay = isSameDay(dayDate, today);
           const dateKey = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
-          const dayMatches = matchesByDate.get(dateKey) || [];
+          const dayMatches = isCurrentMonth || viewMode === 'week' ? matchesByDate.get(dateKey) || [] : [];
           const hasMatches = dayMatches.length > 0;
 
           const displayMatches = dayMatches.slice(0, 3);
@@ -311,6 +323,12 @@ export default function ScheduleCalendarView({
           );
         })}
       </div>
+
+      {!isLoading && matches.length === 0 && (
+        <div className={`${roboto.className} border-t border-border/20 py-2.5 text-center text-[11px] text-muted-foreground/60`}>
+          No matches scheduled {viewMode === 'week' ? 'this week' : `in ${format(currentMonth, 'MMMM yyyy')}`}.
+        </div>
+      )}
 
       {/* Overflow Day Matches Dialog */}
       <Dialog open={!!dialogDate} onOpenChange={(open) => !open && setDialogDate(null)}>
