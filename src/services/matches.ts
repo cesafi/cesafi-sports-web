@@ -701,16 +701,9 @@ export class MatchService extends BaseService {
         const matchDate = match.scheduled_at ? new Date(match.scheduled_at) : null;
         const dateKey = matchDate ? matchDate.toISOString().split('T')[0] : '';
 
+        // displayDate/displayTime are formatted client-side: this runs in the server's timezone, not the viewer's
         return {
           ...match,
-          displayDate: dateKey,
-          displayTime: matchDate
-            ? matchDate.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              })
-            : '',
           isToday: dateKey === today.toISOString().split('T')[0],
           isPast: matchDate ? matchDate < now : false,
           isUpcoming: matchDate ? matchDate > now : false
@@ -937,15 +930,9 @@ export class MatchService extends BaseService {
               groupedMatches[dateKey] = [];
             }
 
-            // Add display properties
+            // displayDate/displayTime are formatted client-side: this runs in the server's timezone, not the viewer's
             const displayMatch: ScheduleMatch = {
               ...match,
-              displayDate: dateKey,
-              displayTime: matchDate.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              }),
               isToday: dateKey === today.toISOString().split('T')[0],
               isPast: matchDate < now,
               isUpcoming: matchDate > now

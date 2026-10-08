@@ -25,6 +25,7 @@ import { formatCategoryName } from '@/lib/utils/sports';
 import { roboto } from '@/lib/fonts';
 import { getSportSvgPath } from '@/components/ui/sport-icon';
 import { getCalendarRange } from '@/lib/utils/schedule-pagination';
+import { formatMatchTime } from './utils';
 
 interface ScheduleCalendarViewProps {
   readonly matches: ScheduleMatch[];
@@ -295,9 +296,9 @@ export default function ScheduleCalendarView({
                       </div>
                       {isLive ? (
                         <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse flex-shrink-0 ml-1" />
-                      ) : m.displayTime ? (
+                      ) : m.scheduled_at ? (
                         <span className="text-[9px] text-muted-foreground/50 flex-shrink-0 ml-1 hidden lg:inline">
-                          {m.displayTime}
+                          {formatMatchTime(m.scheduled_at)}
                         </span>
                       ) : null}
                     </button>
@@ -399,7 +400,7 @@ export default function ScheduleCalendarView({
                             />
                           ) : null;
                         })()}
-                        <span>{m.displayTime || 'TBD'} · {m.sports_seasons_stages?.sports_categories?.sports?.name ?? 'CESAFI'}</span>
+                        <span>{m.scheduled_at ? formatMatchTime(m.scheduled_at) : 'TBD'} · {m.sports_seasons_stages?.sports_categories?.sports?.name ?? 'CESAFI'}</span>
                       </div>
                     </div>
                   </div>

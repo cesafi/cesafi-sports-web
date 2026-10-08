@@ -24,6 +24,13 @@ export const isUpcoming = (date: Date): boolean => {
   return date > now;
 };
 
+// Match times must be formatted in the browser: a server action runs in the server's timezone (UTC on Vercel)
+export const formatMatchTime = (scheduledAt: string | Date): string =>
+  new Date(scheduledAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+export const toLocalDateKey = (date: Date): string =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
 // Group matches by date - ALL date computation happens here (client-side)
 // This ensures correct timezone handling since the browser knows the user's timezone
 export const groupMatchesByDate = (matches: ScheduleMatch[]): ScheduleDateGroup[] => {
@@ -41,9 +48,7 @@ export const groupMatchesByDate = (matches: ScheduleMatch[]): ScheduleDateGroup[
 
       // Derive local date key from the browser's timezone interpretation
       const year = matchDate.getFullYear();
-      const month = String(matchDate.getMonth() + 1).padStart(2, '0');
-      const day = String(matchDate.getDate()).padStart(2, '0');
-      const dateKey = `${year}-${month}-${day}`;
+      const dateKey = toLocalDateKey(matchDate);
 
       // Format display date client-side (browser timezone)
       const showYear = year !== currentYear;
@@ -55,7 +60,7 @@ export const groupMatchesByDate = (matches: ScheduleMatch[]): ScheduleDateGroup[
       });
 
       // Format display time client-side (browser timezone)
-      const displayTime = matchDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const displayTime = formatMatchTime(matchDate);
 
       const isCancelled = (match.status as string) === 'cancelled' || (match.status as string) === 'canceled';
       const isRescheduled = (match.status as string) === 'rescheduled';

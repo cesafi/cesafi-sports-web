@@ -8,7 +8,7 @@ import { Calendar, MapPin, Clock, ChevronRight, Flame } from 'lucide-react';
 import { moderniz, roboto } from '@/lib/fonts';
 import { ScheduleMatch } from '@/lib/types/matches';
 import { formatCategoryName, formatStage } from '@/lib/utils/sports';
-import { determineWinner } from './utils';
+import { determineWinner, formatMatchTime, toLocalDateKey } from './utils';
 import { getSportSvgPath } from '@/components/ui/sport-icon';
 
 interface OngoingUpcomingShowcaseProps {
@@ -301,7 +301,7 @@ export default function OngoingUpcomingShowcase({
             {featuredMatch.scheduled_at && (
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3 opacity-60" />
-                <span>{featuredMatch.displayDate} · {featuredMatch.displayTime}</span>
+                <span>{toLocalDateKey(new Date(featuredMatch.scheduled_at))} · {formatMatchTime(featuredMatch.scheduled_at)}</span>
               </div>
             )}
             {featuredMatch.venue && (
@@ -372,7 +372,7 @@ export default function OngoingUpcomingShowcase({
                         {p1?.abbreviation ?? 'TBD'} vs {p2?.abbreviation ?? 'TBD'}
                       </div>
                       <div className={`${roboto.className} text-[9px] text-muted-foreground/50 truncate`}>
-                        {match.displayDate}
+                        {match.scheduled_at ? toLocalDateKey(new Date(match.scheduled_at)) : ''}
                       </div>
                     </div>
                   </div>
