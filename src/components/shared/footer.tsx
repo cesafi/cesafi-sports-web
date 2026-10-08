@@ -126,7 +126,7 @@ export default function Footer() {
                   </svg>
                 </a>
                 <a
-                  href="https://www.facebook.com/cesafi"
+                  href="https://www.facebook.com/thecesafi"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-3 rounded-lg bg-muted/50 text-muted-foreground hover:text-blue-500 hover:bg-muted transition-all duration-200"
@@ -147,7 +147,7 @@ export default function Footer() {
                   </svg>
                 </a>
                 <a
-                  href="https://www.tiktok.com/@cesafi"
+                  href="https://www.tiktok.com/@cesafiofficial"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-3 rounded-lg bg-muted/50 text-muted-foreground hover:text-black dark:hover:text-white hover:bg-muted transition-all duration-200"
