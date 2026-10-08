@@ -197,10 +197,10 @@ export default function InfiniteSchedule({
     }
   }, [onRegisterScrollToDate, scrollToDateGroup]);
 
-  // Scroll to today (or nearest date) on initial mount
-  const hasScrolledRef = useRef(false);
+  // Point the toolbar at today (or nearest date) on initial mount; the page itself stays at the top
+  const hasInitializedDateRef = useRef(false);
   useEffect(() => {
-    if (dateGroups.length === 0 || hasScrolledRef.current) return;
+    if (dateGroups.length === 0 || hasInitializedDateRef.current) return;
 
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
@@ -223,16 +223,7 @@ export default function InfiniteSchedule({
 
     if (targetGroup) {
       setDisplayedDate(getValidDate(targetGroup.date));
-      setTimeout(() => {
-        const element = document.getElementById(`date-group-${targetGroup!.date}`);
-        if (element) {
-          const headerOffset = 180;
-          const elementPosition = element.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.scrollY - headerOffset;
-          window.scrollTo({ top: offsetPosition, behavior: 'auto' });
-          hasScrolledRef.current = true;
-        }
-      }, 100);
+      hasInitializedDateRef.current = true;
     }
   }, [dateGroups]);
 

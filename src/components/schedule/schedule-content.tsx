@@ -41,6 +41,15 @@ export default function ScheduleContent({
   const [selectedSchool, setSelectedSchool] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
+  // Always open the schedule at the top, overriding Next's segment scroll and browser history restoration
+  useEffect(() => {
+    history.scrollRestoration = 'manual';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    return () => {
+      history.scrollRestoration = 'auto';
+    };
+  }, []);
+
   // Callback ref for scrolling to a specific date from Calendar / Showcase
   const scrollToDateRef = useRef<((dateStr: string) => void) | null>(null);
 
