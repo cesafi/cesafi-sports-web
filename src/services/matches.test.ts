@@ -34,6 +34,7 @@ function from(table: string) {
     gte: (col: string, v: string) => (filters.push((r) => r[col] >= v), builder),
     lt: (col: string, v: string) => (filters.push((r) => r[col] < v), builder),
     lte: (col: string, v: string) => (filters.push((r) => r[col] <= v), builder),
+    order: () => builder,
     single: async () => {
       const data = run()[0] ?? null;
       return { data, error: data ? null : { code: 'PGRST116' } };
@@ -126,5 +127,20 @@ describe('MatchService schedule conflicts', () => {
       ['uspf-col', 'usjr-col']
     );
     expect(res).toMatchObject({ success: true });
+  });
+});
+
+describe('MatchService schedule range', () => {
+  it('returns saved times untouched and leaves display formatting to the viewer', async () => {
+    const res = await MatchService.getScheduleMatchesByDate({ date_from: at('00:00'), date_to: at('23:59') });
+
+    if (!res.success) throw new Error(res.error);
+    const matches = res.data.sortedDateKeys.flatMap((key) => res.data.groupedMatches[key]);
+    expect(matches.map((m) => m.scheduled_at)).toEqual([at('09:00'), at('09:00'), at('13:00')]);
+    // A server action runs in the server's timezone, so any time string it builds is wrong for the viewer
+    matches.forEach((m) => {
+      expect(m.displayTime).toBeUndefined();
+      expect(m.displayDate).toBeUndefined();
+    });
   });
 });
