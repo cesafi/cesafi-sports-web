@@ -61,7 +61,7 @@ export function getCalendarRange(anchor: Date, viewMode: 'month' | 'week'): { fr
 export interface ScheduleFilterSelection {
   season: string;
   sport: string;
-  division: string;
+  level: string;
   stage: string;
   school: string;
   status: string;
@@ -73,7 +73,7 @@ export function matchesScheduleFilters(match: ScheduleMatch, filters: ScheduleFi
 
   if (filters.season !== 'all' && stage?.season_id?.toString() !== filters.season) return false;
   if (filters.sport !== 'all' && category?.sports?.id?.toString() !== filters.sport) return false;
-  if (filters.division !== 'all' && category?.division !== filters.division) return false;
+  if (filters.level !== 'all' && category?.levels !== filters.level) return false;
   if (filters.stage !== 'all' && stage?.competition_stage !== filters.stage) return false;
 
   if (filters.school !== 'all') {

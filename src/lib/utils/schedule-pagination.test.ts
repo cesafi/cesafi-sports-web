@@ -91,14 +91,14 @@ describe('matchesScheduleFilters', () => {
     sports_seasons_stages: {
       season_id: 3,
       competition_stage: 'elimination_round',
-      sports_categories: { division: 'men', sports: { id: 7 } }
+      sports_categories: { division: 'men', levels: 'college', sports: { id: 7 } }
     },
     match_participants: [
       { schools_teams: { school: { abbreviation: 'USC' } } },
       { schools_teams: { school: { abbreviation: 'UV' } } }
     ]
   };
-  const all = { season: 'all', sport: 'all', division: 'all', stage: 'all', school: 'all', status: 'all' };
+  const all = { season: 'all', sport: 'all', level: 'all', stage: 'all', school: 'all', status: 'all' };
 
   it('passes everything when no filters are applied', () => {
     expect(matchesScheduleFilters(match as never, all)).toBe(true);
@@ -109,8 +109,8 @@ describe('matchesScheduleFilters', () => {
     [{ season: '4' }, false],
     [{ sport: '7' }, true],
     [{ sport: '8' }, false],
-    [{ division: 'men' }, true],
-    [{ division: 'women' }, false],
+    [{ level: 'college' }, true],
+    [{ level: 'high_school' }, false],
     [{ stage: 'elimination_round' }, true],
     [{ stage: 'playoffs' }, false],
     [{ school: 'UV' }, true],

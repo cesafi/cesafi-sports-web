@@ -35,7 +35,7 @@ export default function ScheduleContent({
   availableSchools = []
 }: ScheduleContentProps) {
   const [selectedSport, setSelectedSport] = useState<string>('all');
-  const [selectedDivision, setSelectedDivision] = useState<string>('all');
+  const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [selectedSeason, setSelectedSeason] = useState<string>('all');
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [selectedSchool, setSelectedSchool] = useState<string>('all');
@@ -87,9 +87,9 @@ export default function ScheduleContent({
     return selectedSport === 'all' ? undefined : parseInt(selectedSport);
   }, [selectedSport]);
 
-  const divisionFilter = useMemo(() => {
-    return selectedDivision === 'all' ? undefined : selectedDivision;
-  }, [selectedDivision]);
+  const levelFilter = useMemo(() => {
+    return selectedLevel === 'all' ? undefined : selectedLevel;
+  }, [selectedLevel]);
 
   const seasonIdFilter = useMemo(() => {
     return selectedSeason === 'all' ? undefined : parseInt(selectedSeason);
@@ -108,7 +108,7 @@ export default function ScheduleContent({
   }, [selectedStatus]);
 
   const isFiltersApplied = selectedSport !== 'all' ||
-    selectedDivision !== 'all' ||
+    selectedLevel !== 'all' ||
     selectedSeason !== 'all' ||
     selectedStage !== 'all' ||
     selectedSchool !== 'all' ||
@@ -117,11 +117,11 @@ export default function ScheduleContent({
   const filterSelection = useMemo(() => ({
     season: selectedSeason,
     sport: selectedSport,
-    division: selectedDivision,
+    level: selectedLevel,
     stage: selectedStage,
     school: selectedSchool,
     status: selectedStatus
-  }), [selectedSeason, selectedSport, selectedDivision, selectedStage, selectedSchool, selectedStatus]);
+  }), [selectedSeason, selectedSport, selectedLevel, selectedStage, selectedSchool, selectedStatus]);
 
   // Anchor the feed on the same "today" the server used, so its pre-rendered page can seed the query
   const [referenceDate] = useState(() => initialSchedule?.referenceDate ?? new Date().toISOString());
@@ -144,7 +144,7 @@ export default function ScheduleContent({
     initialPage: isFiltersApplied ? undefined : initialPage,
     filters: {
       sport_id: sportIdFilter,
-      division: divisionFilter,
+      levels: levelFilter,
       season_id: seasonIdFilter,
       stage_name: stageNameFilter,
       school_id: schoolIdFilter,
@@ -177,18 +177,18 @@ export default function ScheduleContent({
 
   const handleSportChange = useCallback((esportId: string) => {
     setSelectedSport(esportId);
-    setSelectedDivision('all');
+    setSelectedLevel('all');
     setSelectedStage('all');
   }, []);
 
-  const handleDivisionChange = useCallback((division: string) => {
-    setSelectedDivision(division);
+  const handleLevelChange = useCallback((level: string) => {
+    setSelectedLevel(level);
     setSelectedStage('all');
   }, []);
 
   const handleResetFilters = useCallback(() => {
     setSelectedSport('all');
-    setSelectedDivision('all');
+    setSelectedLevel('all');
     setSelectedSeason('all');
     setSelectedStage('all');
     setSelectedSchool('all');
@@ -256,8 +256,8 @@ export default function ScheduleContent({
           isFetchingPreviousPage={isFetchingPreviousPage || isWaiting}
           selectedSportId={selectedSport}
           onSportChange={handleSportChange}
-          selectedDivision={selectedDivision}
-          onDivisionChange={handleDivisionChange}
+          selectedLevel={selectedLevel}
+          onLevelChange={handleLevelChange}
           availableRichSports={availableCategories}
           availableSeasons={availableSeasons}
           selectedSeason={selectedSeason}

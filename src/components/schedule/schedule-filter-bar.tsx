@@ -12,6 +12,14 @@ import { isToday, formatDateHeader } from './utils';
 import { Season } from '@/lib/types/seasons';
 import { SportsSeasonsStageWithDetails } from '@/lib/types/sports-seasons-stages';
 
+// Values match the sport_levels enum
+const LEVEL_OPTIONS = [
+  { value: 'college', label: 'College' },
+  { value: 'high_school', label: 'High School' },
+  { value: '12_under', label: '12 Under' },
+  { value: '15_under', label: '15 Under' }
+];
+
 function formatStage(stage: string) {
   if (!stage) return '';
   return stage.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -44,8 +52,8 @@ interface ScheduleFilterBarProps {
   readonly onNextDay?: () => void;
   readonly selectedSportId?: string;
   readonly onSportChange?: (id: string) => void;
-  readonly selectedDivision?: string;
-  readonly onDivisionChange?: (division: string) => void;
+  readonly selectedLevel?: string;
+  readonly onLevelChange?: (level: string) => void;
   readonly availableRichSports?: RichSportCategory[];
   readonly availableDates?: Date[];
   readonly availableSeasons?: Season[];
@@ -69,8 +77,8 @@ export default function ScheduleFilterBar({
   onNextDay,
   selectedSportId = 'all',
   onSportChange,
-  selectedDivision = 'all',
-  onDivisionChange,
+  selectedLevel = 'all',
+  onLevelChange,
   availableRichSports = [],
   availableDates = [],
   availableSeasons = [],
@@ -92,12 +100,12 @@ export default function ScheduleFilterBar({
     let count = 0;
     if (selectedSeason !== 'all') count++;
     if (selectedSportId !== 'all') count++;
-    if (selectedDivision !== 'all') count++;
+    if (selectedLevel !== 'all') count++;
     if (selectedStage !== 'all') count++;
     if (selectedSchool !== 'all') count++;
     if (selectedStatus !== 'all') count++;
     return count;
-  }, [selectedSeason, selectedSportId, selectedDivision, selectedStage, selectedSchool, selectedStatus]);
+  }, [selectedSeason, selectedSportId, selectedLevel, selectedStage, selectedSchool, selectedStatus]);
 
   const uniqueSports = useMemo(() => {
     if (!availableRichSports || availableRichSports.length === 0) return [];
@@ -110,15 +118,6 @@ export default function ScheduleFilterBar({
     return Array.from(map.values());
   }, [availableRichSports]);
 
-  const uniqueDivisions = useMemo(() => {
-    if (!availableRichSports || availableRichSports.length === 0) return [];
-    const divisions = new Set<string>();
-    availableRichSports.forEach(cat => {
-      if (selectedSportId !== 'all' && cat.sport?.id.toString() !== selectedSportId) return;
-      divisions.add(cat.division);
-    });
-    return Array.from(divisions).sort();
-  }, [availableRichSports, selectedSportId]);
 
   const uniqueFilteredStages = useMemo(() => {
     const filtered = availableStages.filter(stage => {
@@ -130,8 +129,8 @@ export default function ScheduleFilterBar({
           return false;
         }
       }
-      if (selectedDivision !== 'all') {
-        if (!stage.sports_categories || stage.sports_categories.division !== selectedDivision) {
+      if (selectedLevel !== 'all') {
+        if (!stage.sports_categories || stage.sports_categories.levels !== selectedLevel) {
           return false;
         }
       }
@@ -146,7 +145,7 @@ export default function ScheduleFilterBar({
     });
 
     return Array.from(uniqueMap.values());
-  }, [availableStages, selectedSeason, selectedSportId, selectedDivision]);
+  }, [availableStages, selectedSeason, selectedSportId, selectedLevel]);
 
   const statusOptions = [
     { value: 'all', label: 'All' },
@@ -323,15 +322,15 @@ export default function ScheduleFilterBar({
         </Select>
 
         {/* Category */}
-        <Select value={selectedDivision} onValueChange={(val) => onDivisionChange?.(val)}>
+        <Select value={selectedLevel} onValueChange={(val) => onLevelChange?.(val)}>
           <SelectTrigger className="h-7 w-[120px] bg-background/50 font-medium text-[11px] border-border/30">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {uniqueDivisions.map((division) => (
-              <SelectItem key={division} value={division}>
-                {division}
+            {LEVEL_OPTIONS.map((level) => (
+              <SelectItem key={level.value} value={level.value}>
+                {level.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -367,7 +366,7 @@ export default function ScheduleFilterBar({
           <SelectContent>
             <SelectItem value="all">All Stages</SelectItem>
             {uniqueFilteredStages.map((stage) => (
-              <SelectItem key={stage.id} value={formatStage(stage.competition_stage)}>
+              <SelectItem key={stage.id} value={stage.competition_stage}>
                 {formatStage(stage.competition_stage)}
               </SelectItem>
             ))}
@@ -455,15 +454,15 @@ export default function ScheduleFilterBar({
                 </div>
               )}
 
-              <Select value={selectedDivision} onValueChange={(val) => onDivisionChange?.(val)}>
+              <Select value={selectedLevel} onValueChange={(val) => onLevelChange?.(val)}>
                 <SelectTrigger className="h-7 w-full bg-background/50 font-medium text-[11px] border-border/30">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {uniqueDivisions.map((division) => (
-                    <SelectItem key={division} value={division}>
-                      {division}
+                  {LEVEL_OPTIONS.map((level) => (
+                    <SelectItem key={level.value} value={level.value}>
+                      {level.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -476,7 +475,7 @@ export default function ScheduleFilterBar({
                 <SelectContent>
                   <SelectItem value="all">All Stages</SelectItem>
                   {uniqueFilteredStages.map((stage) => (
-                    <SelectItem key={stage.id} value={formatStage(stage.competition_stage)}>
+                    <SelectItem key={stage.id} value={stage.competition_stage}>
                       {formatStage(stage.competition_stage)}
                     </SelectItem>
                   ))}

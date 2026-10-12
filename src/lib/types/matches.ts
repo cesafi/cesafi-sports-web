@@ -65,6 +65,7 @@ export interface ScheduleFilters {
   category?: string;
   category_id?: number;
   division?: string; // New filter for category division
+  levels?: string; // Category level: college, high_school, 12_under, 15_under
   date?: string;
   status?: string;
   season_id?: number;

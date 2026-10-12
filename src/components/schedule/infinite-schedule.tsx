@@ -31,8 +31,8 @@ interface InfiniteScheduleProps {
   readonly isFetchingPreviousPage?: boolean;
   readonly selectedSportId?: string;
   readonly onSportChange?: (id: string) => void;
-  readonly selectedDivision?: string;
-  readonly onDivisionChange?: (division: string) => void;
+  readonly selectedLevel?: string;
+  readonly onLevelChange?: (level: string) => void;
   readonly availableRichSports?: RichSportCategory[];
   readonly availableSeasons?: Season[];
   readonly selectedSeason?: string;
@@ -59,8 +59,8 @@ export default function InfiniteSchedule({
   isFetchingPreviousPage = false,
   selectedSportId = 'all',
   onSportChange,
-  selectedDivision = 'all',
-  onDivisionChange,
+  selectedLevel = 'all',
+  onLevelChange,
   availableRichSports = [],
   availableSeasons = [],
   selectedSeason = 'all',
@@ -97,7 +97,7 @@ export default function InfiniteSchedule({
   const topLoadMoreRef = useRef<HTMLDivElement | null>(null);
   const bottomLoadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter matches by sport/division/school/status - memoized
+  // Filter matches by sport/level/school/status - memoized
   const filteredMatches = useMemo(() => {
     return matches.filter((match) => {
       // Filter by Sport ID
@@ -106,10 +106,10 @@ export default function InfiniteSchedule({
         if (sportId !== selectedSportId) return false;
       }
 
-      // Filter by Division ("Category")
-      if (selectedDivision !== 'all') {
-        const division = match.sports_seasons_stages?.sports_categories?.division;
-        if (division !== selectedDivision) return false;
+      // Filter by level ("Category")
+      if (selectedLevel !== 'all') {
+        const level = match.sports_seasons_stages?.sports_categories?.levels;
+        if (level !== selectedLevel) return false;
       }
 
       // Filter by School
@@ -139,7 +139,7 @@ export default function InfiniteSchedule({
 
       return true;
     });
-  }, [matches, selectedSportId, selectedDivision, selectedSchool, selectedStatus]);
+  }, [matches, selectedSportId, selectedLevel, selectedSchool, selectedStatus]);
 
   // Group filtered matches by date (chronological ascending)
   useEffect(() => {
@@ -388,8 +388,8 @@ export default function InfiniteSchedule({
         onNextDay={() => handleDateNavigation('next')}
         selectedSportId={selectedSportId}
         onSportChange={onSportChange}
-        selectedDivision={selectedDivision}
-        onDivisionChange={onDivisionChange}
+        selectedLevel={selectedLevel}
+        onLevelChange={onLevelChange}
         availableRichSports={availableRichSports}
         availableDates={dateGroups.map((group) => getValidDate(group.date))}
         availableSeasons={availableSeasons}

@@ -31,6 +31,54 @@ const SCHOOLS_TEAMS_TABLE = 'schools_teams';
 const MATCH_PARTICIPANTS_TABLE = 'match_participants';
 const GAMES_TABLE = 'games';
 
+// school_filter is a second embed of match_participants used only by the school filter,
+// so filtering on it doesn't strip the opponent out of match_participants
+const SCHEDULE_SELECT = `
+  *,
+  sports_seasons_stages!inner(
+    id,
+    competition_stage,
+    season_id,
+    sport_category_id,
+    sports_categories!sport_category_id!inner(
+      id,
+      division,
+      levels,
+      sports!inner(
+        id,
+        name
+      )
+    ),
+    seasons!inner(
+      id,
+      start_at,
+      end_at
+    )
+  ),
+  school_filter:match_participants!inner(
+    schools_teams!inner(school_id)
+  ),
+  match_participants!inner(
+    id,
+    match_id,
+    team_id,
+    match_score,
+    schools_teams!inner(
+      id,
+      name,
+      school:schools!inner(
+        id,
+        name,
+        abbreviation,
+        logo_url
+      )
+    )
+  )
+`;
+
+// The schedule's "live" tab maps to the match_status enum value
+const SCHEDULE_STATUS_ALIASES: Record<string, string> = { live: 'ongoing' };
+
 export class MatchService extends BaseService {
   // A match only conflicts with an overlapping match at the same venue or with a shared team record.
   private static async getScheduleConflictError(target: ScheduledMatchSlot): Promise<string | null> {
@@ -583,84 +631,37 @@ export class MatchService extends BaseService {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private static applyScheduleFilters<T extends Record<'eq' | 'gte' | 'lte' | 'or', any>>(query: T, filters?: ScheduleFilters): T {
+    if (!filters) return query;
+
+    if (filters.season_id) query = query.eq('sports_seasons_stages.season_id', filters.season_id);
+    if (filters.sport_id) query = query.eq('sports_seasons_stages.sports_categories.sport_id', filters.sport_id);
+    if (filters.category_id) query = query.eq('sports_seasons_stages.sport_category_id', filters.category_id);
+    if (filters.division) query = query.eq('sports_seasons_stages.sports_categories.division', filters.division);
+    if (filters.levels) query = query.eq('sports_seasons_stages.sports_categories.levels', filters.levels);
+    if (filters.stage_id) query = query.eq('stage_id', filters.stage_id);
+    if (filters.stage_name) query = query.eq('sports_seasons_stages.competition_stage', filters.stage_name);
+    if (filters.school_id) query = query.eq('school_filter.schools_teams.school_id', filters.school_id);
+    if (filters.status) query = query.eq('status', SCHEDULE_STATUS_ALIASES[filters.status] ?? filters.status);
+    if (filters.date_from) query = query.gte('scheduled_at', filters.date_from);
+    if (filters.date_to) query = query.lte('scheduled_at', filters.date_to);
+    if (filters.search) {
+      query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
+    }
+
+    return query;
+  }
+
   // New method for schedule feature with infinite scrolling
   static async getScheduleMatches(
     options: SchedulePaginationOptions
   ): Promise<ServiceResponse<ScheduleResponse>> {
     try {
       const supabase = await this.getClient();
-      let query = supabase.from(TABLE_NAME).select(`
-          *,
-          sports_seasons_stages!inner(
-            id,
-            competition_stage,
-            season_id,
-            sport_category_id,
-            sports_categories!sport_category_id!inner(
-              id,
-              division,
-              levels,
-              sports!inner(
-                id,
-                name
-              )
-            ),
-            seasons!inner(
-              id,
-              start_at,
-              end_at
-            )
-          ),
-          match_participants!inner(
-            id,
-            match_id,
-            team_id,
-            match_score,
-            schools_teams!inner(
-              id,
-              name,
-              school:schools!inner(
-                name,
-                abbreviation,
-                logo_url
-              )
-            )
-          )
-        `);
+      let query = supabase.from(TABLE_NAME).select(SCHEDULE_SELECT);
 
-      // Apply filters
-      if (options.filters?.season_id) {
-        query = query.eq('sports_seasons_stages.season_id', options.filters.season_id);
-      }
-      if (options.filters?.sport_id) {
-        query = query.eq(
-          'sports_seasons_stages.sports_categories.sport_id',
-          options.filters.sport_id
-        );
-      }
-      if (options.filters?.category_id) {
-        query = query.eq(
-          'sports_seasons_stages.sport_category_id',
-          options.filters.category_id
-        );
-      }
-      if (options.filters?.stage_id) {
-        query = query.eq('stage_id', options.filters.stage_id);
-      }
-      if (options.filters?.status) {
-        query = query.eq('status', options.filters.status);
-      }
-      if (options.filters?.date_from) {
-        query = query.gte('scheduled_at', options.filters.date_from);
-      }
-      if (options.filters?.date_to) {
-        query = query.lte('scheduled_at', options.filters.date_to);
-      }
-      if (options.filters?.search) {
-        query = query.or(
-          `name.ilike.%${options.filters.search}%,description.ilike.%${options.filters.search}%`
-        );
-      }
+      query = this.applyScheduleFilters(query, options.filters);
 
       // Apply cursor-based pagination
       if (options.cursor) {
@@ -697,7 +698,7 @@ export class MatchService extends BaseService {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-      const matches: ScheduleMatch[] = rawMatches.map((match) => {
+      const matches: ScheduleMatch[] = rawMatches.map(({ school_filter: _schoolFilter, ...match }) => {
         const matchDate = match.scheduled_at ? new Date(match.scheduled_at) : null;
         const dateKey = matchDate ? matchDate.toISOString().split('T')[0] : '';
 
@@ -723,39 +724,6 @@ export class MatchService extends BaseService {
         }
       }
 
-      // Get total count for the filtered results
-      const countQuery = supabase.from(TABLE_NAME).select('*', { count: 'exact', head: true });
-
-      // Apply same filters to count query
-      if (options.filters?.season_id) {
-        countQuery.eq('sports_seasons_stages.season_id', options.filters.season_id);
-      }
-      if (options.filters?.sport_id) {
-        countQuery.eq('sports_seasons_stages.sports_categories.sport_id', options.filters.sport_id);
-      }
-      if (options.filters?.category_id) {
-        countQuery.eq('sports_seasons_stages.sport_category_id', options.filters.category_id);
-      }
-      if (options.filters?.stage_id) {
-        countQuery.eq('stage_id', options.filters.stage_id);
-      }
-      if (options.filters?.status) {
-        countQuery.eq('status', options.filters.status);
-      }
-      if (options.filters?.date_from) {
-        countQuery.gte('scheduled_at', options.filters.date_from);
-      }
-      if (options.filters?.date_to) {
-        countQuery.lte('scheduled_at', options.filters.date_to);
-      }
-      if (options.filters?.search) {
-        countQuery.or(
-          `name.ilike.%${options.filters.search}%,description.ilike.%${options.filters.search}%`
-        );
-      }
-
-      const { count } = await countQuery;
-
       return {
         success: true,
         data: {
@@ -763,8 +731,7 @@ export class MatchService extends BaseService {
           nextCursor,
           prevCursor,
           hasMore,
-          direction: options.direction || 'future',
-          totalCount: count ?? 0
+          direction: options.direction || 'future'
         }
       };
     } catch (err) {
@@ -841,70 +808,9 @@ export class MatchService extends BaseService {
   ): Promise<ServiceResponse<ScheduleMatchesByDateResponse>> {
     try {
       const supabase = await this.getClient();
-      let query = supabase.from(TABLE_NAME).select(`
-          *,
-          sports_seasons_stages!inner(
-            id,
-            competition_stage,
-            season_id,
-            sport_category_id,
-            sports_categories!sport_category_id!inner(
-              id,
-              division,
-              levels,
-              sports!inner(
-                id,
-                name
-              )
-            ),
-            seasons!inner(
-              id,
-              start_at,
-              end_at
-            )
-          ),
-          match_participants!inner(
-            id,
-            match_id,
-            team_id,
-            match_score,
-            schools_teams!inner(
-              id,
-              name,
-              school:schools!inner(
-                name,
-                abbreviation,
-                logo_url
-              )
-            )
-          )
-        `);
+      let query = supabase.from(TABLE_NAME).select(SCHEDULE_SELECT);
 
-      // Apply filters
-      if (options.season_id) {
-        query = query.eq('sports_seasons_stages.season_id', options.season_id);
-      }
-      if (options.sport_id) {
-        query = query.eq('sports_seasons_stages.sports_categories.sport_id', options.sport_id);
-      }
-      if (options.category_id) {
-        query = query.eq('sports_seasons_stages.sport_category_id', options.category_id);
-      }
-      if (options.stage_id) {
-        query = query.eq('stage_id', options.stage_id);
-      }
-      if (options.status) {
-        query = query.eq('status', options.status);
-      }
-      if (options.date_from) {
-        query = query.gte('scheduled_at', options.date_from);
-      }
-      if (options.date_to) {
-        query = query.lte('scheduled_at', options.date_to);
-      }
-      if (options.search) {
-        query = query.or(`name.ilike.%${options.search}%,description.ilike.%${options.search}%`);
-      }
+      query = this.applyScheduleFilters(query, options);
 
       // Order by scheduled_at
       query = query.order('scheduled_at', { ascending: true, nullsFirst: false });
@@ -921,7 +827,7 @@ export class MatchService extends BaseService {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
       if (data) {
-        data.forEach((match) => {
+        data.forEach(({ school_filter: _schoolFilter, ...match }) => {
           if (match.scheduled_at) {
             const matchDate = new Date(match.scheduled_at);
             const dateKey = matchDate.toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -1593,12 +1499,9 @@ export class MatchService extends BaseService {
           levels,
           sports!inner(
             id,
-            name,
-            logo_url,
-            abbreviation
+            name
           )
         `)
-        .order('sports.name', { ascending: true })
         .order('division', { ascending: true })
         .order('levels', { ascending: true });
 
@@ -1613,8 +1516,12 @@ export class MatchService extends BaseService {
         levels: category.levels,
         sport_name: (category as any).sports?.name,
         formatted_name: `${(category as any).sports?.name} - ${formatCategoryName(category.division, category.levels)}`,
-        sport: (category as any).sports
+        // sports has no logo/abbreviation columns; keep the shape the filter bar expects
+        sport: { ...(category as any).sports, logo_url: null, abbreviation: null }
       })) || [];
+
+      // PostgREST can't order parent rows by an embedded column, so sort by sport name here (stable sort keeps division/levels order)
+      formattedCategories.sort((a, b) => (a.sport_name ?? '').localeCompare(b.sport_name ?? ''));
 
       return { success: true, data: formattedCategories };
     } catch (err) {
