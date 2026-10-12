@@ -246,7 +246,7 @@ export function VolunteersModal({
               currentImageUrl={formData.image_url || undefined}
               placeholder="Upload volunteer photo"
               description="Photo will be automatically optimized and stored in the cloud. Required for all volunteers."
-              required={true}
+              required={false}
               error={errors.image_url}
             />
           </CardContent>
