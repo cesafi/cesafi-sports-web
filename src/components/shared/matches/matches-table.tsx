@@ -10,6 +10,8 @@ import { MatchWithStageDetails } from '@/lib/types/matches';
 import { MatchModal } from '@/components/shared/matches';
 import { LeagueStageSelector } from '@/components/shared/matches';
 import { MatchDeletionModal } from '@/components/shared/matches/match-deletion-modal';
+import { MatchImportModal } from '@/components/shared/matches/match-import-modal';
+import { Upload } from 'lucide-react';
 import {
   MatchInsert,
   MatchUpdate
@@ -35,6 +37,8 @@ export function MatchesTable({ userRole, showLeagueStageSelector = true }: Match
   const [editingMatch, setEditingMatch] = useState<MatchWithStageDetails | undefined>();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [matchToDelete, setMatchToDelete] = useState<MatchWithStageDetails | undefined>();
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const canImport = userRole === 'admin';
   const router = useRouter();
   const { refetchAllMatchData } = useMatchRefetch();
 
@@ -205,6 +209,23 @@ export function MatchesTable({ userRole, showLeagueStageSelector = true }: Match
             setIsModalOpen(true);
           }
         }}
+        secondaryButtons={
+          canImport
+            ? [
+                {
+                  label: 'Import Bulk Matches',
+                  icon: <Upload className="h-4 w-4" />,
+                  onClick: () => {
+                    if (!selectedStageId) {
+                      toast.error('Please select a league stage first before importing matches.');
+                      return;
+                    }
+                    setIsImportModalOpen(true);
+                  }
+                }
+              ]
+            : undefined
+        }
         className=""
         emptyMessage="No matches found for the selected league stage"
         refetch={refetch}
@@ -220,6 +241,15 @@ export function MatchesTable({ userRole, showLeagueStageSelector = true }: Match
         onSubmit={handleSubmit}
         isSubmitting={isCreating || isUpdating}
       />
+
+      {/* Bulk CSV import (admin only) */}
+      {canImport && (
+        <MatchImportModal
+          open={isImportModalOpen}
+          onOpenChange={setIsImportModalOpen}
+          stageId={selectedStageId}
+        />
+      )}
 
       {/* Enhanced Deletion Modal */}
       <MatchDeletionModal

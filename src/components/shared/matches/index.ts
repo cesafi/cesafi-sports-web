@@ -8,6 +8,7 @@ export { MatchGameScoresModal } from './match-game-scores-modal';
 export { MatchModal } from './match-modal';
 export { MatchStatusModal } from './match-status-modal';
 export { MatchDeletionModal } from './match-deletion-modal';
+export { MatchImportModal } from './match-import-modal';
 export { LeagueStageSelector } from './league-stage-selector';
 export { TeamSelectionModal } from './team-selection-modal';
 export { getMatchesTableColumns, getMatchesTableActions } from './matches-table-columns';
