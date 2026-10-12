@@ -1522,15 +1522,18 @@ export class MatchService extends BaseService {
               end_at
             )
           ),
-          match_participants!inner(
+          school_filter:match_participants!inner(
+            schools_teams!inner(school_id)
+          ),
+          match_participants(
             id,
             match_id,
             team_id,
             match_score,
-            schools_teams!inner(
+            schools_teams(
               id,
               name,
-              school:schools!inner(
+              school:schools(
                 id,
                 name,
                 abbreviation,
@@ -1540,7 +1543,8 @@ export class MatchService extends BaseService {
           )
         `
         )
-        .eq('match_participants.schools_teams.school_id', schoolId)
+        // Filter via a separate embed so match_participants keeps every team, not just this school's
+        .eq('school_filter.schools_teams.school_id', schoolId)
         .order('scheduled_at', { ascending: direction === 'future' })
         .limit(limit);
 
@@ -1555,7 +1559,9 @@ export class MatchService extends BaseService {
         throw error;
       }
 
-      return { success: true, data: data || [] };
+      const matches = (data || []).map(({ school_filter: _schoolFilter, ...match }) => match);
+
+      return { success: true, data: matches as MatchWithFullDetails[] };
     } catch (err) {
       return this.formatError(err, `Failed to fetch matches by school ID.`);
     }

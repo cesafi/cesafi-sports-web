@@ -395,8 +395,10 @@ export default function SchoolProfile({ schoolAbbreviation }: SchoolProfileProps
                     ))
                   ) : recentMatches && recentMatches.length > 0 ? (
                     recentMatches.slice(0, 5).map((match: MatchWithFullDetails, index: number) => {
-                      const p1 = match.match_participants?.[0];
-                      const p2 = match.match_participants?.[1];
+                      const participants = match.match_participants ?? [];
+                      const ownIndex = participants.findIndex((p) => p.schools_teams?.school?.id === school?.id);
+                      const p1 = ownIndex > 0 ? participants[ownIndex] : participants[0];
+                      const p2 = ownIndex > 0 ? participants[0] : participants[1];
                       const team1 = p1?.schools_teams;
                       const team2 = p2?.schools_teams;
                       const t1Score = p1?.match_score ?? 0;
