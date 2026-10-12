@@ -1,6 +1,87 @@
-import { findInFileConflicts, findInFileDuplicates, parseMatchImportCsv } from './match-import';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type Row = Record<string, any>;
+
+const mockTables: Record<string, Row[]> = {};
+let mockNextId = 1000;
+let mockFailOnMatchInsert: number | null = null;
+
+function mockFrom(table: string) {
+  const filters: ((row: Row) => boolean)[] = [];
+  const run = () =>
+    (mockTables[table] ?? [])
+      .filter((row) => filters.every((f) => f(row)))
+      .map((row) =>
+        table === 'matches'
+          ? { ...row, match_participants: (mockTables.match_participants ?? []).filter((p) => p.match_id === row.id) }
+          : row
+      );
+
+  const builder: any = {
+    select: () => builder,
+    order: () => builder,
+    eq: (col: string, v: any) => (filters.push((r) => r[col] === v), builder),
+    in: (col: string, v: any[]) => (filters.push((r) => v.includes(r[col])), builder),
+    not: (col: string) => (filters.push((r) => r[col] != null), builder),
+    gte: (col: string, v: string) => (filters.push((r) => r[col] >= v), builder),
+    lt: (col: string, v: string) => (filters.push((r) => r[col] < v), builder),
+    single: async () => {
+      const data = run()[0] ?? null;
+      return { data, error: data ? null : { code: 'PGRST116', message: 'not found' } };
+    },
+    then: (resolve: (v: any) => void) => resolve({ data: run(), error: null })
+  };
+  return builder;
+}
+
+// Mirrors a Postgres transaction: inserts become visible only if the callback resolves.
+const mockDrizzle = {
+  transaction: jest.fn(async (fn: (tx: any) => Promise<any>) => {
+    const { matches: matchesTable } = jest.requireActual('@/db/schema');
+    const pending: Record<string, Row[]> = { matches: [], match_participants: [] };
+    let matchInserts = 0;
+    const tx = {
+      insert: (table: unknown) => ({
+        values: (values: Row | Row[]) => {
+          const name = table === matchesTable ? 'matches' : 'match_participants';
+          if (name === 'matches' && ++matchInserts === mockFailOnMatchInsert) {
+            throw new Error('connection reset');
+          }
+          const inserted = (Array.isArray(values) ? values : [values]).map((v) => ({ id: mockNextId++, ...v }));
+          pending[name].push(...inserted);
+          return Object.assign(Promise.resolve(inserted), { returning: async () => inserted });
+        }
+      })
+    };
+    const result = await fn(tx);
+    mockTables.matches.push(...pending.matches);
+    mockTables.match_participants.push(...pending.match_participants);
+    return result;
+  })
+};
+
+jest.mock('./base', () => ({
+  BaseService: class {
+    static async getClient() {
+      return { from: mockFrom };
+    }
+    static getDrizzle() {
+      return mockDrizzle;
+    }
+    static formatError(err: any, msg: string) {
+      return { success: false, error: err?.message ? `${msg}: ${err.message}` : msg };
+    }
+  }
+}));
+
+import {
+  MatchImportService,
+  findInFileConflicts,
+  findInFileDuplicates,
+  parseMatchImportCsv
+} from './match-import';
 import { MATCH_IMPORT_COLUMNS, MatchImportColumn, ParsedMatchImportRow } from '@/lib/types/match-import';
 import { toCsv } from '@/lib/utils/csv';
+import { generateMatchName } from '@/lib/utils/match-naming';
 
 const HEADER = [...MATCH_IMPORT_COLUMNS];
 
@@ -170,5 +251,151 @@ describe('findInFileConflicts', () => {
     ]);
     expect(errors).toHaveLength(1);
     expect(errors[0].message).toContain('same team');
+  });
+});
+
+describe('MatchImportService.importFromCsv', () => {
+  const team = (id: string, abbreviation: string, overrides: Row = {}) => ({
+    id,
+    name: 'Varsity',
+    sport_category_id: 3,
+    season_id: 1,
+    is_active: true,
+    school: { name: `${abbreviation} University`, abbreviation },
+    ...overrides
+  });
+
+  beforeEach(() => {
+    mockFailOnMatchInsert = null;
+    mockDrizzle.transaction.mockClear();
+    mockTables.sports_seasons_stages = [
+      {
+        id: 10,
+        competition_stage: 'group_stage',
+        sport_category_id: 3,
+        season_id: 1,
+        sports_categories: { division: 'men', levels: 'college', sports: { name: 'Basketball' } }
+      },
+      { id: 11, competition_stage: 'group_stage', sport_category_id: null, season_id: 1, sports_categories: null }
+    ];
+    mockTables.schools_teams = [
+      team('t-uclm', 'UCLM'),
+      team('t-upc', 'UPC'),
+      team('t-bc', 'BC'),
+      team('t-uc', 'UC'),
+      team('t-hs-uc', 'UC', { sport_category_id: 4 })
+    ];
+    mockTables.matches = [];
+    mockTables.match_participants = [];
+  });
+
+  const csv = (...rows: string[][]) => toCsv([HEADER, ...rows]);
+  const rowErrors = (res: Awaited<ReturnType<typeof MatchImportService.importFromCsv>>) =>
+    res.success ? [] : (res.rowErrors ?? []);
+
+  it('creates every match with two participants in one transaction', async () => {
+    const res = await MatchImportService.importFromCsv(10, csv(...TWO_ROWS));
+
+    expect(res).toMatchObject({ success: true, data: { created: 2 } });
+    expect(mockDrizzle.transaction).toHaveBeenCalledTimes(1);
+    expect(mockTables.matches).toHaveLength(2);
+    expect(mockTables.matches[0]).toMatchObject({
+      stage_id: 10,
+      status: 'upcoming',
+      best_of: 1,
+      venue: 'Cebu Coliseum',
+      scheduled_at: '2026-10-17T07:30:00.000Z',
+      name: generateMatchName([
+        { id: 't-uclm', name: 'Varsity', schools: { name: 'UCLM University', abbreviation: 'UCLM' } },
+        { id: 't-upc', name: 'Varsity', schools: { name: 'UPC University', abbreviation: 'UPC' } }
+      ])
+    });
+    expect(mockTables.matches[0].description).toContain('Basketball');
+    expect(mockTables.match_participants).toHaveLength(4);
+    expect(mockTables.match_participants.filter((p) => p.match_id === mockTables.matches[0].id).map((p) => p.team_id)).toEqual([
+      't-uclm',
+      't-upc'
+    ]);
+  });
+
+  it('lists the stage teams when an abbreviation is not in the stage', async () => {
+    const res = await MatchImportService.importFromCsv(10, csv(cells({ 'Match Participants': 'SHS-ADC vs. UC' })));
+    expect(res.success).toBe(false);
+    expect(rowErrors(res)).toEqual([
+      {
+        row: 2,
+        matchId: 'CBL26-COL-001',
+        field: 'Match Participants',
+        message: 'Team "SHS-ADC" is not in this stage. Valid teams: BC, UC, UCLM, UPC'
+      }
+    ]);
+    expect(mockTables.matches).toEqual([]);
+  });
+
+  it('rejects an abbreviation shared by two active teams in the stage', async () => {
+    mockTables.schools_teams.push(team('t-uc-b', 'UC', { name: 'Team B' }));
+    const res = await MatchImportService.importFromCsv(10, csv(cells({ 'Match Participants': 'BC vs. UC' })));
+    expect(rowErrors(res)[0].message).toBe('Team "UC" is ambiguous: 2 active teams in this stage');
+  });
+
+  it('rejects an unknown stage', async () => {
+    const res = await MatchImportService.importFromCsv(99, csv(cells()));
+    expect(res).toEqual({ success: false, error: 'Selected league stage was not found.' });
+  });
+
+  it('passes on the team lookup error for a stage without a sport category', async () => {
+    const res = await MatchImportService.importFromCsv(11, csv(cells()));
+    expect(res).toEqual({ success: false, error: 'Stage must have both sport category and season defined.' });
+  });
+
+  it('rejects every row when the same file is imported twice', async () => {
+    await MatchImportService.importFromCsv(10, csv(...TWO_ROWS));
+    const res = await MatchImportService.importFromCsv(10, csv(...TWO_ROWS));
+
+    expect(res.success).toBe(false);
+    expect(rowErrors(res).map((e) => e.row)).toEqual([2, 3]);
+    rowErrors(res).forEach((e) => expect(e.message).toMatch(/^Already exists: ".+" \(Match #\d+\)$/));
+    expect(mockTables.matches).toHaveLength(2);
+    expect(mockTables.match_participants).toHaveLength(4);
+  });
+
+  it('rejects a row that overlaps an existing match at the same venue in another stage', async () => {
+    mockTables.matches.push({
+      id: 1,
+      name: 'USJR vs UV (High School)',
+      stage_id: 20,
+      venue: 'Cebu Coliseum',
+      scheduled_at: '2026-10-17T07:00:00.000Z',
+      end_at: '2026-10-17T08:30:00.000Z'
+    });
+    const res = await MatchImportService.importFromCsv(10, csv(cells()));
+    expect(res.success).toBe(false);
+    expect(rowErrors(res)[0].message).toContain('USJR vs UV (High School) (same venue)');
+    expect(mockTables.matches).toHaveLength(1);
+  });
+
+  it('reports errors from different checks together', async () => {
+    const res = await MatchImportService.importFromCsv(
+      10,
+      csv(
+        cells({ 'Scheduled Date': '10/17/2026' }),
+        cells({ 'Match ID': 'CBL26-COL-002', 'Match Participants': 'XYZ vs. UC', 'Start Time': '5:00 PM' })
+      )
+    );
+    expect(res).toMatchObject({ success: false, error: 'Validation failed' });
+    expect(rowErrors(res).map((e) => [e.row, e.field])).toEqual([
+      [2, 'Scheduled Date'],
+      [3, 'Match Participants']
+    ]);
+    expect(mockDrizzle.transaction).not.toHaveBeenCalled();
+  });
+
+  it('rolls back everything when the database fails mid-import', async () => {
+    mockFailOnMatchInsert = 2;
+    const res = await MatchImportService.importFromCsv(10, csv(...TWO_ROWS));
+    expect(res.success).toBe(false);
+    expect(!res.success && res.error).toContain('Failed to import matches.');
+    expect(mockTables.matches).toEqual([]);
+    expect(mockTables.match_participants).toEqual([]);
   });
 });
