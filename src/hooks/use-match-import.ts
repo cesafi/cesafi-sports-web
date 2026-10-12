@@ -6,6 +6,9 @@ import { matchKeys } from '@/hooks/use-matches';
 import { MatchImportResponse } from '@/lib/types/match-import';
 import { validateImportFile } from '@/lib/validations/match-import';
 
+// Browsers refuse to re-read a picked file once it has been edited and saved on disk.
+class UnreadableFileError extends Error {}
+
 export function useMatchImport(stageId: number | null) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
@@ -13,8 +16,17 @@ export function useMatchImport(stageId: number | null) {
   const [result, setResult] = useState<MatchImportResponse | null>(null);
 
   const mutation = useMutation({
-    mutationFn: async ({ file, stageId }: { file: File; stageId: number }) =>
-      importMatchesFromCsv(stageId, await file.text()),
+    mutationFn: async ({ file, stageId }: { file: File; stageId: number }) => {
+      let csvText: string;
+      try {
+        csvText = await file.text();
+      } catch {
+        throw new UnreadableFileError(
+          'The file could not be read. It may have changed since you chose it. Choose it again.'
+        );
+      }
+      return importMatchesFromCsv(stageId, csvText);
+    },
     onSuccess: (response, { stageId }) => {
       setResult(response);
       if (!response.success) return;
@@ -31,6 +43,7 @@ export function useMatchImport(stageId: number | null) {
       queryClient.invalidateQueries({ queryKey: matchKeys.byStage(stageId) });
     },
     onError: (error) => {
+      if (error instanceof UnreadableFileError) setFile(null);
       setResult({ success: false, error: error instanceof Error ? error.message : 'Failed to import matches.' });
     }
   });

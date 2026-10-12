@@ -44,6 +44,8 @@ const STAGE_SELECT =
   'id, competition_stage, sport_category_id, season_id, sports_categories!sport_category_id(division, levels, sports(name))';
 // Same lookback as MatchService: catches earlier matches whose end_at runs into a new slot.
 const CONFLICT_LOOKBACK_MS = 24 * 60 * 60000;
+// Matches the default PostgREST max_rows on hosted Supabase.
+const CONFLICT_PAGE_SIZE = 1000;
 
 const isColumn = (value: unknown): value is MatchImportColumn =>
   MATCH_IMPORT_COLUMNS.includes(value as MatchImportColumn);
@@ -77,8 +79,12 @@ export function parseMatchImportCsv(csvText: string): {
       field: column,
       message: `Missing column "${column}"`
     })),
-    ...header.filter((cell) => !isColumn(cell)).map((cell) => ({ row: 1, message: `Unknown column "${cell}"` }))
+    ...header
+      .filter((cell) => cell !== '' && !isColumn(cell))
+      .map((cell) => ({ row: 1, message: `Unknown column "${cell}"` }))
   ];
+  // Excel pads every row to its used range, leaving header-less columns that must stay empty.
+  const unnamedColumns = header.flatMap((cell, i) => (cell === '' ? [i] : []));
   if (headerErrors.length > 0) return { rows: [], errors: headerErrors };
 
   // Spreadsheet row number = record index + 1 (header is row 1); blank rows keep their number.
@@ -108,7 +114,15 @@ export function parseMatchImportCsv(csvText: string): {
       continue;
     }
 
-    const result = matchImportRowSchema.safeParse(Object.fromEntries(header.map((column, i) => [column, record[i]])));
+    const strayColumn = unnamedColumns.find((i) => record[i].trim() !== '');
+    if (strayColumn !== undefined) {
+      errors.push({ row, matchId, message: `Column ${strayColumn + 1} has a value but no header` });
+      continue;
+    }
+
+    const result = matchImportRowSchema.safeParse(
+      Object.fromEntries(header.flatMap((column, i) => (column === '' ? [] : [[column, record[i]]])))
+    );
     if (result.success) {
       rows.push({ row, ...result.data });
     } else {
@@ -355,15 +369,26 @@ export class MatchImportService extends BaseService {
   private static async findDatabaseConflicts(rows: ResolvedRow[]): Promise<MatchImportRowError[]> {
     const supabase = await this.getClient();
     const times = rows.map((r) => new Date(r.scheduledAt).getTime());
-    const { data, error } = await supabase
-      .from('matches')
-      .select('id, name, venue, scheduled_at, end_at, match_participants(team_id)')
-      .not('scheduled_at', 'is', null)
-      .gte('scheduled_at', new Date(Math.min(...times) - CONFLICT_LOOKBACK_MS).toISOString())
-      .lt('scheduled_at', new Date(Math.max(...times) + DEFAULT_MATCH_DURATION_MINUTES * 60000).toISOString());
-    if (error) throw error;
+    const windowStart = new Date(Math.min(...times) - CONFLICT_LOOKBACK_MS).toISOString();
+    const windowEnd = new Date(Math.max(...times) + DEFAULT_MATCH_DURATION_MINUTES * 60000).toISOString();
 
-    const existing: ScheduledMatchSlot[] = ((data ?? []) as ExistingMatch[]).map((m) => ({
+    // A season-long file spans months of every sport, so page past PostgREST's max_rows cap.
+    const data: ExistingMatch[] = [];
+    for (let from = 0; ; from += CONFLICT_PAGE_SIZE) {
+      const { data: page, error } = await supabase
+        .from('matches')
+        .select('id, name, venue, scheduled_at, end_at, match_participants(team_id)')
+        .not('scheduled_at', 'is', null)
+        .gte('scheduled_at', windowStart)
+        .lt('scheduled_at', windowEnd)
+        .order('id')
+        .range(from, from + CONFLICT_PAGE_SIZE - 1);
+      if (error) throw error;
+      data.push(...((page ?? []) as ExistingMatch[]));
+      if (!page || page.length < CONFLICT_PAGE_SIZE) break;
+    }
+
+    const existing: ScheduledMatchSlot[] = data.map((m) => ({
       id: m.id,
       name: m.name,
       venue: m.venue,

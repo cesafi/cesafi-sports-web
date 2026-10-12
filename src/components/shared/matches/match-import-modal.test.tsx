@@ -92,6 +92,31 @@ describe('MatchImportModal', () => {
     expect(screen.getByText('college.csv')).toBeInTheDocument();
   });
 
+  it('asks for the file again when it changed on disk after being chosen', async () => {
+    renderModal();
+    const file = new File(['csv'], 'college.csv', { type: 'text/csv' });
+    file.text = () => Promise.reject(new DOMException('The requested file could not be read', 'NotReadableError'));
+    fireEvent.change(screen.getByLabelText('CSV file'), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+    expect(
+      await screen.findByText('The file could not be read. It may have changed since you chose it. Choose it again.')
+    ).toBeInTheDocument();
+    expect(importAction).not.toHaveBeenCalled();
+    expect(screen.queryByText('college.csv')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled();
+  });
+
+  it('clears the file input after each pick so the same (edited) file can be chosen again', () => {
+    renderModal();
+    const input = screen.getByLabelText('CSV file') as HTMLInputElement;
+    const setValue = jest.fn();
+    Object.defineProperty(input, 'value', { configurable: true, get: () => '', set: setValue });
+    chooseFile('college.csv');
+    expect(setValue).toHaveBeenCalledWith('');
+    expect(screen.getByText('college.csv')).toBeInTheDocument();
+  });
+
   it('shows a non-row error such as a permission failure', async () => {
     importAction.mockResolvedValue({ success: false, error: 'You do not have permission to import matches.' });
     renderModal();

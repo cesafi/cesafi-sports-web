@@ -5,20 +5,28 @@ const mockTables: Record<string, Row[]> = {};
 let mockNextId = 1000;
 let mockFailOnMatchInsert: number | null = null;
 
+// Hosted PostgREST caps every response at max_rows (1000) unless the caller pages with .range().
+const MOCK_MAX_ROWS = 1000;
+
 function mockFrom(table: string) {
   const filters: ((row: Row) => boolean)[] = [];
-  const run = () =>
-    (mockTables[table] ?? [])
+  let range: [number, number] | null = null;
+  const run = () => {
+    const rows = (mockTables[table] ?? [])
       .filter((row) => filters.every((f) => f(row)))
       .map((row) =>
         table === 'matches'
           ? { ...row, match_participants: (mockTables.match_participants ?? []).filter((p) => p.match_id === row.id) }
           : row
       );
+    const [from, to] = range ?? [0, MOCK_MAX_ROWS - 1];
+    return rows.slice(from, Math.min(to + 1, from + MOCK_MAX_ROWS));
+  };
 
   const builder: any = {
     select: () => builder,
     order: () => builder,
+    range: (from: number, to: number) => ((range = [from, to]), builder),
     eq: (col: string, v: any) => (filters.push((r) => r[col] === v), builder),
     in: (col: string, v: any[]) => (filters.push((r) => v.includes(r[col])), builder),
     not: (col: string) => (filters.push((r) => r[col] != null), builder),
@@ -134,6 +142,21 @@ describe('parseMatchImportCsv', () => {
     const { rows, errors } = parseMatchImportCsv(toCsv([header, cells({}, header)]));
     expect(rows).toEqual([]);
     expect(errors).toContainEqual({ row: 1, field: 'Venue', message: 'Missing column "Venue"' });
+  });
+
+  it('ignores trailing columns without a header (Excel used-range padding)', () => {
+    const padded = (row: string[]) => [...row, '', ''];
+    const { rows, errors } = parseMatchImportCsv(toCsv([padded(HEADER), ...TWO_ROWS.map(padded)]));
+    expect(errors).toEqual([]);
+    expect(rows).toHaveLength(2);
+  });
+
+  it('rejects a value placed in a column without a header', () => {
+    const { rows, errors } = parseMatchImportCsv(toCsv([[...HEADER, ''], [...cells(), 'stray note']]));
+    expect(rows).toEqual([]);
+    expect(errors).toEqual([
+      { row: 2, matchId: 'CBL26-COL-001', message: 'Column 8 has a value but no header' }
+    ]);
   });
 
   it('reports an unknown column', () => {
@@ -372,6 +395,31 @@ describe('MatchImportService.importFromCsv', () => {
     expect(res.success).toBe(false);
     expect(rowErrors(res)[0].message).toContain('USJR vs UV (High School) (same venue)');
     expect(mockTables.matches).toHaveLength(1);
+  });
+
+  it('finds a conflict even when more than 1000 matches fall in the time window', async () => {
+    for (let i = 0; i < 1000; i++) {
+      mockTables.matches.push({
+        id: i + 1,
+        name: `Other sport #${i}`,
+        stage_id: 30,
+        venue: 'Other Gym',
+        scheduled_at: '2026-10-17T00:00:00.000Z',
+        end_at: null
+      });
+    }
+    mockTables.matches.push({
+      id: 5000,
+      name: 'USJR vs UV (High School)',
+      stage_id: 20,
+      venue: 'Cebu Coliseum',
+      scheduled_at: '2026-10-17T07:00:00.000Z',
+      end_at: '2026-10-17T08:30:00.000Z'
+    });
+
+    const res = await MatchImportService.importFromCsv(10, csv(cells()));
+    expect(res.success).toBe(false);
+    expect(rowErrors(res)[0]?.message).toContain('USJR vs UV (High School) (same venue)');
   });
 
   it('reports errors from different checks together', async () => {

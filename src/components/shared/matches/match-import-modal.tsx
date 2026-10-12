@@ -154,7 +154,11 @@ export function MatchImportModal({ open, onOpenChange, stageId }: MatchImportMod
               type="file"
               accept=".csv,text/csv"
               disabled={isImporting}
-              onChange={(e) => selectFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                selectFile(e.target.files?.[0] ?? null);
+                // Lets the same file be picked again after it is edited (no change event otherwise)
+                e.target.value = '';
+              }}
             />
             {file && (
               <p className="text-muted-foreground flex items-center gap-2 text-sm">
