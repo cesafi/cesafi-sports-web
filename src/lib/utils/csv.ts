@@ -1,3 +1,13 @@
+export class CsvParseError extends Error {
+  constructor(
+    message: string,
+    public readonly line: number
+  ) {
+    super(message);
+    this.name = 'CsvParseError';
+  }
+}
+
 /**
  * Minimal RFC 4180 CSV parser: quoted fields, doubled-quote escapes, CRLF/LF line endings
  * and a leading UTF-8 BOM (as written by Excel).
@@ -52,7 +62,7 @@ export function parseCsv(text: string): string[][] {
   }
 
   if (inQuotes) {
-    throw new Error(`Unterminated quoted field starting on line ${quoteLine}`);
+    throw new CsvParseError(`Unterminated quoted field starting on line ${quoteLine}`, quoteLine);
   }
 
   // A trailing line break does not start another record
