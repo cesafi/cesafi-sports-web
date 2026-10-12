@@ -240,14 +240,15 @@ export default function AboutUsFaq({ initialFaqs = [] }: AboutUsFaqProps) {
                             {item.answer}
                           </motion.p>
                           {item.id === 2 && (
-                            <motion.button
+                            <motion.a
+                              href="https://www.facebook.com/thecesafi"
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.3, delay: 0.3 }}
                               className={`${moderniz.className} bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-semibold text-sm uppercase tracking-wide transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl`}
                             >
                               WATCH HERE
-                            </motion.button>
+                            </motion.a>
                           )}
                         </div>
                       </motion.div>
