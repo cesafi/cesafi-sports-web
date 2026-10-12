@@ -39,6 +39,7 @@ export function DataTable<T extends BaseEntity>({
   showSearch = true,
   showFilters = true,
   addButton,
+  secondaryButtons,
 
   // Styling
   className = '',
@@ -171,6 +172,7 @@ export function DataTable<T extends BaseEntity>({
           searchPlaceholder={searchPlaceholder}
           showFilters={showFilters}
           addButton={addButton}
+          secondaryButtons={secondaryButtons}
         />
       )}
 

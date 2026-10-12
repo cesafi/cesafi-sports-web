@@ -10,7 +10,8 @@ export function TableSearchAndFilters({
   onFiltersChange,
   searchPlaceholder = "Search...",
   showFilters = true,
-  addButton
+  addButton,
+  secondaryButtons = []
 }: SearchAndFiltersProps) {
   const [localSearch, setLocalSearch] = useState(search || '');
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -78,14 +79,29 @@ export function TableSearchAndFilters({
         )}
       </div>
 
-      {addButton && (
-        <Button
-          onClick={addButton.onClick}
-          className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-        >
-          {addButton.icon || <Plus className="h-4 w-4" />}
-          {addButton.label}
-        </Button>
+      {(secondaryButtons.length > 0 || addButton) && (
+        <div className="flex items-center gap-2">
+          {secondaryButtons.map((button) => (
+            <Button
+              key={button.label}
+              variant="outline"
+              onClick={button.onClick}
+              className="flex items-center gap-2"
+            >
+              {button.icon}
+              {button.label}
+            </Button>
+          ))}
+          {addButton && (
+            <Button
+              onClick={addButton.onClick}
+              className="flex items-center gap-2 bg-primary hover:bg-primary/90"
+            >
+              {addButton.icon || <Plus className="h-4 w-4" />}
+              {addButton.label}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

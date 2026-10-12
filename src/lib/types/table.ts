@@ -76,6 +76,7 @@ export interface TableProps<T extends BaseEntity> {
     onClick: () => void;
     icon?: ReactNode;
   };
+  secondaryButtons?: TableToolbarButton[];
 
   // Styling
   className?: string;
@@ -137,6 +138,12 @@ export interface PaginationProps {
   onPageSizeChange: (pageSize: number) => void;
 }
 
+export interface TableToolbarButton {
+  label: string;
+  onClick: () => void;
+  icon?: ReactNode;
+}
+
 export interface SearchAndFiltersProps {
   search: string;
   onSearchChange: (search: string) => void;
@@ -148,4 +155,5 @@ export interface SearchAndFiltersProps {
     onClick: () => void;
     icon?: ReactNode;
   };
+  secondaryButtons?: TableToolbarButton[];
 }
