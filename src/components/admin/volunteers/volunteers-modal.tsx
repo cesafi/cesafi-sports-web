@@ -235,7 +235,7 @@ export function VolunteersModal({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <ImageIcon className="h-5 w-5" />
-              Volunteer Photo (Optional)
+              Volunteer Photo
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
