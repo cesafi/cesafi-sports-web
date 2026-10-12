@@ -235,7 +235,7 @@ export function VolunteersModal({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <ImageIcon className="h-5 w-5" />
-              Volunteer Photo *
+              Volunteer Photo (Optional)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -245,7 +245,7 @@ export function VolunteersModal({
               preset="VOLUNTEER"
               currentImageUrl={formData.image_url || undefined}
               placeholder="Upload volunteer photo"
-              description="Photo will be automatically optimized and stored in the cloud. Required for all volunteers."
+              description="Photo will be automatically optimized and stored in the cloud. Optional."
               required={false}
               error={errors.image_url}
             />

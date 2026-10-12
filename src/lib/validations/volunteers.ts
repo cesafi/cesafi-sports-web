@@ -2,10 +2,7 @@ import { z } from 'zod';
 
 export const createVolunteerSchema = z.object({
   full_name: z.string().min(1, { message: 'Full name is required.' }),
-  image_url: z
-    .string()
-    .min(1, { message: 'Volunteer photo is required.' })
-    .url({ message: 'Please upload a valid photo.' }),
+  image_url: z.url({ message: 'Please upload a valid photo.' }).optional().or(z.literal('')),
   title: z.string().nullable().optional(),
   is_active: z.boolean().default(true),
   department_id: z.number().nullable().optional(),
