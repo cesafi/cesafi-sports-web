@@ -60,7 +60,8 @@ created and every problem is listed per row.
 
 ### Additive edits
 
-- `src/actions/matches.ts` — new `importMatchesFromCsv(stageId: unknown, csvText: unknown)`.
+- `src/actions/match-import.ts` (new file) — `importMatchesFromCsv(stageId: unknown, csvText: unknown)`.
+  Kept out of `src/actions/matches.ts` because that file is `// @ts-nocheck`.
 - `src/components/shared/matches/matches-table.tsx` — admin-only button + modal.
 - `src/components/shared/matches/index.ts` — export the modal.
 - `src/components/table/data-table.tsx`, `src/components/table/table-search-filters.tsx`,
@@ -181,7 +182,7 @@ Re-opening the modal resets its state.
 - `src/services/match-import.test.ts` — valid import (N matches, 2N participants, one
   transaction, generated name/description); unknown/ambiguous/same team; in-file and DB
   duplicates; DB and in-file conflicts; too many rows; malformed CSV; DB error mid-transaction.
-- `src/actions/match-import.test.ts` — tests `importMatchesFromCsv` from `src/actions/matches.ts`:
+- `src/actions/match-import.test.ts` — tests `importMatchesFromCsv` from `src/actions/match-import.ts`:
   unauthenticated and non-admin rejected without calling the service; invalid input rejected.
 
 ### Regression
