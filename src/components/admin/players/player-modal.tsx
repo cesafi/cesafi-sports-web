@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlayerInsert, PlayerUpdate, PlayerWithTeam } from '@/lib/types/players';
 import { createPlayerSchema, updatePlayerSchema } from '@/lib/validations/players';
 import { useAllSchoolsTeams } from '@/hooks/use-schools-teams';
+import { useSeason } from '@/components/contexts/season-provider';
+import { formatCategoryName } from '@/lib/utils/sports';
 import { toast } from 'sonner';
 import { ZodError } from 'zod';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,7 +54,54 @@ export function PlayerModal({
   const hasStartedCreating = useRef(false);
   const hasStartedUpdating = useRef(false);
 
+  const [selectedSchoolId, setSelectedSchoolId] = useState('');
+
   const { data: teams = [] } = useAllSchoolsTeams();
+  const { currentSeason } = useSeason();
+
+  // Teams of the current season, plus the player's existing team when editing
+  const seasonTeams = useMemo(
+    () =>
+      teams.filter(
+        (team) =>
+          !currentSeason || Number(team.season_id) === currentSeason.id || team.id === formData.school_team_id
+      ),
+    [teams, currentSeason, formData.school_team_id]
+  );
+
+  const schoolOptions = useMemo(() => {
+    const bySchool = new Map<string, { id: string; name: string; abbreviation: string }>();
+    for (const team of seasonTeams) {
+      if (!bySchool.has(team.school_id)) {
+        bySchool.set(team.school_id, {
+          id: team.school_id,
+          name: team.school?.name ?? '',
+          abbreviation: team.school?.abbreviation ?? ''
+        });
+      }
+    }
+    return [...bySchool.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [seasonTeams]);
+
+  // Each school team is one category (sport + division + level) for that school
+  const categoryOptions = useMemo(
+    () =>
+      seasonTeams
+        .filter((team) => team.school_id === selectedSchoolId)
+        .map((team) => ({
+          teamId: team.id,
+          sportId: team.sports_categories?.sport_id,
+          label: team.sports_categories
+            ? `${team.sports_categories.sports?.name ?? ''} - ${formatCategoryName(
+                team.sports_categories.division,
+                team.sports_categories.levels
+              )}`
+            : team.name,
+          teamName: team.name
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [seasonTeams, selectedSchoolId]
+  );
 
   const handleClose = useCallback(() => {
     setErrors({});
@@ -90,11 +139,19 @@ export function PlayerModal({
           bio: null
         } as PlayerInsert);
       }
+      setSelectedSchoolId('');
       setErrors({});
       hasStartedCreating.current = false;
       hasStartedUpdating.current = false;
     }
   }, [open, mode, player]);
+
+  // When editing, preselect the school of the player's current team (teams may load after opening)
+  useEffect(() => {
+    if (!open || selectedSchoolId) return;
+    const team = teams.find((t) => t.id === formData.school_team_id);
+    if (team) setSelectedSchoolId(team.school_id);
+  }, [open, teams, formData.school_team_id, selectedSchoolId]);
 
   // Handle mutation completion
   useEffect(() => {
@@ -275,26 +332,75 @@ export function PlayerModal({
               </div>
             </div>
 
-            {/* School Team Select */}
-            <div className="space-y-2">
-              <Label htmlFor="school_team_id">School Team *</Label>
-              <Select
-                value={formData.school_team_id || ''}
-                onValueChange={(value) => handleInputChange('school_team_id', value)}
-              >
-                <SelectTrigger className={errors.school_team_id ? 'border-red-500' : ''}>
-                  <SelectValue placeholder="Select a team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.school?.name} - {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.school_team_id && <p className="text-sm text-red-500">{errors.school_team_id}</p>}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* School Select — min-w-0/w-full/truncate keep long names inside the column */}
+              <div className="min-w-0 space-y-2">
+                <Label htmlFor="school_id">School *</Label>
+                <Select
+                  value={selectedSchoolId}
+                  onValueChange={(value) => {
+                    setSelectedSchoolId(value);
+                    handleInputChange('school_team_id', '');
+                  }}
+                >
+                  <SelectTrigger
+                    id="school_id"
+                    title={schoolOptions.find((s) => s.id === selectedSchoolId)?.name}
+                    className={`w-full ${errors.school_team_id && !selectedSchoolId ? 'border-red-500' : ''}`}
+                  >
+                    <SelectValue placeholder="Select a school" className="overflow-hidden" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {schoolOptions.map((school) => (
+                      <SelectItem key={school.id} value={school.id}>
+                        <span className="truncate">{school.name}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Category Select (resolves to the school's team for that category) */}
+              <div className="min-w-0 space-y-2">
+                <Label htmlFor="category">Category *</Label>
+                <Select
+                  value={formData.school_team_id || ''}
+                  onValueChange={(value) => {
+                    handleInputChange('school_team_id', value);
+                    const option = categoryOptions.find((c) => c.teamId === value);
+                    if (option?.sportId) handleInputChange('sport_id', option.sportId);
+                  }}
+                  disabled={!selectedSchoolId}
+                >
+                  <SelectTrigger
+                    id="category"
+                    title={categoryOptions.find((c) => c.teamId === formData.school_team_id)?.label}
+                    className={`w-full ${errors.school_team_id ? 'border-red-500' : ''}`}
+                  >
+                    <SelectValue
+                      placeholder={selectedSchoolId ? 'Select a category' : 'Select a school first'}
+                      className="overflow-hidden"
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryOptions.map((category) => (
+                      <SelectItem key={category.teamId} value={category.teamId}>
+                        <span className="truncate">{category.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedSchoolId && categoryOptions.length === 0 && (
+                  <p className="text-sm text-muted-foreground">This school has no teams this season.</p>
+                )}
+              </div>
             </div>
+            {formData.school_team_id && (
+              <p className="-mt-2 text-xs text-muted-foreground">
+                Team: {categoryOptions.find((c) => c.teamId === formData.school_team_id)?.teamName}
+              </p>
+            )}
+            {errors.school_team_id && <p className="text-sm text-red-500">{errors.school_team_id}</p>}
 
             {/* Slug Field */}
             <div className="space-y-2">

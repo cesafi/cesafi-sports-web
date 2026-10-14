@@ -30,6 +30,7 @@ export class SchoolsTeamService extends BaseService {
             id,
             division,
             levels,
+            sport_id,
             sports!inner(name)
           )
         `)

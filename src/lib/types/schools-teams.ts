@@ -57,6 +57,13 @@ export interface SchoolsTeamWithSchoolDetails {
     abbreviation: string;
     logo_url: string | null;
   };
+  sports_categories?: {
+    id: number;
+    division: string;
+    levels: string;
+    sport_id: number;
+    sports: { name: string };
+  };
 }
 
 export interface SchoolsTeamWithFullDetails {

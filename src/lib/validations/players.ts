@@ -11,7 +11,7 @@ export const createPlayerSchema = z.object({
   player_number: z.number().int().optional().nullable(),
   position: z.string().optional().nullable(),
   photo_url: optionalUrl.optional(),
-  school_team_id: z.string().min(1, { message: 'School team is required.' }),
+  school_team_id: z.string().min(1, { message: 'Select a school and category.' }),
   sport_id: z.number().int().min(1, { message: 'Sport is required.' }),
   is_active: z.boolean().default(true),
   slug: z.string().min(1, { message: 'Slug is required.' }),
