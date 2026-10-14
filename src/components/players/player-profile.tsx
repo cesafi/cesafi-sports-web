@@ -80,13 +80,22 @@ export default function PlayerProfile({ schoolSlug, playerSlug }: PlayerProfileP
     );
   }
 
+  // Scale the hero name down for long names so it stays within two lines
+  const fullName = `${player.first_name ?? ''} ${player.last_name ?? ''}`.trim();
+  const nameSizeClass =
+    fullName.length > 22
+      ? 'text-5xl sm:text-6xl lg:text-7xl'
+      : fullName.length > 14
+        ? 'text-5xl sm:text-7xl lg:text-8xl'
+        : 'text-6xl md:text-8xl lg:text-9xl';
+
   return (
     <div className="min-h-screen bg-background">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="relative w-full h-[50vh] min-h-[400px] overflow-hidden bg-zinc-950"
+        className="relative flex w-full min-h-[max(50vh,400px)] overflow-hidden bg-zinc-950"
       >
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/80 md:via-black/40 to-transparent" />
@@ -98,11 +107,17 @@ export default function PlayerProfile({ schoolSlug, playerSlug }: PlayerProfileP
           </Button>
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 h-full w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-full items-end justify-between">
-            <div className="pb-8 md:pb-12 text-white relative z-20 max-w-2xl">
-              <h1 className="font-mango-grotesque text-6xl md:text-8xl lg:text-9xl font-bold tracking-wide leading-none drop-shadow-sm">
-                {player.first_name} {player.last_name}
+        {/* In normal flow (not absolute) so the hero grows with the name instead of clipping it */}
+        <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-full justify-between gap-6">
+            <div className="self-end min-w-0 pt-20 pb-8 md:pb-12 text-white relative z-20 max-w-2xl">
+              <h1
+                className={cn(
+                  'font-mango-grotesque font-bold tracking-wide leading-none drop-shadow-sm text-balance break-words',
+                  nameSizeClass
+                )}
+              >
+                {fullName}
               </h1>
 
               <div className="flex flex-wrap items-center gap-4 mt-4">
@@ -143,7 +158,7 @@ export default function PlayerProfile({ schoolSlug, playerSlug }: PlayerProfileP
               )}
             </div>
 
-            <div className="relative h-full w-1/2 max-w-[500px] hidden md:block">
+            <div className="relative w-1/2 max-w-[500px] shrink-0 hidden md:block">
               {player.photo_url ? (
                 <Image
                   src={player.photo_url}
