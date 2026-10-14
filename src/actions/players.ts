@@ -59,10 +59,15 @@ export async function createPlayer(
   // Use validated school_team_id as the teamId if not explicitly passed
   const resolvedTeamId = teamId ?? school_team_id;
 
-  const result = await PlayerService.insert(playerData as PlayerInsert);
+  // players.school_team_id is NOT NULL, so it must be part of the insert
+  const result = await PlayerService.insert({ ...playerData, school_team_id: resolvedTeamId } as PlayerInsert);
 
   if (result.success && result.data && resolvedTeamId) {
-    await PlayerService.assignTeam(result.data.id, resolvedTeamId, seasonId);
+    const assignResult = await PlayerService.assignTeam(result.data.id, resolvedTeamId, seasonId);
+    if (!assignResult.success) {
+      revalidatePath('/admin/players');
+      return { success: false, error: `Player was created, but adding them to the team failed: ${assignResult.error}` };
+    }
   }
 
   if (result.success) {
@@ -93,10 +98,16 @@ export async function updatePlayerById(
   // Use validated school_team_id as the teamId if not explicitly passed
   const resolvedTeamId = teamId ?? school_team_id ?? null;
 
-  const result = await PlayerService.updateById(playerData as PlayerUpdate);
+  const result = await PlayerService.updateById(
+    (resolvedTeamId ? { ...playerData, school_team_id: resolvedTeamId } : playerData) as PlayerUpdate
+  );
 
   if (result.success && resolvedTeamId) {
-    await PlayerService.assignTeam(playerData.id, resolvedTeamId, seasonId);
+    const assignResult = await PlayerService.assignTeam(playerData.id, resolvedTeamId, seasonId);
+    if (!assignResult.success) {
+      revalidatePath('/admin/players');
+      return { success: false, error: `Player was updated, but changing their team failed: ${assignResult.error}` };
+    }
   }
 
   if (result.success) {

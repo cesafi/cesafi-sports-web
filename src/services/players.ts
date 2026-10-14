@@ -8,7 +8,7 @@ import { BaseService } from './base';
 import { Player, PlayerInsert, PlayerUpdate, PlayerWithTeam } from '@/lib/types/players';
 import CloudinaryService, { extractCloudinaryPublicId } from './cloudinary';
 import { players, playerSeasons, schoolsTeams, schools } from '@/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 
 export class PlayerService extends BaseService {
   static async getPaginated(
@@ -104,7 +104,49 @@ export class PlayerService extends BaseService {
         }
       }
 
-      return { success: true, data: Array.from(playersMap.values()) };
+      const result = Array.from(playersMap.values());
+
+      // Latest team = the team from the most recent season entry
+      for (const p of result) {
+        const latest = [...p.player_seasons]
+          .filter((s: any) => s.schools_teams)
+          .sort((a: any, b: any) => b.season_id - a.season_id)[0];
+        p.schools_teams = latest?.schools_teams ?? null;
+      }
+
+      // Players without a season entry fall back to players.school_team_id
+      const missingTeamIds = [
+        ...new Set(result.filter((p) => !p.schools_teams && p.school_team_id).map((p) => p.school_team_id as string))
+      ];
+
+      if (missingTeamIds.length > 0) {
+        const teamRows = await db
+          .select({ team: schoolsTeams, school: schools, category: sportsCategories, sport: sports })
+          .from(schoolsTeams)
+          .leftJoin(schools, eq(schoolsTeams.school_id, schools.id))
+          .leftJoin(sportsCategories, eq(schoolsTeams.sport_category_id, sportsCategories.id))
+          .leftJoin(sports, eq(sportsCategories.sport_id, sports.id))
+          .where(inArray(schoolsTeams.id, missingTeamIds));
+
+        const teamsById = new Map(
+          teamRows.map((r) => [
+            r.team.id,
+            {
+              ...r.team,
+              schools: r.school,
+              sports_categories: r.category ? { ...r.category, sports: r.sport } : null
+            }
+          ])
+        );
+
+        for (const p of result) {
+          if (!p.schools_teams && p.school_team_id) {
+            p.schools_teams = teamsById.get(p.school_team_id) ?? null;
+          }
+        }
+      }
+
+      return { success: true, data: result };
     } catch (err) {
       return this.formatError(err, `Failed to fetch all players with teams.`);
     }
@@ -276,22 +318,37 @@ export class PlayerService extends BaseService {
     try {
       const db = this.getDrizzle();
 
-      if (!seasonId) {
-        throw new Error('No seasonId provided.');
+      // A team belongs to exactly one season, so the team's own season takes precedence
+      const [team] = await db
+        .select({ season_id: schoolsTeams.season_id })
+        .from(schoolsTeams)
+        .where(eq(schoolsTeams.id, teamId));
+      const resolvedSeasonId = team?.season_id ?? seasonId;
+
+      if (!resolvedSeasonId) {
+        throw new Error('No season found for the selected team.');
       }
 
-      await db
-        .insert(playerSeasons)
-        .values({
+      // The unique key is (player_id, season_id, school_team_id), so ON CONFLICT on
+      // (player_id, season_id) is rejected by Postgres. Update the season's row instead.
+      const [existing] = await db
+        .select({ id: playerSeasons.id })
+        .from(playerSeasons)
+        .where(and(eq(playerSeasons.player_id, playerId), eq(playerSeasons.season_id, resolvedSeasonId)));
+
+      if (existing) {
+        await db
+          .update(playerSeasons)
+          .set({ school_team_id: teamId })
+          .where(eq(playerSeasons.id, existing.id));
+      } else {
+        await db.insert(playerSeasons).values({
           player_id: playerId,
           school_team_id: teamId,
-          season_id: seasonId,
+          season_id: resolvedSeasonId,
           is_active: true
-        })
-        .onConflictDoUpdate({
-          target: [playerSeasons.player_id, playerSeasons.season_id],
-          set: { school_team_id: teamId }
         });
+      }
 
       return { success: true, data: undefined };
     } catch (err) {

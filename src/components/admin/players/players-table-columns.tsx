@@ -6,6 +6,7 @@ import { PlayerWithTeam } from '@/lib/types/players';
 import { Pencil, Trash2, History } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatTableDate } from '@/lib/utils/date';
+import { formatCategoryName } from '@/lib/utils/sports';
 import Image from 'next/image';
 
 export const getPlayersTableColumns = (): TableColumn<PlayerWithTeam>[] => [
@@ -53,10 +54,16 @@ export const getPlayersTableColumns = (): TableColumn<PlayerWithTeam>[] => [
       <div className="text-sm">
         {player.schools_teams ? (
           <div>
-            <div className="font-medium">{player.schools_teams.name}</div>
-            {player.schools_teams.school && (
+            <div className="font-medium">
+              {player.schools_teams.schools?.abbreviation ?? player.schools_teams.name}
+            </div>
+            {player.schools_teams.sports_categories && (
               <div className="text-xs text-muted-foreground">
-                {player.schools_teams.school.abbreviation}
+                {player.schools_teams.sports_categories.sports?.name}{' '}
+                {formatCategoryName(
+                  player.schools_teams.sports_categories.division,
+                  player.schools_teams.sports_categories.levels
+                )}
               </div>
             )}
           </div>

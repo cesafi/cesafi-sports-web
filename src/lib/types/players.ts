@@ -18,6 +18,12 @@ export interface PlayerWithTeam extends Player {
       abbreviation: string;
       logo_url: string | null;
     } | null;
+    sports_categories?: {
+      id: number;
+      division: string;
+      levels: string;
+      sports: { id: number; name: string } | null;
+    } | null;
   } | null;
   [key: string]: unknown;
 }

@@ -54,8 +54,9 @@ export default function PlayersManagementPage() {
         const fullName = `${player.first_name || ''} ${player.last_name || ''}`.toLowerCase();
         const slug = (player.slug || '').toLowerCase();
         const teamName = (player.schools_teams?.name || '').toLowerCase();
-        
-        return fullName.includes(query) || slug.includes(query) || teamName.includes(query);
+        const schoolName = `${player.schools_teams?.schools?.name || ''} ${player.schools_teams?.schools?.abbreviation || ''}`.toLowerCase();
+
+        return fullName.includes(query) || slug.includes(query) || teamName.includes(query) || schoolName.includes(query);
       });
     }
 
@@ -68,8 +69,8 @@ export default function PlayersManagementPage() {
                 ? aName.localeCompare(bName) 
                 : bName.localeCompare(aName);
         } else if (sortConfig.key === 'team') {
-            const aTeam = (a.schools_teams?.name || '').toLowerCase();
-            const bTeam = (b.schools_teams?.name || '').toLowerCase();
+            const aTeam = (a.schools_teams?.schools?.abbreviation || a.schools_teams?.name || '').toLowerCase();
+            const bTeam = (b.schools_teams?.schools?.abbreviation || b.schools_teams?.name || '').toLowerCase();
             return sortConfig.direction === 'asc' 
                 ? aTeam.localeCompare(bTeam) 
                 : bTeam.localeCompare(aTeam);
