@@ -98,7 +98,8 @@ export default function PlayerProfile({ schoolSlug, playerSlug }: PlayerProfileP
         className="relative flex w-full min-h-[max(50vh,400px)] overflow-hidden bg-zinc-950"
       >
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/80 md:via-black/40 to-transparent" />
+          <Image src="/img/player-banner-bg.webp" alt="" fill priority sizes="100vw" className="object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 md:via-transparent to-transparent" />
         </div>
 
         <div className="absolute top-6 left-6 z-10">
