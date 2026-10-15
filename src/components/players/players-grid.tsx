@@ -208,13 +208,20 @@ export default function PlayersGrid() {
                   return (
                     <motion.div key={player.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                       <Link href={playerLink}>
-                        <div className="group block h-[360px] rounded-2xl border bg-card overflow-hidden hover:border-primary transition-colors cursor-pointer">
-                          <div className="h-[240px] bg-muted relative">
+                        <div className="group relative block h-[360px] rounded-2xl border border-border/30 bg-gradient-to-b from-card/80 to-background overflow-hidden hover:border-primary transition-colors cursor-pointer">
+                          {group.logo && (
+                            <div className="absolute inset-x-0 top-0 h-[240px] z-0 opacity-[0.05] dark:opacity-10 mix-blend-multiply dark:mix-blend-plus-lighter pointer-events-none">
+                              <Image src={group.logo} alt="" fill sizes="300px" className="object-contain p-6" />
+                            </div>
+                          )}
+                          <div className="h-[240px] relative z-10">
                             {player.photo_url ? (
                               <Image src={player.photo_url} alt={player.first_name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                             ) : <User className="h-12 w-12 text-muted-foreground m-auto mt-24" />}
                           </div>
-                          <div className="p-4 flex flex-col justify-between h-[120px]">
+                          {/* Fades the bottom of the photo into the name area so the crop isn't a hard edge */}
+                          <div className="absolute inset-x-0 bottom-0 h-[200px] z-10 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none" />
+                          <div className="relative z-20 p-4 flex flex-col justify-between h-[120px]">
                             <div>
                               <h4 className="font-bold text-lg group-hover:text-primary transition-colors">{player.first_name} {player.last_name}</h4>
                               {player.player_number && <p className="text-xs text-muted-foreground">#{player.player_number}</p>}
