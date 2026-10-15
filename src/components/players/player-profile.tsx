@@ -46,6 +46,15 @@ export default function PlayerProfile({ schoolSlug, playerSlug }: PlayerProfileP
   const schoolInfo = currentTeam?.schools_teams?.schools || (player as any)?.schools_teams?.schools;
   const teamName = currentTeam?.schools_teams?.name || (player as any)?.schools_teams?.name;
 
+  // Opened directly (new tab / shared link) there is no in-site page to go back to.
+  // navigation.canGoBack only counts same-origin entries; history.length is the fallback.
+  const handleBack = () => {
+    const nav = (window as any).navigation;
+    const canGoBack = nav ? nav.canGoBack : window.history.length > 1;
+    if (canGoBack) router.back();
+    else router.push('/players');
+  };
+
   const displayPosition = React.useMemo(() => {
     const positionString = (currentTeam as any)?.position || player?.position;
     if (!positionString) return null;
@@ -72,7 +81,7 @@ export default function PlayerProfile({ schoolSlug, playerSlug }: PlayerProfileP
           <Users className="h-16 w-16 text-muted-foreground mx-auto" />
           <h1 className="text-2xl font-bold">Player Not Found</h1>
           <p className="text-muted-foreground">This player doesn&apos;t exist or has been removed.</p>
-          <Button onClick={() => router.back()}>
+          <Button onClick={handleBack}>
             <ArrowLeft className="h-4 w-4 mr-2" /> Go Back
           </Button>
         </div>
@@ -102,8 +111,9 @@ export default function PlayerProfile({ schoolSlug, playerSlug }: PlayerProfileP
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 md:via-transparent to-transparent" />
         </div>
 
-        <div className="absolute top-6 left-6 z-10">
-          <Button variant="ghost" size="sm" onClick={() => router.back()} className="backdrop-blur-sm bg-black/20 hover:bg-black/40 text-white border-white/20">
+        {/* Above the name column (z-20), which can stretch over this corner */}
+        <div className="absolute top-6 left-6 z-30">
+          <Button variant="ghost" size="sm" onClick={handleBack} className="backdrop-blur-sm bg-black/20 hover:bg-black/40 text-white border-white/20">
             <ArrowLeft className="h-4 w-4 mr-2" /> Go Back
           </Button>
         </div>
