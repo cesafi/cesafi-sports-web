@@ -26,7 +26,7 @@ export async function getDashboardStats() {
       ArticleService.getRecent(5),
       GameService.getRecent(5),
       MatchService.getRecent(5)
-    ]);
+    ])
 
     const recentArticles =
       recentArticlesResult.success && recentArticlesResult.data ? recentArticlesResult.data : [];
