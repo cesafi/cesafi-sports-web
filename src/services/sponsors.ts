@@ -52,6 +52,7 @@ export class SponsorService extends BaseService {
         .from(TABLE_NAME)
         .select()
         .eq('is_active', true)
+        .order('display_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
