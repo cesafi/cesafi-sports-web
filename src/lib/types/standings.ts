@@ -1,122 +1,48 @@
-// Standings types for tournament standings pages
+// Team standings: manual season win/loss totals, ranked per category
 
-export interface StandingsFilters {
-  season_id?: number;
-  sport_id?: number;
-  esport_category_id?: number;
-  stage_id?: number;
-}
-
-export interface StandingsNavigation {
-  season: {
-    id: number;
-    name: string;
-    start_at: string;
-    end_at: string;
-  };
-  sport: {
-    id: number;
-    name: string;
-  };
-  category: {
-    id: number;
-    division: string;
-    levels: string;
-    display_name: string;
-  };
-  stages: Array<{
-    id: number;
-    name: string;
-    competition_stage: string;
-    stage_type?: 'round_robin' | 'single_elimination' | 'double_elimination';
-    order: number;
-  }>;
-}
-
-export interface TeamStanding {
-  team_id: string;
-  team_name: string;
-  school_name: string;
-  school_abbreviation: string;
-  school_logo_url: string | null;
-  matches_played: number;
+export interface RankedTeamStanding {
+  teamId: string;
+  teamName: string;
+  school: { id: string; name: string; abbreviation: string; logoUrl: string | null };
   wins: number;
   losses: number;
-  draws: number;
-  goals_for: number;
-  goals_against: number;
-  goal_difference: number;
-  points: number;
-  position: number;
-  // Tiebreaker fields
-  round_difference?: number;
-  rounds_won?: number;
-  rounds_lost?: number;
-  avg_win_duration?: string; // Format "MM:SS"
+  /** null when the category has no results yet */
+  rank: number | null;
+  /** null = no record saved yet (shown as 0-0) */
+  updatedAt: string | null;
 }
 
-export interface GroupStageStandings {
-  stage_id: number;
-  stage_name: string;
-  competition_stage: 'group_stage';
-  esport_type?: string;
-  groups: Array<{
-    group_name?: string;
-    teams: TeamStanding[];
-  }>;
+export interface CategoryStandings {
+  category: { id: number; sportName: string; division: string; levels: string; name: string };
+  /** false when every team is 0-0 */
+  hasResults: boolean;
+  teams: RankedTeamStanding[];
 }
 
-export interface BracketTeam {
-  team_id: string;
-  team_name: string;
-  school_name: string;
-  school_abbreviation: string;
-  school_logo_url: string | null;
-  score: number | null;
+export interface SeasonStandings {
+  seasonId: number;
+  categories: CategoryStandings[];
 }
 
-export interface BracketMatch {
-  match_id: number;
-  match_name: string;
-  round: number;
-  position: number;
-  team1: BracketTeam | null;
-  team2: BracketTeam | null;
-  winner: BracketTeam | null;
-  match_status: 'upcoming' | 'live' | 'finished' | 'canceled' | 'completed';
-  scheduled_at: string;
-  venue: string;
-  group_name?: string | null;
+export interface SavedTeamStanding {
+  teamId: string;
+  wins: number;
+  losses: number;
+  updatedAt: string;
 }
 
-export interface BracketStandings {
-  stage_id: number;
-  stage_name: string;
-  competition_stage: 'playoffs' | 'elimination';
-  bracket: BracketMatch[];
-}
+export type StandingsSortKey = 'rank' | 'school' | 'wins' | 'losses';
 
-export interface PlayinsMatch {
-  match_id: number;
-  match_name: string;
-  team1: BracketTeam | null;
-  team2: BracketTeam | null;
-  winner: BracketTeam | null;
-  match_status: 'upcoming' | 'live' | 'finished' | 'canceled' | 'completed';
-  scheduled_at: string;
-  venue: string;
-}
+export type StandingsErrorCode =
+  | 'VALIDATION'
+  | 'UNAUTHENTICATED'
+  | 'FORBIDDEN'
+  | 'CONFLICT'
+  | 'NOT_FOUND'
+  | 'SERVER';
 
-export interface PlayinsStandings {
-  stage_id: number;
-  stage_name: string;
-  competition_stage: 'playins';
-  matches: PlayinsMatch[];
-}
+export type StandingsFieldErrors = Partial<Record<'teamId' | 'wins' | 'losses', string[]>>;
 
-export type StandingsData = GroupStageStandings | BracketStandings | PlayinsStandings;
-
-export interface StandingsResponse {
-  navigation: StandingsNavigation;
-  standings: StandingsData;
-}
+export type StandingsResult<T> =
+  | { success: true; data: T }
+  | { success: false; code: StandingsErrorCode; error: string; fieldErrors?: StandingsFieldErrors };
