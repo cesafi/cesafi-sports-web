@@ -21,7 +21,8 @@ import {
   Volleyball,
   ChevronDown,
   ChevronRight,
-  List
+  List,
+  ListOrdered
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -125,6 +126,7 @@ export default function DashboardSidebar({ userRole = 'admin' }: DashboardSideba
         return [
           { href: '/admin/league-stage', label: 'League Stages', icon: Group },
           { href: '/admin/school-teams', label: 'School Teams', icon: Shield },
+          { href: '/admin/standings', label: 'Standings', icon: ListOrdered },
           { href: '/admin/volunteers', label: 'Volunteers', icon: Users },
           { href: '/admin/matches', label: 'Matches', icon: Target },
         ];
