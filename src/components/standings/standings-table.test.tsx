@@ -48,9 +48,9 @@ describe('StandingsTable', () => {
 
     const rows = screen.getAllByRole('row').slice(1);
     expect(rows.map((row) => within(row).getAllByRole('cell').map((cell) => cell.textContent?.trim()))).toEqual([
-      ['1', 'WebmastersUniversity of Cebu', '5', '1'],
-      ['1', 'JaguarsUniversity of San Jose-Recoletos', '5', '1'],
-      ['3', 'CobrasSouthwestern University', '2', '4']
+      ['1', 'WebmastersUCUniversity of Cebu', '5', '1'],
+      ['1', 'JaguarsUSJRUniversity of San Jose-Recoletos', '5', '1'],
+      ['3', 'CobrasSWUSouthwestern University', '2', '4']
     ]);
   });
 
@@ -74,6 +74,21 @@ describe('StandingsTable', () => {
     render(<StandingsTable category={category([team('uc', 'Webmasters', 'University of Cebu', 5, 1, 1, null)])} />);
 
     expect(screen.getByAltText('University of Cebu').getAttribute('src')).toContain('cesafi-logo.webp');
+  });
+
+  it('shows each school abbreviation so same-named teams stay distinguishable on phones', () => {
+    render(
+      <StandingsTable
+        category={category([
+          team('uclm', 'Webmasters', 'University of Cebu Lapu-Lapu and Mandaue', 0, 0, 1),
+          team('uc', 'Webmasters', 'University of Cebu Main', 0, 0, 1)
+        ])}
+      />
+    );
+
+    const rows = screen.getAllByRole('row').slice(1);
+    expect(within(rows[0]).getByText('UCLM')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('UC')).toBeInTheDocument();
   });
 
   it('shows the team count in the header', () => {

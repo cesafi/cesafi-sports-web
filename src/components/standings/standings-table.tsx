@@ -85,6 +85,7 @@ export function StandingsTable({ category: standings }: StandingsTableProps) {
                       />
                       <div className="flex min-w-0 flex-col">
                         <span className="text-foreground font-bold">{team.teamName}</span>
+                        <span className="text-muted-foreground text-xs sm:hidden">{team.school.abbreviation}</span>
                         <span className="text-muted-foreground hidden text-xs sm:inline">{team.school.name}</span>
                       </div>
                     </div>
