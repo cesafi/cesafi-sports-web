@@ -618,6 +618,38 @@ export type Database = {
           },
         ]
       }
+      team_standings: {
+        Row: {
+          created_at: string
+          losses: number
+          team_id: string
+          updated_at: string
+          wins: number
+        }
+        Insert: {
+          created_at?: string
+          losses?: number
+          team_id: string
+          updated_at?: string
+          wins?: number
+        }
+        Update: {
+          created_at?: string
+          losses?: number
+          team_id?: string
+          updated_at?: string
+          wins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_standings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "schools_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       volunteers: {
         Row: {
           created_at: string

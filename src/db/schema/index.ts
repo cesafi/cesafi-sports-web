@@ -24,4 +24,5 @@ export * from './sport-stat-mappings';
 export * from './sports';
 export * from './sports-categories';
 export * from './sports-seasons-stages';
+export * from './team-standings';
 export * from './volunteers';
