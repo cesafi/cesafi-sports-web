@@ -187,5 +187,11 @@ export async function getAvailableStages() {
   return await (await import('./sports-seasons-stages')).getAllSportsSeasonsStages();
 }
 export async function getAvailableSeasons() {
-  return await (await import('./standings')).getAvailableSeasons();
+  const result = await (await import('./seasons')).getAllSeasons();
+  if (!result.success) return result;
+
+  return {
+    success: true as const,
+    data: [...result.data].sort((a, b) => new Date(b.start_at).getTime() - new Date(a.start_at).getTime())
+  };
 }

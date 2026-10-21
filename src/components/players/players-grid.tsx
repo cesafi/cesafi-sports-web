@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, X, User } from 'lucide-react';
-import { getAvailableSeasons } from '@/actions/standings';
+import { getAllSeasons } from '@/actions/seasons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -106,16 +106,20 @@ export default function PlayersGrid() {
     async function fetchInitialData() {
       setFiltersLoading(true);
       const [seasonsResult, playersResult] = await Promise.all([
-        getAvailableSeasons(),
+        getAllSeasons(),
         getAllPlayersWithTeams()
       ]);
 
       if (seasonsResult.success && seasonsResult.data) {
-        setSeasons(seasonsResult.data.map((s: any) => ({
-          id: s.id,
-          label: s.name || `Season ${s.id}`,
-          value: s.id.toString()
-        })));
+        setSeasons(
+          [...seasonsResult.data]
+            .sort((a, b) => new Date(b.start_at).getTime() - new Date(a.start_at).getTime())
+            .map((s) => ({
+              id: s.id,
+              label: `Season ${s.id}`,
+              value: s.id.toString()
+            }))
+        );
       }
       if (playersResult.success && playersResult.data) setAllPlayers(playersResult.data);
 
