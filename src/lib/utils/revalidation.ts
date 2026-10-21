@@ -185,6 +185,14 @@ export class RevalidationHelper {
     }
 
     /**
+     * Revalidate standings routes (admin management tab and public standings page)
+     */
+    static revalidateStandings() {
+        revalidatePath('/admin/standings');
+        revalidatePath('/standings');
+    }
+
+    /**
      * Revalidate FAQ-related routes
      */
     static revalidateFAQ() {

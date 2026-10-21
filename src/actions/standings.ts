@@ -1,36 +1,49 @@
 'use server';
 
+import { z } from 'zod';
+import { AuthService } from '@/services/auth';
 import { StandingsService } from '@/services/standings';
-import { StandingsFilters } from '@/lib/types/standings';
+import { SavedTeamStanding, SeasonStandings, StandingsResult } from '@/lib/types/standings';
+import { standingsSeasonIdSchema, updateTeamStandingSchema } from '@/lib/validations/standings';
+import { RevalidationHelper } from '@/lib/utils/revalidation';
 
-export async function getStandings(filters: StandingsFilters) {
-  return await StandingsService.getStandings(filters);
+/** Public, read-only: ranked standings for every category with active teams in the season. */
+export async function getStandings(seasonId: unknown): Promise<StandingsResult<SeasonStandings>> {
+  const parsed = standingsSeasonIdSchema.safeParse(seasonId);
+  if (!parsed.success) {
+    return { success: false, code: 'VALIDATION', error: 'Invalid season.' };
+  }
+
+  return StandingsService.getSeasonStandings(parsed.data);
 }
 
-export async function getStandingsNavigation(filters: StandingsFilters) {
-  return await StandingsService.getStandingsNavigation(filters);
-}
+/**
+ * Saves one team's season wins/losses. Admin only: checked here and again by row-level security.
+ */
+export async function updateTeamStanding(input: unknown): Promise<StandingsResult<SavedTeamStanding>> {
+  const auth = await AuthService.checkAuth(['admin']);
+  if (!auth.authenticated) {
+    return { success: false, code: 'UNAUTHENTICATED', error: 'You must be signed in to update standings.' };
+  }
+  if (!auth.authorized) {
+    return { success: false, code: 'FORBIDDEN', error: 'You do not have permission to update standings.' };
+  }
 
-export async function getGroupStageStandings(stageId: number) {
-  return await StandingsService.getGroupStageStandings(stageId);
-}
+  const parsed = updateTeamStandingSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      code: 'VALIDATION',
+      error: 'Please fix the highlighted fields.',
+      fieldErrors: z.flattenError(parsed.error).fieldErrors
+    };
+  }
 
-export async function getBracketStandings(stageId: number) {
-  return await StandingsService.getBracketStandings(stageId);
-}
+  const result = await StandingsService.saveRecord(parsed.data);
 
-export async function getPlayinsStandings(stageId: number) {
-  return await StandingsService.getPlayinsStandings(stageId);
-}
+  if (result.success) {
+    RevalidationHelper.revalidateStandings();
+  }
 
-export async function getAvailableSeasons() {
-  return await StandingsService.getAvailableSeasons();
-}
-
-export async function getAvailableSports(seasonId: number) {
-  return await StandingsService.getAvailableSports(seasonId);
-}
-
-export async function getAvailableCategories(seasonId: number, sportId: number) {
-  return await StandingsService.getAvailableCategories(seasonId, sportId);
+  return result;
 }
