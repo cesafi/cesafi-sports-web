@@ -24,6 +24,7 @@ This document provides a comprehensive operational user guide and technical spec
 17. [Hero Section Live Banner](#17-hero-section-live-banner)
 18. [Photo Gallery Curation](#18-photo-gallery-curation)
 19. [Broadcast & Production Hub](#19-broadcast--production-hub)
+20. [Team Standings](#20-team-standings)
 
 ---
 
@@ -38,6 +39,7 @@ This document provides a comprehensive operational user guide and technical spec
 | **Stats Mapping** | `/admin/sports/[slug]/stats` | ✅ | ✅ | ❌ | ❌ |
 | **Schools** | `/admin/schools` | ✅ | ❌ | ❌ | ❌ |
 | **School Teams** | `/admin/school-teams` | ✅ | ❌ | ❌ | ❌ |
+| **Standings** | `/admin/standings` | ✅ | ❌ | ❌ | ❌ |
 | **Players** | `/admin/players` | ✅ | ❌ | ❌ | ❌ |
 | **Matches** | `/admin/matches` | ✅ | ✅ | ❌ | ❌ |
 | **Articles** | `/admin/articles` | ✅ | ❌ | ✅ | ✅ (Own) |
@@ -256,3 +258,23 @@ This document provides a comprehensive operational user guide and technical spec
 - **Routes:** `/admin/production`, `/league-operator/production`, `/head-writer/production`
 - **User Guide:**
   - Placeholder / Coming-Soon operations hub for live stream operators, broadcast graphics overlays, and instant replay logging.
+
+---
+
+## 20. Team Standings
+
+- **Route:** `/admin/standings` (Admin only — sidebar **Seasonal → Standings**)
+- **User Guide:**
+  - Records each team's **season wins and losses** by hand. Nothing is calculated from matches.
+  - Uses the season picked in the season switcher. Each category with active teams gets a tab (e.g. *Basketball · Men's College*).
+  - Every active team in the category is listed automatically and starts at **0-0**. Inactive teams are hidden but keep their record; deleting a team deletes its record.
+  - **Edit:** type the new Wins / Losses in the row, then click **Save** (or **Reset** to undo). Values must be whole numbers from 0 to 999; invalid values are flagged under the field and cannot be saved.
+  - **Ranking (automatic):** most wins first, then fewest losses. Teams with the same wins **and** losses share a rank (1, 1, 3) and are listed by school name. While every team in a category is 0-0, ranks show "–".
+  - **Search & sort:** filter by school, abbreviation or team name; sort by Rank, School A–Z, Most wins or Most losses (display only — ranks never change).
+  - **Two admins editing at once:** if someone else saved the same team after you loaded it, your save is rejected with *"Someone else updated this team's record. The latest numbers have been loaded."* Re-enter your change if it is still needed.
+  - Saved changes appear on the public `/standings` page immediately.
+- **Technical Specs:**
+  - Table: `team_standings` (`team_id` PK → `schools_teams.id`, `wins`/`losses` ≥ 0, `updated_at` used for conflict detection); migration `supabase/migrations/20261022000000_add_team_standings.sql`, applied with `scripts/migrate-team-standings.mjs`. RLS: public read, admin-only writes.
+  - Service: `src/services/standings.ts` (`rankStandings`, `getSeasonStandings`, `saveRecord`)
+  - Actions: `src/actions/standings.ts` (`getStandings`, `updateTeamStanding` — admin role + Zod)
+  - Hooks: `src/hooks/use-standings.ts`; Components: `src/components/admin/standings/`

@@ -62,12 +62,16 @@ This document details the technical specification, user experience, and data int
 
 ## 4. League Standings (`/standings`)
 
-- **Routes:** `/standings`, `/standings/[[...slug]]`
-- **Technical Specification:** `src/app/(public)/standings/page.tsx`
+- **Route:** `/standings` (optional query: `?season=<id>&category=<id>`)
+- **Technical Specification:** `src/app/(public)/standings/page.tsx` (server-rendered) → `StandingsView`, `StandingsFilters`, `StandingsTable` in `src/components/standings/`
+- **Data:** Season win/loss totals entered by admins at `/admin/standings` (`team_standings` table). Not derived from match results.
 - **Features:**
-  - **Sport & Division Selector:** Toggle between sports and categories (e.g., Men's Basketball Seniors).
-  - **Group Stage Table (`GroupStageTable`):** Ranks teams by Wins, Losses, Points, Win Percentage, and Streak.
-  - **Bracket Visualization (`BracketVisualization`):** Dynamic playoff trees for elimination rounds.
+  - **Season default:** the season whose dates include today, otherwise the most recent one. Season chips appear only when more than one season exists.
+  - **Category chips:** *All* (every category as its own section) or a single category (e.g. *Basketball · Men's College*). Unknown or stale `season` / `category` values fall back to the defaults.
+  - **Ranked table per category:** Rank, Team (school logo, team and school name), W, L. Only active teams of the season are listed; teams without a saved record show 0-0.
+  - **Ranking rule:** most wins first, then fewest losses. Teams with equal wins **and** losses share a rank (1, 1, 3) and are listed by school name. While every team in a category is 0-0, the table shows "No results recorded yet" and "–" ranks.
+  - **Freshness:** admin saves revalidate `/standings` immediately.
+  - **States:** "No standings yet" when the season has no active teams; "Standings are temporarily unavailable" if loading fails; route-level loading skeleton (`loading.tsx`).
 
 ---
 
