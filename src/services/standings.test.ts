@@ -278,3 +278,72 @@ describe('StandingsService.getSeasonStandings', () => {
     consoleError.mockRestore();
   });
 });
+
+describe('StandingsService.saveRecord', () => {
+  const TEAM = '3f1c2b7e-4a5d-4e6f-9a1b-2c3d4e5f6a7b';
+  const LOADED_AT = '2026-10-22T01:00:00.123456+00:00';
+  const CONFLICT_MESSAGE = "Someone else updated this team's record. The latest numbers have been loaded.";
+
+  it('inserts when there is no record yet', async () => {
+    tables.team_standings = [];
+
+    const result = await StandingsService.saveRecord({ teamId: TEAM, wins: 5, losses: 2, expectedUpdatedAt: null });
+
+    expect(result).toEqual({ success: true, data: { teamId: TEAM, wins: 5, losses: 2, updatedAt: INSERTED_AT } });
+    expect(calls.find((c) => c.op === 'insert')?.payload).toEqual({ team_id: TEAM, wins: 5, losses: 2 });
+  });
+
+  it('updates when updated_at matches the loaded value', async () => {
+    tables.team_standings = [{ team_id: TEAM, wins: 1, losses: 1, updated_at: LOADED_AT }];
+
+    const result = await StandingsService.saveRecord({ teamId: TEAM, wins: 5, losses: 2, expectedUpdatedAt: LOADED_AT });
+
+    expect(result).toEqual({ success: true, data: { teamId: TEAM, wins: 5, losses: 2, updatedAt: UPDATED_AT } });
+    const update = calls.find((c) => c.op === 'update');
+    expect(update?.payload).toEqual({ wins: 5, losses: 2 });
+    expect(update?.filters).toEqual([
+      ['team_id', TEAM],
+      ['updated_at', LOADED_AT]
+    ]);
+  });
+
+  it('reports CONFLICT and changes nothing when the record changed since it was loaded', async () => {
+    tables.team_standings = [{ team_id: TEAM, wins: 4, losses: 0, updated_at: '2026-10-22T02:00:00+00:00' }];
+
+    const result = await StandingsService.saveRecord({ teamId: TEAM, wins: 5, losses: 2, expectedUpdatedAt: LOADED_AT });
+
+    expect(result).toEqual({ success: false, code: 'CONFLICT', error: CONFLICT_MESSAGE });
+    expect(tables.team_standings[0]).toMatchObject({ wins: 4, losses: 0 });
+  });
+
+  it('reports NOT_FOUND when the update hits nothing and no record exists', async () => {
+    tables.team_standings = [];
+
+    const result = await StandingsService.saveRecord({ teamId: TEAM, wins: 5, losses: 2, expectedUpdatedAt: LOADED_AT });
+
+    expect(result).toEqual({ success: false, code: 'NOT_FOUND', error: 'This team no longer exists.' });
+  });
+
+  it.each([
+    ['23505', 'CONFLICT', CONFLICT_MESSAGE],
+    ['23503', 'NOT_FOUND', 'This team no longer exists.'],
+    ['23514', 'VALIDATION', 'Please fix the highlighted fields.']
+  ])('maps insert error %s to %s', async (dbCode, code, error) => {
+    failures['team_standings.insert'] = { code: dbCode, message: 'violates constraint "team_standings_pkey"' };
+
+    const result = await StandingsService.saveRecord({ teamId: TEAM, wins: 5, losses: 2, expectedUpdatedAt: null });
+
+    expect(result).toEqual({ success: false, code, error });
+  });
+
+  it('reports a generic SERVER error for anything else, without database details', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+    failures['team_standings.update'] = { code: '57014', message: 'canceling statement due to statement timeout' };
+
+    const result = await StandingsService.saveRecord({ teamId: TEAM, wins: 5, losses: 2, expectedUpdatedAt: LOADED_AT });
+
+    expect(result).toEqual({ success: false, code: 'SERVER', error: 'Could not save the record. Please try again.' });
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+});
