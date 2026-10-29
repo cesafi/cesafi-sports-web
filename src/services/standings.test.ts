@@ -8,6 +8,8 @@ let failures: Record<string, DbError> = {};
 const calls: { table: string; op: string; payload: Row | null; filters: [string, unknown][] }[] = [];
 
 const INSERTED_AT = '2026-10-22T05:00:00.000001+00:00';
+// Hosted PostgREST silently cuts every response at max_rows
+const MAX_ROWS = 1000;
 const UPDATED_AT = '2026-10-22T06:00:00.000002+00:00';
 
 // Dotted columns filter on an embedded row (object or one-element array), like PostgREST `!inner`.
@@ -22,6 +24,7 @@ function from(table: string) {
   let op: 'select' | 'insert' | 'update' | 'upsert' | 'delete' = 'select';
   let payload: Row | null = null;
   let conflictColumns: string[] = [];
+  let range: [number, number] | null = null;
 
   const run = (): { data: Row[] | null; error: DbError | null } => {
     calls.push({ table, op, payload, filters: [...filters] });
@@ -51,7 +54,9 @@ function from(table: string) {
       hit.forEach((row) => Object.assign(row, payload, { updated_at: UPDATED_AT }));
       return { data: hit.map((row) => ({ ...row })), error: null };
     }
-    return { data: rows.filter(matches).map((row) => ({ ...row })), error: null };
+    const selected = rows.filter(matches);
+    const page = range ? selected.slice(range[0], range[1] + 1) : selected;
+    return { data: page.slice(0, MAX_ROWS).map((row) => ({ ...row })), error: null };
   };
 
   const builder: any = {
@@ -63,6 +68,8 @@ function from(table: string) {
     ),
     delete: () => ((op = 'delete'), builder),
     eq: (col: string, value: unknown) => (filters.push([col, value]), builder),
+    order: () => builder,
+    range: (from: number, to: number) => ((range = [from, to]), builder),
     single: async () => {
       const res = run();
       if (res.error) return res;
@@ -361,6 +368,22 @@ describe('StandingsService.getSeasonStandings', () => {
     if (!result.success) throw new Error(result.error);
     expect(result.data.categories[0].teams).toHaveLength(1);
     expect(result.data.categories[0].teams[0]).toMatchObject({ teamId: 'a', wins: 1, losses: 0, pointDiff: 10 });
+  });
+
+  it('counts every finished match even past the 1000-row response cap', async () => {
+    tables.schools_teams = [team('a', 'Alpha', MEN_COLLEGE), team('b', 'Beta', MEN_COLLEGE)];
+    tables.matches = Array.from({ length: 1005 }, (_, i) =>
+      match(i + 1, 3, 'Elimination Round', AFTER_CUTOFF, [['a', 71], ['b', 70]])
+    );
+
+    const result = await StandingsService.getSeasonStandings(26);
+
+    if (!result.success) throw new Error(result.error);
+    expect(result.data.categories[0].teams.find((t) => t.teamId === 'a')?.fromMatches).toEqual({
+      wins: 1005,
+      losses: 0,
+      pointDiff: 1005
+    });
   });
 
   it('returns SERVER when the matches query fails', async () => {

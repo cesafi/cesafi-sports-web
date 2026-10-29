@@ -55,10 +55,13 @@ interface FinishedMatchRow {
 }
 
 const FINISHED_MATCHES_SELECT = `
+  id,
   scheduled_at,
   sports_seasons_stages!inner(season_id, sport_category_id, competition_stage),
   match_participants(team_id, match_score)
 `;
+
+const MATCHES_PAGE_SIZE = 1000;
 
 const ZERO_LINE: StandingLine = { wins: 0, losses: 0, pointDiff: 0 };
 
@@ -122,25 +125,38 @@ const CUTOFF_ERRORS = {
 } as const;
 
 export class StandingsService extends BaseService {
+  /** Every finished match of the season. A season spans every sport, so page past PostgREST's max_rows cap. */
+  private static async getFinishedMatches(seasonId: number): Promise<FinishedMatchRow[]> {
+    const supabase = await this.getClient();
+    const rows: FinishedMatchRow[] = [];
+    for (let from = 0; ; from += MATCHES_PAGE_SIZE) {
+      const { data: page, error } = await supabase
+        .from('matches')
+        .select(FINISHED_MATCHES_SELECT)
+        .eq('status', 'finished')
+        .eq('sports_seasons_stages.season_id', seasonId)
+        .order('id')
+        .range(from, from + MATCHES_PAGE_SIZE - 1);
+      if (error) throw error;
+      rows.push(...((page ?? []) as unknown as FinishedMatchRow[]));
+      if (!page || page.length < MATCHES_PAGE_SIZE) return rows;
+    }
+  }
+
   static async getSeasonStandings(seasonId: number): Promise<StandingsResult<SeasonStandings>> {
     try {
       const supabase = await this.getClient();
-      const [teamsResult, matchesResult, cutoffsResult] = await Promise.all([
+      const [teamsResult, finishedMatches, cutoffsResult] = await Promise.all([
         supabase.from('schools_teams').select(SEASON_TEAMS_SELECT).eq('season_id', seasonId).eq('is_active', true),
-        supabase
-          .from('matches')
-          .select(FINISHED_MATCHES_SELECT)
-          .eq('status', 'finished')
-          .eq('sports_seasons_stages.season_id', seasonId),
+        this.getFinishedMatches(seasonId),
         supabase.from('standings_cutoffs').select('sport_category_id, counted_through').eq('season_id', seasonId)
       ]);
 
       if (teamsResult.error) throw teamsResult.error;
-      if (matchesResult.error) throw matchesResult.error;
       if (cutoffsResult.error) throw cutoffsResult.error;
 
       const data = teamsResult.data;
-      const matchesByCategory = groupMatchesByCategory((matchesResult.data ?? []) as unknown as FinishedMatchRow[]);
+      const matchesByCategory = groupMatchesByCategory(finishedMatches);
       const cutoffs = new Map(
         ((cutoffsResult.data ?? []) as { sport_category_id: number; counted_through: string }[]).map((c) => [
           c.sport_category_id,
