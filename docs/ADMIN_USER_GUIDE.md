@@ -265,16 +265,19 @@ This document provides a comprehensive operational user guide and technical spec
 
 - **Route:** `/admin/standings` (Admin only — sidebar **Seasonal → Standings**)
 - **User Guide:**
-  - Records each team's **season wins and losses** by hand. Nothing is calculated from matches.
+  - Each team's line is its **starting record** (W, L, +/−, typed here) **plus finished matches** after the category's cut-off date. PTS (3 × W) and the totals are worked out automatically.
   - Uses the season picked in the season switcher. Each category with active teams gets a tab (e.g. *Basketball · Men's College*).
   - Every active team in the category is listed automatically and starts at **0-0**. Inactive teams are hidden but keep their record; deleting a team deletes its record.
-  - **Edit:** type the new Wins / Losses in the row, then click **Save** (or **Reset** to undo). Values must be whole numbers from 0 to 999; invalid values are flagged under the field and cannot be saved.
-  - **Ranking (automatic):** most wins first, then fewest losses. Teams with the same wins **and** losses share a rank (1, 1, 3) and are listed by school name. While every team in a category is 0-0, ranks show "–".
+  - **Edit the starting record:** type Start W / Start L / Start +/− in the row, then click **Save** (or **Reset** to undo). W and L are whole numbers from 0 to 999; +/− is a whole number from -9999 to 9999. Invalid values are flagged under the field and cannot be saved. **From matches** and **Total** are read-only.
+  - **Cut-off date ("Starting record covers games through"):** finished matches on or before this date are treated as already included in the starting record and are not added again. Move it forward only when you re-copy every team's totals (e.g. from cesafi.ph) as of a new date. **Clear** makes every finished match count (use it when the starting records are all 0-0).
+  - **Which matches count:** status *Finished*, a round-robin stage (Elimination Round / Group Stage — not play-ins, quarterfinals, semifinals, playoffs or finals), exactly two teams, both scores entered, and not tied. Entering scores for a match dated on or before the cut-off does **not** change the standings.
+  - **Ranking (automatic):** most PTS first, then fewest losses, then best +/−, then school name; every team gets its own position. While every team in a category is 0-0, ranks show "–".
   - **Search & sort:** filter by school, abbreviation or team name; sort by Rank, School A–Z, Most wins or Most losses (display only — ranks never change).
   - **Two admins editing at once:** if someone else saved the same team after you loaded it, your save is rejected with *"Someone else updated this team's record. The latest numbers have been loaded."* Re-enter your change if it is still needed.
-  - Saved changes appear on the public `/standings` page immediately.
+  - Saved changes, and match status / score changes made under Matches, appear on the public `/standings` page immediately.
 - **Technical Specs:**
-  - Table: `team_standings` (`team_id` PK → `schools_teams.id`, `wins`/`losses` ≥ 0, `updated_at` used for conflict detection); migration `supabase/migrations/20261022000000_add_team_standings.sql`, applied with `scripts/migrate-team-standings.mjs`. RLS: public read, admin-only writes.
-  - Service: `src/services/standings.ts` (`rankStandings`, `getSeasonStandings`, `saveRecord`)
-  - Actions: `src/actions/standings.ts` (`getStandings`, `updateTeamStanding` — admin role + Zod)
+  - Tables: `team_standings` (`team_id` PK → `schools_teams.id`, `wins`/`losses` ≥ 0, `point_diff` -9999…9999, `updated_at` used for conflict detection) and `standings_cutoffs` (`season_id` + `sport_category_id` PK, `counted_through` date). Migrations `supabase/migrations/20261022000000_add_team_standings.sql`, `20261029000000_add_automatic_standings.sql` and `20261029000100_seed_season_26_standings.sql`, applied with `scripts/migrate-team-standings.mjs` and `scripts/migrate-automatic-standings.mjs`. RLS: public read, admin-only writes.
+  - Calculations: `src/lib/utils/standings-calc.ts` (`tallyMatches`, `rankStandings`, `isStandingsStage`, `formatPointDiff`)
+  - Service: `src/services/standings.ts` (`getSeasonStandings`, `saveRecord`, `saveCutoff`)
+  - Actions: `src/actions/standings.ts` (`getStandings`, `updateTeamStanding`, `updateStandingsCutoff` — admin role + Zod)
   - Hooks: `src/hooks/use-standings.ts`; Components: `src/components/admin/standings/`

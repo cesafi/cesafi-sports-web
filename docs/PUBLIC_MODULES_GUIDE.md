@@ -64,13 +64,14 @@ This document details the technical specification, user experience, and data int
 
 - **Route:** `/standings` (optional query: `?season=<id>&category=<id>`)
 - **Technical Specification:** `src/app/(public)/standings/page.tsx` (server-rendered) → `StandingsView`, `StandingsFilters`, `StandingsTable` in `src/components/standings/`
-- **Data:** Season win/loss totals entered by admins at `/admin/standings` (`team_standings` table). Not derived from match results.
+- **Data:** Each team's starting record (W, L, +/−) entered by admins at `/admin/standings` (`team_standings`), **plus finished matches** dated after the category's cut-off date (`standings_cutoffs`). A match counts when it is marked *Finished*, belongs to a round-robin stage (Elimination Round / Group Stage), has two teams with both scores entered, and is not tied.
 - **Features:**
   - **Season default:** the season whose dates include today, otherwise the most recent one. Season chips appear only when more than one season exists.
   - **Category chips:** *All* (every category as its own section) or a single category (e.g. *Basketball · Men's College*). Unknown or stale `season` / `category` values fall back to the defaults.
-  - **Ranked table per category:** Rank, Team (school logo, team and school name), W, L. Only active teams of the season are listed; teams without a saved record show 0-0.
-  - **Ranking rule:** most wins first, then fewest losses. Teams with equal wins **and** losses share a rank (1, 1, 3) and are listed by school name. While every team in a category is 0-0, the table shows "No results recorded yet" and "–" ranks.
-  - **Freshness:** admin saves revalidate `/standings` immediately.
+  - **Ranked table per category:** #, Team (school logo, team and school name), W, L, PTS, +/− (same columns as cesafi.ph). Only active teams of the season are listed; teams without a saved record start at 0-0.
+  - **Points:** PTS = 3 × W; a loss is worth 0. +/− is points scored minus points allowed.
+  - **Ranking rule:** most PTS first, then fewest losses, then best +/−, then school name. Every team gets its own position (1…n). While every team in a category is 0-0, the table shows "No results recorded yet" and "–" ranks.
+  - **Freshness:** admin saves and any match status, score or participant change revalidate `/standings` immediately.
   - **States:** "No standings yet" when the season has no active teams; "Standings are temporarily unavailable" if loading fails; route-level loading skeleton (`loading.tsx`).
 
 ---
