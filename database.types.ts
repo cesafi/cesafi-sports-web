@@ -618,10 +618,50 @@ export type Database = {
           },
         ]
       }
+      standings_cutoffs: {
+        Row: {
+          counted_through: string
+          created_at: string
+          season_id: number
+          sport_category_id: number
+          updated_at: string
+        }
+        Insert: {
+          counted_through: string
+          created_at?: string
+          season_id: number
+          sport_category_id: number
+          updated_at?: string
+        }
+        Update: {
+          counted_through?: string
+          created_at?: string
+          season_id?: number
+          sport_category_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standings_cutoffs_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standings_cutoffs_sport_category_id_fkey"
+            columns: ["sport_category_id"]
+            isOneToOne: false
+            referencedRelation: "sports_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_standings: {
         Row: {
           created_at: string
           losses: number
+          point_diff: number
           team_id: string
           updated_at: string
           wins: number
@@ -629,6 +669,7 @@ export type Database = {
         Insert: {
           created_at?: string
           losses?: number
+          point_diff?: number
           team_id: string
           updated_at?: string
           wins?: number
@@ -636,6 +677,7 @@ export type Database = {
         Update: {
           created_at?: string
           losses?: number
+          point_diff?: number
           team_id?: string
           updated_at?: string
           wins?: number

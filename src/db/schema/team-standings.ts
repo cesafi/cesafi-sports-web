@@ -4,6 +4,7 @@ export const teamStandings = pgTable('team_standings', {
   team_id: uuid('team_id').primaryKey(),
   wins: integer('wins').default(0).notNull(),
   losses: integer('losses').default(0).notNull(),
+  point_diff: integer('point_diff').default(0).notNull(),
   created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
   updated_at: timestamp('updated_at', { withTimezone: true, mode: 'string' }).defaultNow().notNull()
 });
