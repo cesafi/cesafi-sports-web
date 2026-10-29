@@ -115,6 +115,7 @@ export function StandingsManager({ seasonId }: StandingsManagerProps) {
         <TabsContent value={String(selectedCategoryId)} className="mt-4 space-y-4">
           {selectedCategory && (
             <StandingsCutoffBar
+              key={selectedCategory.category.id}
               countedThrough={selectedCategory.countedThrough}
               onSave={(countedThrough) =>
                 updateCutoff.mutateAsync({ seasonId, sportCategoryId: selectedCategory.category.id, countedThrough })
