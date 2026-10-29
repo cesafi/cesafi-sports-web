@@ -1,25 +1,28 @@
 import { BaseService } from './base';
 import { formatCategoryName } from '@/lib/utils/sports';
 import {
+  isStandingsStage,
+  POINTS_PER_WIN,
+  rankStandings,
+  StandingsMatch,
+  tallyMatches
+} from '@/lib/utils/standings-calc';
+import {
   CategoryStandings,
   RankedTeamStanding,
+  SavedStandingsCutoff,
   SavedTeamStanding,
   SeasonStandings,
+  StandingLine,
   StandingsErrorCode,
   StandingsResult
 } from '@/lib/types/standings';
-import { UpdateTeamStandingInput } from '@/lib/validations/standings';
-
-interface RankableStanding {
-  wins: number;
-  losses: number;
-  teamName: string;
-  school: { name: string };
-}
+import { UpdateStandingsCutoffInput, UpdateTeamStandingInput } from '@/lib/validations/standings';
 
 interface StandingRecordRow {
   wins: number;
   losses: number;
+  point_diff: number;
   updated_at: string;
 }
 
@@ -36,36 +39,31 @@ const SEASON_TEAMS_SELECT = `
   name,
   school:schools!inner(id, name, abbreviation, logo_url),
   sports_categories!sport_category_id!inner(id, division, levels, sports!inner(name)),
-  team_standings(wins, losses, updated_at)
+  team_standings(wins, losses, point_diff, updated_at)
 `;
 
-const isBetter = (a: RankableStanding, b: RankableStanding) =>
-  a.wins > b.wins || (a.wins === b.wins && a.losses < b.losses);
-
-/**
- * Ranks one category: most wins first, then fewest losses. Teams share a rank only when wins
- * and losses are both equal (competition ranking: 1, 1, 3). Full ties are listed by school, then
- * team name. When nobody has played, ranks are null.
- */
-export function rankStandings<T extends RankableStanding>(
-  rows: T[]
-): { teams: (T & { rank: number | null })[]; hasResults: boolean } {
-  const hasResults = rows.some((r) => r.wins + r.losses > 0);
-  const sorted = [...rows].sort(
-    (a, b) =>
-      b.wins - a.wins ||
-      a.losses - b.losses ||
-      a.school.name.localeCompare(b.school.name) ||
-      a.teamName.localeCompare(b.teamName)
-  );
-
-  const teams = sorted.map((team) => ({
-    ...team,
-    rank: hasResults ? 1 + rows.filter((other) => isBetter(other, team)).length : null
-  }));
-
-  return { teams, hasResults };
+interface StageRow {
+  season_id: number;
+  sport_category_id: number;
+  competition_stage: string;
 }
+
+interface FinishedMatchRow {
+  scheduled_at: string | null;
+  sports_seasons_stages: StageRow | StageRow[] | null;
+  match_participants: { team_id: string; match_score: number | null }[] | null;
+}
+
+const FINISHED_MATCHES_SELECT = `
+  scheduled_at,
+  sports_seasons_stages!inner(season_id, sport_category_id, competition_stage),
+  match_participants(team_id, match_score)
+`;
+
+const ZERO_LINE: StandingLine = { wins: 0, losses: 0, pointDiff: 0 };
+
+/** A team with its starting record, before match results and ranking are added. */
+type SeasonTeam = Pick<RankedTeamStanding, 'teamId' | 'teamName' | 'school' | 'starting' | 'updatedAt'>;
 
 const SAVE_ERRORS: Record<Exclude<StandingsErrorCode, 'UNAUTHENTICATED' | 'FORBIDDEN'>, string> = {
   CONFLICT: "Someone else updated this team's record. The latest numbers have been loaded.",
@@ -91,28 +89,66 @@ const toSaved = (row: StandingRecordRow & { team_id: string }): SavedTeamStandin
   teamId: row.team_id,
   wins: row.wins,
   losses: row.losses,
+  pointDiff: row.point_diff,
   updatedAt: row.updated_at
 });
 
-const SAVED_COLUMNS = 'team_id, wins, losses, updated_at';
+const SAVED_COLUMNS = 'team_id, wins, losses, point_diff, updated_at';
 
-// A one-to-one embed may arrive as an object, an array or null depending on PostgREST's detection.
-const firstRecord = (embedded: SeasonTeamRow['team_standings']): StandingRecordRow | null =>
+// An embed may arrive as an object, an array or null depending on PostgREST's relationship detection.
+const firstRecord = <T>(embedded: T | T[] | null): T | null =>
   Array.isArray(embedded) ? (embedded[0] ?? null) : (embedded ?? null);
+
+/** Finished round-robin matches of the season, grouped by category. */
+function groupMatchesByCategory(rows: FinishedMatchRow[]): Map<number, StandingsMatch[]> {
+  const byCategory = new Map<number, StandingsMatch[]>();
+  for (const row of rows) {
+    const stage = firstRecord(row.sports_seasons_stages);
+    if (!stage || !isStandingsStage(stage.competition_stage)) continue;
+
+    const list = byCategory.get(stage.sport_category_id) ?? [];
+    list.push({
+      scheduledAt: row.scheduled_at,
+      participants: (row.match_participants ?? []).map((p) => ({ teamId: p.team_id, score: p.match_score }))
+    });
+    byCategory.set(stage.sport_category_id, list);
+  }
+  return byCategory;
+}
+
+const CUTOFF_ERRORS = {
+  NOT_FOUND: 'This season or category no longer exists.',
+  SERVER: 'Could not save the cut-off date. Please try again.'
+} as const;
 
 export class StandingsService extends BaseService {
   static async getSeasonStandings(seasonId: number): Promise<StandingsResult<SeasonStandings>> {
     try {
       const supabase = await this.getClient();
-      const { data, error } = await supabase
-        .from('schools_teams')
-        .select(SEASON_TEAMS_SELECT)
-        .eq('season_id', seasonId)
-        .eq('is_active', true);
+      const [teamsResult, matchesResult, cutoffsResult] = await Promise.all([
+        supabase.from('schools_teams').select(SEASON_TEAMS_SELECT).eq('season_id', seasonId).eq('is_active', true),
+        supabase
+          .from('matches')
+          .select(FINISHED_MATCHES_SELECT)
+          .eq('status', 'finished')
+          .eq('sports_seasons_stages.season_id', seasonId),
+        supabase.from('standings_cutoffs').select('sport_category_id, counted_through').eq('season_id', seasonId)
+      ]);
 
-      if (error) throw error;
+      if (teamsResult.error) throw teamsResult.error;
+      if (matchesResult.error) throw matchesResult.error;
+      if (cutoffsResult.error) throw cutoffsResult.error;
 
-      const byCategory = new Map<number, { category: CategoryStandings['category']; teams: Omit<RankedTeamStanding, 'rank'>[] }>();
+      const data = teamsResult.data;
+      const matchesByCategory = groupMatchesByCategory((matchesResult.data ?? []) as unknown as FinishedMatchRow[]);
+      const cutoffs = new Map(
+        ((cutoffsResult.data ?? []) as { sport_category_id: number; counted_through: string }[]).map((c) => [
+          c.sport_category_id,
+          c.counted_through
+        ])
+      );
+
+      const byCategory = new Map<number, { category: CategoryStandings['category']; teams: SeasonTeam[] }>();
 
       for (const row of (data ?? []) as unknown as SeasonTeamRow[]) {
         const cat = row.sports_categories;
@@ -139,15 +175,32 @@ export class StandingsService extends BaseService {
             abbreviation: row.school.abbreviation,
             logoUrl: row.school.logo_url || null
           },
-          wins: record?.wins ?? 0,
-          losses: record?.losses ?? 0,
+          starting: record
+            ? { wins: record.wins, losses: record.losses, pointDiff: record.point_diff ?? 0 }
+            : ZERO_LINE,
           updatedAt: record?.updated_at ?? null
         });
       }
 
       const categories: CategoryStandings[] = [...byCategory.values()]
         .sort((a, b) => a.category.sportName.localeCompare(b.category.sportName) || a.category.id - b.category.id)
-        .map(({ category, teams }) => ({ category, ...rankStandings(teams) }));
+        .map(({ category, teams }) => {
+          const countedThrough = cutoffs.get(category.id) ?? null;
+          const tally = tallyMatches(matchesByCategory.get(category.id) ?? [], countedThrough);
+          const totals = teams.map((team) => {
+            const fromMatches = tally.get(team.teamId) ?? ZERO_LINE;
+            const wins = team.starting.wins + fromMatches.wins;
+            return {
+              ...team,
+              fromMatches,
+              wins,
+              losses: team.starting.losses + fromMatches.losses,
+              pointDiff: team.starting.pointDiff + fromMatches.pointDiff,
+              points: POINTS_PER_WIN * wins
+            };
+          });
+          return { category, countedThrough, ...rankStandings(totals) };
+        });
 
       return { success: true, data: { seasonId, categories } };
     } catch (err) {
@@ -161,7 +214,7 @@ export class StandingsService extends BaseService {
    * (expectedUpdatedAt null); later saves update only while updated_at still matches.
    */
   static async saveRecord(input: UpdateTeamStandingInput): Promise<StandingsResult<SavedTeamStanding>> {
-    const { teamId, wins, losses, expectedUpdatedAt } = input;
+    const { teamId, wins, losses, pointDiff, expectedUpdatedAt } = input;
 
     try {
       const supabase = await this.getClient();
@@ -169,7 +222,7 @@ export class StandingsService extends BaseService {
       if (expectedUpdatedAt === null) {
         const { data, error } = await supabase
           .from('team_standings')
-          .insert({ team_id: teamId, wins, losses })
+          .insert({ team_id: teamId, wins, losses, point_diff: pointDiff })
           .select(SAVED_COLUMNS)
           .single();
 
@@ -183,7 +236,7 @@ export class StandingsService extends BaseService {
 
       const { data: updated, error: updateError } = await supabase
         .from('team_standings')
-        .update({ wins, losses })
+        .update({ wins, losses, point_diff: pointDiff })
         .eq('team_id', teamId)
         .eq('updated_at', expectedUpdatedAt)
         .select(SAVED_COLUMNS);
@@ -202,6 +255,37 @@ export class StandingsService extends BaseService {
     } catch (err) {
       console.error('StandingsService.saveRecord error:', err);
       return saveFailure('SERVER');
+    }
+  }
+
+  /** Sets (upsert) or clears (delete) a category's cut-off. Last write wins. */
+  static async saveCutoff(input: UpdateStandingsCutoffInput): Promise<StandingsResult<SavedStandingsCutoff>> {
+    const { seasonId, sportCategoryId, countedThrough } = input;
+
+    try {
+      const supabase = await this.getClient();
+      const { error } =
+        countedThrough === null
+          ? await supabase
+              .from('standings_cutoffs')
+              .delete()
+              .eq('season_id', seasonId)
+              .eq('sport_category_id', sportCategoryId)
+          : await supabase
+              .from('standings_cutoffs')
+              .upsert(
+                { season_id: seasonId, sport_category_id: sportCategoryId, counted_through: countedThrough },
+                { onConflict: 'season_id,sport_category_id' }
+              );
+
+      if (error) {
+        if (error.code === '23503') return { success: false, code: 'NOT_FOUND', error: CUTOFF_ERRORS.NOT_FOUND };
+        throw error;
+      }
+      return { success: true, data: { seasonId, sportCategoryId, countedThrough } };
+    } catch (err) {
+      console.error('StandingsService.saveCutoff error:', err);
+      return { success: false, code: 'SERVER', error: CUTOFF_ERRORS.SERVER };
     }
   }
 }
