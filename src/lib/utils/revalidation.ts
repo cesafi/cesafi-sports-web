@@ -107,6 +107,7 @@ export class RevalidationHelper {
         // Public pages that display matches
         revalidatePath('/'); // Landing page shows upcoming matches
         revalidatePath('/schedule'); // Schedule page shows all matches
+        this.revalidateStandings(); // Finished matches feed the standings
     }
 
     /**
@@ -259,6 +260,7 @@ export class RevalidationHelper {
         // Public pages that display match participants
         revalidatePath('/'); // Landing page shows upcoming matches with participants
         revalidatePath('/schedule'); // Schedule page shows match participants
+        this.revalidateStandings(); // Match scores feed the standings
     }
 
     /**
