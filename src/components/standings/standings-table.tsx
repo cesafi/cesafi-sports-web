@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { moderniz } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
+import { formatPointDiff } from '@/lib/utils/standings-calc';
 import type { CategoryStandings } from '@/lib/types/standings';
 
 const RANK_COLORS: Record<number, string> = {
@@ -12,6 +13,17 @@ const RANK_COLORS: Record<number, string> = {
   2: 'text-slate-400',
   3: 'text-amber-600'
 };
+
+// Short visible labels (like cesafi.ph) with full names for screen readers
+const STAT_COLUMNS = [
+  { short: 'W', name: 'Wins' },
+  { short: 'L', name: 'Losses' },
+  { short: 'PTS', name: 'Points' },
+  { short: '+/\u2212', name: 'Point difference' }
+] as const;
+
+const HEAD_CLASS = 'text-muted-foreground text-xs font-semibold tracking-wider uppercase';
+const STAT_CELL_CLASS = 'w-10 px-1 py-3 text-center tabular-nums sm:w-16 sm:px-2 sm:py-4';
 
 interface StandingsTableProps {
   category: CategoryStandings;
@@ -43,24 +55,33 @@ export function StandingsTable({ category: standings }: StandingsTableProps) {
             <TableCaption className="sr-only">{category.name}</TableCaption>
             <TableHeader className="bg-muted/30">
               <TableRow className="hover:bg-transparent">
-                <TableHead scope="col" className="text-muted-foreground w-16 pl-4 text-xs font-semibold tracking-wider uppercase sm:w-20 sm:pl-6">
-                  Rank
+                <TableHead scope="col" className={cn(HEAD_CLASS, 'w-10 pl-3 sm:w-20 sm:pl-6')}>
+                  <span aria-hidden="true">#</span>
+                  <span className="sr-only">Rank</span>
                 </TableHead>
-                <TableHead scope="col" className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                <TableHead scope="col" className={HEAD_CLASS}>
                   Team
                 </TableHead>
-                <TableHead scope="col" className="text-muted-foreground w-14 text-center text-xs font-semibold tracking-wider uppercase sm:w-20">
-                  W
-                </TableHead>
-                <TableHead scope="col" className="text-muted-foreground w-14 pr-4 text-center text-xs font-semibold tracking-wider uppercase sm:w-20 sm:pr-6">
-                  L
-                </TableHead>
+                {STAT_COLUMNS.map(({ short, name }, i) => (
+                  <TableHead
+                    key={name}
+                    scope="col"
+                    className={cn(
+                      HEAD_CLASS,
+                      'w-10 px-1 text-center sm:w-16 sm:px-2',
+                      i === STAT_COLUMNS.length - 1 && 'pr-3 sm:pr-6'
+                    )}
+                  >
+                    <span aria-hidden="true">{short}</span>
+                    <span className="sr-only">{name}</span>
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
               {teams.map((team) => (
                 <TableRow key={team.teamId} className="border-border/30 hover:bg-muted/20">
-                  <TableCell className="py-3 pl-4 sm:py-4 sm:pl-6">
+                  <TableCell className="py-3 pl-3 sm:py-4 sm:pl-6">
                     {team.rank === null ? (
                       <span aria-label="Not ranked yet" className="text-muted-foreground text-lg">
                         –
@@ -75,13 +96,13 @@ export function StandingsTable({ category: standings }: StandingsTableProps) {
                     )}
                   </TableCell>
                   <TableCell className="py-3 whitespace-normal sm:py-4">
-                    <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4">
                       <Image
                         src={team.school.logoUrl ?? '/img/cesafi-logo.webp'}
                         alt={team.school.name}
                         width={40}
                         height={40}
-                        className="h-8 w-8 flex-shrink-0 object-contain drop-shadow-md sm:h-10 sm:w-10"
+                        className="h-7 w-7 flex-shrink-0 object-contain drop-shadow-md sm:h-10 sm:w-10"
                       />
                       <div className="flex min-w-0 flex-col">
                         <span className="text-foreground font-bold">{team.teamName}</span>
@@ -90,9 +111,11 @@ export function StandingsTable({ category: standings }: StandingsTableProps) {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3 text-center font-semibold tabular-nums sm:py-4">{team.wins}</TableCell>
-                  <TableCell className="py-3 pr-4 text-center font-semibold tabular-nums sm:py-4 sm:pr-6">
-                    {team.losses}
+                  <TableCell className={cn(STAT_CELL_CLASS, 'font-semibold')}>{team.wins}</TableCell>
+                  <TableCell className={cn(STAT_CELL_CLASS, 'text-muted-foreground')}>{team.losses}</TableCell>
+                  <TableCell className={cn(STAT_CELL_CLASS, 'font-bold')}>{team.points}</TableCell>
+                  <TableCell className={cn(STAT_CELL_CLASS, 'text-muted-foreground pr-3 sm:pr-6')}>
+                    {formatPointDiff(team.pointDiff)}
                   </TableCell>
                 </TableRow>
               ))}

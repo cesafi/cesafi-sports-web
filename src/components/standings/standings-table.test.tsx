@@ -10,29 +10,68 @@ const team = (
   wins: number,
   losses: number,
   rank: number | null,
-  logoUrl: string | null = null
+  logoUrl: string | null = null,
+  pointDiff = 0
 ): RankedTeamStanding => ({
   teamId,
   teamName,
   school: { id: `school-${teamId}`, name: schoolName, abbreviation: teamId.toUpperCase(), logoUrl },
+  starting: { wins, losses, pointDiff },
+  fromMatches: { wins: 0, losses: 0, pointDiff: 0 },
   wins,
   losses,
+  pointDiff,
+  points: 3 * wins,
   rank,
   updatedAt: null
 });
 
 const category = (teams: RankedTeamStanding[], hasResults = true): CategoryStandings => ({
   category: { id: 3, sportName: 'Basketball', division: 'men', levels: 'college', name: "Basketball · Men's College" },
+  countedThrough: null,
   hasResults,
   teams
 });
 
 describe('StandingsTable', () => {
-  it('renders a captioned table with Rank, Team, W and L columns', () => {
+  it('renders a captioned table with #, Team, W, L, PTS and +/- columns', () => {
     render(<StandingsTable category={category([team('uc', 'Webmasters', 'University of Cebu', 5, 1, 1)])} />);
 
     const table = screen.getByRole('table', { name: "Basketball · Men's College" });
-    expect(within(table).getAllByRole('columnheader').map((th) => th.textContent)).toEqual(['Rank', 'Team', 'W', 'L']);
+    const headers = within(table).getAllByRole('columnheader');
+    headers.forEach((th) => expect(th).toHaveAccessibleName());
+    expect(headers.map((th) => th.querySelector('[aria-hidden="true"]')?.textContent ?? th.textContent)).toEqual([
+      '#',
+      'Team',
+      'W',
+      'L',
+      'PTS',
+      '+/\u2212'
+    ]);
+    expect(
+      ['Rank', 'Team', 'Wins', 'Losses', 'Points', 'Point difference'].map(
+        (name) => within(table).getByRole('columnheader', { name }).tagName
+      )
+    ).toEqual(['TH', 'TH', 'TH', 'TH', 'TH', 'TH']);
+  });
+
+  it('shows points and a signed point difference', () => {
+    render(
+      <StandingsTable
+        category={category([
+          team('bc', 'Cheetahs', 'University of Baguio', 9, 1, 1, null, 100),
+          team('usjr', 'Jaguars', 'University of San Jose-Recoletos', 5, 4, 2, null, -1),
+          team('uc', 'Webmasters', 'University of Cebu', 0, 0, 3, null, 0)
+        ])}
+      />
+    );
+
+    const rows = screen.getAllByRole('row').slice(1);
+    expect(rows.map((row) => within(row).getAllByRole('cell').slice(2).map((cell) => cell.textContent))).toEqual([
+      ['9', '1', '27', '+100'],
+      ['5', '4', '15', '\u22121'],
+      ['0', '0', '0', '0']
+    ]);
   });
 
   it('lists teams in the given order with their rank, wins and losses', () => {
@@ -48,9 +87,9 @@ describe('StandingsTable', () => {
 
     const rows = screen.getAllByRole('row').slice(1);
     expect(rows.map((row) => within(row).getAllByRole('cell').map((cell) => cell.textContent?.trim()))).toEqual([
-      ['1', 'WebmastersUCUniversity of Cebu', '5', '1'],
-      ['1', 'JaguarsUSJRUniversity of San Jose-Recoletos', '5', '1'],
-      ['3', 'CobrasSWUSouthwestern University', '2', '4']
+      ['1', 'WebmastersUCUniversity of Cebu', '5', '1', '15', '0'],
+      ['1', 'JaguarsUSJRUniversity of San Jose-Recoletos', '5', '1', '15', '0'],
+      ['3', 'CobrasSWUSouthwestern University', '2', '4', '6', '0']
     ]);
   });
 

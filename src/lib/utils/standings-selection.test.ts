@@ -8,6 +8,7 @@ const SEASONS = [
 
 const category = (id: number): CategoryStandings => ({
   category: { id, sportName: 'Basketball', division: 'men', levels: 'college', name: `Category ${id}` },
+  countedThrough: null,
   hasResults: false,
   teams: []
 });
