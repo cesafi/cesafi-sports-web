@@ -1,5 +1,11 @@
 // Team standings: manual season win/loss totals, ranked per category
 
+export interface StandingLine {
+  wins: number;
+  losses: number;
+  pointDiff: number;
+}
+
 export interface RankedTeamStanding {
   teamId: string;
   teamName: string;
