@@ -3,17 +3,20 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getStandings, updateTeamStanding } from '@/actions/standings';
+import { getStandings, updateStandingsCutoff, updateTeamStanding } from '@/actions/standings';
 import {
   RankedTeamStanding,
+  SavedStandingsCutoff,
   SavedTeamStanding,
   SeasonStandings,
   StandingsResult,
   StandingsSortKey
 } from '@/lib/types/standings';
-import { UpdateTeamStandingInput } from '@/lib/validations/standings';
+import { UpdateStandingsCutoffInput, UpdateTeamStandingInput } from '@/lib/validations/standings';
+import { formatPointDiff } from '@/lib/utils/standings-calc';
 
 const SAVE_FAILED = 'Could not save the record. Please try again.';
+const CUTOFF_SAVE_FAILED = 'Could not save the cut-off date. Please try again.';
 
 export const standingsKeys = {
   all: ['standings'] as const,
@@ -43,16 +46,20 @@ const patchTeam = (season: SeasonStandings, saved: SavedTeamStanding): SeasonSta
     ...category,
     teams: category.teams.map((team) =>
       team.teamId === saved.teamId
-        ? { ...team, wins: saved.wins, losses: saved.losses, updatedAt: saved.updatedAt }
+        ? {
+            ...team,
+            starting: { wins: saved.wins, losses: saved.losses, pointDiff: saved.pointDiff },
+            updatedAt: saved.updatedAt
+          }
         : team
     )
   }))
 });
 
 /**
- * Saves one team's totals. Always resolves with a StandingsResult so rows can show field errors.
- * On success the cached row gets the new updatedAt immediately, so a quick second save does not
- * look stale; ranks refresh when the season refetches.
+ * Saves one team's starting record. Always resolves with a StandingsResult so rows can show field
+ * errors. On success the cached row gets the new updatedAt immediately, so a quick second save does
+ * not look stale; totals and ranks refresh when the season refetches.
  */
 export function useUpdateTeamStanding(seasonId: number) {
   const queryClient = useQueryClient();
@@ -69,7 +76,8 @@ export function useUpdateTeamStanding(seasonId: number) {
     onSuccess: (result, { teamName }) => {
       if (result.success) {
         queryClient.setQueryData<SeasonStandings>(key, (current) => current && patchTeam(current, result.data));
-        toast.success(`${teamName} updated to ${result.data.wins}-${result.data.losses}`);
+        const { wins, losses, pointDiff } = result.data;
+        toast.success(`${teamName} starting record saved: ${wins}-${losses}, ${formatPointDiff(pointDiff)}`);
         queryClient.invalidateQueries({ queryKey: key });
         return;
       }
@@ -80,6 +88,30 @@ export function useUpdateTeamStanding(seasonId: number) {
       if (result.code === 'CONFLICT' || result.code === 'NOT_FOUND') {
         queryClient.invalidateQueries({ queryKey: key });
       }
+    }
+  });
+}
+
+/** Sets or clears a category's cut-off date. Always resolves with a StandingsResult. */
+export function useUpdateStandingsCutoff(seasonId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation<StandingsResult<SavedStandingsCutoff>, Error, UpdateStandingsCutoffInput>({
+    mutationFn: async (input) => {
+      try {
+        return await updateStandingsCutoff(input);
+      } catch {
+        return { success: false, code: 'SERVER', error: CUTOFF_SAVE_FAILED };
+      }
+    },
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(result.data.countedThrough ? 'Cut-off saved' : 'Cut-off cleared');
+        queryClient.invalidateQueries({ queryKey: standingsKeys.season(seasonId) });
+        return;
+      }
+
+      if (result.code !== 'VALIDATION') toast.error(result.error);
     }
   });
 }

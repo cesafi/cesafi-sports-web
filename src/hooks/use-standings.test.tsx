@@ -2,16 +2,27 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
-jest.mock('@/actions/standings', () => ({ getStandings: jest.fn(), updateTeamStanding: jest.fn() }));
+jest.mock('@/actions/standings', () => ({
+  getStandings: jest.fn(),
+  updateTeamStanding: jest.fn(),
+  updateStandingsCutoff: jest.fn()
+}));
 jest.mock('sonner', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
-import { getStandings, updateTeamStanding } from '@/actions/standings';
+import { getStandings, updateStandingsCutoff, updateTeamStanding } from '@/actions/standings';
 import { toast } from 'sonner';
-import { standingsKeys, useSeasonStandings, useStandingsTable, useUpdateTeamStanding } from './use-standings';
+import {
+  standingsKeys,
+  useSeasonStandings,
+  useStandingsTable,
+  useUpdateStandingsCutoff,
+  useUpdateTeamStanding
+} from './use-standings';
 import type { RankedTeamStanding, SeasonStandings } from '@/lib/types/standings';
 
 const getStandingsMock = getStandings as jest.Mock;
 const updateMock = updateTeamStanding as jest.Mock;
+const updateCutoffMock = updateStandingsCutoff as jest.Mock;
 
 const standing = (
   teamId: string,
@@ -25,14 +36,19 @@ const standing = (
   teamId,
   teamName,
   school: { id: `school-${teamId}`, name: schoolName, abbreviation, logoUrl: null },
+  starting: { wins, losses, pointDiff: 0 },
+  fromMatches: { wins: 0, losses: 0, pointDiff: 0 },
   wins,
   losses,
+  pointDiff: 0,
+  points: 3 * wins,
   rank,
   updatedAt: `2026-10-22T01:00:0${rank}+00:00`
 });
 
 const COLLEGE = {
   category: { id: 3, sportName: 'Basketball', division: 'men', levels: 'college', name: "Basketball · Men's College" },
+  countedThrough: '2026-10-29',
   hasResults: true,
   teams: [
     standing('uc', 'Webmasters', 'University of Cebu', 'UC', 5, 1, 1),
@@ -43,6 +59,7 @@ const COLLEGE = {
 };
 const HIGH_SCHOOL = {
   category: { id: 9, sportName: 'Basketball', division: 'men', levels: 'high_school', name: "Basketball · Men's High School" },
+  countedThrough: null,
   hasResults: true,
   teams: [standing('usc', 'Baby Warriors', 'University of San Carlos', 'USC', 2, 0, 1)]
 };
@@ -127,7 +144,7 @@ describe('useStandingsTable', () => {
 });
 
 describe('useUpdateTeamStanding', () => {
-  const INPUT = { teamId: 'uc', wins: 6, losses: 1, expectedUpdatedAt: '2026-10-22T01:00:01+00:00' };
+  const INPUT = { teamId: 'uc', wins: 6, losses: 1, pointDiff: 12, expectedUpdatedAt: '2026-10-22T01:00:01+00:00' };
 
   async function renderUpdate() {
     const hook = renderHook(() => ({ standings: useSeasonStandings(26), update: useUpdateTeamStanding(26) }), {
@@ -141,7 +158,7 @@ describe('useUpdateTeamStanding', () => {
     const { result } = await renderUpdate();
     updateMock.mockResolvedValue({
       success: true,
-      data: { teamId: 'uc', wins: 6, losses: 1, updatedAt: '2026-10-22T09:00:00.000001+00:00' }
+      data: { teamId: 'uc', wins: 6, losses: 1, pointDiff: 12, updatedAt: '2026-10-22T09:00:00.000001+00:00' }
     });
     getStandingsMock.mockReturnValue(new Promise(() => {})); // keep the refetch pending
 
@@ -152,11 +169,10 @@ describe('useUpdateTeamStanding', () => {
     const cached = queryClient.getQueryData<SeasonStandings>(standingsKeys.season(26));
     expect(cached?.categories[0].teams[0]).toMatchObject({
       teamId: 'uc',
-      wins: 6,
-      losses: 1,
+      starting: { wins: 6, losses: 1, pointDiff: 12 },
       updatedAt: '2026-10-22T09:00:00.000001+00:00'
     });
-    expect(toast.success).toHaveBeenCalledWith('Webmasters updated to 6-1');
+    expect(toast.success).toHaveBeenCalledWith('Webmasters starting record saved: 6-1, +12');
     expect(getStandingsMock).toHaveBeenCalledTimes(2);
     expect(updateMock).toHaveBeenCalledWith(INPUT);
   });
@@ -224,5 +240,83 @@ describe('useUpdateTeamStanding', () => {
       error: 'Could not save the record. Please try again.'
     });
     expect(toast.error).toHaveBeenCalledWith('Could not save the record. Please try again.');
+  });
+});
+
+describe('useUpdateStandingsCutoff', () => {
+  const INPUT = { seasonId: 26, sportCategoryId: 3, countedThrough: '2026-11-15' };
+
+  async function renderCutoff() {
+    const hook = renderHook(() => ({ standings: useSeasonStandings(26), cutoff: useUpdateStandingsCutoff(26) }), {
+      wrapper
+    });
+    await waitFor(() => expect(hook.result.current.standings.data).toBeDefined());
+    return hook;
+  }
+
+  it.each([
+    ['2026-11-15', 'Cut-off saved'],
+    [null, 'Cut-off cleared']
+  ])('saves %p, toasts "%s" and refetches the season', async (countedThrough, message) => {
+    const { result } = await renderCutoff();
+    updateCutoffMock.mockResolvedValue({ success: true, data: { ...INPUT, countedThrough } });
+
+    await act(async () => {
+      await result.current.cutoff.mutateAsync({ ...INPUT, countedThrough });
+    });
+
+    expect(updateCutoffMock).toHaveBeenCalledWith({ ...INPUT, countedThrough });
+    expect(toast.success).toHaveBeenCalledWith(message);
+    expect(getStandingsMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('on VALIDATION shows no toast and resolves with the field errors', async () => {
+    const { result } = await renderCutoff();
+    const invalid = {
+      success: false,
+      code: 'VALIDATION',
+      error: 'Please fix the highlighted fields.',
+      fieldErrors: { countedThrough: ['Enter a valid date.'] }
+    };
+    updateCutoffMock.mockResolvedValue(invalid);
+
+    let returned: unknown;
+    await act(async () => {
+      returned = await result.current.cutoff.mutateAsync(INPUT);
+    });
+
+    expect(returned).toEqual(invalid);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('toasts other failures', async () => {
+    const { result } = await renderCutoff();
+    updateCutoffMock.mockResolvedValue({
+      success: false,
+      code: 'FORBIDDEN',
+      error: 'You do not have permission to update standings.'
+    });
+
+    await act(async () => {
+      await result.current.cutoff.mutateAsync(INPUT);
+    });
+
+    expect(toast.error).toHaveBeenCalledWith('You do not have permission to update standings.');
+  });
+
+  it('turns a failed request into a SERVER result instead of throwing', async () => {
+    const { result } = await renderCutoff();
+    updateCutoffMock.mockRejectedValue(new Error('fetch failed'));
+
+    let returned: unknown;
+    await act(async () => {
+      returned = await result.current.cutoff.mutateAsync(INPUT);
+    });
+
+    expect(returned).toEqual({
+      success: false,
+      code: 'SERVER',
+      error: 'Could not save the cut-off date. Please try again.'
+    });
   });
 });
