@@ -9,8 +9,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useStandingsTable, useUpdateTeamStanding } from '@/hooks/use-standings';
+import { useStandingsTable, useUpdateStandingsCutoff, useUpdateTeamStanding } from '@/hooks/use-standings';
 import type { StandingsSortKey } from '@/lib/types/standings';
+import { StandingsCutoffBar } from './standings-cutoff-bar';
 import { StandingsRow } from './standings-row';
 
 const SORT_OPTIONS: { value: StandingsSortKey; label: string }[] = [
@@ -39,13 +40,14 @@ export function StandingsManager({ seasonId }: StandingsManagerProps) {
     refetch
   } = useStandingsTable(seasonId);
   const update = useUpdateTeamStanding(seasonId);
+  const updateCutoff = useUpdateStandingsCutoff(seasonId);
 
   const selectedCategory = categories.find((c) => c.category.id === selectedCategoryId);
 
   const header = (
     <div>
       <h1 className="text-2xl font-bold">Standings</h1>
-      <p className="text-muted-foreground mt-1">Season {seasonId} · wins and losses by category</p>
+      <p className="text-muted-foreground mt-1">Season {seasonId} · starting records and match results by category</p>
     </div>
   );
 
@@ -111,6 +113,15 @@ export function StandingsManager({ seasonId }: StandingsManagerProps) {
         </TabsList>
 
         <TabsContent value={String(selectedCategoryId)} className="mt-4 space-y-4">
+          {selectedCategory && (
+            <StandingsCutoffBar
+              countedThrough={selectedCategory.countedThrough}
+              onSave={(countedThrough) =>
+                updateCutoff.mutateAsync({ seasonId, sportCategoryId: selectedCategory.category.id, countedThrough })
+              }
+            />
+          )}
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full sm:max-w-sm">
               <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
@@ -148,8 +159,11 @@ export function StandingsManager({ seasonId }: StandingsManagerProps) {
                 <TableRow>
                   <TableHead className="w-16 px-4 text-center">Rank</TableHead>
                   <TableHead className="px-4">Team</TableHead>
-                  <TableHead className="px-4">Wins</TableHead>
-                  <TableHead className="px-4">Losses</TableHead>
+                  <TableHead className="px-4">Start W</TableHead>
+                  <TableHead className="px-4">Start L</TableHead>
+                  <TableHead className="px-4">Start +/−</TableHead>
+                  <TableHead className="px-4">From matches</TableHead>
+                  <TableHead className="px-4">Total</TableHead>
                   <TableHead className="w-48 px-4">
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -170,7 +184,7 @@ export function StandingsManager({ seasonId }: StandingsManagerProps) {
                 ))}
                 {rows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-muted-foreground py-10 text-center">
+                    <TableCell colSpan={8} className="text-muted-foreground py-10 text-center">
                       No teams match &apos;{search.trim()}&apos;
                     </TableCell>
                   </TableRow>
