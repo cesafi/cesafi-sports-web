@@ -37,6 +37,21 @@ export function getArticleUrl(slug: string): string {
 }
 
 /**
+ * Get the URL that opens a platform's share dialog for a page
+ */
+export function getShareIntentUrl(platform: 'x' | 'facebook', title: string, url: string): string {
+  const encodedUrl = encodeURIComponent(url);
+
+  if (platform === 'x') {
+    // Limit title length for X (280 char limit)
+    const truncatedTitle = title.length > 200 ? title.substring(0, 200) + '...' : title;
+    return `https://x.com/intent/post?text=${encodeURIComponent(truncatedTitle)}&url=${encodedUrl}`;
+  }
+
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+}
+
+/**
  * Validate if a URL is safe for sharing
  */
 export function isValidShareUrl(url: string): boolean {

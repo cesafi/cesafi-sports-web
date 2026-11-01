@@ -37,7 +37,8 @@ A versatile, reusable article display component with multiple variants:
 Social sharing component for articles and content:
 
 #### Features
-- **Multiple Platforms**: Twitter, Facebook, and link copying
+- **Multiple Platforms**: X, Facebook, Instagram, and link copying
+- **Instagram**: Instagram has no web share URL, so phones use the native share sheet and other devices copy the link
 - **Toast Notifications**: User feedback for successful actions
 - **Loading States**: Prevents double-clicks during sharing
 - **Error Handling**: Graceful fallbacks for sharing failures

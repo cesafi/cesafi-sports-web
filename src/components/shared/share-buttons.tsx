@@ -1,18 +1,74 @@
 'use client';
 
-import { useState } from 'react';
-import { Share2, Twitter, Facebook, Link as LinkIcon } from 'lucide-react';
+import { useState, type MouseEvent, type SVGProps } from 'react';
+import { Share2, Facebook, Instagram, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { moderniz } from '@/lib/fonts';
 import { toast } from 'sonner';
-import { isValidShareUrl } from '@/lib/utils/site-url';
+import { getShareIntentUrl, isValidShareUrl } from '@/lib/utils/site-url';
 
 interface ShareButtonsProps {
   title: string;
   url?: string;
   variant?: 'default' | 'compact' | 'expanded' | 'full';
   disabled?: boolean;
+}
+
+// Drawn with strokes to match the lucide icons beside it
+function XIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
+      <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
+    </svg>
+  );
+}
+
+const SHARE_OPTIONS = [
+  { id: 'x', label: 'X', ariaLabel: 'Share on X', icon: XIcon },
+  { id: 'facebook', label: 'Facebook', ariaLabel: 'Share on Facebook', icon: Facebook },
+  { id: 'instagram', label: 'Instagram', ariaLabel: 'Share on Instagram', icon: Instagram },
+  { id: 'copy', label: 'Copy Link', ariaLabel: 'Copy article link', icon: LinkIcon }
+] as const;
+
+type ShareOption = (typeof SHARE_OPTIONS)[number];
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // In-app browsers can reject the clipboard API, so fall through to the older approach
+  }
+
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-999999px';
+  textArea.style.top = '-999999px';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    return document.execCommand('copy');
+  } catch {
+    return false;
+  } finally {
+    document.body.removeChild(textArea);
+  }
 }
 
 export default function ShareButtons({
@@ -23,184 +79,127 @@ export default function ShareButtons({
 }: ShareButtonsProps) {
   const [isSharing, setIsSharing] = useState(false);
 
-  const handleShare = async (platform?: string) => {
-    if (disabled) return;
+  const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+  // Validate URL to prevent malicious URLs
+  const isShareable = Boolean(shareUrl) && isValidShareUrl(shareUrl);
 
-    setIsSharing(true);
-    const shareUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+  const copyFailed = () => toast.error('Failed to copy link. Please copy manually: ' + shareUrl);
 
-    // Validate URL to prevent malicious URLs
-    if (!shareUrl || !isValidShareUrl(shareUrl)) {
+  const handleCopy = async () => {
+    if (await copyToClipboard(shareUrl)) {
+      toast.success('Link copied to clipboard!');
+    } else {
+      copyFailed();
+    }
+  };
+
+  const handleInstagram = async () => {
+    // Instagram has no web share URL. Phones can reach the app through the share sheet;
+    // desktop share sheets don't offer it, so the link is copied for pasting instead.
+    const hasPhoneShareSheet =
+      typeof navigator.share === 'function' && window.matchMedia('(pointer: coarse)').matches;
+
+    if (hasPhoneShareSheet) {
+      try {
+        await navigator.share({ title, url: shareUrl });
+        return;
+      } catch (error) {
+        if ((error as Error).name === 'AbortError') return;
+      }
+    }
+
+    if (await copyToClipboard(shareUrl)) {
+      toast.success('Link copied! Paste it into your Instagram story or message.', {
+        action: {
+          label: 'Open Instagram',
+          onClick: () => window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer')
+        }
+      });
+    } else {
+      copyFailed();
+    }
+  };
+
+  const handleButtonShare = async (optionId: ShareOption['id']) => {
+    if (!isShareable) {
       toast.error('Invalid URL for sharing');
-      setIsSharing(false);
       return;
     }
 
+    setIsSharing(true);
     try {
-      if (platform === 'twitter') {
-        // Limit title length for Twitter (280 char limit)
-        const truncatedTitle = title.length > 200 ? title.substring(0, 200) + '...' : title;
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(truncatedTitle)}&url=${encodeURIComponent(shareUrl)}`;
-
-        // Open with security attributes
-        const popup = window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
-        if (!popup) {
-          toast.error('Please allow popups to share on Twitter');
-        }
-      } else if (platform === 'facebook') {
-        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-
-        // Open with security attributes
-        const popup = window.open(
-          facebookUrl,
-          '_blank',
-          'noopener,noreferrer,width=600,height=400'
-        );
-        if (!popup) {
-          toast.error('Please allow popups to share on Facebook');
-        }
-      } else {
-        // Copy to clipboard with fallback
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(shareUrl);
-          toast.success('Link copied to clipboard!');
-        } else {
-          // Fallback for older browsers or non-HTTPS
-          const textArea = document.createElement('textarea');
-          textArea.value = shareUrl;
-          textArea.style.position = 'fixed';
-          textArea.style.left = '-999999px';
-          textArea.style.top = '-999999px';
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-
-          try {
-            document.execCommand('copy');
-            toast.success('Link copied to clipboard!');
-          } catch (_) {
-            toast.error('Failed to copy link. Please copy manually: ' + shareUrl);
-          } finally {
-            document.body.removeChild(textArea);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Share error:', error);
-      if (platform === 'twitter' || platform === 'facebook') {
-        toast.error('Failed to open sharing window. Please check your popup blocker.');
-      } else {
-        toast.error('Failed to copy link to clipboard');
-      }
+      await (optionId === 'instagram' ? handleInstagram() : handleCopy());
     } finally {
       setIsSharing(false);
     }
   };
 
-  // Compact variant - horizontal buttons without card
+  const handleLinkClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!isShareable) {
+      event.preventDefault();
+      toast.error('Invalid URL for sharing');
+    }
+  };
+
+  const renderOption = (option: ShareOption, className: string, showLabel: boolean) => {
+    const Icon = option.icon;
+    const content = (
+      <>
+        <Icon aria-hidden="true" />
+        {showLabel && option.label}
+      </>
+    );
+
+    // Real links keep working in in-app browsers such as Messenger, which block scripted popups
+    if ((option.id === 'x' || option.id === 'facebook') && !disabled) {
+      return (
+        <Button key={option.id} asChild variant="outline" size="icon" className={className}>
+          <a
+            href={getShareIntentUrl(option.id, title, shareUrl)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={option.ariaLabel}
+            onClick={handleLinkClick}
+          >
+            {content}
+          </a>
+        </Button>
+      );
+    }
+
+    return (
+      <Button
+        key={option.id}
+        variant="outline"
+        size="icon"
+        className={className}
+        aria-label={option.ariaLabel}
+        onClick={() => handleButtonShare(option.id)}
+        disabled={disabled || isSharing}
+      >
+        {content}
+      </Button>
+    );
+  };
+
+  // Compact variant - horizontal icon buttons without card
   if (variant === 'compact') {
     return (
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare('twitter')}
-          disabled={disabled || isSharing}
-        >
-          <Twitter className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare('facebook')}
-          disabled={disabled || isSharing}
-        >
-          <Facebook className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare()}
-          disabled={disabled || isSharing}
-        >
-          <LinkIcon className="h-4 w-4" />
-        </Button>
+      <div role="group" aria-label="Share this article" className="flex items-center gap-2">
+        {SHARE_OPTIONS.map((option) => renderOption(option, 'size-11 [&_svg]:size-5', false))}
       </div>
     );
   }
 
-  // Expanded variant - horizontal buttons with labels
-  if (variant === 'expanded') {
+  // Expanded and full variants - equal buttons with labels
+  if (variant === 'expanded' || variant === 'full') {
     return (
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare('twitter')}
-          disabled={disabled || isSharing}
-          className="flex items-center gap-2"
-        >
-          <Twitter className="h-4 w-4" />
-          Twitter
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare('facebook')}
-          disabled={disabled || isSharing}
-          className="flex items-center gap-2"
-        >
-          <Facebook className="h-4 w-4" />
-          Facebook
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare()}
-          disabled={disabled || isSharing}
-          className="flex items-center gap-2"
-        >
-          <LinkIcon className="h-4 w-4" />
-          Copy Link
-        </Button>
-      </div>
-    );
-  }
-
-  // Full variant - horizontal buttons with labels (same as expanded but different name for clarity)
-  if (variant === 'full') {
-    return (
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare('twitter')}
-          disabled={disabled || isSharing}
-          className="flex items-center gap-2"
-        >
-          <Twitter className="h-4 w-4" />
-          Twitter
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare('facebook')}
-          disabled={disabled || isSharing}
-          className="flex items-center gap-2"
-        >
-          <Facebook className="h-4 w-4" />
-          Facebook
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleShare()}
-          disabled={disabled || isSharing}
-          className="flex items-center gap-2"
-        >
-          <LinkIcon className="h-4 w-4" />
-          Copy Link
-        </Button>
+      <div
+        role="group"
+        aria-label="Share this article"
+        className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center"
+      >
+        {SHARE_OPTIONS.map((option) => renderOption(option, 'h-11 w-full px-4 sm:w-auto [&_svg]:size-5', true))}
       </div>
     );
   }
@@ -215,36 +214,9 @@ export default function ShareButtons({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full justify-start"
-          onClick={() => handleShare('twitter')}
-          disabled={disabled || isSharing}
-        >
-          <Twitter className="mr-2 h-4 w-4" />
-          Twitter
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full justify-start"
-          onClick={() => handleShare('facebook')}
-          disabled={disabled || isSharing}
-        >
-          <Facebook className="mr-2 h-4 w-4" />
-          Facebook
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full justify-start"
-          onClick={() => handleShare()}
-          disabled={disabled || isSharing}
-        >
-          <LinkIcon className="mr-2 h-4 w-4" />
-          Copy Link
-        </Button>
+        {SHARE_OPTIONS.map((option) =>
+          renderOption(option, 'h-11 w-full justify-start px-4 [&_svg]:size-5', true)
+        )}
       </CardContent>
     </Card>
   );
