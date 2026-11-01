@@ -23,7 +23,7 @@ export default async function SponsorsGrid() {
   return (
     <section className="bg-background py-12 overflow-hidden transition-colors duration-300">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 md:mb-20">
+        <div className="text-center mb-8 md:mb-10">
           <h2 className={`${moderniz.className} text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6`}>
             Our <span className="text-primary">Partners</span>
           </h2>

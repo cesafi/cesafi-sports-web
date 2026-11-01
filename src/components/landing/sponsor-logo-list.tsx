@@ -1,6 +1,3 @@
-'use client';
-
-import { useTheme } from 'next-themes';
 import { Sponsor } from '@/lib/types/sponsors';
 
 interface SponsorLogoListProps {
@@ -8,31 +5,22 @@ interface SponsorLogoListProps {
 }
 
 export default function SponsorLogoList({ sponsors }: SponsorLogoListProps) {
-    const { resolvedTheme } = useTheme();
-
-    const logos = sponsors.map((sponsor) => {
-        const isDark = resolvedTheme === 'dark';
-        const src = isDark && (sponsor as any).dark_logo_url
-            ? (sponsor as any).dark_logo_url
-            : sponsor.logo_url || '/img/cesafi-logo.webp';
-        const alt = sponsor.logo_url ? sponsor.title : `${sponsor.title} - CESAFI Logo`;
-
-        return { src, alt };
-    });
-
     return (
-        <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 lg:gap-16">
-            {logos.map((sponsor, index) => (
-                <div key={`${sponsor.src}-${index}`} className="group relative">
-                    <div className="w-24 h-16 md:w-32 md:h-20 lg:w-40 lg:h-24 relative transition-all duration-300 transform hover:scale-105">
-                        <img
-                            src={sponsor.src}
-                            alt={sponsor.alt}
-                            className="w-full h-full object-contain"
-                        />
-                    </div>
-                </div>
+        <ul className="flex flex-wrap justify-center gap-3 sm:gap-4">
+            {sponsors.map((sponsor) => (
+                // White tiles keep every logo legible in both themes, so the light logo is always used
+                <li
+                    key={sponsor.id}
+                    className="border-border/60 flex h-24 w-[calc(50%-0.375rem)] items-center justify-center rounded-xl border bg-white p-4 shadow-sm sm:h-28 sm:w-40 lg:w-36 xl:w-44"
+                >
+                    <img
+                        src={sponsor.logo_url || '/img/cesafi-logo.webp'}
+                        alt={sponsor.logo_url ? sponsor.title : `${sponsor.title} - CESAFI Logo`}
+                        loading="lazy"
+                        className="max-h-full max-w-full object-contain"
+                    />
+                </li>
             ))}
-        </div>
+        </ul>
     );
 }
