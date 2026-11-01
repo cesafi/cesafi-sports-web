@@ -22,7 +22,8 @@ import {
   ArticleInsert,
   ArticleUpdate,
   ArticlePaginationOptions,
-  Article
+  Article,
+  ArticleWithViewCount
 } from '@/lib/types/articles';
 
 import { PaginatedResponse, ServiceResponse, FilterValue, PaginationOptions } from '@/lib/types/base';
@@ -97,7 +98,7 @@ export function useArticleById(
 
 export function useArticleBySlug(
   slug: string,
-  queryOptions?: UseQueryOptions<ServiceResponse<Article>, Error, Article>
+  queryOptions?: UseQueryOptions<ServiceResponse<ArticleWithViewCount>, Error, ArticleWithViewCount>
 ) {
   return useQuery({
     queryKey: [...articleKeys.all, 'slug', slug],

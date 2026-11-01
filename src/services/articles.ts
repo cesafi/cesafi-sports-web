@@ -3,9 +3,9 @@ import {
   ServiceResponse
 } from '@/lib/types/base';
 import { BaseService } from './base';
-import { Article, ArticlePaginationOptions, ArticleInsert, ArticleUpdate } from '@/lib/types/articles';
-import { articles } from '@/db/schema';
-import { eq, desc, lte, and, isNotNull } from 'drizzle-orm';
+import { Article, ArticleWithViewCount, ArticlePaginationOptions, ArticleInsert, ArticleUpdate } from '@/lib/types/articles';
+import { articles, articleViews } from '@/db/schema';
+import { eq, desc, lte, and, isNotNull, getTableColumns } from 'drizzle-orm';
 
 export class ArticleService extends BaseService {
   static async getPaginated(
@@ -105,11 +105,14 @@ export class ArticleService extends BaseService {
     }
   }
 
-  static async getBySlug(slug: string): Promise<ServiceResponse<Article>> {
+  static async getBySlug(slug: string): Promise<ServiceResponse<ArticleWithViewCount>> {
     try {
       const db = this.getDrizzle();
       const [data] = await db
-        .select()
+        .select({
+          ...getTableColumns(articles),
+          view_count: db.$count(articleViews, eq(articleViews.article_id, articles.id))
+        })
         .from(articles)
         .where(and(eq(articles.slug, slug), eq(articles.status, 'published')));
 
@@ -117,7 +120,7 @@ export class ArticleService extends BaseService {
         throw new Error('Article not found');
       }
 
-      return { success: true, data: data as Article };
+      return { success: true, data: data as ArticleWithViewCount };
     } catch (err) {
       return this.formatError(err, `Failed to fetch articles entity by slug.`);
     }

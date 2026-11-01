@@ -5,6 +5,7 @@ import { Articles } from '@/db/schema/articles';
 import { articleStatusEnum } from '@/db/schema/enums';
 
 export type Article = Articles;
+export type ArticleWithViewCount = Article & { view_count: number };
 export type ArticleInsert = z.infer<typeof createArticleSchema>;
 export type ArticleUpdate = z.infer<typeof updateArticleSchema>;
 

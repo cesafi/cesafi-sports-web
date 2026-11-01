@@ -1,6 +1,6 @@
 'use server';
 
-import { ArticlePaginationOptions, Article } from '@/lib/types/articles';
+import { ArticlePaginationOptions, Article, ArticleWithViewCount } from '@/lib/types/articles';
 import { ArticleService } from '@/services/articles';
 import { createArticleSchema, updateArticleSchema } from '@/lib/validations/articles';
 import { ServiceResponse } from '@/lib/types/base';
@@ -23,7 +23,7 @@ export async function getArticleById(id: string): Promise<ServiceResponse<Articl
   return await ArticleService.getById(id);
 }
 
-export async function getArticleBySlug(slug: string): Promise<ServiceResponse<Article>> {
+export async function getArticleBySlug(slug: string): Promise<ServiceResponse<ArticleWithViewCount>> {
   return await ArticleService.getBySlug(slug);
 }
 
