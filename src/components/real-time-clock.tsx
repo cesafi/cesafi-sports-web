@@ -22,12 +22,13 @@ export function RealTimeClock({
   format = '12h',
   size = 'md'
 }: RealTimeClockProps) {
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [timezone, setTimezone] = useState<string>('');
 
   useEffect(() => {
-    // Set timezone on client side to avoid hydration mismatch
+    // Set time and timezone on client side to avoid hydration mismatch
     setTimezone(getBrowserTimezone());
+    setCurrentTime(new Date());
 
     // Update time every second
     const interval = setInterval(() => {
@@ -53,6 +54,19 @@ export function RealTimeClock({
 
     return date.toLocaleString('en-US', options);
   };
+
+  // A fixed string, not a formatted date, so the server and client always agree.
+  // It has the same shape as the formatted time, so it reserves the time's width.
+  const reservedTime = `${showDate ? 'Mon, Jan 01, ' : ''}00:00:00${format === '12h' ? ' AM' : ''}`;
+
+  const timeSlot = (
+    <span
+      className={cn('font-mono font-medium', !currentTime && 'invisible')}
+      aria-hidden={currentTime ? undefined : true}
+    >
+      {currentTime ? formatTime(currentTime) : reservedTime}
+    </span>
+  );
 
   const getTimezoneAbbreviation = (timezone: string) => {
     try {
@@ -93,17 +107,13 @@ export function RealTimeClock({
       )}
       {showTimezone && timezone ? (
         <div className="flex flex-col">
-          <span className="font-mono font-medium">
-            {formatTime(currentTime)}
-          </span>
+          {timeSlot}
           <span className="text-xs opacity-75">
             {getTimezoneAbbreviation(timezone)}
           </span>
         </div>
       ) : (
-        <span className="font-mono font-medium">
-          {formatTime(currentTime)}
-        </span>
+        timeSlot
       )}
     </div>
   );
