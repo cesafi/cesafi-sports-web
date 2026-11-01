@@ -745,6 +745,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      track_article_view: {
+        Args: { p_article_id: string; p_viewer_id: string }
+        Returns: undefined
+      }
       user_has_role: {
         Args: { "": string[] }
         Returns: boolean

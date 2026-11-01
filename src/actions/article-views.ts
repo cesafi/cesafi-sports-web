@@ -33,7 +33,7 @@ export async function trackArticleView(articleId: string): Promise<{ success: bo
 
     // Call the Supabase RPC (SECURITY DEFINER handles privileges)
     const supabase = await getSupabaseServer();
-    const { error } = await (supabase.rpc as any)('track_article_view', {
+    const { error } = await supabase.rpc('track_article_view', {
       p_article_id: articleId,
       p_viewer_id: viewerId,
     });
