@@ -7,6 +7,7 @@ import { moderniz, roboto } from '@/lib/fonts';
 import { useHighlightedFaq } from '@/hooks/use-faq';
 import { Faq } from '@/lib/types/faq';
 import Link from 'next/link';
+import WatchCesafi from '@/components/shared/watch-cesafi';
 
 interface LandingFaqProps {
   initialFaqs?: Faq[];
@@ -41,11 +42,11 @@ export default function LandingFaq({ initialFaqs = [] }: LandingFaqProps) {
   }
 
   return (
-    <section className="py-16 sm:py-32 bg-background relative overflow-hidden">
+    <section className="py-12 sm:py-20 bg-background relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <div className="text-center mb-16 md:mb-20">
+        <div className="text-center mb-8 md:mb-12">
           <h2 className={`${moderniz.className} text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6`}>
             Frequently Asked <span className="text-primary">Questions</span>
           </h2>
@@ -55,7 +56,7 @@ export default function LandingFaq({ initialFaqs = [] }: LandingFaqProps) {
         </div>
 
         {/* FAQ Items */}
-        <div className="max-w-3xl mx-auto space-y-2 sm:space-y-4 mb-8 sm:mb-12">
+        <div className="max-w-3xl mx-auto space-y-2 sm:space-y-4 mb-4 sm:mb-6">
           {topFaqs.map((item, index) => (
             <motion.div
               key={item.id}
@@ -67,6 +68,7 @@ export default function LandingFaq({ initialFaqs = [] }: LandingFaqProps) {
             >
               <button
                 onClick={() => toggleItem(item.id)}
+                aria-expanded={openItems.includes(item.id)}
                 className="w-full p-4 sm:p-5 text-left flex items-center justify-between hover:bg-muted/50 transition-all duration-300 group"
               >
                 <span className={`${moderniz.className} text-sm sm:text-base font-semibold text-foreground transition-colors duration-300 pr-3 ${openItems.includes(item.id) ? 'text-primary' : 'group-hover:text-primary/80'
@@ -121,7 +123,7 @@ export default function LandingFaq({ initialFaqs = [] }: LandingFaqProps) {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.2 }}
-                        className={`${roboto.className} text-muted-foreground leading-relaxed text-sm sm:text-base`}
+                        className={`${roboto.className} text-muted-foreground leading-relaxed text-sm sm:text-base whitespace-pre-line`}
                       >
                         {item.answer}
                       </motion.p>
@@ -133,6 +135,17 @@ export default function LandingFaq({ initialFaqs = [] }: LandingFaqProps) {
           ))}
         </div>
 
+        {/* Where to Watch */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto"
+        >
+          <WatchCesafi />
+        </motion.div>
+
         {/* View More FAQs Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -141,7 +154,7 @@ export default function LandingFaq({ initialFaqs = [] }: LandingFaqProps) {
           viewport={{ once: true }}
           className="text-center space-y-4"
         >
-          <div className="text-center mt-10 md:mt-12 flex flex-col gap-3 sm:gap-4 justify-center">
+          <div className="text-center mt-8 flex flex-col gap-3 sm:gap-4 justify-center">
             <Link href="/faq">
                 <button className={`${roboto.className} bg-foreground hover:bg-foreground/90 text-background px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl font-semibold text-base sm:text-lg transition-all duration-300 hover:scale-105 shadow-lg inline-flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center`}>
                   View All FAQs
