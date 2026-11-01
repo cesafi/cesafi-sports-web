@@ -4,6 +4,7 @@ import AboutUsArticlesLoading from '@/components/about-us/about-us-articles-load
 import CesafiTimeline from '@/components/about-us/cesafi-timeline';
 import { getAboutUsFaq } from '@/actions/faq';
 import { Faq } from '@/lib/types/faq';
+import BasketballIcon from '@/components/shared/basketball-icon';
 import { moderniz, roboto } from '@/lib/fonts';
 import Image from 'next/image';
 import { Suspense } from 'react';
@@ -82,34 +83,32 @@ export default async function AboutUsPage() {
               {/* Main Image Container */}
               <div className="relative">
                 <div className="from-primary/20 via-primary/10 to-secondary/20 border-primary/20 rounded-2xl sm:rounded-3xl border bg-gradient-to-br p-3 sm:p-8">
-                  <div className="bg-muted/30 relative h-48 sm:h-96 overflow-hidden rounded-xl sm:rounded-2xl">
+                  {/* Matches the banner's proportions, which carry text and logos edge to edge */}
+                  <div className="bg-muted/30 relative aspect-[25/11] overflow-hidden rounded-xl sm:rounded-2xl">
                     <Image
-                      src="/img/cesafi-banner.jpg"
-                      alt="CESAFI Sports Excellence"
+                      src="/img/cesafi-season-26-banner.webp"
+                      alt="CESAFI Season 26 banner with the logos of all member schools"
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 60vw"
                       className="object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  </div>
 
-                    {/* Overlay Text */}
-                    <div className="absolute right-4 bottom-4 left-4 sm:right-6 sm:bottom-6 sm:left-6">
-                      <h3 className={`${moderniz.className} mb-1 sm:mb-2 text-lg sm:text-2xl font-bold text-white`}>
-                        Athletic Excellence
-                      </h3>
-                      <p className={`${roboto.className} text-white/90 text-xs sm:text-base`}>
-                        Celebrating the best in Cebu sports
-                      </p>
-                    </div>
+                  {/* Caption */}
+                  <div className="mt-3 px-1 sm:mt-4">
+                    <h3 className={`${moderniz.className} text-foreground mb-1 sm:mb-2 text-lg sm:text-2xl font-bold`}>
+                      Athletic Excellence
+                    </h3>
+                    <p className={`${roboto.className} text-muted-foreground text-xs sm:text-base`}>
+                      Celebrating the best in Cebu sports
+                    </p>
                   </div>
                 </div>
 
-                {/* Floating Award/Trophy Element - Hidden on mobile */}
+                {/* Floating Basketball Element - Hidden on mobile */}
                 <div className="bg-accent absolute -top-4 -right-4 hidden sm:flex h-20 w-20 items-center justify-center rounded-full shadow-lg">
                   <div className="bg-accent-foreground flex h-12 w-12 items-center justify-center rounded-full">
-                    <span className={`${moderniz.className} text-accent text-lg font-bold`}>
-                      🏆
-                    </span>
+                    <BasketballIcon className="text-accent size-7" />
                   </div>
                 </div>
               </div>
