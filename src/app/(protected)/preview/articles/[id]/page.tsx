@@ -205,7 +205,7 @@ export default function ArticlePreviewPage() {
       </section>
 
       {/* Article Content - Exactly like published version */}
-      <section className="py-12">
+      <section className="py-8 sm:py-10">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -218,7 +218,7 @@ export default function ArticlePreviewPage() {
 
             {/* Tags - Exactly like published version */}
             {displayArticle.tags && displayArticle.tags.length > 0 && (
-              <div className="mt-12 pt-8 border-t border-border/30">
+              <div className="mt-8 pt-6 border-t border-border/30">
                 <h3 className={`${moderniz.className} text-foreground mb-4 text-lg font-semibold`}>
                   Related Topics
                 </h3>
@@ -233,10 +233,10 @@ export default function ArticlePreviewPage() {
             )}
 
             {/* Share Buttons - Bottom (Preview Mode) */}
-            <div className="mt-12 pt-8 border-t border-border/30">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div className="mt-8 pt-6 border-t border-border/30">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h3 className={`${moderniz.className} text-foreground mb-2 text-lg font-semibold`}>
+                  <h3 className={`${moderniz.className} text-foreground mb-1 text-lg font-semibold`}>
                     Share this article (Preview)
                   </h3>
                   <p className="text-muted-foreground text-sm">
@@ -253,7 +253,7 @@ export default function ArticlePreviewPage() {
             </div>
 
             {/* Back to Articles */}
-            <div className="mt-12 pt-8 border-t border-border/30">
+            <div className="mt-6 pt-6 border-t border-border/30">
               <Button variant="outline" className="group" onClick={() => router.back()}>
                 <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
                 Back to Articles Management

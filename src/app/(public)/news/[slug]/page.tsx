@@ -113,7 +113,7 @@ export default function NewsArticlePage() {
       </section>
 
       {/* Article Header */}
-      <section className="border-border/30 border-b pt-4 pb-6">
+      <section className="border-border/30 border-b pt-2 pb-6">
         {/* Breadcrumbs */}
         <div className="mx-auto max-w-4xl p-4 sm:px-6 lg:px-8">
           <nav className="flex items-center space-x-2 text-sm">
@@ -141,12 +141,12 @@ export default function NewsArticlePage() {
             transition={{ duration: 0.8 }}
           >
             <h1
-              className={`${moderniz.className} text-foreground py-6 sm:py-12 text-3xl leading-tight font-bold md:text-4xl lg:text-5xl`}
+              className={`${moderniz.className} text-foreground py-4 sm:py-6 text-3xl leading-tight font-bold md:text-4xl lg:text-5xl`}
             >
               {displayArticle.title}
             </h1>
 
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="text-muted-foreground grid grid-cols-2 gap-y-3 gap-x-6 sm:flex sm:flex-wrap text-sm">
                 <div className="flex items-center gap-2">
                   <Pencil className="h-4 w-4 shrink-0" />
@@ -185,7 +185,7 @@ export default function NewsArticlePage() {
       </section>
 
       {/* Article Content */}
-      <section className="py-12">
+      <section className="py-8 sm:py-10">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -198,7 +198,7 @@ export default function NewsArticlePage() {
 
             {/* Tags */}
             {displayArticle.tags && displayArticle.tags.length > 0 && (
-              <div className="border-border/30 mt-12 border-t pt-8">
+              <div className="border-border/30 mt-8 border-t pt-6">
                 <h3 className={`${moderniz.className} text-foreground mb-4 text-lg font-semibold`}>
                   Related Topics
                 </h3>
@@ -213,11 +213,11 @@ export default function NewsArticlePage() {
             )}
 
             {/* Share Buttons - Bottom */}
-            <div className="border-border/30 mt-12 border-t pt-8">
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="border-border/30 mt-8 border-t pt-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h3
-                    className={`${moderniz.className} text-foreground mb-2 text-lg font-semibold`}
+                    className={`${moderniz.className} text-foreground mb-1 text-lg font-semibold`}
                   >
                     Share this article
                   </h3>
@@ -232,7 +232,7 @@ export default function NewsArticlePage() {
             </div>
 
             {/* Back to News */}
-            <div className="border-border/30 mt-12 border-t pt-8">
+            <div className="border-border/30 mt-6 border-t pt-6">
               <Link href="/news">
                 <Button variant="outline" className="group">
                   <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -245,7 +245,7 @@ export default function NewsArticlePage() {
       </section>
 
       {/* Related Articles */}
-      <section className="bg-muted/30 py-16">
+      <section className="bg-muted/30 py-10 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -253,7 +253,7 @@ export default function NewsArticlePage() {
             transition={{ duration: 0.8 }}
           >
             <h2
-              className={`${moderniz.className} text-foreground mb-8 text-2xl font-bold md:text-3xl`}
+              className={`${moderniz.className} text-foreground mb-6 text-2xl font-bold md:text-3xl`}
             >
               Related Articles
             </h2>
