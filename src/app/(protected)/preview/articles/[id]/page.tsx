@@ -168,30 +168,18 @@ export default function ArticlePreviewPage() {
               {displayArticle.title}
             </h1>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  <span className="font-medium">{displayArticle.author}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{formatSmartDate(displayArticle.publishedAt)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  <span>{displayArticle.readTime}</span>
-                </div>
+            <div className="mb-6 flex items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                <span className="font-medium">{displayArticle.author}</span>
               </div>
-
-              {/* Share Buttons - Top (Preview Mode) */}
-              <div className="flex-shrink-0">
-                <ShareButtons 
-                  url={getArticleUrl(displayArticle.slug)}
-                  title={displayArticle.title}
-                  variant="compact"
-                  disabled={true}
-                />
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>{formatSmartDate(displayArticle.publishedAt)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>{displayArticle.readTime}</span>
               </div>
             </div>
 

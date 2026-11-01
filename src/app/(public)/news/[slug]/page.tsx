@@ -146,31 +146,20 @@ export default function NewsArticlePage() {
               {displayArticle.title}
             </h1>
 
-            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="text-muted-foreground grid grid-cols-2 gap-y-3 gap-x-6 sm:flex sm:flex-wrap text-sm">
-                <div className="flex items-center gap-2">
-                  <Pencil className="h-4 w-4 shrink-0" />
-                  <span>by {displayArticle.author}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 shrink-0" />
-                  <span>{formatSmartDate(displayArticle.publishedAt)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 shrink-0" />
-                  <span>{displayArticle.readTime}</span>
-                </div>
-                <ViewCounter count={article.view_count || 0} className="flex items-center gap-2 text-sm text-muted-foreground shrink-0" />
+            <div className="text-muted-foreground mb-6 grid grid-cols-2 gap-y-3 gap-x-6 sm:flex sm:flex-wrap text-sm">
+              <div className="flex items-center gap-2">
+                <Pencil className="h-4 w-4 shrink-0" />
+                <span>by {displayArticle.author}</span>
               </div>
-
-              {/* Share Buttons - Top */}
-              <div className="flex-shrink-0">
-                <ShareButtons
-                  title={displayArticle.title}
-                  url={getArticleUrl(displayArticle.slug)}
-                  variant="compact"
-                />
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 shrink-0" />
+                <span>{formatSmartDate(displayArticle.publishedAt)}</span>
               </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 shrink-0" />
+                <span>{displayArticle.readTime}</span>
+              </div>
+              <ViewCounter count={article.view_count || 0} className="flex items-center gap-2 text-sm text-muted-foreground shrink-0" />
             </div>
 
             {displayArticle.excerpt && (
