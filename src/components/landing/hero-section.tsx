@@ -89,7 +89,7 @@ export default function HeroSection({ initialData }: HeroSectionProps) {
               muted
               loop
               playsInline
-              poster="/banner.jpg"
+              poster="/img/hero-poster.jpg"
               className="h-full w-full scale-105 transform object-cover"
             >
               <source src="/videos/hero-loop.mp4" type="video/mp4" />
