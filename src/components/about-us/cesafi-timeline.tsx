@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { moderniz, roboto } from '@/lib/fonts';
 import { useAllTimeline } from '@/hooks/use-timeline';
 import { Timeline } from '@/lib/types/timeline';
+import BasketballIcon from '@/components/shared/basketball-icon';
 
 export default function CesafiTimeline() {
   const { data: timelineEvents, isLoading, error } = useAllTimeline();
@@ -86,10 +88,10 @@ export default function CesafiTimeline() {
   }
 
   return (
-    <section className="bg-background relative overflow-hidden py-16 sm:py-24 lg:py-32">
+    <section className="bg-background relative overflow-hidden py-12 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-12 text-center sm:mb-16 lg:mb-20">
+        <div className="mb-10 text-center sm:mb-14 lg:mb-16">
           <h2
             className={`${moderniz.className} text-foreground mb-6 text-3xl leading-tight font-bold sm:text-4xl lg:text-5xl xl:text-6xl`}
           >
@@ -103,6 +105,13 @@ export default function CesafiTimeline() {
           >
             A journey through 25 years of excellence in Cebu collegiate sports, celebrating
             milestones, achievements, and the spirit of competition.
+          </p>
+
+          <p
+            className={`${roboto.className} bg-primary text-primary-foreground mt-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold`}
+          >
+            <BasketballIcon className="text-accent size-4 shrink-0" />
+            The basketball season tips off every August
           </p>
         </div>
 
@@ -127,7 +136,7 @@ export default function CesafiTimeline() {
                 <div className="relative z-10 mb-6 md:absolute md:left-1/2 md:-translate-x-1/2 md:transform md:mb-0">
                   {/* Main Dot */}
                   <div className={`w-12 h-12 rounded-full ${getCategoryColor(event.category)} flex items-center justify-center text-lg font-bold shadow-2xl border-2 border-background`}>                       
-                    <span className="text-xl">🏆</span>
+                    <BasketballIcon className="size-6" />
                   </div>
                   
                   {/* Year Badge - Mobile: below dot, Desktop: above */}
@@ -162,7 +171,7 @@ export default function CesafiTimeline() {
                         <div className="text-center">
                           {/* Icon Container */}
                           <div className="from-primary/20 to-secondary/20 relative mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br shadow-lg sm:mb-4 sm:h-16 sm:w-16 lg:h-20 lg:w-20">
-                            <span className="text-lg sm:text-2xl lg:text-3xl">🏆</span>
+                            <BasketballIcon className="text-primary size-6 sm:size-8 lg:size-10" />
                           </div>
 
                           <p className={`${roboto.className} text-muted-foreground px-2 text-xs sm:px-4 sm:text-sm`}>
@@ -232,7 +241,7 @@ export default function CesafiTimeline() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-12 text-center sm:mt-16 lg:mt-20">
+        <div className="mt-10 text-center sm:mt-14 lg:mt-16">
           <div className="from-primary/10 via-primary/5 to-primary/10 border-primary/20 rounded-2xl border bg-gradient-to-r p-6 sm:rounded-3xl sm:p-8">
             <h3 className={`${moderniz.className} text-foreground mb-3 text-xl font-bold sm:mb-4 sm:text-2xl`}>
               Be Part of Our History
@@ -242,16 +251,18 @@ export default function CesafiTimeline() {
               student-athlete, coach, or supporter, your story matters.
             </p>
             <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
-              <button
+              <Link
+                href="/faq"
                 className={`${roboto.className} bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg px-6 py-2 text-sm font-semibold shadow-lg transition-all duration-300 hover:scale-105 sm:rounded-xl sm:px-8 sm:py-3 sm:text-base`}
               >
                 Learn More About CESAFI
-              </button>
-              <button
+              </Link>
+              <Link
+                href="/schedule"
                 className={`${roboto.className} border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-lg border-2 px-6 py-2 text-sm font-semibold transition-all duration-300 hover:scale-105 sm:rounded-xl sm:px-8 sm:py-3 sm:text-base`}
               >
                 View Current Season
-              </button>
+              </Link>
             </div>
           </div>
         </div>
