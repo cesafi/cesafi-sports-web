@@ -104,7 +104,7 @@ export default function Footer() {
               <h3 className={`${moderniz.className} text-base lg:text-lg font-bold`}>Follow Us</h3>
               <div className="flex justify-center md:justify-start space-x-3">
                 <a
-                  href="https://www.youtube.com/@cesafi"
+                  href="https://www.youtube.com/@CESAFIOfficial"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-3 rounded-lg bg-muted/50 text-muted-foreground hover:text-red-500 hover:bg-muted transition-all duration-200"
