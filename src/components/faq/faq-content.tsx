@@ -216,7 +216,7 @@ export default function FaqContent({ initialFaqItems }: FaqContentProps) {
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3, delay: 0.2 }}
-                          className={`${roboto.className} text-muted-foreground leading-relaxed`}
+                          className={`${roboto.className} text-muted-foreground leading-relaxed whitespace-pre-line`}
                         >
                           {item.answer}
                         </motion.p>
