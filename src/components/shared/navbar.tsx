@@ -188,7 +188,7 @@ export default function Navbar() {
               <Youtube size={18} />
             </a>
             <a
-              href="https://www.facebook.com/cesikilig"
+              href="https://www.facebook.com/thecesafi"
               target="_blank"
               rel="noopener noreferrer"
               className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-500 transition-colors"
