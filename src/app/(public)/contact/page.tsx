@@ -5,6 +5,7 @@ import { moderniz, roboto } from '@/lib/fonts';
 export const metadata: Metadata = {
   title: 'Contact Us | CESAFI Sports',
   description: 'Get in touch with CESAFI Sports. Send us your questions, feedback, or inquiries.',
+  alternates: { canonical: '/contact' },
 };
 
 export default function ContactPage() {

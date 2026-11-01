@@ -8,6 +8,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'News | CESAFI Sports',
   description: 'Stay updated with the latest news, updates, and highlights from CESAFI sports events.',
+  alternates: { canonical: '/news' },
 };
 
 export const revalidate = 900; // Revalidate every 15 minutes

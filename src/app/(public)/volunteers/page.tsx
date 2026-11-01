@@ -12,6 +12,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Volunteers | CESAFI Sports',
   description: 'Meet the dedicated volunteers who make CESAFI possible through their passion and commitment to student athletics.',
+  alternates: { canonical: '/volunteers' },
 };
 
 export const revalidate = 1800; // Revalidate every 30 minutes

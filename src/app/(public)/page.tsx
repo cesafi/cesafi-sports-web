@@ -20,10 +20,11 @@ export const metadata: Metadata = {
   title: 'CESAFI Sports | Cebu Schools Athletic Foundation, Inc.',
   description: 'The official digital platform of CESAFI. Get the latest news, live scores, team standings, player statistics, and match schedules for basketball, volleyball, football, and more across Cebu.',
   keywords: 'CESAFI, Cebu Sports, College Sports, Basketball, Volleyball, Football, Esports, Cebu Schools Athletic Foundation Inc',
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'CESAFI Sports',
     description: 'The official digital platform of CESAFI. Catch the action live.',
-    url: 'https://cesafi.vercel.app',
+    url: '/',
     siteName: 'CESAFI Sports',
     locale: 'en_PH',
     type: 'website',

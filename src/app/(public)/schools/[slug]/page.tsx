@@ -26,6 +26,7 @@ export async function generateMetadata({ params }: SchoolProfilePageProps): Prom
   return {
     title: `${abbreviation} - ${name} | CESAFI Esports League`,
     description: `Explore ${name} (${abbreviation})'s esports teams, players, and match history in the CESAFI Esports League.`,
+    alternates: { canonical: `/schools/${abbreviation.toLowerCase()}` },
   };
 }
 

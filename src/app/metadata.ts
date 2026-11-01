@@ -30,7 +30,6 @@ export const metadata: Metadata = {
     title: 'CESAFI',
     description:
       'The official digital platform for Cebu Schools Athletic Foundation, Inc. (CESAFI). Get real-time updates, scores, news, schedules, standings, and team profiles for Cebuano collegiate athletics and education.', // Updated Open Graph description
-    url: `${metadataBase}`,
     siteName: 'CESAFI | Cebu Schools Athletic Foundation, Inc.',
     locale: 'en_US',
     images: [
@@ -49,9 +48,6 @@ export const metadata: Metadata = {
     description:
       'The official digital platform for Cebu Schools Athletic Foundation, Inc. (CESAFI). Get real-time updates, scores, news, schedules, standings, and team profiles for Cebuano collegiate athletics and education.', // Updated Twitter description
     images: ['/img/cesafi-banner.jpg']
-  },
-  alternates: {
-    canonical: `${metadataBase}`
   },
   robots: {
     index: true,

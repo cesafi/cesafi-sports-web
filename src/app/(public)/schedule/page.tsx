@@ -9,6 +9,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Match Schedule | CESAFI Sports League',
   description: 'View the full match schedule for the CESAFI Sports League. Follow live scores, upcoming matches, and tournament schedules across all sports and divisions.',
+  alternates: { canonical: '/schedule' },
 };
 
 export const revalidate = 0; // Temporarily disabled caching for dev

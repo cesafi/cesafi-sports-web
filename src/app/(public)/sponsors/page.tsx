@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { getActiveSponsors } from '@/actions/sponsors';
 import { Sponsor } from '@/lib/types/sponsors';
 import { moderniz, roboto } from '@/lib/fonts';
@@ -5,6 +6,10 @@ import { Handshake, MapPin, CalendarCheck } from 'lucide-react';
 import PartnersGrid from '@/components/sponsors/partners-grid';
 
 export const revalidate = 3600; // Revalidate every 1 hour
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/sponsors' },
+};
 
 export default async function SponsorsPage() {
   // Fetch active sponsors server-side

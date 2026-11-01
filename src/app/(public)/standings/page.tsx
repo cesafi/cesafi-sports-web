@@ -7,7 +7,8 @@ import { resolveCategoryId, resolveSeasonId } from '@/lib/utils/standings-select
 
 export const metadata: Metadata = {
   title: 'League Standings | CESAFI Sports League',
-  description: 'Team standings for the CESAFI Sports League: wins, losses and rankings for every category.'
+  description: 'Team standings for the CESAFI Sports League: wins, losses and rankings for every category.',
+  alternates: { canonical: '/standings' }
 };
 
 interface StandingsPageProps {

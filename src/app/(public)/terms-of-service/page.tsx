@@ -1,6 +1,11 @@
+import type { Metadata } from 'next';
 import { moderniz, roboto } from '@/lib/fonts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/terms-of-service' },
+};
 
 export default function TermsOfServicePage() {
   return (

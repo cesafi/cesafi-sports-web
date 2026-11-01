@@ -27,6 +27,7 @@ export async function generateMetadata({ params }: PlayerProfilePageProps): Prom
   return {
     title: `${name}${school ? ` - ${school}` : ''} | CESAFI Sports`,
     description: `View ${name}'s player profile, stats, and match history in CESAFI Sports.`,
+    alternates: { canonical: `/players/${playerSlug}` },
   };
 }
 

@@ -23,6 +23,7 @@ export async function generateMetadata({ params }: TeamProfilePageProps): Promis
   return {
     title: `${schoolName} ${teamName} | CESAFI Esports League`,
     description: `View the ${schoolName} ${teamName} roster, stats, and match results in the CESAFI Esports League.`,
+    alternates: { canonical: `/schools/${slug.toLowerCase()}/teams/${teamSlug.toLowerCase()}` },
   };
 }
 

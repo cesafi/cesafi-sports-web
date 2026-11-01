@@ -38,6 +38,7 @@ export async function generateMetadata({ params }: PublicMatchPageProps): Promis
   return {
     title: `${team1} vs ${team2} - ${sport} | CESAFI Sports`,
     description: `Match details for ${team1} vs ${team2} in ${sport}`,
+    alternates: { canonical: `/matches/${numericId}` },
   };
 }
 

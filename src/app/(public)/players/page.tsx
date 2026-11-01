@@ -6,7 +6,8 @@ import { getAvailableSportCategories } from '@/actions/matches';
 
 export const metadata = {
   title: 'Players | CESAFI Sports',
-  description: 'Browse all CESAFI sports competitors across teams and seasons.'
+  description: 'Browse all CESAFI sports competitors across teams and seasons.',
+  alternates: { canonical: '/players' }
 };
 
 export const revalidate = 1800; // Revalidate every 30 minutes

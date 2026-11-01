@@ -7,6 +7,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Member Schools | CESAFI Esports League',
   description: 'Discover the member schools of the Cebu Schools Athletic Foundation, Inc. that compete in the CESAFI Esports League.',
+  alternates: { canonical: '/schools' },
 };
 
 export const revalidate = 1800; // Revalidate every 30 minutes

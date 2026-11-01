@@ -8,6 +8,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'FAQ | CESAFI Sports',
   description: 'Find answers to frequently asked questions about CESAFI Sports programs, and member schools.',
+  alternates: { canonical: '/faq' },
 };
 
 export const revalidate = 3600; // Revalidate every 1 hour
