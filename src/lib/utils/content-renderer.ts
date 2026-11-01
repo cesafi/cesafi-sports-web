@@ -196,11 +196,29 @@ export function lexicalToHtml(lexicalState: unknown): string {
       return '';
     }
 
-    return convertNodesToHtml(state.root.children);
+    return convertNodesToHtml(trimBlankParagraphs(state.root.children));
   } catch (error) {
     console.error('Error converting Lexical to HTML:', error);
     return '';
   }
+}
+
+function isBlankParagraph(node: LexicalNode): boolean {
+  return node.type === 'paragraph' && !convertNodesToHtml(node.children).replace(/<br>/g, '').trim();
+}
+
+/**
+ * Remove blank paragraphs from the start and end of an article. Those are editor
+ * leftovers, unlike blank paragraphs between content, which writers use for spacing.
+ */
+function trimBlankParagraphs(nodes: LexicalNode[]): LexicalNode[] {
+  let start = 0;
+  let end = nodes.length;
+
+  while (start < end && isBlankParagraph(nodes[start])) start++;
+  while (end > start && isBlankParagraph(nodes[end - 1])) end--;
+
+  return nodes.slice(start, end);
 }
 
 /**
