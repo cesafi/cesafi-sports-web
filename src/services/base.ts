@@ -200,11 +200,13 @@ export abstract class BaseService {
           const col = (table as any)[field];
           if (!col) return null;
           
+          // Cast to text so ILIKE works on enums, numbers and timestamps too
+          const textCol = sql`${col}::text`;
           const numericValue = Number(searchQuery);
           if (!isNaN(numericValue) && col.dataType === 'number') {
-            return or(eq(col, numericValue), ilike(col, `%${searchQuery}%`));
+            return or(eq(col, numericValue), ilike(textCol, `%${searchQuery}%`));
           } else {
-            return ilike(col, `%${searchQuery}%`);
+            return ilike(textCol, `%${searchQuery}%`);
           }
         }).filter(Boolean);
         
