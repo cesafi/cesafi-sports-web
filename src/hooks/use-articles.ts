@@ -42,10 +42,9 @@ export const articleKeys = {
 // Basic article operations (for non-table use cases)
 export function usePaginatedArticles(
   options: ArticlePaginationOptions,
-  queryOptions?: UseQueryOptions<
-    ServiceResponse<PaginatedResponse<Article>>,
-    Error,
-    PaginatedResponse<Article>
+  queryOptions?: Omit<
+    UseQueryOptions<ServiceResponse<PaginatedResponse<Article>>, Error, PaginatedResponse<Article>>,
+    'queryKey' | 'queryFn'
   >
 ) {
   return useQuery({
