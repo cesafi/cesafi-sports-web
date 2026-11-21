@@ -27,28 +27,41 @@ export default function NewsContent({
   initialPagination
 }: NewsContentProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
+  // Fixed once per visit so the query key stays stable
+  const [now] = useState(() => new Date().toISOString());
 
-  // Use paginated articles hook for additional pages
-  const { 
-    data: articlesData, 
-    isLoading, 
+  // Wait for the user to stop typing before querying
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const isSearching = debouncedSearch !== '';
+  const useServerData = currentPage === 1 && !isSearching;
+
+  const {
+    data: articlesData,
+    isLoading,
+    isFetching,
     error
   } = usePaginatedArticles({
     page: currentPage,
     pageSize,
-    searchQuery: searchTerm,
+    searchQuery: debouncedSearch,
     sortBy: 'created_at',
-    sortOrder: 'desc'
+    sortOrder: 'desc',
+    // Same visibility rules as the server-rendered first page
+    filters: { status: 'published', published_at: { lte: now } }
   }, {
-    enabled: currentPage > 1 || !!initialPagination, // Only enable if we have initial data or we're on page 2+
-    queryKey: ['articles', 'paginated', { page: currentPage, pageSize, searchQuery: searchTerm, sortBy: 'created_at', sortOrder: 'desc' }]
+    enabled: !useServerData
   });
 
-  // Use initial data for first page, hook data for subsequent pages
-  const rawArticles = currentPage === 1 ? initialArticles : (articlesData?.data || []);
-  const currentPagination = currentPage === 1 ? initialPagination : articlesData;
+  const rawArticles = useServerData ? initialArticles : (articlesData?.data || []);
+  const currentPagination = useServerData ? initialPagination : articlesData;
+  const isPending = searchTerm.trim() !== debouncedSearch || (!useServerData && isFetching);
 
   // Transform articles to match ArticleCard format
   const currentArticles = rawArticles.map((article) => {
@@ -77,10 +90,10 @@ export default function NewsContent({
     article.featured !== true
   );
 
-  // Reset pagination when search term changes
+  // Reset pagination when the search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [debouncedSearch]);
 
   return (
     <section className="py-16">
@@ -88,13 +101,15 @@ export default function NewsContent({
         {/* Search Bar */}
         <div className="mb-12">
           <NewsSearch 
-            searchTerm={searchTerm} 
-            onSearchChange={setSearchTerm} 
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            isPending={isPending}
+            resultCount={isSearching && !isPending ? (currentPagination?.totalCount ?? 0) : undefined}
           />
         </div>
 
         {/* Loading State */}
-        {isLoading && currentPage > 1 ? (
+        {!useServerData && isLoading ? (
           <div className="space-y-12">
             {/* Featured Article Skeleton */}
             <div className="space-y-6">
@@ -138,6 +153,12 @@ export default function NewsContent({
                 {error.message || 'Please try again later.'}
               </p>
             </div>
+          </div>
+        ) : filteredArticles.length === 0 && isSearching ? (
+          <div className="py-12 text-center">
+            <p className={`${roboto.className} text-muted-foreground text-lg`}>
+              No articles found matching &quot;{debouncedSearch}&quot;.
+            </p>
           </div>
         ) : filteredArticles.length === 0 && currentPage === 1 ? (
           <div className="py-12 text-center">

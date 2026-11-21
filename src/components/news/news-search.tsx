@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -9,12 +9,16 @@ interface NewsSearchProps {
   searchTerm: string;
   onSearchChange: (term: string) => void;
   placeholder?: string;
+  isPending?: boolean;
+  resultCount?: number;
 }
 
-export default function NewsSearch({ 
-  searchTerm, 
-  onSearchChange, 
-  placeholder = "Search articles by title or content..." 
+export default function NewsSearch({
+  searchTerm,
+  onSearchChange,
+  placeholder = "Search articles by title or content...",
+  isPending = false,
+  resultCount
 }: NewsSearchProps) {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -51,12 +55,21 @@ export default function NewsSearch({
         )}
       </div>
       
-      {/* Search results count indicator */}
-      {searchTerm && (
-        <div className="mt-2 text-sm text-muted-foreground text-center">
+      {/* Search status: spinner while fetching, then the result count */}
+      {searchTerm.trim() && (
+        <div className="mt-2 text-sm text-muted-foreground text-center" aria-live="polite">
           <span className="inline-flex items-center gap-1">
-            <Search className="h-3 w-3" />
-            Searching for &quot;{searchTerm}&quot;
+            {isPending ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Searching for &quot;{searchTerm.trim()}&quot;…
+              </>
+            ) : resultCount !== undefined ? (
+              <>
+                <Search className="h-3 w-3" />
+                {resultCount} {resultCount === 1 ? 'result' : 'results'} for &quot;{searchTerm.trim()}&quot;
+              </>
+            ) : null}
           </span>
         </div>
       )}
